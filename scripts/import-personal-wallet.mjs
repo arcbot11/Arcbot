@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile, rename } from "node:fs/promises";
 import { fileURLToPath } from "node:url";
-import { privateKeyToAddress } from "viem/accounts";
+import { parsePersonalKey, KeyInputError } from "./personal-wallet-key.mjs";
 import { personalWalletError } from "./personal-wallet-errors.mjs";
 
 process.env.DISABLE_CDP_ERROR_REPORTING="true";
@@ -19,24 +19,24 @@ async function savePublicRecord(name,address){
   await rename(temporary,fileURLToPath(manifest));
 }
 async function main(){
+  const name=process.argv[2];
+  let key,address;
+  if(name!=="--check"){
+    if(name!=="--validate"&&!/^Personal[1-8]$/.test(name??""))throw new Error("name");
+    let input="";
+    for await(const chunk of process.stdin){input+=chunk.toString("utf8");if(input.length>256)throw new KeyInputError("Received more than 256 characters. Copy only the EVM private key.");}
+    ({key,address}=parsePersonalKey(input));input="";
+    if(name==="--validate"){key="";console.log("ARC_IMPORT: Key format and EVM value are valid. Nothing was imported or saved.");return;}
+  }
   for(const key of ["CDP_API_KEY_ID","CDP_API_KEY_SECRET","CDP_WALLET_SECRET"])
     if(!process.env[key]?.trim())throw new Error("configuration");
   const {CdpClient}=await import("@coinbase/cdp-sdk");
   const cdp=new CdpClient({apiKeyId:process.env.CDP_API_KEY_ID,apiKeySecret:process.env.CDP_API_KEY_SECRET,walletSecret:process.env.CDP_WALLET_SECRET});
-  const name=process.argv[2];
   if(name==="--check"){
     stage="CDP connection check";
     await cdp.evm.listAccounts({pageSize:1});
     console.log("ARC_IMPORT: CDP connection ready. Read access verified; importing also requires write access and a valid wallet secret.");return;
   }
-  if(!/^Personal[1-8]$/.test(name??""))throw new Error("name");
-  let input="";
-  for await(const chunk of process.stdin){input+=chunk.toString("utf8");if(input.length>256)throw new Error("key");}
-  let key=input.trim();input="";
-  if(!/^(0x)?[a-fA-F0-9]{64}$/.test(key))throw new Error("key");
-  if(!key.startsWith("0x"))key=`0x${key}`;
-  let address;
-  try{address=privateKeyToAddress(key);}catch{throw new Error("key");}
   const lookup=async(options)=>{
     try{return await cdp.evm.getAccount(options);}catch(error){if(error.statusCode===404)return null;throw error;}
   };

@@ -1,4 +1,4 @@
-param([ValidateRange(1,8)][int]$StartAt=1, [switch]$CheckOnly)
+param([ValidateRange(1,8)][int]$StartAt=1, [switch]$CheckOnly, [switch]$FromClipboard, [switch]$ValidateOnly, [switch]$SelfTest)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $helperPath = Join-Path $PSScriptRoot 'import-personal-wallet.mjs'
@@ -57,14 +57,30 @@ function Invoke-PersonalImport {
     }
 }
 
-Invoke-PersonalImport -AccountName '--check'
+if ($SelfTest) {
+    # Disposable public test value. Never imports an account or contacts CDP.
+    $testSecret = ConvertTo-SecureString (('0' * 63) + '1') -AsPlainText -Force
+    try { Invoke-PersonalImport -AccountName '--validate' -Secret $testSecret }
+    finally { $testSecret.Dispose() }
+    return
+}
+if (-not $ValidateOnly) { Invoke-PersonalImport -AccountName '--check' }
 if ($CheckOnly) { return }
 Write-Host 'Importing personal CDP wallets. Keys are hidden. Ctrl+C stops the process.'
 Write-Host 'Only names and public addresses are saved. No website, X, or Telegram links are created.'
 for ($number=$StartAt; $number -le 8; $number++) {
     $accountName = 'Personal' + $number
-    $secureKey = Read-Host "Private key for $accountName" -AsSecureString
-    try { Invoke-PersonalImport -AccountName $accountName -Secret $secureKey }
+    if ($FromClipboard) {
+        [void](Read-Host "Copy the key for $accountName, then press Enter here (do not paste it)")
+        $clipboardKey = Get-Clipboard -Raw
+        if (-not $clipboardKey) { throw 'Clipboard is empty. Copy the private key first.' }
+        try { $secureKey = ConvertTo-SecureString $clipboardKey -AsPlainText -Force }
+        finally { $clipboardKey = $null }
+    } else {
+        $secureKey = Read-Host "Private key for $accountName" -AsSecureString
+    }
+    try { Invoke-PersonalImport -AccountName $(if ($ValidateOnly) { '--validate' } else { $accountName }) -Secret $secureKey }
     finally { $secureKey.Dispose() }
+    if ($ValidateOnly) { return }
 }
 Write-Host 'Done. Public address list: .deployment-private/personal-wallets.json'

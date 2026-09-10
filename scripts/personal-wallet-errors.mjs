@@ -1,4 +1,6 @@
+import { KeyInputError } from "./personal-wallet-key.mjs";
 export function personalWalletError(error, stage) {
+  if(error instanceof KeyInputError)return error.message;
   const messages = {
     configuration: "CDP credentials are missing from .env.local.",
     name: "Choose Personal1 through Personal8.",
