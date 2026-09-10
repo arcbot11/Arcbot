@@ -1,3 +1,4 @@
+import { isXBotAuthor } from "../lib/x-bot-identity";
 import { retiredFeatureEnabled } from "../lib/retired-features";
 import { canIndexArcToken, CANONICAL_ARC_USDC, isArcUsdcSymbol } from "../lib/arc/token-catalog";
 import { disabledCreationKind } from "../lib/disabled-creation";
@@ -2928,7 +2929,7 @@ export const reconcileTransaction = internalAction({
       };
       const telegramAuthorized = current.request.source !== "telegram" || await ctx.runQuery(internal.telegram.executionAuthorized, { updateId: current.request.telegramUpdateId, ownerXUserId: current.request.ownerXUserId });
       const result =
-        current.request.status === "prepared" && telegramAuthorized
+        current.request.status === "prepared" && telegramAuthorized && !((current.request.source??"x")==="x"&&isXBotAuthor(current.request.ownerXUserId))
           ? await signerRequest<SubmittedTransaction>(
               "/v1/transactions/broadcast",
               {
@@ -3673,6 +3674,7 @@ export const executeCommand = internalAction({
     requestId: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<CommandResult> => {
+    if((args.source??"x")==="x"&&isXBotAuthor(args.xUserId))return {ok:false,message:"Bot-authored X commands are ignored."};
     const structured = args.parsedCommandJson
       ? validateStructuredWalletCommand(
           JSON.parse(args.parsedCommandJson) as unknown,
@@ -3844,8 +3846,7 @@ Your wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`,
     // use the terminal, but source/channel labels alone are not authority:
     // require a live, same-owner session again at the execution boundary.
     if (
-      process.env.X_BOT_USER_ID &&
-      args.xUserId === process.env.X_BOT_USER_ID
+      isXBotAuthor(args.xUserId)
     ) {
       if ((source !== "terminal" && source !== "telegram") || (args.channel !== "terminal_chat" && args.channel !== "terminal_form" && args.channel !== "telegram_chat")) {
         return {
@@ -7022,7 +7023,7 @@ export const authorizeArcCommand=action({args:{secret:v.string(),requestId:v.str
   if(!process.env.WEB_AUTH_SECRET||args.secret!==process.env.WEB_AUTH_SECRET)throw new Error("Unauthorized.");
   const request=await ctx.runQuery(internal.wallets.getWalletRequest,{requestId:args.requestId});
   if(!request||!["x","telegram"].includes(request.source??"x")||["rejected","failed","skipped"].includes(request.status))throw new Error("Request is not authorized.");
-  if(request.source!=="telegram"&&request.ownerXUserId===process.env.X_BOT_USER_ID)throw new Error("Bot wallet spending is not authorized.");
+  if(request.source!=="telegram"&&isXBotAuthor(request.ownerXUserId))throw new Error("Bot wallet spending is not authorized.");
   if(request.source==="telegram"&&!await ctx.runQuery(internal.telegram.executionAuthorized,{updateId:request.telegramUpdateId,ownerXUserId:request.ownerXUserId}))throw new Error("Telegram authorization changed.");
   const context=await ctx.runQuery(internal.wallets.getXUserAndWallet,{xUserId:request.ownerXUserId});
   if(!context?.wallet||context.wallet.status!=="active"||context.wallet._id!==request.walletId)throw new Error("Wallet authorization changed.");

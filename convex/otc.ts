@@ -1,8 +1,9 @@
 import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
+import { publicMarket } from "../lib/otc/public-market";
 import { otcWorkerUrl } from "../lib/project-config";
 import { mutation, query, action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
-import { createListing, createQuote, acceptQuote, cancelListing, finishOrder, marketStats, type Store, type RecordValue, type Order, type Listing } from "../lib/otc/model";
+import { createListing, createQuote, acceptQuote, cancelListing, finishOrder, type Store, type RecordValue, type Order, type Listing } from "../lib/otc/model";
 import { prepareTransaction, signTransactionRecord, submitted, settled, retryPayout } from "../lib/otc/transactions";
 
 function authorize(secret: string) {
@@ -100,10 +101,15 @@ export const read = query({
       return [...rows,...txs,...positions].map(r=>JSON.parse(r.json));
     }
     const rows = await ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","listing").eq("status","active")).collect();
-    const listings = rows.map(r=>JSON.parse(r.json) as Listing).filter(l=>BigInt(l.available)>=10_000_000n).sort((a,b)=>a.premiumBps-b.premiumBps || a.createdAt-b.createdAt);
-    return { listings: listings.map(({id,seller,premiumBps,available,createdAt})=>({id,seller,premiumBps,available,createdAt})), stats: marketStats(listings) };
+    return publicMarket(rows.map(r=>JSON.parse(r.json) as Listing));
   },
 });
+
+// Browsers subscribe only to this public projection. Private queries still require the service secret.
+export const market = query({args:{},handler:async(ctx)=>{
+  const rows=await ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","listing").eq("status","active")).collect();
+  return publicMarket(rows.map(r=>JSON.parse(r.json) as Listing));
+}});
 
 // Schedule this internal service endpoint in the deployment's scheduler. It does not depend on a browser remaining open.
 export const wakeWorker = action({

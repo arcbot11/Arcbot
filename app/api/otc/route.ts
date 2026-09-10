@@ -6,6 +6,7 @@ import { assertListingRetry } from "@/lib/otc/listing-submission";
 import { arcWalletBalance } from "@/lib/arc/wallet-balance";
 import { listingPreview } from "@/lib/otc/listing-preview";
 import { positionHistory } from "@/lib/otc/position-history";
+import { transactionHistory } from "@/lib/otc/transaction-history";
 import { randomUUID } from "node:crypto";
 import { NextRequest } from "next/server";
 import { z } from "zod";
@@ -13,7 +14,7 @@ import { boundedJson } from "@/lib/bounded-json";
 import { repository } from "@/lib/otc/repository";
 import { balanceSnapshot, verifyRouter, ethPrice, prepareCall, advanceOrder, baseUsdcBalance, verifyUsdcRouter } from "@/lib/otc/runtime";
 import { json, webFailure, websiteSession, WebError } from "@/lib/otc/http";
-import { type Transaction, type Listing, type Order, type RecordValue, type Wallet, locked, lockedBaseUsdc, paymentAsset, walletId, usdc, price, usdcPrice } from "@/lib/otc/model";
+import { SERVICE_FEE_BPS, type Transaction, type Listing, type Order, type RecordValue, type Wallet, locked, lockedBaseUsdc, paymentAsset, walletId, usdc, price, usdcPrice } from "@/lib/otc/model";
 import { payoutCall, paymentCall, approvalCall } from "@/lib/otc/transactions";
 
 export const runtime="nodejs";
@@ -53,7 +54,7 @@ export async function GET(request:NextRequest) {
       const orders=await Promise.all(records.filter(r=>r.kind==="order").map(async r=>{
         const o=r as Order; return {listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.xUserId?"buy":"sell"};
       }));
-      const transactions=records.filter(r=>r.kind==="transaction").map(r=>{if(r.kind!=="transaction")throw new Error("Unexpected record");return {escrowStep:r.escrowRef?.step,id:r.id,chainId:r.chainId,leg:r.leg,status:r.status,hash:r.hash,note:r.note,createdAt:r.createdAt};});
+      const transactions=records.filter((r):r is Transaction=>r.kind==="transaction").map(transactionHistory);
       const baseSnapshot = snapshots[1];
       let baseUsdc = {balance: null as string|null, locked: "0", available: null as string|null};
       const baseWallet = records.find(r => r.kind === "wallet" && r.id === walletId(8453, session.walletAddress)) as Wallet|undefined;
@@ -114,10 +115,11 @@ export async function POST(request:NextRequest) {
       const listing=await repo.read<Listing|null>({id:body.listingId});
       if(!listing||listing.kind!=="listing")throw new WebError("Listing not found.",404);
       const amount=usdc(body.amount),asset=body.paymentAsset;
-      if (asset === "USDC" && session.walletAddress.toLowerCase() === config.feeRecipient.toLowerCase()) throw new WebError("Fee wallet cannot buy with Base USDC.");
+      if (!listing.escrow && asset === "USDC" && session.walletAddress.toLowerCase() === config.feeRecipient.toLowerCase()) throw new WebError("Fee wallet cannot buy with Base USDC.");
       if (asset === "USDC" && !listing.escrow) await verifyUsdcRouter(config.router);
       const rate=asset === "USDC" ? {ethUsdMicros:"1000000",priceAt:Date.now()} : await ethPrice();
-      const cost=asset === "USDC" ? usdcPrice(amount,listing.premiumBps) : price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros));
+      const feeBps=listing.escrow?SERVICE_FEE_BPS:100;
+      const cost=asset === "USDC" ? usdcPrice(amount,listing.premiumBps,feeBps) : price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros),feeBps);
       const quoteId=`order:${randomUUID()}`;
       if(listing.escrow){
         if(!listing.escrow.address||listing.escrow.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new WebError("Listing escrow configuration changed.");
@@ -158,5 +160,5 @@ export async function POST(request:NextRequest) {
 
 function publicOrder(order:Order){
   const {id,amount,premiumBps,sellerWei,feeWei,totalWei,baseGasWei,expiresAt,status,paymentHash,payoutHash,note}=order;
-  return {escrowAddress:order.escrow?.address,escrowGasBudgetWei:order.escrow?.gasBudgetWei,gasRemainderWei:order.escrow?.gasRemainderWei,sellerPaymentHash:order.sellerPaymentHash,serviceFeeHash:order.serviceFeeHash,gasRefundHash:order.gasRefundHash,paymentAsset:paymentAsset(order),approvalGasWei:order.approvalGasWei??"0",approvalHash:order.approvalHash,id,amount,premiumBps,sellerWei,feeWei,totalWei,baseGasWei,expiresAt,status,paymentHash,payoutHash,note};
+  return {serviceFeeBps:order.serviceFeeBps??100,escrowAddress:order.escrow?.address,escrowGasBudgetWei:order.escrow?.gasBudgetWei,gasRemainderWei:order.escrow?.gasRemainderWei,sellerPaymentHash:order.sellerPaymentHash,serviceFeeHash:order.serviceFeeHash,gasRefundHash:order.gasRefundHash,paymentAsset:paymentAsset(order),approvalGasWei:order.approvalGasWei??"0",approvalHash:order.approvalHash,id,amount,premiumBps,sellerWei,feeWei,totalWei,baseGasWei,expiresAt,status,paymentHash,payoutHash,note};
 }

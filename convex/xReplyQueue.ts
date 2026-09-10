@@ -1,3 +1,5 @@
+import { isXBotAuthor } from "../lib/x-bot-identity";
+import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
 import { disabledCreationKind, suppressCreationReply } from "../lib/disabled-creation";
 import { v } from "convex/values";
 import { internal } from "./_generated/api";
@@ -85,8 +87,8 @@ export const enqueue = internalMutation({
     if (existing) return { status: existing.status, ...(existing.responsePostId ? { responsePostId: existing.responsePostId } : {}) };
 
     const interaction = args.postId ? await ctx.db.query("xReplyInteractions").withIndex("by_post_id", q => q.eq("postId", args.postId!)).unique() : null;
-    if (disabledCreationKind(interaction?.commandKind)) return { status: "cancelled" };
-    if (args.postId && (!interaction || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) return { status: "cancelled" };
+    if (isXBotAuthor(interaction?.authorXUserId) || disabledCreationKind(interaction?.commandKind)) return { status: "cancelled" };
+    if (args.postId && (!interaction || !explicitReplyRequest(interaction.text,interaction.parentPostId) || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) return { status: "cancelled" };
     const prior = await ctx.db.query("xPublicationEvents").withIndex("by_post_id", q => q.eq("postId", args.key)).order("desc").first();
     if (prior?.status === "published") return { status: "published", responsePostId: prior.responsePostId };
     if (interaction?.responsePostId && args.key === args.postId) return { status: "published", responsePostId: interaction.responsePostId };
@@ -124,6 +126,7 @@ export const enqueue = internalMutation({
     const priority = replyQueuePriority(safeText, priorityAuthority, args.ok);
     const now = Date.now();
     const user = interaction ? await ctx.db.query("xReplyUsers").withIndex("by_x_user_id", q => q.eq("xUserId", interaction.authorXUserId)).unique() : null;
+    if(isXBotAuthor(user?.xUserId,user?.username))return {status:"cancelled"};
     let dailyWarning = false;
     if (interaction && (interaction.authorVerified ?? user?.verified) !== true) {
       const budget = await reserveUnverifiedReply(ctx, interaction.authorXUserId, interaction, safeText, effectiveKind);
@@ -223,7 +226,7 @@ export const takeNext = internalMutation({
     }
 
     const interaction = row.postId ? await ctx.db.query("xReplyInteractions").withIndex("by_post_id", q => q.eq("postId", row.postId!)).unique() : null;
-    if (row.postId && (!interaction || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) {
+    if (row.postId && (!interaction || !explicitReplyRequest(interaction.text,interaction.parentPostId) || isXBotAuthor(interaction.authorXUserId,row.username) || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) {
       await ctx.db.patch(row._id, { status: "cancelled", updatedAt: now }); await settleBindings(ctx, row, "cancelled"); await wake(ctx, state); return null;
     }
     if (disabledCreationKind(interaction?.commandKind)) {

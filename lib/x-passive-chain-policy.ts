@@ -39,6 +39,13 @@ export function hasExplicitBotMention(text: string, references: XReference[] | u
   return !isPassiveBotChainReply(text, references, botUsername);
 }
 
+/** Current post only. Links, parent posts and inherited thread participants cannot opt in. */
+export function explicitReplyRequest(text: string, parentPostId?: string) {
+  const body=text.replace(/https?:\/\/\S+/gi, "");
+  if(!new RegExp(`(^|[^A-Za-z0-9_@/])@${escapeRegExp(xBotUsername())}(?![A-Za-z0-9_])`,"i").test(body))return false;
+  return hasExplicitBotMention(body,parentPostId?[{type:"replied_to",id:parentPostId}]:undefined);
+}
+
 /**
  * Launch authorization is satisfied by a direct invocation in the current
  * post or by the platform-verifiable fact that its direct parent is the bot.

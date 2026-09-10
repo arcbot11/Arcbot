@@ -1,32 +1,35 @@
 import { describe, expect, it, vi } from "vitest";
-import { executeTradeFlow, ARC_TRADE_GAS_BUDGET_WEI, type TradeFlowQuote } from "../lib/arc/trade-flow";
+import { executeTradeFlow, estimatedTradeGasBudget, ARC_TRADE_GAS_BUDGET_WEI, type TradeFlowQuote } from "../lib/arc/trade-flow";
 const quote = (stage = "approve token", changes: Partial<TradeFlowQuote> = {}): TradeFlowQuote => ({ quote: stage, stage, amountOut: "100", minimumOut: "99", protocol: "v3", gasWei: "10", expiresAt: Date.now() + 60000, ...changes });
 const io = () => ({ confirm: vi.fn(), preview: vi.fn(), wait: vi.fn(async () => {}), active: () => true, progress: vi.fn() });
 describe("automatic trade setup", () => {
   it("budgets swap work separately from the cheaper approval",async()=>{
     const calls=io();
     const budget=ARC_TRADE_GAS_BUDGET_WEI;
-    calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"submitted"});
+    calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"completed"});
     calls.preview.mockResolvedValue(quote("swap",{gasWei:"5815587375000000"}));
     const result=await executeTradeFlow(quote("approve router",{gasWei:"1065344000000000",tradeGasBudgetWei:budget}),calls);
     expect(result.result?.id).toBe("b");
     expect(BigInt(budget)).toBe(10n**16n);
   });
-  it("does not increase the original gas budget when refreshing",async()=>{
-    const calls=io();calls.confirm.mockResolvedValue({id:"a",leg:"allowance",status:"completed"});
-    calls.preview.mockResolvedValue(quote("swap",{gasWei:"41",tradeGasBudgetWei:"1000"}));
-    const result=await executeTradeFlow(quote("approve token",{tradeGasBudgetWei:"50"}),calls);
-    expect(result.message).toContain("Gas exceeded");expect(calls.confirm).toHaveBeenCalledTimes(1);
+  it("accepts a higher server estimate after approval",async()=>{
+    const calls=io();calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"completed"});
+    const higher="20000000000000000";
+    calls.preview.mockResolvedValue(quote("swap",{gasWei:higher,tradeGasBudgetWei:estimatedTradeGasBudget(higher)}));
+    const result=await executeTradeFlow(quote("approve token",{tradeGasBudgetWei:ARC_TRADE_GAS_BUDGET_WEI}),calls);
+    expect(result.result?.id).toBe("b");expect(calls.confirm).toHaveBeenCalledTimes(2);
+    expect(estimatedTradeGasBudget("10")).toBe(ARC_TRADE_GAS_BUDGET_WEI);
+    expect(estimatedTradeGasBudget(higher)).toBe(higher);
   });
-  it.each([false,true])("enforces the 0.01 USDC total gas boundary (over=%s)",async over=>{
-    const calls=io();calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"submitted"});
+  it.each([false,true])("requires a refreshed allowance when exceeding the initial budget (over=%s)",async over=>{
+    const calls=io();calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"completed"});
     calls.preview.mockResolvedValue(quote("swap",{gasWei:(9n*10n**15n+(over?1n:0n)).toString()}));
     const result=await executeTradeFlow(quote("approve router",{gasWei:"1000000000000000",tradeGasBudgetWei:ARC_TRADE_GAS_BUDGET_WEI}),calls);
     expect(Boolean(result.result)).toBe(!over);
   });
   it("waits for verified approval before quoting and submitting the swap", async () => {
     const calls = io();
-    calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"submitted"}).mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"submitted"});
+    calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"submitted"}).mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"completed"});
     calls.preview.mockResolvedValue(quote("swap"));
     const result = await executeTradeFlow(quote(), calls);
     expect(result.result?.id).toBe("b");

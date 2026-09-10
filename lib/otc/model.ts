@@ -3,7 +3,7 @@ import { exactAmount, USDC_SCALE } from "../arc/amounts";
 export const MIN_USDC = 10_000_000n;
 export const MAX_PREMIUM_BPS = 1_000_000;
 export const QUOTE_MS = 30_000;
-export const SERVICE_FEE_BPS = 100;
+export const SERVICE_FEE_BPS = 150;
 export type PaymentAsset = "ETH" | "USDC";
 export const paymentAsset = (order: {paymentAsset?: PaymentAsset}): PaymentAsset => order.paymentAsset ?? "ETH";
 export type Chain = 5042 | 8453;
@@ -21,16 +21,16 @@ export function premium(value: string) {
   if (bps > MAX_PREMIUM_BPS) throw new Error("Maximum premium is 10,000%.");
   return bps;
 }
-export function price(amount: bigint, premiumBps: number, ethUsdMicros: bigint) {
+export function price(amount: bigint, premiumBps: number, ethUsdMicros: bigint, feeBps=100) {
   if (amount < MIN_USDC || !Number.isSafeInteger(premiumBps) || premiumBps < 0 || premiumBps > MAX_PREMIUM_BPS || ethUsdMicros <= 0n) throw new Error("Invalid OTC price inputs.");
   const sellerWei = ceil(amount * BigInt(10_000 + premiumBps) * 10n ** 18n, 10_000n * ethUsdMicros);
-  const feeWei = ceil(sellerWei, 100n);
+  const feeWei = ceil(sellerWei*BigInt(feeBps), 10_000n);
   return { sellerWei: sellerWei.toString(), feeWei: feeWei.toString(), totalWei: (sellerWei + feeWei).toString() };
 }
-export function usdcPrice(amount: bigint, premiumBps: number) {
+export function usdcPrice(amount: bigint, premiumBps: number, feeBps=100) {
   if (amount < MIN_USDC || !Number.isSafeInteger(premiumBps) || premiumBps < 0 || premiumBps > MAX_PREMIUM_BPS) throw new Error("Invalid OTC price inputs.");
   const sellerWei = ceil(amount * BigInt(10_000 + premiumBps), 10_000n);
-  const feeWei = ceil(sellerWei, 100n);
+  const feeWei = ceil(sellerWei*BigInt(feeBps), 10_000n);
   return {sellerWei: sellerWei.toString(), feeWei: feeWei.toString(), totalWei: (sellerWei + feeWei).toString()};
 }
 export type EscrowPosition = {version:1;accountName:string;address?:string;fundingWei:string;feeRecipient:string;fundingGasWei:string;closeGasWei:string;closeReason?:"cancelled"|"filled";returnedWei?:string;gasRemainderWei?:string;attempts?:Record<string,number>;note?:string};
@@ -47,7 +47,7 @@ export type Order = {
   amount: string; premiumBps: number; ethUsdMicros: string; priceAt: number;
   // Legacy names: atomic payment units (18 decimals for ETH, 6 for Base USDC).
   sellerWei: string; feeWei: string; totalWei: string; baseGasWei: string; arcGasWei: string;
-  router: string; feeRecipient: string; expiresAt: number; status: OrderStatus;
+  router: string; feeRecipient: string; serviceFeeBps?:number; expiresAt: number; status: OrderStatus;
   sellerPaymentHash?: string; serviceFeeHash?: string; gasRefundHash?:string; paymentHash?: string; payoutHash?: string; payoutAttempt?: number; note?: string; createdAt: number; updatedAt: number;
 };
 export type Wallet = { kind: "wallet"; id: string; owner: string; address: string; chainId: Chain;
@@ -133,7 +133,8 @@ export async function createQuote(store: Store, input: { id: string; owner: stri
   if (now - input.priceAt > QUOTE_MS || input.priceAt > now || BigInt(input.baseGasWei) <= 0n) throw new Error("Price or gas estimate expired.");
   if (input.paymentAsset && !["ETH", "USDC"].includes(input.paymentAsset)) throw new Error("Unsupported Base payment asset.");
   const asset = paymentAsset(input);
-  const quote = asset === "USDC" ? usdcPrice(amount, listing.premiumBps) : price(amount, listing.premiumBps, BigInt(input.ethUsdMicros));
+  const serviceFeeBps=listing.escrow?SERVICE_FEE_BPS:100;
+  const quote = asset === "USDC" ? usdcPrice(amount, listing.premiumBps,serviceFeeBps) : price(amount, listing.premiumBps, BigInt(input.ethUsdMicros),serviceFeeBps);
   const funding = await wallet(store,8453,input.buyer,input.owner,now);
   checkSnapshot(funding,input.baseBlock);
   if (asset === "USDC" && ((!listing.escrow&&BigInt(input.approvalGasWei ?? "0") <= 0n) || BigInt(input.baseUsdcBalance ?? "0") - lockedBaseUsdc(funding) < BigInt(quote.totalWei))) throw new Error("Not enough available Base USDC or approval gas allowance.");
@@ -143,7 +144,7 @@ export async function createQuote(store: Store, input: { id: string; owner: stri
     ...(listing.escrow?{escrow:{version:1 as const,address:listing.escrow.address!,gasBudgetWei:input.escrowGasBudgetWei!}}:{}),
     paymentAsset: asset, ...(asset === "USDC" ? {approvalGasWei: input.approvalGasWei} : {}),
     amount: amount.toString(), premiumBps: listing.premiumBps, ethUsdMicros: input.ethUsdMicros, priceAt: input.priceAt, ...quote,
-    baseGasWei: input.baseGasWei, arcGasWei: listing.gasPerFillWei, router: input.router, feeRecipient: input.feeRecipient,
+    baseGasWei: input.baseGasWei, arcGasWei: listing.gasPerFillWei, router: input.router, feeRecipient: input.feeRecipient,serviceFeeBps,
     expiresAt: now + QUOTE_MS, status: "quoted", createdAt: now, updatedAt: now };
   listing.available = (BigInt(listing.available) - amount).toString();
   listing.held = (BigInt(listing.held) + amount).toString(); listing.pendingFills++;

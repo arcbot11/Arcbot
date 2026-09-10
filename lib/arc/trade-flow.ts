@@ -1,7 +1,11 @@
 export type TradeFlowQuote = { quote: string; stage: string; amountOut: string; minimumOut: string; protocol: string; gasWei: string; tradeGasBudgetWei?: string; expiresAt: number };
 type Result = { id: string; status: string; leg: string };
 export const tradeGasBudget = (quote: TradeFlowQuote) => quote.tradeGasBudgetWei ? BigInt(quote.tradeGasBudgetWei) : BigInt(quote.gasWei) * (quote.stage === "swap" ? 1n : 4n);
-export const ARC_TRADE_GAS_BUDGET_WEI = "10000000000000000"; // 0.01 native USDC, including approvals.
+export const ARC_TRADE_GAS_BUDGET_WEI = "10000000000000000"; // Default allowance; higher verified estimates are supported.
+export const estimatedTradeGasBudget = (gasWei: string) => {
+  const estimate=BigInt(gasWei),baseline=BigInt(ARC_TRADE_GAS_BUDGET_WEI);
+  return (estimate>baseline?estimate:baseline).toString();
+};
 const decimal = (value: string) => {
   const [whole, fraction = ""] = value.split(".");
   if (!/^\d+$/.test(whole) || !/^\d{0,36}$/.test(fraction)) throw new Error("Invalid trade amount.");
@@ -11,6 +15,7 @@ const decimal = (value: string) => {
 /** Each approval must settle before the next quote. Uncertain submissions are never retried here. */
 export async function executeTradeFlow(initial: TradeFlowQuote, io: {
   confirm: (quote: string) => Promise<Result>;
+  status?: (id:string) => Promise<TransactionStatus>;
   preview: () => Promise<TradeFlowQuote>;
   wait: () => Promise<void>;
   active: () => boolean;
@@ -21,28 +26,25 @@ export async function executeTradeFlow(initial: TradeFlowQuote, io: {
   for (let step = 0; step < 4; step++) {
     if (!io.active()) throw new Error("Trade paused. Check transaction history before continuing.");
     if (Date.now() >= current.expiresAt) throw new Error("Quote expired. Submit the trade again.");
-    if (spent + BigInt(current.gasWei) > budget)
+    // A refreshed server quote can authorize its higher estimated gas. The
+    // transaction still passes backend gas policy and available-balance checks.
+    const refreshedAllowance=current.tradeGasBudgetWei?BigInt(current.tradeGasBudgetWei):0n;
+    if (spent + BigInt(current.gasWei) > budget && BigInt(current.gasWei)>refreshedAllowance)
       return { quote: current, message: "Gas exceeded the trade allowance. No swap was submitted. Submit again for a fresh gas estimate." };
     if (decimal(current.minimumOut) < minimum)
       return { quote: current, message: "Price moved below the original minimum. No swap was submitted. Submit again for a fresh quote." };
     io.progress(current.stage === "swap" ? "Preparing trade…" : current.stage === "reset token approval" ? "Preparing approval reset…" : current.stage === "approve router" ? "Preparing router approval…" : "Preparing token approval…");
-    let result = await io.confirm(current.quote);
+    const result = await io.confirm(current.quote);
     if (result.leg !== (current.stage === "swap" ? "swap" : "allowance")) throw new Error("Unexpected transaction. Check transaction history.");
     if (result.status === "reverted") throw new Error("Transaction reverted. Check transaction history.");
-    if (current.stage === "swap") return { result };
-    const id = result.id;
-    for (let attempt = 0; result.status !== "completed" && attempt < 30; attempt++) {
-      await io.wait();
-      if (!io.active()) throw new Error("Trade paused. Check transaction history before continuing.");
-      // The confirm endpoint returns existing durable records without preparing or signing again.
-      result = await io.confirm(current.quote);
-      if (result.id !== id || result.leg !== "allowance") throw new Error("Unexpected transaction. Check transaction history.");
-      if (result.status === "reverted") throw new Error("Token setup failed. Check transaction history.");
-    }
-    if (result.status !== "completed") throw new Error("Token setup is pending. Check transaction history before continuing.");
+    const action=current.stage==="swap"?"trade":current.stage==="reset token approval"?"approval reset":current.stage==="approve router"?"router approval":"token approval";
+    const settled=await waitForTransaction(result,action,{...io,read:io.status??(()=>io.confirm(current.quote))});
+    if (current.stage === "swap") return { result:settled };
     spent += BigInt(current.gasWei);
     if (!io.active()) throw new Error("Trade paused. Check transaction history before continuing.");
+    io.progress("Refreshing trade quote…");
     current = await io.preview();
   }
   return { quote: current, message: "Trade setup changed. Check transaction history before submitting again." };
 }
+import {waitForTransaction,type TransactionStatus} from "./transaction-progress";

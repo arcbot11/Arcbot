@@ -64,7 +64,7 @@ const state = (ctx: ReturnType<typeof fixture>) => ctx.rows.xReplyQueueState[0];
 const row = (ctx: ReturnType<typeof fixture>, key: string) => ctx.rows.xReplyQueue.find((r: Row) => r.key === key)!;
 async function source(ctx: ReturnType<typeof fixture>, id: string, kind = "buy", extra: Row = {}) {
   await ctx.db.insert("xReplyUsers", { xUserId: id, username: `user${id}` });
-  return ctx.db.insert("xReplyInteractions", { postId: id, authorXUserId: id, text: "user request", commandKind: kind,
+  return ctx.db.insert("xReplyInteractions", { postId: id, authorXUserId: id, text: "@ArcChainBot user request", commandKind: kind,
     status: "processing", createdAt: Date.now(), updatedAt: Date.now(), ...extra });
 }
 async function add(ctx: ReturnType<typeof fixture>, key: string, priority: "A" | "B" | "C", extra: Row = {}) {
@@ -72,6 +72,48 @@ async function add(ctx: ReturnType<typeof fixture>, key: string, priority: "A" |
   return invoke(queue.enqueue, ctx, { key, postId: key, kind: "reply", text: priority === "A" ? "Confirmed: Bought 10 TEST!" : priority === "B" ? "Action needed: More than one indexed token uses that ticker." : "💡 Tell me buy or sell.", ...extra });
 }
 const take = (ctx: ReturnType<typeof fixture>) => invoke(queue.takeNext, ctx, { wakeToken: state(ctx).wakeToken });
+
+describe("bot-authored posts",()=>{
+  const botId="2097696306135220226";
+  it("silently rejects the bot's own incoming tweet",async()=>{
+    const ctx=fixture();
+    expect(await invoke(replies.reserveInteraction,ctx,{postId:"self",authorXUserId:botId,text:"@ArcChainBot buy 10 ARGUS"})).toBe(false);
+    expect(ctx.rows.xReplyInteractions).toBeUndefined();expect(ctx.scheduler.runAfter).not.toHaveBeenCalled();
+  });
+  it("does not enqueue replies to the bot's own post",async()=>{
+    const ctx=fixture();await source(ctx,"self","buy",{authorXUserId:botId});
+    expect(await invoke(queue.enqueue,ctx,{key:"self",postId:"self",kind:"reply",text:"Result"})).toMatchObject({status:"cancelled"});
+    expect(ctx.rows.xReplyQueue).toBeUndefined();
+  });
+  it("cancels an already queued self-reply before publication",async()=>{
+    const ctx=fixture();await add(ctx,"queued","A");
+    const interaction=ctx.rows.xReplyInteractions.find((r:Row)=>r.postId==="queued");await ctx.db.patch(interaction._id,{authorXUserId:botId});
+    expect(await take(ctx)).toBeNull();expect(row(ctx,"queued").status).toBe("cancelled");
+  });
+  it("allows another user to issue a command in reply to a bot post",async()=>{
+    const ctx=fixture();await source(ctx,"bot-post","help",{authorXUserId:botId,responsePostId:"bot-parent"});
+    await source(ctx,"human-reply","buy",{authorXUserId:"human",parentPostId:"bot-parent",text:"@ArcChainBot buy 10 ARGUS"});
+    expect(await invoke(queue.enqueue,ctx,{key:"human-reply",postId:"human-reply",kind:"reply",text:"Result"})).toMatchObject({status:"queued"});
+    expect((await take(ctx))?.row.postId).toBe("human-reply");
+  });
+});
+
+describe("explicit tag required",()=>{
+  it("rejects untagged intake even when the parent authorized a workflow",async()=>{
+    const ctx=fixture();
+    expect(await invoke(replies.reserveInteraction,ctx,{postId:"untagged",authorXUserId:"human",text:"buy 10 ARGUS",parentPostId:"bot-parent",botParentAuthorized:true})).toBe(false);
+    expect(ctx.rows.xReplyInteractions).toBeUndefined();
+  });
+  it("rejects queued responses to untagged posts",async()=>{
+    const ctx=fixture();await source(ctx,"untagged","buy",{text:"buy 10 ARGUS"});
+    expect(await invoke(queue.enqueue,ctx,{key:"untagged",postId:"untagged",kind:"reply",text:"Result"})).toMatchObject({status:"cancelled"});
+  });
+  it("cancels previously queued replies if the original post lacks a tag",async()=>{
+    const ctx=fixture();await add(ctx,"old","A");
+    const interaction=ctx.rows.xReplyInteractions.find((r:Row)=>r.postId==="old");await ctx.db.patch(interaction._id,{text:"buy 10 ARGUS"});
+    expect(await take(ctx)).toBeNull();expect(row(ctx,"old").status).toBe("cancelled");
+  });
+});
 
 describe("unverified daily reply budget", () => {
   it("warns on 7, caps all kinds at 10, deduplicates, and resets at UTC midnight", async () => {

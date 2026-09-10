@@ -1,5 +1,7 @@
 "use client";
 import { PersistentNotices, usePersistentNotices } from "./PersistentNotices";
+import { ConvexClient } from "convex/browser";
+import { makeFunctionReference } from "convex/server";
 import { useWalletSession } from "./WalletSessionProvider";
 import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
@@ -10,7 +12,7 @@ import { usdc as validateAmount, premium as validatePremium } from "@/lib/otc/mo
 export type OtcSession={authenticated:boolean;walletAddress?:string;csrfToken?:string};
 type Listing={id:string;seller:string;available:string;premiumBps:number};
 type Market={available:boolean;enabled:boolean;listings:Listing[];stats:{count:number;available:string;lowestBps:number|null;averageBps:number|null}};
-type Quote={escrowAddress?:string;escrowGasBudgetWei?:string;paymentAsset?:"ETH"|"USDC";approvalGasWei?:string;id:string;amount:string;premiumBps:number;sellerWei:string;feeWei:string;totalWei:string;baseGasWei:string;expiresAt:number;status:string};
+type Quote={serviceFeeBps?:number;escrowAddress?:string;escrowGasBudgetWei?:string;paymentAsset?:"ETH"|"USDC";approvalGasWei?:string;id:string;amount:string;premiumBps:number;sellerWei:string;feeWei:string;totalWei:string;baseGasWei:string;expiresAt:number;status:string};
 const quoteGas=(q:Quote)=>BigInt(q.baseGasWei)*(q.escrowAddress?2n:1n)+BigInt(q.escrowGasBudgetWei??q.approvalGasWei??"0");
 export function units(value:string,decimals=6){return formatUnits(BigInt(value),decimals);}
 const pct=(bps:number|null)=>bps===null?"—":`${(bps/100).toLocaleString("en-US",{maximumFractionDigits:2})}%`;
@@ -25,6 +27,7 @@ export function OtcClient(){
   const [market,setMarket]=useState<Market|null>(null),[tab,setTab]=useState<"buy"|"sell">("buy");
   const [selected,setSelected]=useState(""),[amount,setAmount]=useState("10"),[premium,setPremium]=useState("0");
   const [quote,setQuote]=useState<Quote|null>(null),[busy,setBusy]=useState(false),[now,setNow]=useState(Date.now());
+  const [premiumAccepted,setPremiumAccepted]=useState<{quoteId:string;premiumBps:number}|null>(null);
   const [paymentAsset,setPaymentAsset]=useState<"ETH"|"USDC">("ETH");
   const [pendingListing,setPendingListing]=useState<ListingSubmission|null>(null);
   const storageKey=session?.walletAddress?`arc-listing-pending:${session.walletAddress.toLowerCase()}`:null;
@@ -34,16 +37,26 @@ export function OtcClient(){
   const dialog=useRef<HTMLDialogElement>(null);
   const [formOpen,setFormOpen]=useState(false);
   useEffect(()=>{if(formOpen)dialog.current?.showModal();else dialog.current?.close();},[formOpen]);
-  const openForm=(direction:"buy"|"sell",id="")=>{setTab(direction);setSelected(id);setAmount(direction==="sell"&&pendingListing?pendingListing.amount:"10");setPremium(direction==="sell"&&pendingListing?pendingListing.premium:"0");setQuote(null);setListingPreview(null);setFormOpen(true);};
+  const openForm=(direction:"buy"|"sell",id="")=>{setPremiumAccepted(null);setTab(direction);setSelected(id);setAmount(direction==="sell"&&pendingListing?pendingListing.amount:"10");setPremium(direction==="sell"&&pendingListing?pendingListing.premium:"0");setQuote(null);setListingPreview(null);setFormOpen(true);};
   const marketRequest=useRef<AbortController|null>(null);
+  const liveVersion=useRef(0);
   const [marketError,setMarketError]=useState(false);
   const refresh=useCallback(async()=>{
     if(marketRequest.current)return;
-    const controller=new AbortController();marketRequest.current=controller;
-    try{const r=await fetch("/api/otc",{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});if(!r.ok)throw new Error();const next=await r.json();if(!next.available)throw new Error();if(!controller.signal.aborted){setMarket(next);setMarketError(false);}}
+    const controller=new AbortController();marketRequest.current=controller;const version=liveVersion.current;
+    try{const r=await fetch("/api/otc",{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});if(!r.ok)throw new Error();const next=await r.json();if(!next.available)throw new Error();if(!controller.signal.aborted){setMarket(previous=>version===liveVersion.current?next:previous?{...previous,enabled:next.enabled}:next);setMarketError(false);}}
     catch{if(!controller.signal.aborted){setMarketError(true);setNotice("Market refresh failed. Check listing availability before trading.");}}
     finally{if(marketRequest.current===controller)marketRequest.current=null;}
   },[setNotice]);
+  useEffect(()=>{
+    const url=process.env.NEXT_PUBLIC_CONVEX_URL;if(!url)return;
+    const client=new ConvexClient(url);
+    const unsubscribe=client.onUpdate(makeFunctionReference<"query",Record<string,never>,Pick<Market,"listings"|"stats">>("otc:market"),{},next=>{
+      liveVersion.current++;
+      setMarket(previous=>({...next,available:true,enabled:previous?.enabled??false}));setMarketError(false);
+    },()=>{void refresh();});
+    return()=>{unsubscribe();void client.close();};
+  },[refresh]);
   useEffect(()=>{void refresh();const timer=setInterval(()=>void refresh(),10_000);return()=>{clearInterval(timer);marketRequest.current?.abort();marketRequest.current=null;};},[refresh]);
   useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
 
@@ -81,7 +94,7 @@ export function OtcClient(){
           {inputError&&<p className="otc-fine" role="status">{inputError}</p>}
           <button className="arc-button" disabled={busy||!(ready||(tab==="sell"&&pendingListing&&session?.authenticated))} type="submit">{busy?(tab==="buy"?"Preparing quote…":"Preparing listing…"):tab==="buy"?"Get exact quote":pendingListing?"Retry original listing":listingPreview?"Confirm listing":"Check amount & gas"}</button>
         </form>
-        {quote&&<div className="otc-quote"><div className="otc-panel-title"><h3>Your quote</h3><span>{Math.max(0,Math.ceil((quote.expiresAt-now)/1000))}s left</span></div><dl><dt>You receive</dt><dd>{units(quote.amount)} Arc USDC</dd><dt>Premium</dt><dd>{pct(quote.premiumBps)}</dd><dt>Seller receives</dt><dd>{units(quote.sellerWei,quote.paymentAsset==="USDC"?6:18)} {quote.paymentAsset??"ETH"}</dd><dt>Service fee · 1%</dt><dd>{units(quote.feeWei,quote.paymentAsset==="USDC"?6:18)} {quote.paymentAsset??"ETH"}</dd><dt>Base gas allowance</dt><dd>{units(quoteGas(quote).toString(),18)} ETH</dd><dt>Reserved for this purchase</dt><dd>{quote.paymentAsset==="USDC"?`${units(quote.totalWei)} USDC + ${units(quoteGas(quote).toString(),18)} ETH gas`:`${units((BigInt(quote.totalWei)+quoteGas(quote)).toString(),18)} ETH`}</dd></dl>{quote.escrowAddress&&<p className="otc-address">Escrow: {quote.escrowAddress}</p>}<p className="otc-fine">Your Base payment and gas go to the position escrow wallet. After deposits are verified, you receive the exact Arc USDC quoted; the seller and fee wallet receive the Base payment. Remaining spendable gas returns to you. Any gas remainder stays credited to your order.</p><button className="arc-button" disabled={busy||now>=quote.expiresAt||quote.status!=="quoted"} onClick={async()=>{const result=await run({action:"accept",orderId:quote.id});if(result){setQuote(null);setNotice(`Order recorded: ${result.status.replaceAll("_"," ")}. Follow it on your wallet page.`);}}}>Confirm purchase</button></div>}
+        {quote&&<div className="otc-quote"><div className="otc-panel-title"><h3>Your quote</h3><span>{Math.max(0,Math.ceil((quote.expiresAt-now)/1000))}s left</span></div><dl><dt>You receive</dt><dd>{units(quote.amount)} Arc USDC</dd><dt>Premium</dt><dd>{pct(quote.premiumBps)}</dd><dt>Seller receives</dt><dd>{units(quote.sellerWei,quote.paymentAsset==="USDC"?6:18)} {quote.paymentAsset??"ETH"}</dd><dt>Service fee · {(quote.serviceFeeBps??100)/100}%</dt><dd>{units(quote.feeWei,quote.paymentAsset==="USDC"?6:18)} {quote.paymentAsset??"ETH"}</dd><dt>Base gas allowance</dt><dd>{units(quoteGas(quote).toString(),18)} ETH</dd><dt>Reserved for this purchase</dt><dd>{quote.paymentAsset==="USDC"?`${units(quote.totalWei)} USDC + ${units(quoteGas(quote).toString(),18)} ETH gas`:`${units((BigInt(quote.totalWei)+quoteGas(quote)).toString(),18)} ETH`}</dd></dl>{quote.escrowAddress&&<p className="otc-address">Escrow: {quote.escrowAddress}</p>}<p className="otc-fine">Your Base payment and gas go to the position escrow wallet. After deposits are verified, you receive the exact Arc USDC quoted; the seller and fee wallet receive the Base payment. Remaining spendable gas returns to you. Any gas remainder stays credited to your order.</p><label className="otc-premium-ack"><input type="checkbox" checked={premiumAccepted?.quoteId===quote.id&&premiumAccepted.premiumBps===quote.premiumBps} disabled={busy||now>=quote.expiresAt} onChange={e=>setPremiumAccepted(e.target.checked?{quoteId:quote.id,premiumBps:quote.premiumBps}:null)}/><span>I understand I’m paying a {pct(quote.premiumBps)} premium.</span></label><button className="arc-button" disabled={busy||now>=quote.expiresAt||quote.status!=="quoted"||premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps} onClick={async()=>{if(premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps)return;const result=await run({action:"accept",orderId:quote.id});if(result){setQuote(null);setNotice(`Order recorded: ${result.status.replaceAll("_"," ")}. Follow it on your wallet page.`);}}}>Confirm purchase</button></div>}
         <PersistentNotices notices={notices} dismiss={dismiss}/>
       </section>}
       </dialog>

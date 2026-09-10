@@ -74,6 +74,9 @@ describe("position CDP escrow",()=>{
   });
   it.each(["ETH","USDC"] as const)("keeps partial %s fills locked until both deposits and all dispersals are verified",async asset=>{
     const {store,listing}=await funded(),order=await orderFor(store,listing,asset,"12.345678");
+    expect(order.serviceFeeBps).toBe(150);
+    expect(BigInt(order.feeWei)).toBe((BigInt(order.sellerWei)*150n+9999n)/10000n);
+    expect(BigInt(order.totalWei)).toBe(BigInt(order.sellerWei)+BigInt(order.feeWei));
     await expect(escrowCall(store,listing,"arc",order)).rejects.toThrow("not verified");
     await expect(cancelListing(store,listing.id,"seller",now)).rejects.toThrow("locked");
     await expect(orderFor(store,listing,asset,"10","order:two")).rejects.toThrow("settling");
@@ -81,6 +84,8 @@ describe("position CDP escrow",()=>{
       const call=await escrowCall(store,listing,step,order,100n);
       if(step==="gas"||step==="deposit")expect(call.from.toLowerCase()).toBe(buyer);
       if(step==="arc")expect(call.value).toBe(12345678n*10n**12n);
+      if(step==="fee"&&asset==="ETH"){expect(call.to.toLowerCase()).toBe(fee);expect(call.value).toBe(BigInt(order.feeWei));}
+      if(step==="fee"&&asset==="USDC")expect(decodeFunctionData({abi:parseAbi(["function transfer(address,uint256) returns(bool)"]),data:call.data}).args).toEqual([fee,BigInt(order.feeWei)]);
       if(asset==="USDC"&&step==="deposit")expect(decodeFunctionData({abi:parseAbi(["function transfer(address,uint256) returns(bool)"]),data:call.data}).args).toEqual([escrow,BigInt(order.totalWei)]);
       await complete(store,listing,step,order,100n);
       if(step!=="return_gas")await advanceEscrowState(store,listing.id,order.id,now);

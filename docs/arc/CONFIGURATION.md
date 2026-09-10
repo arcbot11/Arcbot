@@ -26,7 +26,7 @@ Public configuration lives in `lib/project-config.ts`. The eight legacy executio
 | `OTC_WORKER_URL` | Removed. Fixed production site plus `/api/otc/worker`: `https://www.arcchainbot.io/api/otc/worker`. Website-origin/old worker environment values cannot redirect it. |
 | `OTC_BASE_PAYMENT_ROUTER` | Legacy positions only; deployed Base payment contract address. New CDP escrow positions do not use it. |
 | `OTC_BASE_ROUTER_CODE_HASH` | Legacy positions only; must match their payment contract runtime bytecode. |
-| `OTC_FEE_WALLET` | Dedicated fee recipient, fixed into each new escrow position. |
+| `OTC_FEE_WALLET` | Legacy payment contracts only. New escrow positions use the pinned @arctos_arc address in lib/project-config.ts and a 1.5% service fee. |
 
 The production worker URL is shared by website transfer validation and Convex scheduler calls. Change the public configuration for an isolated staging deployment; it no longer has an environment override. `NEXT_PUBLIC_SITE_URL` remains the website/OAuth/CSRF origin setting and should match the actual deployed website.
 

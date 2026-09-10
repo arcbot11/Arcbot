@@ -8,7 +8,7 @@ Creating a position stores an idempotent funding request and reserves the seller
 
 The entered budget includes Arc deposit gas, gas for every possible minimum-size fill, and closing-return gas. The market displays the remaining sellable USDC. At least 10 USDC must remain after gas. Premiums range from 0% to 10,000%.
 
-Buyers can request any amount from 10 USDC through the remaining availability, to six decimals. A quote fixes the exact Arc output, premium-inclusive seller payment, and 1% service fee. Base ETH quotes use a server-side ETH/USD price; Base USDC quotes need no price feed or token approval. Quotes expire after 30 seconds.
+Buyers can request any amount from 10 USDC through the remaining availability, to six decimals. A quote fixes the exact Arc output, premium-inclusive seller payment, and 1.5% service fee. Base ETH quotes use a server-side ETH/USD price; Base USDC quotes need no price feed or token approval. Quotes expire after 30 seconds.
 
 One quote or settlement occupies a position at a time. Other positions can settle independently. An expired unsigned quote restores inventory. Accepted orders retain their locks through every payment and payout step. Unsold USDC stays in the position account for subsequent buyers.
 
@@ -18,7 +18,7 @@ One quote or settlement occupies a position at a time. Other positions can settl
 2. Buyer sends the quoted Base ETH or native Base USDC payment to that account.
 3. After both deposits and the position's Arc funding are verified, escrow sends the exact quoted Arc USDC to the buyer.
 4. Escrow sends the premium-inclusive Base payment to the seller.
-5. Escrow sends the 1% Base service fee to the position's fixed fee recipient.
+5. Escrow sends the 1.5% Base service fee to the position's fixed fee recipient.
 6. Escrow returns spendable excess Base gas to the buyer and records any remaining gas credit.
 
 Each step waits for the preceding transfer's canonical, finalized receipt. ERC-20 transfers also require successful simulation return data, exact Transfer evidence, and recipient balance evidence. Transaction amounts, recipients, chain and position bindings are derived from durable records, never supplied as arbitrary payout instructions.
@@ -41,7 +41,7 @@ The worker resumes funding, settlements and returns independently of browser ses
 
 Deploy the updated Convex functions before the website. New creation uses the distinct escrow_listing command, so an older Convex deployment rejects it instead of silently creating a legacy position. This implementation has only been tested locally; no escrow account or funded transfer was created during development.
 
-The website needs existing CDP credentials, Arc/Base RPCs and checkpoints, NEXT_PUBLIC_CONVEX_URL, OTC_SERVICE_SECRET, and OTC_FEE_WALLET. Convex needs the matching service secret and existing worker cron. The worker URL is fixed by project configuration. New positions do not require OTC_BASE_PAYMENT_ROUTER or OTC_BASE_ROUTER_CODE_HASH. Keep those configured while any legacy positions/orders still depend on the original Base payment contract; existing records continue on their original path.
+The website needs existing CDP credentials, Arc/Base RPCs and checkpoints, NEXT_PUBLIC_CONVEX_URL, OTC_SERVICE_SECRET, with the fee recipient pinned in lib/project-config.ts to @arctos_arc (0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC). Convex needs the matching service secret and existing worker cron. The worker URL is fixed by project configuration. New positions do not require OTC_BASE_PAYMENT_ROUTER or OTC_BASE_ROUTER_CODE_HASH. Keep those configured while any legacy positions/orders still depend on the original Base payment contract; existing records continue on their original path.
 
 Before public use, run a controlled funded test for both payment assets, multiple partial buyers, the under-10 closing threshold, cancellation, worker restarts and verified-revert recovery. Do not export position keys or permit unrelated signers to bypass the backend's custody rules.
 

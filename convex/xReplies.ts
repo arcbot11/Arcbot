@@ -1,3 +1,5 @@
+import { isXBotAuthor, xBotUserId } from "../lib/x-bot-identity";
+import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
 import { retiredFeatureEnabled } from "../lib/retired-features";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 import { tokenPattern } from "../lib/token-pattern";
@@ -723,6 +725,7 @@ export const reserveInteraction = internalMutation({
     guidedHelpStateJson: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
+    if(isXBotAuthor(args.authorXUserId)||!explicitReplyRequest(args.text,args.parentPostId))return false;
     const existing = await ctx.db
       .query("xReplyInteractions")
       .withIndex("by_post_id", (q) => q.eq("postId", args.postId))
@@ -1113,7 +1116,7 @@ export const beginReplyPublication = internalMutation({
       .query("xReplyInteractions")
       .withIndex("by_post_id", (q) => q.eq("postId", postId))
       .unique();
-    if (!interaction || interaction.commandKind === "operator_cancelled")
+    if (!interaction || !explicitReplyRequest(interaction.text,interaction.parentPostId) || isXBotAuthor(interaction.authorXUserId) || interaction.commandKind === "operator_cancelled")
       return { reserved: false, waitMs: 0 };
     if (interaction.replySuppressedReason)
       return { reserved: false, waitMs: 0, suppressedReason: interaction.replySuppressedReason };
@@ -1602,6 +1605,8 @@ export const retryInteraction = internalAction({
     });
     if (
       !current?.user ||
+      !explicitReplyRequest(current.interaction.text,current.interaction.parentPostId) ||
+      isXBotAuthor(current.interaction.authorXUserId,current.user.username) ||
       current.interaction.publicationQueued ||
       ["completed", "rejected", "publishing"].includes(
         current.interaction.status,
@@ -2865,9 +2870,8 @@ export const pollMentions = internalAction({
     );
     if (!acquired)
       return { enabled: true, processed: 0, skipped: "poll already running" };
-    const botUserId = process.env.X_BOT_USER_ID;
+    const botUserId = xBotUserId();
     try {
-      if (!botUserId) throw new Error("X_BOT_USER_ID is not configured");
       const state: {
         newestSeenPostId?: string;
         backlogPaginationToken?: string;
@@ -2922,7 +2926,7 @@ export const pollMentions = internalAction({
         }
         mentions.push(...(page.data || []));
         if (xAutoIntakeGuardEnabled()) admissionFilters = await ctx.runMutation(internal.xReplies.observeIntakeTraffic, {
-          postIds: (page.data || []).filter(m => m.author_id !== botUserId).map(m => m.id),
+          postIds: (page.data || []).filter(m => !isXBotAuthor(m.author_id)).map(m => m.id),
         });
         for (const item of page.includes?.media || [])
           media.set(item.media_key, item);
@@ -2944,7 +2948,7 @@ export const pollMentions = internalAction({
         operation: straightforwardCommandOperation(directPostCommandText(text)) ?? undefined,
       }; }).sort(compareXPriority);
       const eligibleReferences = new Set(prioritized.filter(({ mention, text }) =>
-        mention.author_id !== botUserId && !shouldSuppressXResponse(text) &&
+        !isXBotAuthor(mention.author_id) && !shouldSuppressXResponse(text) &&
         (hasExplicitBotMention(text, mention.referenced_tweets) || shouldHandlePassiveChainText(text))
       ).map(({ id }) => id));
       const { references: referencedTweets, depths: persistedDepths } = await loadReplyMetadata(
@@ -2971,7 +2975,8 @@ export const pollMentions = internalAction({
       const mentionsById = new Map(mentions.map(m => [m.id, m]));
 
       for (const { mention } of prioritized) {
-        if (!/^\d+$/.test(mention.author_id) || mention.author_id === botUserId) continue;
+        if (!/^\d+$/.test(mention.author_id) || isXBotAuthor(mention.author_id)) continue;
+        if (!explicitReplyRequest(mention.text,mention.referenced_tweets?.find(r=>r.type==="replied_to")?.id)) continue;
         // This guard runs before persistence, wallet provisioning, parsing, AI,
         // transaction execution, or reply publication. Parent/thread text is
         // never considered: `mention.text` is the direct post's text from X.
@@ -3128,7 +3133,7 @@ export const pollMentions = internalAction({
       ));
       for (const { mention, directText, restrictedReply, directedHelp, contextualGasHelp, gasResume, expiredWorkflowResume, workflowCooldownNotice, parentPostId, replyDepth, botParentAuthorized } of admitted) {
         const user = users.get(mention.author_id);
-        if (!user || user.id === botUserId) continue;
+        if (!user || isXBotAuthor(user.id,user.username)) continue;
         // During emergency intake, confirm Premium/PremiumPlus from the profile;
         // a verified search result alone is not proof of a paid subscription.
         if (admissionFilters.verifiedOnly && !premiumSubscription(user.subscription_type)) continue;

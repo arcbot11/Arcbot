@@ -7,7 +7,7 @@ import { V3_FACTORY, quoteAbi, quoteRoutes, type RouteQuote } from "./quotes";
 import { ARC_ROUTER, ARC_ROUTER_CODE_HASH, encodeArcSwap, findRoutes, type V3Pool, type Route } from "./routing";
 import { exactAmount } from "./amounts";
 import { ARC_TOKEN_CATALOG } from "./token-catalog";
-import { ARC_TRADE_GAS_BUDGET_WEI } from "./trade-flow";
+import { estimatedTradeGasBudget } from "./trade-flow";
 import { prepareCall, type Call } from "../otc/runtime";
 
 export const PERMIT2=getAddress("0x000000000022D473030F116dDEE9F6B43aC78BA3");
@@ -85,7 +85,7 @@ export async function previewArcTrade(wallet:Address,input:TradeInput){
     }else call={from:wallet,...encodeArcSwap(q.route,q.amountIn,q.amountOutMinimum,BigInt(Math.floor(Date.now()/1000)+120),discovered?.poolId)};
   }else call={from:wallet,...encodeArcSwap(q.route,q.amountIn,q.amountOutMinimum,BigInt(Math.floor(Date.now()/1000)+120),discovered?.poolId)};
   const prepared=await prepareCall(5042,call);
-  const tradeGasBudgetWei=ARC_TRADE_GAS_BUDGET_WEI;
+  const tradeGasBudgetWei=estimatedTradeGasBudget(prepared.gasWei);
   if(leg==="swap"&&q.route.tokenOut===zeroAddress){
     // Native output has no ERC-20 receipt event. Require transaction-local
     // balance tracing before accepting a swap whose delivery needs that proof.

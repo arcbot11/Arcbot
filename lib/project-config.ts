@@ -1,7 +1,9 @@
 /** Public Arc Bot identity and transaction policy. Credentials stay in the environment. */
 export const ARC_BOT_USERNAME = "ArcChainBot";
+export const ARC_BOT_X_USER_ID = "2097696306135220226";
 export const ARC_BOT_X_URL = "https://x.com/ArcChainBot";
 export const ARC_BOT_SITE_URL = "https://www.arcchainbot.io";
+export const OTC_FEE_RECIPIENT = "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC"; // @arctos_arc
 export const ARC_GAS_POLICY = Object.freeze({ maxGas: "1000000", maxFeePerGas: "1000000000000" });
 export const BASE_GAS_POLICY = Object.freeze({ maxGas: "1000000", maxFeePerGas: "1000000000000", maxTotalFeeWei: "1000000000000000" });
 

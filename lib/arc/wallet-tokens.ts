@@ -9,6 +9,15 @@ type Result={tokens:ArcTokenBalance[];partial:boolean;block:string};
 const cache=new Map<string,{expires:number;request:Promise<Result>}>();
 const metadataAbi=parseAbi(["function symbol() view returns (string)","function name() view returns (string)"]);
 
+export async function arcSelectedTokenBalance(ownerAddress:string,tokenAddress:string){
+  const owner=getAddress(ownerAddress),token=getAddress(tokenAddress);
+  const config=arcDisplayConfig(),transport=arcTransport(config),rpc=createArcRpc(config,transport);
+  const head=await checkArcRpc(rpc,config);
+  const [raw,decimals]=await Promise.all([rpc.tokenBalance(token,owner,head.number),rpc.decimals(token,head.number)]);
+  if((await rpc.block(head.number)).hash!==head.hash)throw Error("Token balance block changed");
+  return {address:token,balance:formatUnits(raw,decimals),raw:raw.toString(),decimals};
+}
+
 export function arcTokenBalances(address:string,known:string[]=[]):Promise<Result>{
   const owner=getAddress(address),key=owner+known.sort().join();
   const hit=cache.get(key);if(hit&&hit.expires>Date.now())return hit.request;

@@ -1,4 +1,5 @@
 import { CdpClient } from "@coinbase/cdp-sdk";
+import { OTC_FEE_RECIPIENT } from "../project-config";
 import { getAddress, keccak256, stringToHex, parseTransaction, type Hex } from "viem";
 import { arcConfigFromEnv } from "../arc/config";
 import { baseConfigFromEnv } from "../base/config";
@@ -10,9 +11,7 @@ import { escrowCall, escrowRecords, escrowTxId, orderSteps, type EscrowStep } fr
 export const escrowAccountName=(id:string)=>`arc-otc-${keccak256(stringToHex(id)).slice(2,34)}`;
 export function escrowConfiguration(){
   walletTransferConfiguration(5042);walletTransferConfiguration(8453);
-  const recipient=process.env.OTC_FEE_WALLET?.trim();
-  if(!recipient||/^0x0{40}$/i.test(recipient))throw new Error("OTC fee wallet is not configured.");
-  return {feeRecipient:getAddress(recipient),arc:arcConfigFromEnv(),base:baseConfigFromEnv()};
+  return {feeRecipient:getAddress(OTC_FEE_RECIPIENT),arc:arcConfigFromEnv(),base:baseConfigFromEnv()};
 }
 const readStore=():Store=>({get:<T extends RecordValue>(id:string)=>repository().read<T|null>({id}),put:async()=>{throw Error("Read only");}});
 export async function assertEscrowTransaction(record:Transaction){

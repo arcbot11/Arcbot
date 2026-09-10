@@ -6,6 +6,11 @@ function compact(parts: string[]) {
 
 function policy(request: NextRequest, nonce?: string) {
   const development = process.env.NODE_ENV !== "production";
+  let convexConnections="";
+  try {
+    const endpoint=new URL(process.env.NEXT_PUBLIC_CONVEX_URL??"");
+    if(endpoint.protocol==="https:")convexConnections=` ${endpoint.origin} wss://${endpoint.host}`;
+  } catch { /* No public Convex endpoint is configured. */ }
   const strictScripts = nonce
     ? `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${development ? " 'unsafe-eval'" : ""}`
     : `script-src 'self' 'unsafe-inline'${development ? " 'unsafe-eval'" : ""}`;
@@ -20,7 +25,7 @@ function policy(request: NextRequest, nonce?: string) {
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
-    `connect-src 'self'${development ? " http: https: ws: wss:" : ""}`,
+    `connect-src 'self'${convexConnections}${development ? " http: https: ws: wss:" : ""}`,
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
     "frame-src 'self' https://www.geckoterminal.com",
