@@ -2,7 +2,7 @@ import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
 import {decodeFunctionData,parseAbi,zeroAddress,keccak256} from "viem";
 vi.mock("viem",async original=>({...await original<typeof import("viem")>(),createPublicClient:()=>({readContract:m.read})}));
 vi.mock("../lib/arc/argus-discovery",()=>({discoverArgusPool:(...args:unknown[])=>m.discovery(...args)}));
-const m=vi.hoisted(()=>({discovery:vi.fn(async(..._args:unknown[])=>null as unknown),rpc:{block:vi.fn(async()=>({hash:"block"})),code:vi.fn(),decimals:vi.fn(),balance:vi.fn(),tokenBalance:vi.fn()},read:vi.fn(),quotes:vi.fn(),prepare:vi.fn(),approved:0n,permitted:0n}));
+const m=vi.hoisted(()=>({discovery:vi.fn(async(...args:unknown[])=>{void args;return null as unknown;}),rpc:{block:vi.fn(async()=>({hash:"block"})),code:vi.fn(),decimals:vi.fn(),balance:vi.fn(),tokenBalance:vi.fn()},read:vi.fn(),quotes:vi.fn(),prepare:vi.fn(),approved:0n,permitted:0n}));
 vi.mock("../lib/arc/config",()=>({ARC_USDC:"0x3600000000000000000000000000000000000000",arcConfigFromEnv:()=>({})}));
 vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>m.rpc,checkArcRpc:async()=>({number:1n,hash:"block"})}));
 vi.mock("../lib/arc/quotes",async orig=>({...await orig<typeof import("../lib/arc/quotes")>(),quoteRoutes:m.quotes}));
@@ -52,4 +52,22 @@ it("discovers both token hooks and prepares one atomic V4 token swap",async()=>{
  m.quotes.mockImplementation(async(routes:unknown[],amount:bigint)=>({quotes:(routes as {pools:{protocol:string}[]}[]).filter(r=>r.pools.length===2&&r.pools[0].protocol==="v4").slice(0,1).map(route=>({route,amountIn:amount,amountOut:10n**18n,amountOutMinimum:9n*10n**17n,expiresAt:Date.now()+30000,executionBlocker:"Hook requires review"}))}));
  const result=await previewArcTrade(wallet,{tokenIn:token,tokenOut:out,amount:"1",slippageBps:100});
  expect(result.stage).toBe("swap");expect(result.protocol).toBe("v4");expect(m.discovery).toHaveBeenCalledTimes(2);
+});
+
+it("selects a mixed V3/V4 route and guards both token balances", async () => {
+ const out="0x7777777777777777777777777777777777777777";
+ const hooked:V4Pool={protocol:"v4",currency0:usdc,currency1:out,fee:10000,tickSpacing:200,hooks:"0x9999999999999999999999999999999999999999"};
+ m.discovery.mockImplementation(async(a:unknown)=>a===out?{pool:hooked,poolId:poolId(hooked)}:null);
+ m.approved=10n**30n;m.permitted=10n**30n;
+ m.quotes.mockImplementation(async(routes:unknown[],amount:bigint)=>({quotes:(routes as {pools:{protocol:string}[]}[]).filter(r=>r.pools.length===2&&r.pools[0].protocol==="v3"&&r.pools[1]===hooked).slice(0,1).map(route=>({route,amountIn:amount,amountOut:10n**18n,amountOutMinimum:9n*10n**17n,expiresAt:Date.now()+30000}))}));
+ const result=await previewArcTrade(wallet,{tokenIn:token,tokenOut:out,amount:"1",slippageBps:100});
+ expect(result.protocol).toBe("v3/v4");expect(result.leg).toBe("swap");
+ const {routerAbi}=await import("../lib/arc/routing");
+ const {decodeAbiParameters,parseAbiParameters}=await import("viem");
+ const decoded=decodeFunctionData({abi:routerAbi,data:m.prepare.mock.calls[0][1].data});
+ expect(decoded.args[0]).toBe("0x0010040e0e");
+ const guard=decodeAbiParameters(parseAbiParameters("address,address,uint256"),decoded.args[1][3]);
+ expect(guard[2]).toBe(99n*10n**18n);
+ const outputGuard=decodeAbiParameters(parseAbiParameters("address,address,uint256"),decoded.args[1][4]);
+ expect(outputGuard[2]).toBe(100n*10n**18n+9n*10n**17n);
 });

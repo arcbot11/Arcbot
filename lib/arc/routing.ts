@@ -151,9 +151,12 @@ function encodeMixedSwap(route: Route, amountIn: bigint, minimum: bigint, deadli
       // resulting open credit. V4 -> V3: take USDC into the router, not the user.
       inputs.push(encodeAbiParameters(parseAbiParameters("bytes,bytes[]"), first
         ? ["0x060c0e", [swap, encodeAbiParameters(parseAbiParameters("address,uint256"), [currencies[i], amountIn]), take]]
-        : ["0x0b060e", [encodeAbiParameters(parseAbiParameters("address,uint256,bool"), [currencies[i], CONTRACT_BALANCE, false]), swap, take]]));
+        : ["0x0b060e0e", [encodeAbiParameters(parseAbiParameters("address,uint256,bool"), [currencies[i], CONTRACT_BALANCE, false]), swap, take, encodeAbiParameters(parseAbiParameters("address,address,uint256"), [currencies[i], MSG_SENDER, 0n])]]));
     }
   }
+  // A price-limit partial fill must not strand intermediate USDC in the router.
+  commands = `${commands}04`;
+  inputs.push(encodeAbiParameters(parseAbiParameters("address,address,uint256"), [currencies[1], MSG_SENDER, 0n]));
   return { to: ARC_ROUTER, value: 0n, data: encodeFunctionData({ abi: routerAbi, functionName: "execute", args: [commands, inputs, deadline] }) };
 }
 

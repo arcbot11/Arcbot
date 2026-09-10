@@ -2,6 +2,8 @@
 
 Observed September 9, 2026. Target chain: 5042.
 
+Historical research below. For the current mixed-route implementation, token balance guards and remaining execution-test limits, see [September 10 update](MIXED-ROUTES-2026-09-10.md).
+
 ## Live evidence
 
 - ArgusPad's browser code uses `https://arguspad.io/api/rpc`. Read calls worked: chain ID, recent blocks, code, receipts, logs, and contract quotes. This gives us a working research endpoint. Its production capacity, availability and transaction submission policy remain unverified. No application RPC setting was changed.
