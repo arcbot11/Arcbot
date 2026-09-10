@@ -84,7 +84,7 @@ export function isTerminalCommand(command: WalletCommand) {
 
 /** A deliberately narrow, anchored command that is never advertised. */
 export function parseTopFiveBuyCommand(raw: string): Extract<WalletCommand, { kind: "buy_top_five" }> | null {
-  const text = raw.replace(/(?:^|\s)@arcbot\b/gi, " ").replace(/\s+/g, " ").trim();
+  const text = raw.replace(/(?:^|\s)@ArctosBot\b/gi, " ").replace(/\s+/g, " ").trim();
   const match = text.match(/^buy(?:\s*back)?(\s+and\s+burn)?\s+\$((?:[0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+))\s+(?:of\s+)?each\s+of\s+the\s+top\s+5\s+arc\s+bot\s+tokens[.!?]*$/i);
   if (!match) return null;
   const amount = cleanAmount(match[2]);
@@ -133,7 +133,7 @@ function cleanLaunchNameEdges(value: string) {
   let cleaned = stripWrappingQuotes(value).trim();
   // A repeated invocation at the name boundary is routing text, not metadata.
   // Match the complete handle only; never alter project socials/descriptions.
-  cleaned = cleaned.replace(/(?:[\s,;:]+@arcbot\b[\s,;:.!]*)+$/i, "").trim();
+  cleaned = cleaned.replace(/(?:[\s,;:]+@ArctosBot\b[\s,;:.!]*)+$/i, "").trim();
   // A lone cashtag is common shorthand for both the launch name and ticker.
   // The contract name is human-readable metadata and should never retain the
   // ticker marker itself.
@@ -142,7 +142,7 @@ function cleanLaunchNameEdges(value: string) {
   while (cleaned !== previous) {
     previous = cleaned;
     cleaned = cleaned
-      .replace(/(?:[\s,;:]+@arcbot\b[\s,;:.!]*)+$/i, "")
+      .replace(/(?:[\s,;:]+@ArctosBot\b[\s,;:.!]*)+$/i, "")
       .replace(/^(?:(?:and|with)\b[\s,;:\-]*)+/i, "")
       // These words commonly leak across the boundary before ticker, pair,
       // link, or description syntax. They may occur inside a real name, but
@@ -228,7 +228,7 @@ function textOutsideQuotedContent(text: string) {
 /** An unqualified final spend in a launch refers to that launch, not another asset. */
 export function trailingLaunchBuy(text: string) {
   const operative = textOutsideQuotedContent(text);
-  const match = /\b(?:and\s+)?(?:please\s+)?(?:buy(?:\s*back)?|purchase)\s+(?:\$([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)(?:\s+USD)?|([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)\s+ETH)(?:\s+worth)?(?:\s+please)?[\s.!?,;]*(?:@arcbot[\s.!?,;]*)?$/i.exec(operative);
+  const match = /\b(?:and\s+)?(?:please\s+)?(?:buy(?:\s*back)?|purchase)\s+(?:\$([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)(?:\s+USD)?|([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)\s+ETH)(?:\s+worth)?(?:\s+please)?[\s.!?,;]*(?:@ArctosBot[\s.!?,;]*)?$/i.exec(operative);
   if (!match || /\b(?:dev|developer|initial)\s*$/i.test(operative.slice(0, match.index))) return undefined;
   return { index: match.index, amount: cleanAmount(match[1] || match[2]), unit: match[1] ? "usd" as const : "eth" as const };
 }
@@ -454,7 +454,7 @@ export function parseWalletCommand(raw: string): WalletCommand {
   if (burned) return burned;
   const topFive = parseTopFiveBuyCommand(raw);
   if (topFive) return topFive;
-  const reassignmentText = raw.replace(/(?:^|\s)@arcbot\b/gi, " ").trim();
+  const reassignmentText = raw.replace(/(?:^|\s)@ArctosBot\b/gi, " ").trim();
   const upgrade = parseFeeUpgradePhrase(raw);
   if (upgrade) return upgrade;
   const exactReassignment = reassignmentText.match(tokenPattern(/^reassign\s+(?:\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\s+fees|fees\s+for\s+\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31}))\s+to\s+(@[a-zA-Z0-9_]{1,15}|0x[a-fA-F0-9]{40}|holders)[.!]?$/i));

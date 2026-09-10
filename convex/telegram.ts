@@ -320,9 +320,9 @@ export const completeXLink = action({
     if (linked.status === "expired") throw new Error("Telegram link expired or was already used");
     try {
       const text = linked.status === "wallet_already_linked"
-        ? 'This wallet is already linked to another TG. Post "@ArcChainBot unlink TG" on X to unlink the attached account.'
+        ? 'This wallet is already linked to another TG. Post "@ArctosBot unlink TG" on X to unlink the attached account.'
         : linked.status === "telegram_already_linked"
-          ? "This TG account is already linked to another Arc Bot wallet. Use /unlink before linking a different X account."
+          ? "This TG account is already linked to another Arctos Bot wallet. Use /unlink before linking a different X account."
           : "Confirmed: X linked. Use /wallet, /balance or /help.";
       await sendMessage(linked.telegramChatId, text);
       await ctx.runMutation(internal.telegram.recordMessage, { telegramUserId: linked.telegramUserId, telegramChatId: linked.telegramChatId, role: "assistant", text });
@@ -408,10 +408,10 @@ export const processUpdate = internalAction({
           telegramUserId, ownerXUserId: link.ownerXUserId,
         });
         await sendMessage(chatId, revoked
-          ? "Confirmed: Telegram has been unlinked from your Arc Bot X account. Your wallet and funds are unchanged."
+          ? "Confirmed: Telegram has been unlinked from your Arctos Bot X account. Your wallet and funds are unchanged."
           : "No active Telegram link was found.");
       } else if (command === "/link" && link) {
-        await sendMessage(chatId, "Confirmed: Your Telegram account is linked to your Arc Bot X account.");
+        await sendMessage(chatId, "Confirmed: Your Telegram account is linked to your Arctos Bot X account.");
       } else if (command === "/unlink") {
         await sendMessage(chatId, "No X account linked.");
       } else if (!link) {
@@ -422,7 +422,7 @@ export const processUpdate = internalAction({
         });
         const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
         if (!site) throw new Error("Telegram linking is not configured");
-        await sendMessage(chatId, "Link your X account to use your Arc Bot wallet in Telegram.", {
+        await sendMessage(chatId, "Link your X account to use your Arctos Bot wallet in Telegram.", {
           inline_keyboard: [[{ text: "Link X Account", url: `${site}/api/auth/x/start?telegramLink=${nonce}` }]],
         });
       } else if (command === "/start" || command === "/help") {

@@ -29,6 +29,18 @@ function mockRpc() {
   };
 }
 describe("Arc quotes", () => {
+  it("reuses the caller's verified head while checking pools and the final block hash", async () => {
+    const rpc = mockRpc();
+    const head = {number:2n,hash,timestamp:1000n};
+    const result = await quoteRoutes([route(v3)],100n,100,a,rpc as unknown as ArcRpc,config,now,head);
+    expect(result.quotes).toHaveLength(1);
+    expect(rpc.chainId).not.toHaveBeenCalled();
+    expect(rpc.call).toHaveBeenCalled();
+    expect(rpc.block).toHaveBeenCalledExactlyOnceWith(2n);
+    await expect(quoteRoutes([route(v3)],100n,100,a,rpc as unknown as ArcRpc,config,now+60000,head)).rejects.toThrow(/stale/);
+    rpc.block.mockResolvedValue({ ...head,hash:`0x${"34".repeat(32)}` });
+    await expect(quoteRoutes([route(v3)],100n,100,a,rpc as unknown as ArcRpc,config,now,head)).rejects.toThrow(/snapshot/);
+  });
   it("ranks V3 and V4 quotes with a shared snapshot and bounded minimum", async () => {
     const rpc = mockRpc();
     const result = await quoteRoutes([route(v3), route(v4)], 100n, 100, a, rpc as unknown as ArcRpc, config, now);

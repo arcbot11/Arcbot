@@ -15,14 +15,16 @@ describe("website Arc trade boundary",()=>{
  it.each(["estimate","preview"])("converts USD sells before %s using the authenticated wallet",async action=>{
    m.convert.mockResolvedValue("123.456789012345678901");
    m.estimate.mockResolvedValue({minimumOut:"9.8"});
-   expect((await POST(request({...input,action,tokenIn:input.tokenOut,tokenOut:"native",amountUnit:"usd"}))).status).toBe(200);
-   expect(m.convert).toHaveBeenCalledWith("0x1111111111111111111111111111111111111111",input.tokenOut,"10");
-   expect(action==="estimate"?m.estimate:m.preview).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({amount:"123.456789012345678901"}));
+   expect((await POST(request({...input,action,tokenIn:input.tokenOut,tokenOut:"native",amountUnit:"usd",routeHint:"signed-route"}))).status).toBe(200);
+   expect(m.convert).toHaveBeenCalledWith("0x1111111111111111111111111111111111111111",input.tokenOut,"10","signed-route");
+   expect(action==="estimate"?m.estimate:m.preview).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({amount:"123.456789012345678901",routeHint:"signed-route"}));
  });
- it("rejects USD mode for buying or token-to-token swaps",async()=>{
-   for(const tokenIn of ["native","0x3333333333333333333333333333333333333333"])
-     expect((await POST(request({...input,tokenIn,amountUnit:"usd"}))).status).toBe(400);
-   expect(m.convert).not.toHaveBeenCalled();expect(m.preview).not.toHaveBeenCalled();
+ it("converts USD input values for token-to-token swaps",async()=>{
+   const tokenIn="0x3333333333333333333333333333333333333333";
+   m.convert.mockResolvedValue("12.5");
+   expect((await POST(request({...input,tokenIn,amountUnit:"usd"}))).status).toBe(200);
+   expect(m.convert).toHaveBeenCalledWith("0x1111111111111111111111111111111111111111",tokenIn,"10",undefined);
+   expect(m.preview).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({tokenIn,tokenOut:input.tokenOut,amount:"12.5"}));
  });
  it("does not prepare a sell when USD conversion fails",async()=>{
    m.convert.mockRejectedValue(Error("Not enough tokens"));

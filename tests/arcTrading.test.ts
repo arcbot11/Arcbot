@@ -2,9 +2,9 @@ import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
 import {decodeFunctionData,parseAbi,zeroAddress,keccak256} from "viem";
 vi.mock("viem",async original=>({...await original<typeof import("viem")>(),createPublicClient:()=>({readContract:m.read})}));
 vi.mock("../lib/arc/argus-discovery",()=>({discoverArgusPool:(...args:unknown[])=>m.discovery(...args)}));
-const m=vi.hoisted(()=>({discovery:vi.fn(async(...args:unknown[])=>{void args;return null as unknown;}),rpc:{block:vi.fn(async()=>({hash:"block"})),code:vi.fn(),decimals:vi.fn(),balance:vi.fn(),tokenBalance:vi.fn()},read:vi.fn(),quotes:vi.fn(),prepare:vi.fn(),approved:0n,permitted:0n}));
+const m=vi.hoisted(()=>({discovery:vi.fn(async(...args:unknown[])=>{void args;return null as unknown;}),rpc:{block:vi.fn(async()=>({hash:"0x1111111111111111111111111111111111111111111111111111111111111111"})),code:vi.fn(),decimals:vi.fn(),balance:vi.fn(),tokenBalance:vi.fn()},read:vi.fn(),quotes:vi.fn(),prepare:vi.fn(),approved:0n,permitted:0n}));
 vi.mock("../lib/arc/config",()=>({ARC_USDC:"0x3600000000000000000000000000000000000000",arcConfigFromEnv:()=>({})}));
-vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>m.rpc,checkArcRpc:async()=>({number:1n,hash:"block"})}));
+vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>m.rpc,checkArcRpc:async()=>({number:1n,hash:"0x1111111111111111111111111111111111111111111111111111111111111111"})}));
 vi.mock("../lib/arc/quotes",async orig=>({...await orig<typeof import("../lib/arc/quotes")>(),quoteRoutes:m.quotes}));
 vi.mock("../lib/arc/routing",async orig=>({...await orig<typeof import("../lib/arc/routing")>(),ARC_ROUTER_CODE_HASH:keccak256("0x6000")}));
 vi.mock("../lib/otc/runtime",()=>({chainClient:()=>({readContract:m.read}),prepareCall:m.prepare}));
@@ -12,6 +12,29 @@ import {clearTradeDiscoveryCache,previewArcTrade,arcSellAmountForUsdc,PERMIT2} f
 const wallet="0x1111111111111111111111111111111111111111",token="0x2222222222222222222222222222222222222222",pool="0x4444444444444444444444444444444444444444",usdc="0x3600000000000000000000000000000000000000";
 beforeEach(()=>{clearTradeDiscoveryCache();vi.clearAllMocks();m.discovery.mockResolvedValue(null);m.approved=0n;m.permitted=0n;m.rpc.code.mockResolvedValue("0x6000");m.rpc.decimals.mockImplementation(async(a:string)=>a===usdc?6:18);m.rpc.balance.mockResolvedValue(100n*10n**18n);m.rpc.tokenBalance.mockResolvedValue(100n*10n**18n);m.read.mockImplementation(async(x:{functionName:string;args:unknown[]})=>x.functionName==="getPool"?(x.args[2]===3000?pool:zeroAddress):x.args.length===3?[m.permitted,BigInt(Math.floor(Date.now()/1000)+1000),0n]:m.approved);m.prepare.mockImplementation(async(callChain:number,call:unknown)=>({unsigned:"0x02",gasWei:"100",reserveWei:"100",snapshot:{balanceWei:"100000000000000000000",block:"1",nonce:0,pendingNonce:0},call}));m.quotes.mockImplementation(async(routes:unknown[],amount:bigint)=>{const route=routes[0] as {pools:{protocol:string}[]};return {quotes:route.pools[0].protocol==="v3"?[{route,amountIn:amount,amountOut:20n*10n**18n,amountOutMinimum:19n*10n**18n,expiresAt:Date.now()+30000}]:[]};});});
 afterEach(()=>vi.unstubAllEnvs());
+it("requotes the signed route on a fresh server without repeating discovery",async()=>{
+ vi.stubEnv("WEB_AUTH_SECRET","test-route-secret");
+ const input={tokenIn:"native",tokenOut:token,amount:"10",slippageBps:100};
+ const initial=await previewArcTrade(wallet,input);
+ expect(initial.routeHint).toBeTruthy();
+ clearTradeDiscoveryCache();vi.clearAllMocks();
+ await previewArcTrade(wallet,{...input,amount:"20",routeHint:initial.routeHint});
+ expect(m.discovery).not.toHaveBeenCalled();
+ expect(m.read.mock.calls.some(([call])=>call.functionName==="getPool")).toBe(false);
+ expect(m.quotes).toHaveBeenCalledTimes(1);
+ expect(m.quotes.mock.calls[0][0]).toHaveLength(1);
+ expect(m.quotes.mock.calls[0][1]).toBe(20000000n);
+ expect(m.prepare).toHaveBeenCalledTimes(1);
+});
+it("rediscovers when the carried route no longer has a usable quote",async()=>{
+ vi.stubEnv("WEB_AUTH_SECRET","test-route-secret");
+ const input={tokenIn:"native",tokenOut:token,amount:"10",slippageBps:100};
+ const initial=await previewArcTrade(wallet,input);
+ clearTradeDiscoveryCache();vi.clearAllMocks();m.quotes.mockResolvedValueOnce({quotes:[]});
+ await previewArcTrade(wallet,{...input,routeHint:initial.routeHint});
+ expect(m.discovery).toHaveBeenCalledTimes(1);
+ expect(m.quotes.mock.calls.length).toBeGreaterThan(1);
+});
 describe("Arc trade preparation",()=>{
  it("converts a USDC sell value using token precision and a fresh reference quote",async()=>{
    m.quotes.mockImplementation(async(routes:unknown[],input:bigint)=>{

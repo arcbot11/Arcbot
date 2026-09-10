@@ -62,7 +62,7 @@ export function readOnlyReplyCategory(item: Interaction): ReadOnlyReplyCategory 
   const clean = item.text.replace(/@[a-z0-9_]+/gi, " ").replace(/[’‘]/g, "'")
     .replace(/\s+/g, " ").trim().replace(/^(?:hey|hi|hello|yo)[,!]?\s+/i, "")
     .replace(/\s+(?:please|pls)[.!?]*$/i, "").replace(/[.!?]+$/, "");
-  if (/^(?:help|what can you do|how (?:does (?:this|arc bot) work|do i (?:buy|sell|burn|swap|send|launch|claim)(?: (?:tokens?|fees|a token))?)|(?:what|which) (?:assets|pairs|chains)(?: are (?:available|supported)| can i (?:use|pair with))?)$/i.test(clean)) return "information";
+  if (/^(?:help|what can you do|how (?:does (?:this|arctos bot) work|do i (?:buy|sell|burn|swap|send|launch|claim)(?: (?:tokens?|fees|a token))?)|(?:what|which) (?:assets|pairs|chains)(?: are (?:available|supported)| can i (?:use|pair with))?)$/i.test(clean)) return "information";
   if (/^(?:(?:show(?: me)?|give me|check|get|what(?:'s| is)|how much is)\s+)?(?:my\s+)?(?:(?:wallet|eth|\$?[a-z0-9_]+|0x[a-f0-9]{40})\s+)?(?:balance|balances|holdings|portfolio)(?:\s+(?:check|for\s+\$?[a-z0-9_]+))?$/i.test(clean)
     || /^(?:show(?: me)?|list) (?:everything|all(?: (?:the|my))? tokens) in my wallet$/i.test(clean)
     || /^what(?:'s| is) in (?:my|the) wallet$/i.test(clean)) return "balance";

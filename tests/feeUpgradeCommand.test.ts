@@ -13,9 +13,9 @@ afterEach(() => vi.clearAllMocks());
 describe("explicit upgrade phrase", () => {
   it.each([
     ["Upgrade $ARCBOT", "ARCBOT"], ["upgrade arcbot", "ARCBOT"],
-    ["HEY @ArcBot, UpGrAdE $arcbot please", "ARCBOT"],
+    ["HEY @ArctosBot, UpGrAdE $arcbot please", "ARCBOT"],
     ["Been looking forward to this! Upgrade ARCBOT. Thanks for everything!", "ARCBOT"],
-    ["@ArcBot could you Upgrade $ARCBOT when you get a chance?", "ARCBOT"],
+    ["@ArctosBot could you Upgrade $ARCBOT when you get a chance?", "ARCBOT"],
     ["I'd like to Upgrade ARCBOT and keep my existing wallet.", "ARCBOT"],
     ["Upgrade ARCBOT to automated fees", "ARCBOT"],
     ["Upgrade $THE", "THE"],
@@ -83,7 +83,7 @@ describe("upgrade responses and idempotency", () => {
   it("uses a bare token-page link and fits the success response within X's limit", () => {
     const tokenPage = `https://arcbot.invalid/launch/${contract}`;
     const response = feeUpgradeSuccessMessage("A".repeat(32), tokenPage);
-    expect(response).toBe(`$${"A".repeat(32)} has been upgraded to Arc Bot V2 - 95% of creator fees go to the creator, while 5% buys back and burns $ARCBOT
+    expect(response).toBe(`$${"A".repeat(32)} has been upgraded to Arctos Bot V2 - 95% of creator fees go to the creator, while 5% buys back and burns $ARCBOT
 ${tokenPage}`);
     expect(response).not.toContain("Your TXN:");
     expect(Array.from(`@${"u".repeat(15)} ${response.replace(/https:\/\/\S+/g, "x".repeat(23))}`).length).toBeLessThan(280);
@@ -92,14 +92,14 @@ ${tokenPage}`);
   });
   it("identifies already-upgraded tokens by their resolved ticker", () => {
     expect(safeFailure(new Error("FEE_UPGRADE_ALREADY"), "upgrade_fees", "TEST"))
-      .toBe("$TEST is already an Arc Bot V2 token");
+      .toBe("$TEST is already an Arctos Bot V2 token");
     expect(safeFailure(new Error("already uses automated fee processing"), "upgrade_fees", "$TEST"))
-      .toBe("$TEST is already an Arc Bot V2 token");
+      .toBe("$TEST is already an Arctos Bot V2 token");
     expect(safeFailure(new Error("FEE_UPGRADE_ALREADY"), "upgrade_fees", contract)).not.toContain(contract);
   });
   it("directs problem vaults to support", () => {
     expect(safeFailure(new Error("FEE_UPGRADE_REVIEW"), "upgrade_fees"))
-      .toBe("There's an issue with this token's upgrade - DM @ArcBot for help");
+      .toBe("There's an issue with this token's upgrade - DM @ArctosBot for help");
   });
 });
 

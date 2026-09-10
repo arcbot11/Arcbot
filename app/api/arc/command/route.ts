@@ -4,6 +4,7 @@ import {getAddress,encodeFunctionData,parseAbi,zeroAddress,formatUnits} from "vi
 import {z} from "zod";
 import {boundedJson} from "@/lib/bounded-json";
 import {socialAuthority} from "@/lib/arc/social-authority";
+import {ARC_COMMAND_AUTHORIZATION_MS} from "@/lib/arc/social-timing";
 import {previewArcTrade,arcSellAmountForUsdc} from "@/lib/arc/trading";
 import {exactAmount} from "@/lib/arc/amounts";
 import {ARC_USDC} from "@/lib/arc/config";
@@ -14,7 +15,7 @@ import {type Transaction} from "@/lib/otc/model";
 import {sameSecret,json} from "@/lib/otc/http";
 import type {WalletCommand} from "@/convex/walletCommands";
 export const runtime="nodejs";
-export const maxDuration=120;
+export const maxDuration=300;
 const abi=parseAbi(["function decimals() view returns (uint8)","function balanceOf(address) view returns (uint256)","function transfer(address,uint256) returns (bool)"]);
 function token(value:string){
   const s=value.replace(/^\$/," ").trim();
@@ -42,7 +43,7 @@ export async function POST(request:NextRequest){
         if(tx.leg!=="allowance")return json({ok:true,message:command.kind==="buy_and_burn"?"Buy and burn confirmed. Purchased tokens were delivered to the dead address.":command.kind==="buy_and_send"?`Buy and send confirmed. Purchased tokens were delivered to ${command.recipient}.`:command.kind==="sell"&&command.unit==="usd"?"Sell confirmed. Token quantity was based on the requested USDC value; proceeds reflect the executed price and fees.":"Arc transaction confirmed.",hash:tx.hash});
         continue;
       }
-      if(Date.now()-auth.createdAt>10*60_000)throw new Error("Request expired. Send a new command after checking wallet history.");
+      if(Date.now()-auth.createdAt>ARC_COMMAND_AUTHORIZATION_MS)throw new Error("Request expired before the next transaction was prepared. Check wallet history before sending a new command.");
       let prepared:Awaited<ReturnType<typeof prepareCall>> & {leg:"send"|"swap"|"allowance";swapOutput?:{token:string;minimum:string;recipient?:string}};
       if(command.kind==="buy"||command.kind==="buy_and_burn"||command.kind==="buy_and_send"||command.kind==="sell"||command.kind==="swap_token_for_token"){
         const buying=command.kind==="buy"||command.kind==="buy_and_burn"||command.kind==="buy_and_send";
@@ -82,6 +83,9 @@ export async function POST(request:NextRequest){
   }catch(e){
     const message=e instanceof Error?e.message:"Arc command failed.";
     const safe=/^(Use |Specify |Request expired|Command not supported|Approval steps|No supported|Not enough)/.test(message);
-    return json({ok:false,message:safe?message:"Arc request could not be confirmed. Check wallet history before retrying."});
+    if(safe)return json({ok:false,message});
+    if(/^(Request is not authorized|Bot wallet spending is not authorized|Telegram authorization changed|Wallet authorization changed)/.test(message))return json({ok:false,message:"Wallet authorization changed. Reconnect before sending a new command."});
+    // RPC, receipt and transport failures do not prove that a transaction failed.
+    return json({pending:true,message:"Arc request is waiting for verification."});
   }
 }

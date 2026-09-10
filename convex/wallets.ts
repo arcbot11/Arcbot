@@ -1,4 +1,5 @@
 import { arcPublicCommand, arcPublicSource } from "../lib/arc/public-policy";
+import {ARC_COMMAND_HTTP_TIMEOUT_MS,arcPendingRetryDelay,arcServiceResult} from "../lib/arc/social-timing";
 import { arcWalletUrl, arcCommandResponse } from "../lib/public-links";
 import { isXBotAuthor } from "../lib/x-bot-identity";
 import { retiredFeatureEnabled } from "../lib/retired-features";
@@ -302,7 +303,7 @@ function commandSummary(command: WalletCommand) {
   if (command.kind === "buy_and_burn")
     return `Bought ${command.unit === "usd" ? `$${command.amount}` : command.unit === "eth" ? `${command.amount} ETH` : command.unit === "token" ? `${command.amount} ${assetLabel(command.token)}` : `${command.amount} ${assetLabel(command.pairAsset)}`} of ${assetLabel(command.token)} and burned the purchased tokens.`;
   if (command.kind === "buy_top_five")
-    return `${command.burn ? "Bought and burned" : "Bought"} $${command.amount} each of the top 5 Arc Bot tokens.`;
+    return `${command.burn ? "Bought and burned" : "Bought"} $${command.amount} each of the top 5 Arctos Bot tokens.`;
   if (command.kind === "swap_token_for_token")
     return `Swapped $${command.amount} of ${assetLabel(command.fromToken)} for ${assetLabel(command.toToken)}!`;
   if (command.kind === "sell")
@@ -429,7 +430,7 @@ export async function transactionMessage(
       : command.kind === "burn" && compactOutput
         ? `Burned ${compactOutput}${burnValue ? ` (${burnValue})` : ""}!`
         : command.kind === "launch" && compactOutput
-          ? commandSummary(command).replace(/\.$/, ` and bought ${compactOutput}${launchBuyValue ? ` (≈${launchBuyValue})` : ""}.`)
+          ? commandSummary(command).replace(/\.$/, ` and bought ${compactOutput}${launchBuyValue ? ` (${launchBuyValue})` : ""}.`)
           : commandSummary(command);
   const tokenLine =
     command.kind === "launch" && tokenAddress
@@ -1662,7 +1663,7 @@ export const prepareTopFiveWorkflow = internalMutation({
     const request = await ctx.db.query("walletRequests").withIndex("by_request_id", q => q.eq("requestId", args.requestId)).unique();
     if (!request || request.kind !== "buy_top_five") throw new Error("top-five request was not found");
     if (request.topFiveWorkflowJson) return JSON.parse(request.topFiveWorkflowJson) as TopFiveTarget[];
-    if (args.targets.length !== 5) throw new Error("five eligible Arc Bot tokens were not available");
+    if (args.targets.length !== 5) throw new Error("five eligible Arctos Bot tokens were not available");
     const seen = new Set<string>();
     for (const target of args.targets) {
       if (!safeAddress(target.tokenAddress) || !tokenPattern(/^[A-Za-z0-9]{1,32}$/).test(target.symbol) || !Number.isFinite(target.marketCapUsd) || target.marketCapUsd <= 0)
@@ -3311,7 +3312,7 @@ export function safeFailure(
       message,
     )
   )
-    return "Failed: You don't have enough of this token's paired asset yet. Buy the paired asset, then reply with the Arc Bot purchase again.";
+    return "Failed: You don't have enough of this token's paired asset yet. Buy the paired asset, then reply with the Arctos Bot purchase again.";
   if (/insufficient/i.test(message))
     return "Failed: There aren't enough funds for that amount. Check the balance or try a smaller amount.";
   if (/no claimable creator fees/i.test(message))
@@ -3346,8 +3347,8 @@ export function safeFailure(
     )
   )
     return operationKind === "upgrade_fees"
-      ? "Required: You don't have the rights to upgrade creator fees for that Arc Bot launch."
-      : "Required: You don't have the rights to reassign fees for that Arc Bot launch.";
+      ? "Required: You don't have the rights to upgrade creator fees for that Arctos Bot launch."
+      : "Required: You don't have the rights to reassign fees for that Arctos Bot launch.";
   if (/already uses automated fee processing/i.test(message))
     return "That launch already uses automated creator-fee processing.";
   if (/multiple owned launches use that ticker/i.test(message))
@@ -3771,11 +3772,11 @@ export const executeCommand = internalAction({
     if (command.kind === "create_wallet" || command.kind === "show_wallet") {
       if (args.source === "telegram" || (args.source ?? "x") === "x") return {
         ok: true,
-        message: `Your Arc Bot wallet\nArc mainnet (5042)\n${wallet.address}\n\n${walletPageUrl(wallet.address, args.sourcePostId)}\n\nFund with Arc USDC. Keep USDC for gas.`,
+        message: `Your Arctos Bot wallet\nArc mainnet (5042)\n${wallet.address}\n\n${walletPageUrl(wallet.address, args.sourcePostId)}\n\nFund with Arc USDC. Keep USDC for gas.`,
       };
       return {
         ok: true,
-        message: `Your Arc Bot wallet is ready.
+        message: `Your Arctos Bot wallet is ready.
 Wallet link: ${walletPageUrl(wallet.address, args.sourcePostId)}
 Tap the link above to view holdings.`,
       };
@@ -4365,7 +4366,7 @@ Funding TXN: ${transactionUrl(fundedStep.request.transactionHash)}` : "";
 Burn TXN: ${transactionUrl(item.burnTransactionHash)}`] : []),
           ].join("\n")).join("\n\n");
           const lastHash = completed.at(-1)!.transactionHash;
-          const message = `Confirmed: ${command.burn ? "Bought and burned" : "Bought"} $${command.amount} each of the top 5 Arc Bot tokens.
+          const message = `Confirmed: ${command.burn ? "Bought and burned" : "Bought"} $${command.amount} each of the top 5 Arctos Bot tokens.
 
 ${resultBlocks}\n\nTransactions\n\n${transactionLinks}${warning}`;
           await ctx.runMutation(internal.wallets.updateWalletRequest, { requestId, status: "confirmed", workflowStage: "top_five_confirmed",
@@ -7037,13 +7038,15 @@ export const continueArcCommand=internalAction({args:{requestId:v.string(),attem
   if(["confirmed","failed","rejected"].includes(request.status))return {ok:request.status==="confirmed",message:responseMessage(request.finalMessage??"Check wallet history.", request.transactionHash)};
   let result:{ok?:boolean;pending?:boolean;message:string;hash?:string};
   try{
-    const response=await fetch("https://www.arcchainbot.io/api/arc/command",{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:args.requestId}),signal:AbortSignal.timeout(110000)});
+    const response=await fetch("https://www.arcchainbot.io/api/arc/command",{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:args.requestId}),signal:AbortSignal.timeout(ARC_COMMAND_HTTP_TIMEOUT_MS)});
     if(!response.ok)throw new Error("Arc command service unavailable.");
-    result=await response.json();
+    result=arcServiceResult(await response.json());
   }catch{result={pending:true,message:"Arc request is waiting for verification. Check wallet history."};}
   result.message = responseMessage(result.message, result.hash);
   if(result.pending){
-    if((args.attempt??0)<60)await ctx.scheduler.runAfter(20_000,internal.wallets.continueArcCommand,{requestId:args.requestId,attempt:(args.attempt??0)+1});
+    // X owns one interaction retry chain, which also publishes the final reply.
+    // Do not create a second self-scheduling chain on every X poll.
+    if(request.source==="telegram")await ctx.scheduler.runAfter(arcPendingRetryDelay(request._creationTime),internal.wallets.continueArcCommand,{requestId:args.requestId,attempt:(args.attempt??0)+1});
     return {ok:false,pending:true,message:result.message,...(result.hash?{transactionHash:result.hash}:{})};
   }
   await ctx.runMutation(internal.wallets.updateWalletRequest,{requestId:args.requestId,status:result.ok?"confirmed":"failed",finalMessage:result.message,...(result.hash?{transactionHash:result.hash}:{})});

@@ -3,6 +3,7 @@ import { serializeTransaction, decodeFunctionData, parseAbi } from "viem";
 import { createListing, createQuote, acceptQuote, cancelListing, locked, walletId, type Store, type RecordValue, type Listing, type Order, type Wallet, type Transaction } from "../lib/otc/model";
 import { bindEscrow, escrowCall, escrowTxId, prepareEscrowStep, advanceEscrowState, retryEscrow, orderSteps, type EscrowStep } from "../lib/otc/escrow-model";
 import { signTransactionRecord, settled } from "../lib/otc/transactions";
+import {escrowAccountName,legacyEscrowAccountName} from "../lib/otc/escrow-name";
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222",escrow="0x3333333333333333333333333333333333333333",fee="0x4444444444444444444444444444444444444444";
 const W=10n**18n,G=10n**15n,now=1800000000000;
 class Memory implements Store{
@@ -10,6 +11,18 @@ class Memory implements Store{
   async get<T extends RecordValue>(id:string){return structuredClone(this.rows.get(id)??null) as T|null;}
   async put(r:RecordValue){this.rows.set(r.id,structuredClone(r));}
 }
+it("repairs only the legacy unprovisioned name and preserves funds and identity",async()=>{
+ const store=new Memory(),id="listing:legacy";
+ await createListing(store,{id,owner:"seller",seller,amount:"100",amountIncludesGas:true,escrow:{accountName:legacyEscrowAccountName(id),feeRecipient:fee},premium:"10",gasPerFillWei:G.toString(),balanceWei:(100n*W).toString(),block:"100"},now);
+ const before=await store.get<Wallet>(walletId(5042,seller));
+ await expect(bindEscrow(store,id,escrow,now,"forged-name")).rejects.toThrow();
+ const repaired=await bindEscrow(store,id,escrow,now,escrowAccountName(id));
+ expect(repaired.escrow?.accountName).toBe(escrowAccountName(id));expect(repaired.status).toBe("funding");
+ expect(await store.get<Wallet>(walletId(5042,seller))).toEqual(before);
+ await expect(bindEscrow(store,id,escrow,now,escrowAccountName(id))).resolves.toEqual(repaired);
+ await expect(bindEscrow(store,id,buyer,now,escrowAccountName(id))).rejects.toThrow("immutable");
+ await expect(bindEscrow(store,id,escrow,now,legacyEscrowAccountName(id))).rejects.toThrow();
+});
 async function setup(){
   const store=new Memory();
   await createListing(store,{id:"listing:escrow",owner:"seller",seller,amount:"100",amountIncludesGas:true,escrow:{accountName:"position-one",feeRecipient:fee},premium:"10",gasPerFillWei:G.toString(),balanceWei:(100n*W).toString(),block:"100"},now);

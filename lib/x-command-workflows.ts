@@ -1,6 +1,6 @@
 export const X_CONTRACT_CLARIFICATION_TTL_MS = 10 * 60_000;
 
-export const X_COMMAND_HELP = "Tag @ArcChainBot with a full command.\n\nshow my wallet\nbuy 10 USDC of TICKER\nsell 100 TICKER\nswap 50% TOKEN for OTHER\nsend 10 USDC to @user\nburn 100 TICKER\n\nGuide: https://www.arcchainbot.io/guide";
+export const X_COMMAND_HELP = "Tag @ArctosBot with a full command.\n\nshow my wallet\nbuy 10 USDC of TICKER\nsell 100 TICKER\nswap 50% TOKEN for OTHER\nsend 10 USDC to @user\nburn 100 TICKER\n\nGuide: https://www.arcchainbot.io/guide";
 
 export function duplicateTickerReply(text: string) {
   return /^Action needed: More than one (?:indexed token|token in your wallet) uses that ticker\. Enter the contract address\.$/.test(text);
@@ -21,7 +21,7 @@ export function xCommandReply(text: string, contractClarification = false) {
   let result = text.replace(/\s*(?:Next command\.?|Anything else\?)\s*$/i, "");
   result = result.replace(/reply\s+[“"']resume[”"']/gi, "submit the full command again");
   if (contractClarification && duplicateTickerReply(result)) {
-    return result.replace("Enter the contract address.", "Reply with the contract address and tag @ArcChainBot.");
+    return result.replace("Enter the contract address.", "Reply with the contract address and tag @ArctosBot.");
   }
   if (!contractClarification) {
     result = result.replace("Reply with its contract address to check how much has been burned.", "Submit a full burned-token query with its contract address.");

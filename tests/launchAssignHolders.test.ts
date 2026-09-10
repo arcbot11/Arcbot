@@ -4,7 +4,7 @@ import { groundedCanonicalCommand, parameterExtractorPrompt } from "../convex/xW
 
 describe("assign fees to holders at launch", () => {
   it("accepts the exact Japanese launch and preserves its dev buy", () => {
-    const text = "@arcbot launch パペットスンスン $スンスン assign fees to holders buy $5";
+    const text = "@ArctosBot launch パペットスンスン $スンスン assign fees to holders buy $5";
     for (const command of [parseWalletCommand(text), groundedCanonicalCommand(text)]) {
       expect(command).toMatchObject({ kind: "launch", name: "パペットスンスン", symbol: "スンスン",
         holderFeeSharing: true, devBuy: { amount: "5", unit: "usd" } });

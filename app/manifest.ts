@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Arc Bot",
-    short_name: "Arc Bot",
+    name: "Arctos Bot",
+    short_name: "Arctos Bot",
     description: "Buy, sell, swap, and send tokens on Arc.",
     start_url: "/",
     display: "standalone",

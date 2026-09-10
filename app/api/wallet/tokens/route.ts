@@ -17,6 +17,6 @@ export async function GET(request:NextRequest){
     }
     const records=await repository().read<RecordValue[]>({owner:session.xUserId});
     const known=records.flatMap(r=>r.kind==="transaction"&&r.chainId===5042&&r.swapOutput?[r.swapOutput.token]:[]);
-    return json({walletAddress:session.walletAddress,...await arcTokenBalances(session.walletAddress,[...new Set(known)])});
+    return json({walletAddress:session.walletAddress,...await arcTokenBalances(session.walletAddress,[...new Set(known)],request.nextUrl.searchParams.get("refresh")==="1")});
   }catch(error){return webFailure(error);}
 }

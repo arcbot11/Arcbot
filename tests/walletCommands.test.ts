@@ -64,7 +64,7 @@ describe("X wallet commands", () => {
   });
 
   it("treats trailing buy-worth language as a launch developer buy", () => {
-    const launch = 'Hey @arcbot, launch "Degen Labz", ticker "DLABZ", buy $20 worth';
+    const launch = 'Hey @ArctosBot, launch "Degen Labz", ticker "DLABZ", buy $20 worth';
     expect(requestedOperations(launch)).toEqual(["launch"]);
     expect(parseWalletCommand(launch)).toMatchObject({
       kind: "launch", name: "Degen Labz", symbol: "DLABZ", devBuy: { amount: "20", unit: "usd" },
@@ -76,7 +76,7 @@ describe("X wallet commands", () => {
   });
 
   it("accepts only the two exact fee-reassignment forms", () => {
-    expect(parseWalletCommand("@ArcBot Reassign $ARCBOT fees to @alice")).toEqual({ kind: "reassign_fees", token: "ARCBOT", recipient: "@alice" });
+    expect(parseWalletCommand("@ArctosBot Reassign $ARCBOT fees to @alice")).toEqual({ kind: "reassign_fees", token: "ARCBOT", recipient: "@alice" });
     expect(parseWalletCommand("Reassign fees for 0x1111111111111111111111111111111111111111 to 0x2222222222222222222222222222222222222222")).toEqual({
       kind: "reassign_fees", token: "0x1111111111111111111111111111111111111111", recipient: "0x2222222222222222222222222222222222222222",
     });
@@ -91,7 +91,7 @@ describe("X wallet commands", () => {
     expect(isTerminalCommand({ kind: "reassign_fees", token: "ARCBOT", recipient: "holders" })).toBe(false);
   });
   it("accepts the short X-only upgrade phrase inside surrounding conversation", () => {
-    expect(parseWalletCommand("@ArcBot Upgrade $ARCBOT to automated fees")).toEqual({
+    expect(parseWalletCommand("@ArctosBot Upgrade $ARCBOT to automated fees")).toEqual({
       kind: "upgrade_fees", token: "ARCBOT",
     });
     expect(parseWalletCommand("Upgrade 0x1111111111111111111111111111111111111111 to automated fees.")).toEqual({
@@ -100,7 +100,7 @@ describe("X wallet commands", () => {
     expect(parseWalletCommand("please upgrade ARCBOT to automated fees")).toEqual({ kind: "upgrade_fees", token: "ARCBOT" });
     expect(parseWalletCommand("Hey, upgrade ARCBOT please. Thanks!")).toEqual({ kind: "upgrade_fees", token: "ARCBOT" });
     expect(isTerminalCommand({ kind: "upgrade_fees", token: "ARCBOT" })).toBe(false);
-    expect(requestedOperations("@ArcBot Upgrade $ARCBOT to automated fees")).toEqual(["upgrade_fees"]);
+    expect(requestedOperations("@ArctosBot Upgrade $ARCBOT to automated fees")).toEqual(["upgrade_fees"]);
   });
   it("accepts clear ETH sends using for and all-balance wording", () => {
     const recipient = "0x1111111111111111111111111111111111111111";
@@ -178,14 +178,14 @@ describe("X wallet commands", () => {
     expect(validateStructuredWalletCommand({ kind: "buy_and_burn", amount: "5", unit: "pair", token: "ARCBOT" })).toBeNull();
   });
   it("parses paired-asset developer buys and Telegram launch links", () => {
-    expect(parseWalletCommand("launch Arc Bot ticker ARCBOT pair with MSFT dev buy 2 MSFT telegram https://t.me/arcbot")).toMatchObject({
+    expect(parseWalletCommand("launch Arctos Bot ticker ARCBOT pair with MSFT dev buy 2 MSFT telegram https://t.me/arcbot")).toMatchObject({
       kind: "launch", pairToken: "MSFT", devBuy: { amount: "2", unit: "pair" }, telegram: "https://t.me/arcbot",
     });
   });
   it("normalizes Telegram launch links to canonical HTTPS t.me URLs", () => {
     expect(normalizeTelegramUrl("t.me/arcbot")).toBe("https://t.me/arcbot");
     expect(normalizeTelegramUrl("http://telegram.me/arcbot/")).toBe("https://t.me/arcbot");
-    expect(() => normalizeTelegramUrl("@arcbot")).toThrow("telegram link must use t.me/XXXXX");
+    expect(() => normalizeTelegramUrl("@ArctosBot")).toThrow("telegram link must use t.me/XXXXX");
     expect(parseWalletCommand("launch Test ticker TEST tg t.me/test")).toMatchObject({ telegram: "https://t.me/test" });
     expect(validateStructuredWalletCommand({ kind: "launch", name: "Test", symbol: "TEST", telegram: "http://t.me/test" })).toMatchObject({ telegram: "https://t.me/test" });
   });
@@ -199,7 +199,7 @@ describe("X wallet commands", () => {
     expect(normalizeLaunchTelegram(parsed)).toEqual(parsed);
   });
   it("normalizes X handles and legacy links to canonical x.com URLs", () => {
-    expect(normalizeXUrl("@ArcBot")).toBe("https://x.com/ArcBot");
+    expect(normalizeXUrl("@ArctosBot")).toBe("https://x.com/ArcBot");
     expect(normalizeXUrl("www.x.com/ArcBot")).toBe("https://x.com/ArcBot");
     expect(normalizeXUrl("http://twitter.com/ArcBot")).toBe("https://x.com/ArcBot");
     expect(validateStructuredWalletCommand({ kind: "launch", name: "Test", symbol: "TEST", twitter: "twitter.com/test" })).toMatchObject({ twitter: "https://x.com/test" });
@@ -223,7 +223,7 @@ describe("X wallet commands", () => {
     expect(() => normalizeLaunchLinks({ kind: "launch", launchMode: "argus", name: "Test", symbol: "TEST" }, "launch Test ticker TEST website: localhost/test")).toThrow(/website link is invalid/);
   });
   it("parses buys with default and custom slippage", () => {
-    expect(parseWalletCommand("@Arc Bot buy $25 of $ROOT")).toEqual({ kind: "buy", amount: "25", unit: "usd", token: "ROOT", slippageBps: 250 });
+    expect(parseWalletCommand("@Arctos Bot buy $25 of $ROOT")).toEqual({ kind: "buy", amount: "25", unit: "usd", token: "ROOT", slippageBps: 250 });
     expect(parseWalletCommand("buy $1,000 of ROOT")).toEqual({ kind: "buy", amount: "1000", unit: "usd", token: "ROOT", slippageBps: 250 });
     expect(parseWalletCommand("buy 0.02 eth of 0x1111111111111111111111111111111111111111 slippage 2.5%")).toEqual({
       kind: "buy", amount: "0.02", unit: "eth", token: "0x1111111111111111111111111111111111111111", slippageBps: 250,
@@ -269,7 +269,7 @@ describe("X wallet commands", () => {
     expect(parseWalletCommand("sell 3.5 of ROOT with slippage 30%")).toEqual({ kind: "unknown", reason: "Slippage must be between 0.1% and 20%." });
   });
   it("defaults launches to Argus", () => {
-    expect(parseWalletCommand('@Arc Bot launch "root static" ticker ROOT with a 0.02 eth dev buy')).toEqual({
+    expect(parseWalletCommand('@Arctos Bot launch "root static" ticker ROOT with a 0.02 eth dev buy')).toEqual({
       kind: "launch", launchMode: "argus", name: "root static", symbol: "ROOT",
       devBuy: { amount: "0.02", unit: "eth" },
     });
@@ -279,7 +279,7 @@ describe("X wallet commands", () => {
     expect(parseWalletCommand('launch "cap test" ticker CAP with 0.1 eth dev buy')).toMatchObject({
       kind: "launch", devBuy: { amount: "0.1", unit: "eth" },
     });
-    expect(parseWalletCommand('launch Arc Bot ticker ARCBOT pair with MSFT dev buy $100 of MSFT')).toMatchObject({
+    expect(parseWalletCommand('launch Arctos Bot ticker ARCBOT pair with MSFT dev buy $100 of MSFT')).toMatchObject({
       kind: "launch", pairToken: "MSFT", devBuy: { amount: "100", unit: "usd" },
     });
   });
@@ -291,17 +291,17 @@ describe("X wallet commands", () => {
   });
 
   it("parses optional Argus metadata", () => {
-    expect(parseWalletCommand('launch "Arc Bot" ticker ARCBOT description "direct on X" website: https://arcbot.invalid x: https://x.com/ArcBot')).toMatchObject({
+    expect(parseWalletCommand('launch "Arctos Bot" ticker ARCBOT description "direct on X" website: https://arcbot.invalid x: https://x.com/ArcBot')).toMatchObject({
       kind: "launch",
-      name: "Arc Bot",
+      name: "Arctos Bot",
       symbol: "ARCBOT",
       description: "direct on X",
       website: "https://arcbot.invalid",
       twitter: "https://x.com/ArcBot",
     });
-    expect(parseWalletCommand('launch token named Arc Bot ticker ARCBOT description "direct on X"')).toMatchObject({
+    expect(parseWalletCommand('launch token named Arctos Bot ticker ARCBOT description "direct on X"')).toMatchObject({
       kind: "launch",
-      name: "Arc Bot",
+      name: "Arctos Bot",
       description: "direct on X",
     });
   });
@@ -356,17 +356,17 @@ describe("X wallet commands", () => {
   });
 
   it("parses flexibly arranged launch names and tickers", () => {
-    expect(parseWalletCommand("deploy Arc Bot (ARCBOT)")).toMatchObject({
-      kind: "launch", name: "Arc Bot", symbol: "ARCBOT",
+    expect(parseWalletCommand("deploy Arctos Bot (ARCBOT)")).toMatchObject({
+      kind: "launch", name: "Arctos Bot", symbol: "ARCBOT",
     });
-    expect(parseWalletCommand("token name: Arc Bot / symbol: $ARCBOT / please launch it")).toMatchObject({
-      kind: "launch", name: "Arc Bot", symbol: "ARCBOT",
+    expect(parseWalletCommand("token name: Arctos Bot / symbol: $ARCBOT / please launch it")).toMatchObject({
+      kind: "launch", name: "Arctos Bot", symbol: "ARCBOT",
     });
-    expect(parseWalletCommand("launch Arc Bot with ARCBOT as the ticker")).toMatchObject({
-      kind: "launch", name: "Arc Bot", symbol: "ARCBOT",
+    expect(parseWalletCommand("launch Arctos Bot with ARCBOT as the ticker")).toMatchObject({
+      kind: "launch", name: "Arctos Bot", symbol: "ARCBOT",
     });
-    expect(parseWalletCommand("create a coin, ticker=$ARCBOT; call it Arc Bot")).toMatchObject({
-      kind: "launch", name: "Arc Bot", symbol: "ARCBOT",
+    expect(parseWalletCommand("create a coin, ticker=$ARCBOT; call it Arctos Bot")).toMatchObject({
+      kind: "launch", name: "Arctos Bot", symbol: "ARCBOT",
     });
   });
 
@@ -385,7 +385,7 @@ describe("X wallet commands", () => {
   });
 
   it("accepts an X handle as a transfer recipient", () => {
-    expect(parseWalletCommand("@Arc Bot send 0.03 eth to @rootfriend")).toMatchObject({
+    expect(parseWalletCommand("@Arctos Bot send 0.03 eth to @rootfriend")).toMatchObject({
       kind: "send", amount: "0.03", unit: "eth", recipient: "@rootfriend",
     });
     expect(parseWalletCommand("send @rootfriend 25 ROOT")).toMatchObject({
@@ -547,7 +547,7 @@ describe("X wallet commands", () => {
     expect(parseWalletCommand("sell all of my $ROOT")).toEqual({ kind: "sell", amount: "100", unit: "percent", token: "ROOT", slippageBps: 250 });
     expect(parseWalletCommand("burn half of my ROOT")).toEqual({ kind: "burn", amount: "50", unit: "percent", token: "ROOT" });
     expect(parseWalletCommand("sell my entire ROOT balance")).toEqual({ kind: "sell", amount: "100", unit: "percent", token: "ROOT", slippageBps: 250 });
-    expect(parseWalletCommand("@Arc Bot send 12.5% of my ROOT to @recipient")).toEqual({
+    expect(parseWalletCommand("@Arctos Bot send 12.5% of my ROOT to @recipient")).toEqual({
       kind: "send", amount: "12.5", unit: "percent", token: "ROOT", recipient: "@recipient",
     });
     expect(parseWalletCommand("transfer all ETH to @recipient")).toEqual({

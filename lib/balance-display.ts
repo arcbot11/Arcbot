@@ -3,7 +3,7 @@ export function formatBalanceUsd(value: number) {
   const formatted = value === 0 || value >= 0.01
     ? new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)
     : new Intl.NumberFormat("en-US", { maximumSignificantDigits: 3, maximumFractionDigits: 12 }).format(value);
-  return `≈$${formatted}`;
+  return `$${formatted}`;
 }
 
 export function balanceWithUsd(display: string, usdValue: number | undefined) {

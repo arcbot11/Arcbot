@@ -1,12 +1,12 @@
 import type { MutationCtx } from "./_generated/server";
-import { ARC_TOKEN_CATALOG, canIndexArcToken } from "../lib/arc/token-catalog";
+import { ARC_TOKEN_CATALOG, canIndexArcToken, compareArcTokenPriority } from "../lib/arc/token-catalog";
 import excluded from "../lib/arc/excluded-catalog-addresses.json";
 import { query } from "./_generated/server";
 
 /** Only public Arc registry metadata; never includes wallet-specific holdings. */
 export const searchCatalog = query({ args: {}, handler: async ctx => {
   const rows = await ctx.db.query("tokenRegistry").withIndex("by_chain_active", q => q.eq("chainId", 5042).eq("active", true)).collect();
-  return rows.filter(t => canIndexArcToken(t.address, t.symbol)).map(t => ({ address: t.address, symbol: t.symbol, name: t.name, chainId: 5042 }));
+  return rows.filter(t => canIndexArcToken(t.address, t.symbol)).map(t => ({ address: t.address, symbol: t.symbol, name: t.name, chainId: 5042 })).sort(compareArcTokenPriority);
 } });
 
 export async function seedArcTokenCatalog(ctx: MutationCtx) {

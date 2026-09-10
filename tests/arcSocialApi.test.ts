@@ -33,4 +33,18 @@ describe("Arc social execution boundary",()=>{
  it("rejects creation workflows",async()=>{command={kind:"launch",name:"test"};expect((await(await POST(request())).json()).ok).toBe(false);expect(m.command).not.toHaveBeenCalled();});
  it("does not duplicate completed social transactions",async()=>{m.read.mockResolvedValue({status:"completed",leg:"send",hash:"old"});expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"old"});expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();});
  it("keeps an ambiguous stored transaction pending",async()=>{m.read.mockResolvedValue({status:"submitted",leg:"send"});expect((await(await POST(request())).json()).pending).toBe(true);expect(m.prepare).not.toHaveBeenCalled();});
+ it("does not report a failed trade when receipt verification times out",async()=>{
+   m.read.mockResolvedValue({status:"submitted",leg:"swap"});m.advance.mockRejectedValue(Error("RPC timed out"));
+   expect(await(await POST(request())).json()).toMatchObject({pending:true});expect(m.prepare).not.toHaveBeenCalled();
+ });
+ it("allows slow approval workflows twenty minutes after the command",async()=>{
+   m.auth.mockResolvedValue({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()-20*60_000});
+   expect(await(await POST(request())).json()).toMatchObject({pending:true});expect(m.prepare).toHaveBeenCalled();
+ });
+ it("expires permission to create new transactions but continues checking existing submissions",async()=>{
+   m.auth.mockResolvedValue({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()-40*60_000});
+   expect(await(await POST(request())).json()).toMatchObject({ok:false,message:expect.stringMatching(/^Request expired/)});expect(m.prepare).not.toHaveBeenCalled();
+   m.read.mockResolvedValue({status:"submitted",leg:"send"});m.advance.mockResolvedValue({status:"completed",leg:"send",hash:"verified"});
+   expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"verified"});expect(m.prepare).not.toHaveBeenCalled();
+ });
 });

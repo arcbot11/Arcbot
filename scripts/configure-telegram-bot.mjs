@@ -16,8 +16,8 @@ async function call(method, body) {
 }
 
 const commands = [
-  { command: "start", description: "Open the Arc Bot menu" },
-  { command: "wallet", description: "Show or create your Arc Bot wallet" },
+  { command: "start", description: "Open the Arctos Bot menu" },
+  { command: "wallet", description: "Show or create your Arctos Bot wallet" },
   { command: "balance", description: "Show wallet balances" },
   { command: "buy", description: "Buy an Arc token" },
   { command: "sell", description: "Sell an Arc token" },
@@ -26,7 +26,7 @@ const commands = [
   { command: "buyandsend", description: "Buy Arc tokens and send to a wallet" },
   { command: "buyandburn", description: "Buy Arc tokens and burn them" },
   { command: "burn", description: "Burn tokens" },
-  { command: "help", description: "Show Arc Bot commands" },
+  { command: "help", description: "Show Arctos Bot commands" },
   { command: "link", description: "Connect your X account" },
   { command: "unlink", description: "Unlink your X account" },
 ];
@@ -46,6 +46,9 @@ if (checkOnly) {
   process.exit(0);
 }
 
+await call("setMyName", { name: "Arctos Bot" });
+await call("setMyDescription", { description: "Your gateway to Arc Chain. Buy, sell, swap, send, and burn Arc tokens with buttons and /commands." });
+await call("setMyShortDescription", { short_description: "Your Arc Chain wallet. https://www.arcchainbot.io" });
 await call("setMyCommands", { commands });
 await call("setChatMenuButton", { menu_button: { type: "commands" } });
 await call("setWebhook", {

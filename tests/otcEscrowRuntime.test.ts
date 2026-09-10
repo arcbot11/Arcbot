@@ -26,10 +26,23 @@ function verifyDeposits(){
 }
 describe("escrow signing authority",()=>{
   it("uses a stable CDP account name per position",async()=>{
+    expect(escrowAccountName(listing.id)).toMatch(/^[A-Za-z0-9][A-Za-z0-9-]{0,34}[A-Za-z0-9]$/);
+    expect(escrowAccountName(listing.id)).toHaveLength(36);
     await provisionEscrow(listing);await provisionEscrow(listing);
     expect(m.account).toHaveBeenNthCalledWith(1,{name:listing.escrow!.accountName});expect(m.account).toHaveBeenNthCalledWith(2,{name:listing.escrow!.accountName});
     expect(escrowAccountName("listing:other")).not.toBe(listing.escrow!.accountName);
     expect(m.command).toHaveBeenCalledWith("escrow_bind",{id:listing.id,address:escrow});
+  });
+  it("resumes an unprovisioned legacy position with a valid deterministic name",async()=>{
+    listing.status="funding";delete listing.escrow!.address;listing.escrow!.accountName=`arc-${escrowAccountName(listing.id)}`;
+    await provisionEscrow(listing);
+    expect(m.account).toHaveBeenCalledWith({name:escrowAccountName(listing.id)});
+    expect(m.command).toHaveBeenCalledWith("escrow_bind",{id:listing.id,address:escrow,accountName:escrowAccountName(listing.id)});
+  });
+  it("never replaces an existing legacy escrow wallet",async()=>{
+    listing.escrow!.accountName=`arc-${escrowAccountName(listing.id)}`;
+    await expect(provisionEscrow(listing)).rejects.toThrow("name mismatch");
+    expect(m.account).not.toHaveBeenCalled();
   });
   it("rejects a forged CDP account name before provisioning",async()=>{
     listing.escrow!.accountName="another-user";await expect(provisionEscrow(listing)).rejects.toThrow("name mismatch");expect(m.account).not.toHaveBeenCalled();

@@ -1,4 +1,5 @@
 import { ConvexHttpClient } from "convex/browser";
+import { walletReturnPath } from "@/lib/wallet-return-path";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
 import { createTelegramConsent, TELEGRAM_CONSENT_COOKIE, TELEGRAM_CONSENT_PATH } from "@/lib/telegram-link-consent";
@@ -89,7 +90,7 @@ export async function GET(request: NextRequest) {
       return response;
     }
     const requestedReturn = request.cookies.get("argus_x_oauth_return")?.value;
-    const returnTo = requestedReturn === "/terminal" ? "/terminal" : requestedReturn === "/otc" ? "/otc" : "/wallet";
+    const returnTo = walletReturnPath(requestedReturn);
     const sessionCookie = createWebWalletSession(wallet.address, identity.id, identity.username, webSecret);
     const session = readWebWalletSession(sessionCookie, webSecret);
     if (!session) return errorRedirect(request, "session");

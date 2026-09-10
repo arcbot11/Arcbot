@@ -103,7 +103,7 @@ describe("per-user ten-minute wallet admission", () => {
 });
 
 describe("wallet lookup classification and priority", () => {
-  it.each(["@ArcBot @ArcBot show my wallet", "what’s my wallet?", "give me my wallet address", "create my wallet", "wallet", "where do I send funds?", "need my receiving address"])("screens %s before AI", text => expect(isWalletLookupText(text)).toBe(true));
+  it.each(["@ArctosBot @ArctosBot show my wallet", "what’s my wallet?", "give me my wallet address", "create my wallet", "wallet", "where do I send funds?", "need my receiving address"])("screens %s before AI", text => expect(isWalletLookupText(text)).toBe(true));
   it.each(["what's my wallet balance?", "show my holdings", "send 1 ETH to my wallet", "launch Wallet ticker WAL", "buy 1 ARCBOT", "claim my fees", "give 1 ETH to @user", "sell all of my ARCBOT"])("does not throttle unrelated command %s", text => expect(isWalletLookupText(text)).toBe(false));
   it("uses parsed intent to catch wording not matched by the cheap filter", () => {
     expect(isWalletLookupInteraction({ text: "deposit details please", parsedIntentJson: JSON.stringify({ kind: "command", command: { kind: "show_wallet" } }) })).toBe(true);
@@ -237,12 +237,12 @@ describe("three independent global read-only limits", () => {
     information: { kind: "help", topic: "launch" },
   };
   it.each([
-    ["@ArcBot what's my wallet?", "wallet"],
+    ["@ArctosBot what's my wallet?", "wallet"],
     ["give me my wallet please", "wallet"],
     ["create my wallet", "wallet"],
     ["where do I send funds?", "wallet"],
     ["What's my wallet balance?", "balance"],
-    ["Hey @ArcBot show me my holdings please", "balance"],
+    ["Hey @ArctosBot show me my holdings please", "balance"],
     ["give me my ETH balance", "balance"],
     ["show everything in my wallet", "balance"],
     ["portfolio check", "balance"],

@@ -11,6 +11,15 @@ const owner=()=>`0x${(counter++).toString(16).padStart(40,"0")}`;
 beforeEach(()=>{vi.clearAllMocks();vi.stubGlobal("fetch",m.fetch);m.fetch.mockResolvedValue({ok:true,json:async()=>({items:[{address:token,symbol:"ARGUS",name:"Argus",balance:"999"}]})});m.balance.mockResolvedValue(12345n);m.decimals.mockResolvedValue(3);m.block.mockResolvedValue({hash:"canonical"});});
 afterEach(()=>vi.unstubAllGlobals());
 describe("Arc token balance display",()=>{
+  it("bypasses pre-transaction cached holdings after confirmation",async()=>{
+    const address=owner();
+    expect((await arcTokenBalances(address)).tokens[0].balance).toBe("12.345");
+    m.balance.mockResolvedValue(67890n);
+    expect((await arcTokenBalances(address)).tokens[0].balance).toBe("12.345");
+    expect((await arcTokenBalances(address,[],true)).tokens[0].balance).toBe("67.89");
+    expect((await arcTokenBalances(address)).tokens[0].balance).toBe("67.89");
+    expect(m.fetch).toHaveBeenCalledTimes(2);
+  });
   it("reads a selected contract directly without relying on explorer discovery",async()=>{
     m.balance.mockResolvedValue(123456789012345678901234567n);m.decimals.mockResolvedValue(18);
     const result=await arcSelectedTokenBalance(owner(),token);

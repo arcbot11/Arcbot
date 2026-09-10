@@ -1,7 +1,12 @@
 import catalog from "./token-catalog.json";
 import excluded from "./excluded-catalog-addresses.json";
 
-export const ARC_TOKEN_CATALOG = catalog;
+export const ARGUS_TOKEN_ADDRESS = "0xece5ca8bf9220718e5727754026757512212cb3c";
+/** Pin the indexed ARGUS contract, preserving the remaining catalog order. */
+export function compareArcTokenPriority(a: { address: string }, b: { address: string }) {
+  return Number(b.address.toLowerCase() === ARGUS_TOKEN_ADDRESS) - Number(a.address.toLowerCase() === ARGUS_TOKEN_ADDRESS);
+}
+export const ARC_TOKEN_CATALOG = [...catalog].sort(compareArcTokenPriority);
 export const CANONICAL_ARC_USDC = "0x3600000000000000000000000000000000000000";
 export function isArcUsdcSymbol(symbol: string) {
   return /^\$*USDC$/.test(symbol.normalize("NFKC").replace(/[\s\u200B-\u200D\uFEFF]/g, "").toUpperCase());

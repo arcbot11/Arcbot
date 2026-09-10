@@ -9,7 +9,7 @@ describe("X reply suppression", () => {
   });
 
   it("routes mechanics questions to information without authorizing actions", () => {
-    expect(isWalletFeatureQuestion("@Arc Bot how does the wallet work?")).toBe(true);
+    expect(isWalletFeatureQuestion("@Arctos Bot how does the wallet work?")).toBe(true);
     expect(isWalletFeatureQuestion("explain how token launches and dev buys work")).toBe(true);
     expect(isWalletFeatureQuestion("what commands can I use for the wallet?" )).toBe(true);
     expect(isWalletFeatureQuestion("what is my wallet?")).toBe(false);

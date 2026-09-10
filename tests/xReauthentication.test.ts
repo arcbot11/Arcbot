@@ -9,4 +9,9 @@ beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(new Date("2026-09-10T00:00:0
 afterEach(()=>{vi.useRealTimers();vi.unstubAllEnvs();});
 const request=()=>new NextRequest("https://www.arcchainbot.io/api/auth/x/start?returnTo=/otc",{headers:{cookie:`${WEB_WALLET_SESSION_COOKIE}=${cookie}`}});
 it("keeps a fresh session without an unnecessary OAuth round trip",async()=>{expect((await GET(request())).headers.get("location")).toBe("https://www.arcchainbot.io/otc");});
+it("preserves wallet-specific destinations during login",async()=>{
+  const path="/wallet/0x1111111111111111111111111111111111111111";
+  const response=await GET(new NextRequest(`https://www.arcchainbot.io/api/auth/x/start?returnTo=${encodeURIComponent(path)}`));
+  expect(response.cookies.get("argus_x_oauth_return")?.value).toBe(path);
+});
 it("starts OAuth after 30 minutes even though the two-hour session is still valid",async()=>{vi.advanceTimersByTime(30*60*1000);expect((await GET(request())).headers.get("location")).toMatch(/^https:\/\/x.com\/i\/oauth2\/authorize/);});

@@ -33,7 +33,7 @@ export const command = mutation({
       },
     };
     switch(args.command) {
-      case "escrow_bind": return bindEscrow(store,input.id,input.address,now);
+      case "escrow_bind": return bindEscrow(store,input.id,input.address,now,input.accountName);
       case "escrow_prepare": return prepareEscrowStep(store,input,now);
       case "escrow_advance": return advanceEscrowState(store,input.listingId,input.orderId,now,input.baseBalanceWei,input.baseBlock,input.arcBalanceWei,input.arcBlock);
       case "escrow_retry": return retryEscrow(store,input.listingId,input.orderId,input.owner,now);
@@ -62,7 +62,7 @@ export const command = mutation({
       case "prepare": return prepareTransaction(store,input,now);
       case "sign": return signTransactionRecord(store,input.id,input.raw,input.hash,now);
       case "submitted": return submitted(store,input.id,now);
-      case "settled": return settled(store,input.id,input.block,input.success,now);
+      case "settled": return settled(store,input.id,input.block,input.success,now,input.settlement);
       case "retry_payout": return retryPayout(store,input,now);
       case "touch": {
         const record=await store.get<RecordValue>(input.id);

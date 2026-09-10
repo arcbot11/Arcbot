@@ -163,7 +163,7 @@ const report = { checkedAt: new Date().toISOString(), readOnly: true, checks };
 if (jsonMode) {
   console.log(JSON.stringify(report, null, 2));
 } else {
-  console.log(`Arc Bot resource check - ${report.checkedAt}`);
+  console.log(`Arctos Bot resource check - ${report.checkedAt}`);
   for (const check of checks) {
     console.log(`\n${check.ok ? "OK" : "ATTENTION"} ${check.name}`);
     if (!check.ok) console.log(`  ${check.error}`);

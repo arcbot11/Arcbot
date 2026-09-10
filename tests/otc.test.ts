@@ -12,6 +12,16 @@ import { positionHistory } from "../lib/otc/position-history";
 import { transferAbi } from "../lib/otc/token-delivery";
 
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222";
+it("saves verified fill evidence with settlement and preserves it on retries",async()=>{
+ const store=new Memory(),evidence={gasWei:"1000",output:{raw:"12345",decimals:6}};
+ await prepareTransaction(store,{id:"fill",owner:"seller",wallet:seller,chainId:5042,leg:"swap",swapOutput:{token:ARC_USDC,minimum:"10000"},unsigned:"unsigned",reserveWei:"100",balanceWei:"1000",block:"100"},now);
+ await signTransactionRecord(store,"fill","raw","hash",now);
+ await settled(store,"fill","101",true,now,evidence);
+ expect((await store.get<Transaction>("fill"))?.settlement).toEqual(evidence);
+ expect((await store.get<Wallet>(walletId(5042,seller)))?.activeTx).toBeUndefined();
+ await settled(store,"fill","101",true,now,{gasWei:"1",output:{raw:"1"}});
+ expect((await store.get<Transaction>("fill"))?.settlement).toEqual(evidence);
+});
 const now=1_800_000_000_000, W=10n**18n, gas=10n**15n;
 class Memory implements Store {
   rows=new Map<string,RecordValue>();

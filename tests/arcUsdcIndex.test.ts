@@ -3,7 +3,7 @@ import { ARC_TOKEN_CATALOG, CANONICAL_ARC_USDC, canIndexArcToken, isArcUsdcSymbo
 import { seedArcTokenCatalog } from "../convex/arcTokenCatalog";
 import type { MutationCtx } from "../convex/_generated/server";
 
-vi.mock("../convex/_generated/server", () => ({ internalMutation: (definition: unknown) => definition, internalQuery: (definition: unknown) => definition }));
+vi.mock("../convex/_generated/server", () => ({ query: (definition: unknown) => definition, internalMutation: (definition: unknown) => definition, internalQuery: (definition: unknown) => definition }));
 import { upsertDiscoveredPairCandidate, updatePairVerification } from "../convex/registry";
 const fake = "0x1111111111111111111111111111111111111111";
 const size = ARC_TOKEN_CATALOG.length;

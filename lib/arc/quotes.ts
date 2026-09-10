@@ -1,6 +1,6 @@
 import { decodeFunctionResult, encodeFunctionData, parseAbi, zeroAddress, type Address } from "viem";
 import type { ArcConfig } from "./config.ts";
-import { checkArcRpc, type ArcRpc } from "./rpc.ts";
+import { checkArcRpc, type ArcRpc, type ArcBlock } from "./rpc.ts";
 import { minimumOutput, mixedRouteSupported, poolId, routeCurrencies, v3Path, v4Path, type Route } from "./routing.ts";
 
 export const V3_FACTORY = "0xf0db7b58379503491d857db50ac9ece64c653918" as const;
@@ -20,11 +20,15 @@ export type RouteQuote = { route: Route; amountIn: bigint; amountOut: bigint; am
   snapshot: { number: bigint; hash: string }; expiresAt: number; executionBlocker?: string };
 
 /** Read-only quotes, including hooked-pool diagnostics. Hook quotes are never execution approval. */
-export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps: number, sender: Address, rpc: ArcRpc, config: ArcConfig, now = Date.now()) {
+export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps: number, sender: Address, rpc: ArcRpc, config: ArcConfig, now = Date.now(), verifiedHead?: ArcBlock) {
   if (routes.length > 32 || routes.length < 1) throw new Error("Provide 1–32 route candidates");
   if (amountIn <= 0n || amountIn >= 2n ** 256n) throw new Error("Invalid input amount");
   minimumOutput(10000n, slippageBps);
-  const head = await checkArcRpc(rpc, config, now);
+  // Callers may share a head verified in this same preparation; prices and pool
+  // state are still read at that block and its hash is rechecked below.
+  const head = verifiedHead ?? await checkArcRpc(rpc, config, now);
+  const age = BigInt(Math.floor(now / 1000)) - head.timestamp;
+  if (age < -5n || age > BigInt(config.maxHeadAgeSeconds)) throw new Error("Arc quote head is stale or invalid");
   const quotes: RouteQuote[] = [];
   const rejected: { index: number; reason: string }[] = [];
   const callCache = new Map<string, Promise<unknown>>();

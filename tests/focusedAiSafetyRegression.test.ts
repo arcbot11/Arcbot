@@ -24,7 +24,7 @@ const scenarios: Array<{ post: string; expected: Expected }> = [
   { post: "Can you explain how buying $5 of ARCBOT works?", expected: { kind: "help", topic: "buy_sell" } },
   { post: "Do not send 10 ARCBOT to @alice", expected: { kind: "unknown_wallet" } },
   { post: "buy ARCBOT", expected: { kind: "unknown_wallet" } },
-  { post: "Testing the bot before I do anything stupid. @ArcBot show me my wallet address", expected: { kind: "command", operation: "show_wallet" } },
+  { post: "Testing the bot before I do anything stupid. @ArctosBot show me my wallet address", expected: { kind: "command", operation: "show_wallet" } },
   { post: "show my wallet and my balance", expected: { kind: "unknown_wallet" } },
   { post: "send 2 ETH to @alice and burn 5 ARCBOT", expected: { kind: "unknown_wallet" } },
   { post: "launch Other Coin ticker OTHER and buy $10 of AMD", expected: { kind: "unknown_wallet" } },

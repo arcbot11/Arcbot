@@ -4,9 +4,10 @@ import sharp from "sharp";
 
 const root = process.cwd();
 const source = path.join(root, "public", "brand", "arc-bot-logo.png");
+const iconSource = path.join(root, "public", "brand", "arc-bot-icon-circle.png");
 
 
-async function icon(size) { return sharp(source).resize(size, size).png().toBuffer(); }
+async function icon(size) { return sharp(iconSource).resize(size, size).png().toBuffer(); }
 
 function ico(pngs) {
   const header = Buffer.alloc(6 + pngs.length * 16);
@@ -25,7 +26,7 @@ function ico(pngs) {
 }
 
 await sharp(source).png().toFile(path.join(root, "public", "arcbot.png"));
-await sharp(path.join(root, "public", "brand", "arc-bot-social-banner.png")).png().toFile(path.join(root, "public", "arcbot-banner.png"));
+await sharp(path.join(root, "public", "brand", "arctos-bot-social-banner.jpg")).png().toFile(path.join(root, "public", "arcbot-banner.png"));
 const sizes = new Map();
 for (const size of [16, 32, 48, 180, 192, 512]) sizes.set(size, await icon(size));
 await Promise.all([
@@ -36,4 +37,4 @@ await Promise.all([
   writeFile(path.join(root, "app", "apple-icon.png"), sizes.get(180)),
 ]);
 
-console.log("Generated Arc Bot favicon and app icons.");
+console.log("Generated Arctos Bot favicon and app icons.");

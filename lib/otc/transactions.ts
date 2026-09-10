@@ -1,5 +1,7 @@
 import { BASE_USDC, baseUsdcAbi } from "../base/usdc";
-import { getAddress, keccak256, parseAbi, encodeFunctionData, stringToHex } from "viem";
+import { getAddress, keccak256, parseAbi, encodeFunctionData, stringToHex, parseTransaction, type Hex } from "viem";
+import { tokenTransfer } from "./token-delivery";
+import { lockedBaseUsdc } from "./model";
 import { USDC_SCALE } from "../arc/amounts";
 import { type Store, type Transaction, type Order, type Chain, wallet, locked, paymentAsset, paymentNativeReserve, checkSnapshot, reserve, finishOrder } from "./model";
 
@@ -40,7 +42,7 @@ export async function retryPayout(store:Store,input:{id:string;owner:string;atte
   await store.put(order);
   return order;
 }
-export async function prepareTransaction(store: Store, input: { id: string; owner: string; wallet: string; chainId: Chain; leg: Transaction["leg"]; orderId?: string; sourceRequestId?: string; swapOutput?: {token:string;minimum:string;recipient?:string}; unsigned: string; reserveWei: string; balanceWei: string; block: string }, now: number) {
+export async function prepareTransaction(store: Store, input: { id: string; owner: string; wallet: string; chainId: Chain; leg: Transaction["leg"]; orderId?: string; sourceRequestId?: string; swapOutput?: {token:string;minimum:string;recipient?:string}; unsigned: string; reserveWei: string; balanceWei: string; baseUsdcBalance?:string; block: string }, now: number, escrow = false) {
   const previous = await store.get<Transaction>(input.id);
   if (previous) { if (previous.wallet !== input.wallet || previous.owner !== input.owner) throw new Error("Transaction identity mismatch."); return previous; }
   const w = await wallet(store, input.chainId, input.wallet, input.owner, now);
@@ -61,6 +63,15 @@ export async function prepareTransaction(store: Store, input: { id: string; owne
     if (BigInt(input.balanceWei) < locked(w)) throw new Error("Wallet no longer covers its reservations.");
   } else {
     reserve(w, holdId, BigInt(input.reserveWei), BigInt(input.balanceWei));
+  }
+  // Escrow steps have their own validated order and token coverage checks.
+  if(!escrow&&input.chainId===8453&&input.leg==="send"){
+    const transaction=parseTransaction(input.unsigned as Hex);
+    if(transaction.to?.toLowerCase()===BASE_USDC.toLowerCase()){
+      const transfer=tokenTransfer(transaction.data,transaction.value);
+      if(!transfer||transfer.amount<=0n||input.baseUsdcBalance===undefined||BigInt(input.baseUsdcBalance)-lockedBaseUsdc(w)<transfer.amount)throw new Error("Not enough available Base USDC.");
+      w.usdcHolds={...w.usdcHolds,[holdId]:transfer.amount.toString()};
+    }
   }
   w.activeTx = input.id; w.updatedAt = now;
   const tx: Transaction = { kind: "transaction", id: input.id, owner: input.owner, wallet: input.wallet, chainId: input.chainId, leg: input.leg, ...(input.orderId ? { orderId: input.orderId } : {}), holdId, ...(input.swapOutput ? {swapOutput:input.swapOutput} : {}), ...(input.sourceRequestId ? {sourceRequestId:input.sourceRequestId} : {}), unsigned: input.unsigned, status: "prepared", createdAt: now, updatedAt: now };
@@ -91,15 +102,19 @@ export async function submitted(store: Store, id: string, now: number) {
   return tx;
 }
 /** Only the private settlement worker may submit canonical, finalized receipt evidence. */
-export async function settled(store: Store, id: string, block: string, success: boolean, now: number) {
+export async function settled(store: Store, id: string, block: string, success: boolean, now: number, evidence?:Transaction["settlement"]) {
   const tx = await store.get<Transaction>(id);
   if (!tx?.raw || !tx.hash) throw new Error("Signed transaction missing.");
   if (["completed", "reverted"].includes(tx.status)) return tx;
+  if(evidence){
+    if(!/^\d+$/.test(evidence.gasWei)||evidence.output&&(!success||tx.leg!=="swap"||!/^\d+$/.test(evidence.output.raw)||evidence.output.decimals!==undefined&&(!Number.isInteger(evidence.output.decimals)||evidence.output.decimals<0||evidence.output.decimals>255)))throw new Error("Invalid settlement amounts.");
+    tx.settlement=evidence;
+  }
   const w = await wallet(store, tx.chainId, tx.wallet, tx.owner, now);
   if (w.activeTx !== id) throw new Error("Wallet transaction lease mismatch.");
   delete w.activeTx; w.lastSettledBlock = block; w.updatedAt = now;
   if (["send","swap","allowance","payment"].includes(tx.leg)) delete w.holds[tx.holdId];
-  if (tx.leg === "payment" && w.usdcHolds) delete w.usdcHolds[tx.holdId];
+  if (["payment","send"].includes(tx.leg) && w.usdcHolds) delete w.usdcHolds[tx.holdId];
   await store.put(w);
   delete tx.note;
   tx.status = success ? "completed" : "reverted"; tx.blockNumber = block; tx.updatedAt = now; await store.put(tx);

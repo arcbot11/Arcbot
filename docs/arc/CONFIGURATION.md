@@ -1,4 +1,4 @@
-# Arc Bot configuration
+# Arctos Bot configuration
 
 Public configuration lives in `lib/project-config.ts`. The eight legacy execution/fee/self-buyback flags have been removed from local/example environment files. `lib/retired-features.ts` permanently disables their runtime gates; stale deployed values cannot re-enable them. Internal legacy configuration field names remain for compatibility, but do not read these environment variables. Legacy fee enable/test commands are blocked before their execution logic.
 
@@ -7,9 +7,9 @@ Public configuration lives in `lib/project-config.ts`. The eight legacy executio
 | `X_OAUTH_CLIENT_ID` | Keep in environment. Nonsecret but not configured locally; must match the actual X application. Can move to public configuration after that app is established. |
 | `X_OAUTH_CLIENT_SECRET` | Environment only; secret. |
 | `WEB_AUTH_SECRET` | Environment only; shared signing/authentication secret. |
-| `X_BOT_USERNAME` | Removed. Fixed to `ArcChainBot`, including the authorization script. |
-| `NEXT_PUBLIC_ARCBOT_X_URL` | Removed. Fixed to `https://x.com/ArcChainBot`. |
-| `NEXT_PUBLIC_ARCBOT_TELEGRAM_URL` | Environment for now; Arc Bot Telegram identity has not been provided. |
+| `X_BOT_USERNAME` | Removed. Fixed to `ArctosBot`, including the authorization script. |
+| `NEXT_PUBLIC_ARCBOT_X_URL` | Removed. Fixed to `https://x.com/ArctosBot`. |
+| `NEXT_PUBLIC_ARCBOT_TELEGRAM_URL` | Environment for now; Arctos Bot Telegram identity has not been provided. |
 | `TELEGRAM_BOT_USERNAME` | Removed; no current application reader. The public Telegram URL is the remaining display setting. |
 | `ARC_MAINNET_RPC_URL` | Environment; owned provider endpoint not configured, and endpoint URLs may contain API credentials. |
 | `ARC_CHECKPOINT_NUMBER` | Environment; trusted mainnet checkpoint not configured. Can become a public constant after verification. |

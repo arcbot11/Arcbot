@@ -3,7 +3,7 @@ import { arcAddressUrl, arcTransactionUrl, arcWalletUrl, arcCommandResponse } fr
 import { walletHelpMessage } from "../convex/xWalletIntent";
 const wallet = "0x1111111111111111111111111111111111111111", hash = "0x" + "a".repeat(64);
 afterEach(() => vi.unstubAllEnvs());
-it("pins public wallet links to Arc Bot despite inherited environment values", () => {
+it("pins public wallet links to Arctos Bot despite inherited environment values", () => {
   vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://old-project.invalid");
   expect(arcWalletUrl(wallet, "x:1:buy")).toBe(`https://www.arcchainbot.io/wallet/${wallet}?request=x%3A1%3Abuy`);
 });
@@ -21,6 +21,9 @@ it("adds explorer and wallet links to receipts without duplicating them on recov
 });
 it("does not invent an explorer link when no valid transaction hash exists", () => {
   expect(arcCommandResponse("Preparing.", wallet, "invalid")).toBe(`Preparing.\nYour wallet: ${arcWalletUrl(wallet)}`);
+});
+it("links insufficient-gas responses to the affected wallet page", () => {
+  expect(arcCommandResponse("Not enough Arc USDC for gas.", wallet)).toBe(`Not enough Arc USDC for gas.\nYour wallet: https://www.arcchainbot.io/wallet/${wallet}`);
 });
 it("keeps public help aligned with Arc USDC and current fees", () => {
   expect(walletHelpMessage("gas")).toContain("USDC");

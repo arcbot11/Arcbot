@@ -1156,7 +1156,7 @@ export default defineSchema({
     .index("by_pair_candidate", ["pairCandidate"]),
 
   // Private resolution cache for launch-pair tickers that are not yet in the
-  // curated Arc Bot catalog. Presence here never implies Argus approval; the
+  // curated Arctos Bot catalog. Presence here never implies Argus approval; the
   // factory allowlist is checked separately before every launch attempt.
   legacyNetworkAssetCatalog: defineTable({
     address: v.string(),

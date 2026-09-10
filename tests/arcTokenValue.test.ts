@@ -14,8 +14,8 @@ it.each([null,0,-1,"2",Infinity])("does not present invalid price %s as a valuat
 });
 it("keeps missing prices separate from zero and formats tiny holdings",()=>{
   expect(formatTokenUsd(null)).toBe("USD estimate unavailable");
-  expect(formatTokenUsd(0)).toBe("≈ $0.00 USD");
-  expect(formatTokenUsd(0.001)).toBe("≈ <$0.01 USD");
+  expect(formatTokenUsd(0)).toBe("$0.00 USD");
+  expect(formatTokenUsd(0.001)).toBe("$0.001 USD");
 });
 it("returns unavailable on explorer failure",async()=>{
   vi.stubGlobal("fetch",vi.fn().mockRejectedValue(Error("offline")));

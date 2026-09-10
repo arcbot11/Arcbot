@@ -64,7 +64,7 @@ const state = (ctx: ReturnType<typeof fixture>) => ctx.rows.xReplyQueueState[0];
 const row = (ctx: ReturnType<typeof fixture>, key: string) => ctx.rows.xReplyQueue.find((r: Row) => r.key === key)!;
 async function source(ctx: ReturnType<typeof fixture>, id: string, kind = "buy", extra: Row = {}) {
   await ctx.db.insert("xReplyUsers", { xUserId: id, username: `user${id}` });
-  return ctx.db.insert("xReplyInteractions", { postId: id, authorXUserId: id, text: "@ArcChainBot user request", commandKind: kind,
+  return ctx.db.insert("xReplyInteractions", { postId: id, authorXUserId: id, text: "@ArctosBot user request", commandKind: kind,
     status: "processing", createdAt: Date.now(), updatedAt: Date.now(), ...extra });
 }
 async function add(ctx: ReturnType<typeof fixture>, key: string, priority: "A" | "B" | "C", extra: Row = {}) {
@@ -77,7 +77,7 @@ describe("bot-authored posts",()=>{
   const botId="2097696306135220226";
   it("silently rejects the bot's own incoming tweet",async()=>{
     const ctx=fixture();
-    expect(await invoke(replies.reserveInteraction,ctx,{postId:"self",authorXUserId:botId,text:"@ArcChainBot buy 10 ARGUS"})).toBe(false);
+    expect(await invoke(replies.reserveInteraction,ctx,{postId:"self",authorXUserId:botId,text:"@ArctosBot buy 10 ARGUS"})).toBe(false);
     expect(ctx.rows.xReplyInteractions).toBeUndefined();expect(ctx.scheduler.runAfter).not.toHaveBeenCalled();
   });
   it("does not enqueue replies to the bot's own post",async()=>{
@@ -92,7 +92,7 @@ describe("bot-authored posts",()=>{
   });
   it("allows another user to issue a command in reply to a bot post",async()=>{
     const ctx=fixture();await source(ctx,"bot-post","help",{authorXUserId:botId,responsePostId:"bot-parent"});
-    await source(ctx,"human-reply","buy",{authorXUserId:"human",parentPostId:"bot-parent",text:"@ArcChainBot buy 10 ARGUS"});
+    await source(ctx,"human-reply","buy",{authorXUserId:"human",parentPostId:"bot-parent",text:"@ArctosBot buy 10 ARGUS"});
     expect(await invoke(queue.enqueue,ctx,{key:"human-reply",postId:"human-reply",kind:"reply",text:"Result"})).toMatchObject({status:"queued"});
     expect((await take(ctx))?.row.postId).toBe("human-reply");
   });
@@ -170,12 +170,12 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs();
 describe("priority categories", () => {
   it("keeps actual no-emoji upgrade confirmations in A without promoting automatic-fee notices", () => {
     expect(replyQueuePriority(feeUpgradeSuccessMessage("ARCBOT", "https://arcbot.invalid/token/example"), "upgrade_fees", true)).toBe("A");
-    expect(replyQueuePriority("ℹ️ $ARCBOT is an Arc Bot V2 token. Creator-fee claims and payouts are automated; 5% buys back and burns $ARCBOT.", "claim_fees", true)).toBe("C");
+    expect(replyQueuePriority("ℹ️ $ARCBOT is an Arctos Bot V2 token. Creator-fee claims and payouts are automated; 5% buys back and burns $ARCBOT.", "claim_fees", true)).toBe("C");
     expect(replyQueuePriority("There aren't any creator fees available to claim in that asset right now.", "claim_fees", true)).toBe("C");
   });
   it.each([
     ["Confirmed: Launched Help (HELP) on Argus!", "launch", "A"],
-    ["Confirmed: Your Arc Bot wallet is ready!", "show_wallet", "C"],
+    ["Confirmed: Your Arctos Bot wallet is ready!", "show_wallet", "C"],
     ["🔄 Buy, sell, send and burn with me!", "help", "C"],
     ["Failed: Swap failed.", "legacy_swap_final", "A"],
     ["🚀 $TEST has graduated!", "graduation", "A"],
@@ -183,7 +183,7 @@ describe("priority categories", () => {
     ["Action needed: The MSFT sale completed, but the purchase of ARCBOT failed.", "swap", "A"],
     ["Action needed: The holder distributor was created, but future fees were not reassigned.", "reassign_fees", "A"],
     ["Pending: An upgrade is already being processed for that token. Wait for the result.", "upgrade_fees", "A"],
-    ["There's an issue with this token's upgrade - DM @ArcBot for help", "upgrade_fees", "A"],
+    ["There's an issue with this token's upgrade - DM @ArctosBot for help", "upgrade_fees", "A"],
     ["The MSFT purchase completed, but the final launch did not.", "launch", "A"],
     ["Failed: I couldn't complete that wallet request. Check the details and give it another try!", "buy", "A"],
     ["🌐 The network couldn't submit that transaction.", "send", "A"],
@@ -196,8 +196,8 @@ describe("priority categories", () => {
     ["Failed: There aren't enough funds for that amount.", "buy", "B"],
     ["⛽ There isn't enough ETH in your wallet to cover this transaction and network gas.", "send", "C"],
     ["There aren't any creator fees available to claim in that asset right now.", "claim_fees", "C"],
-    ["ℹ️ $ARCBOT is an Arc Bot V2 token. Creator-fee claims and payouts are automated; 5% buys back and burns $ARCBOT.", "claim_fees", "C"],
-    ["ℹ️ $ARCBOT is already an Arc Bot V2 token.", "upgrade_fees", "C"],
+    ["ℹ️ $ARCBOT is an Arctos Bot V2 token. Creator-fee claims and payouts are automated; 5% buys back and burns $ARCBOT.", "claim_fees", "C"],
+    ["ℹ️ $ARCBOT is already an Arctos Bot V2 token.", "upgrade_fees", "C"],
     ["Pending: Your wallet is still processing an earlier transaction.", "launch", "C"],
     ["🤔 I couldn't quite make that out. Try show my wallet.", "unknown_wallet", "C"],
     ["🟢 What would you like to buy?", "guided_help:buy", "B"],
@@ -480,6 +480,6 @@ describe("command-only X rollout", () => {
   it("publishes duplicate contract prompts with the explicit tag requirement", async () => {
     const ctx = fixture(); await source(ctx, "dup", "ambiguous_token", { guidedHelpStateJson: clarification });
     expect(await invoke(queue.enqueue, ctx, { key: "dup", postId: "dup", kind: "reply", ok: false, text: "Action needed: More than one indexed token uses that ticker. Enter the contract address." })).toMatchObject({ status: "queued" });
-    expect((await take(ctx)).row.text).toContain("tag @ArcChainBot");
+    expect((await take(ctx)).row.text).toContain("tag @ArctosBot");
   });
 });

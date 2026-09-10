@@ -1,5 +1,5 @@
-export type TradeFlowQuote = { quote: string; amountIn?:string; stage: string; amountOut: string; minimumOut: string; protocol: string; gasWei: string; tradeGasBudgetWei?: string; expiresAt: number };
-type Result = { id: string; status: string; leg: string };
+export type TradeFlowQuote = { quote: string; routeHint?:string; amountIn?:string; stage: string; amountOut: string; minimumOut: string; protocol: string; gasWei: string; tradeGasBudgetWei?: string; expiresAt: number };
+type Result = TransactionStatus & {leg:string};
 export const tradeGasBudget = (quote: TradeFlowQuote) => quote.tradeGasBudgetWei ? BigInt(quote.tradeGasBudgetWei) : BigInt(quote.gasWei) * (quote.stage === "swap" ? 1n : 4n);
 export const ARC_TRADE_GAS_BUDGET_WEI = "10000000000000000"; // Default allowance; higher verified estimates are supported.
 export const estimatedTradeGasBudget = (gasWei: string) => {
@@ -16,7 +16,7 @@ const decimal = (value: string) => {
 export async function executeTradeFlow(initial: TradeFlowQuote, io: {
   confirm: (quote: string) => Promise<Result>;
   status?: (id:string) => Promise<TransactionStatus>;
-  preview: (amountIn?:string) => Promise<TradeFlowQuote>;
+  preview: (amountIn?:string,routeHint?:string) => Promise<TradeFlowQuote>;
   wait: () => Promise<void>;
   active: () => boolean;
   progress: (message: string) => void;
@@ -43,7 +43,7 @@ export async function executeTradeFlow(initial: TradeFlowQuote, io: {
     spent += BigInt(current.gasWei);
     if (!io.active()) throw new Error("Trade paused. Check transaction history before continuing.");
     io.progress("Refreshing trade quote…");
-    current = await io.preview(initial.amountIn);
+    current = await io.preview(initial.amountIn,current.routeHint);
   }
   return { quote: current, message: "Trade setup changed. Check transaction history before submitting again." };
 }

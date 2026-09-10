@@ -1,5 +1,5 @@
 import { pageMetadata } from "@/lib/site-metadata";
-export const metadata = pageMetadata("/guide", "Arc Bot examples for buying, selling, swapping, and sending Arc tokens.");
+export const metadata = pageMetadata("/guide", "Arctos Bot examples for buying, selling, swapping, and sending Arc tokens.");
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { OpenWalletLink } from "@/components/OpenWalletLink";
 
@@ -14,10 +14,8 @@ const examples = [
 export default function Guide() {
   return <main><SiteHeader /><section className="arc-container arc-guide">
     <p className="arc-kicker">THE FIELD GUIDE</p>
-    <h1>Say it.<br /><em>Check it.</em></h1>
-    <p className="arc-intro">Direct commands. Deliberate actions.</p>
-
-    <p className="arc-intro">Use a dollar value or a token amount. Dollar values require a current token price. The examples below are separate amounts.</p>
+    <h1>Your Arc Chain Toolkit</h1>
+    <p className="arc-intro">Post commands on X or use our TG bot or web for any Arc chain transaction. Use a ticker or contract address.</p>
     <div className="arc-command-list">{examples.map(([name, dollars, tokens, description], i) =>
       <article key={name}><span>0{i + 1}</span><h2>{name}</h2><div>
         <dl className="arc-command-examples"><dt>Dollar value</dt><dd><code>{dollars}</code></dd><dt>Token amount</dt><dd><code>{tokens}</code></dd></dl>

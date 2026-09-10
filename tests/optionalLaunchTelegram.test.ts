@@ -64,7 +64,7 @@ describe("optional Telegram launch metadata", () => {
   it.each(["@test", "example.com/test", "https://t.me/one/two", "http//t.me/test"])("accepts first-attempt model extraction with malformed TG %s, no fallback needed", async telegram => {
     model.mockResolvedValueOnce(JSON.stringify({ kind: "command", operation: "launch" }))
       .mockResolvedValueOnce(JSON.stringify({ ...base, telegram }));
-    const result = await parseXWalletIntentWithDiagnostics(`@ArcBot launch Test ticker TEST tg ${telegram}`, false);
+    const result = await parseXWalletIntentWithDiagnostics(`@ArctosBot launch Test ticker TEST tg ${telegram}`, false);
     expect(result.intent).toEqual({ kind: "command", command: base });
     expect(result.diagnostics.source).toBe("ai_attempt_1");
     expect(result.diagnostics.extractionAttempts).toHaveLength(1);

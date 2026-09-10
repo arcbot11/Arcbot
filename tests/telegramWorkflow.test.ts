@@ -7,8 +7,8 @@ const address = "0x1111111111111111111111111111111111111111";
 describe("Telegram command-only interface", () => {
   it.each(["hello", "buy 10 ARGUS", "resume", "10 USDC ARGUS", "guide:buy", "/fees", "/positions", "/launch", "/cancel"])("rejects chat and retired actions: %s", text => expect(telegramInput(text)).toBeNull());
   it("checks command addressing and callback payloads", () => {
-    expect(telegramInput("/wallet@ArcChainBot", false, "ArcChainBot")?.name).toBe("wallet");
-    expect(telegramInput("/wallet@other", false, "ArcChainBot")).toBeNull();
+    expect(telegramInput("/wallet@ArctosBot", false, "ArctosBot")?.name).toBe("wallet");
+    expect(telegramInput("/wallet@other", false, "ArctosBot")).toBeNull();
     expect(telegramInput("/buy 10 USDC ARGUS", true)).toBeNull();
     expect(telegramInput("/buy", true)?.name).toBe("buy");
   });

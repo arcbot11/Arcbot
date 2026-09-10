@@ -1,11 +1,11 @@
-# Arc Bot branding and public-path review
+# Arctos Bot branding and public-path review
 
 Local source review, September 10, 2026. Deployment is separate.
 
 ## Fixed
 
-- Public links use `https://www.arcchainbot.io`, `https://x.com/ArcChainBot`, and the Telegram account verified by getMe: `https://t.me/TheArcChainBot`. Telegram consent redirects use that same account.
-- Arc command results include validated Arc Explorer transaction links and Arc Bot wallet links, including recovered results. Arc Explorer is `https://www.arcexplorer.org`. Base receipts retain Base Explorer links.
+- Public links use `https://www.arcchainbot.io`, `https://x.com/ArctosBot`, and the Telegram account verified by getMe: `https://t.me/TheArcChainBot`. Telegram consent redirects use that same account.
+- Arc command results include validated Arc Explorer transaction links and Arctos Bot wallet links, including recovered results. Arc Explorer is `https://www.arcexplorer.org`. Base receipts retain Base Explorer links.
 - X and Telegram balance requests use chain 5042, native USDC units, and verified Arc token balances. Arbitrary contract metadata and burned balances use pinned Arc block reads with a block-hash recheck.
 - Held-token discovery reads Arc Explorer's current API and verifies candidates through Arc RPC balance reads. Public wallet holdings no longer use the inherited stock-price, explorer or chain-4663 RPC paths.
 - Public commands have an Arc feature allowlist. The signer HTTP endpoint accepts only Arc wallet provisioning, balance, token metadata and burned-balance requests. Retired execution, launch and fee endpoints return 410. Ownership checks remain in place.
@@ -16,7 +16,7 @@ Local source review, September 10, 2026. Deployment is separate.
 
 ## Retained deliberately
 
-The indexed PONIE token has the third-party name “Pons meet UNI liquidity.” Its catalog and research metadata are token data, not Arc Bot branding. They have not been falsified or removed.
+The indexed PONIE token has the third-party name “Pons meet UNI liquidity.” Its catalog and research metadata are token data, not Arctos Bot branding. They have not been falsified or removed.
 
 Legacy contract/ABI modules, historical data structures and operator tools remain for compatibility and audit. They are not Arc deployments. Their disabled `.invalid` endpoints are not Arc RPC fallbacks; the public entry points and scheduled jobs identified above are retired. This is not a claim that every historical module has been deleted.
 

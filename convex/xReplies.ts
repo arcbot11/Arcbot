@@ -1,4 +1,5 @@
 import { isXBotAuthor, xBotUserId } from "../lib/x-bot-identity";
+import {ARC_WALLET_PENDING,arcPendingRetryDelay} from "../lib/arc/social-timing";
 import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
 import { retiredFeatureEnabled } from "../lib/retired-features";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
@@ -182,8 +183,8 @@ async function helpReply(
   topic: Parameters<typeof walletHelpMessage>[0],
 ) {
   if (topic === "capabilities") return X_COMMAND_HELP;
-  if (topic === "buy_sell") return "Tag @ArcChainBot with a full command: buy 10 USDC of TICKER; sell 100 TICKER; swap 50% TOKEN for OTHER. Use a contract address for an unlisted token.";
-  if (topic === "send") return "Tag @ArcChainBot with the amount, token and recipient: send 10 USDC to @user or a full wallet address.";
+  if (topic === "buy_sell") return "Tag @ArctosBot with a full command: buy 10 USDC of TICKER; sell 100 TICKER; swap 50% TOKEN for OTHER. Use a contract address for an unlisted token.";
+  if (topic === "send") return "Tag @ArctosBot with the amount, token and recipient: send 10 USDC to @user or a full wallet address.";
   return walletHelpMessage(topic);
 }
 
@@ -1404,6 +1405,14 @@ export const scheduleInteractionRetry = internalMutation({
       });
       return;
     }
+    if(args.safeError===ARC_WALLET_PENDING){
+      const now=Date.now();
+      if(interaction.safeError===ARC_WALLET_PENDING&&interaction.nextRetryAt&&interaction.nextRetryAt>now)return;
+      const delay=arcPendingRetryDelay(interaction.createdAt,now);
+      await ctx.db.patch(interaction._id,{status:"failed",retryCount:0,nextRetryAt:now+delay,safeError:ARC_WALLET_PENDING,updatedAt:now});
+      await ctx.scheduler.runAfter(delay,internal.xReplies.retryInteraction,{postId:args.postId});
+      return;
+    }
     if (args.safeError === "claim workflow continuation required" || args.safeError === "automated fee workflow continuation required") {
       const delay = args.safeError === "automated fee workflow continuation required" ? 15_000 : 5_000;
       await ctx.db.patch(interaction._id, {
@@ -1458,7 +1467,7 @@ export const retryInteraction = internalAction({
         current.interaction.status,
       ) ||
       current.interaction.responsePostId ||
-      (current.interaction.retryCount || 0) > 5
+      ((current.interaction.retryCount || 0) > 5&&current.interaction.safeError!==ARC_WALLET_PENDING)
     )
       return;
     if (retiredXWorkflow(current.interaction.commandKind, current.interaction.guidedHelpStateJson)) {
@@ -1496,8 +1505,8 @@ export const retryInteraction = internalAction({
         ownerXUserId: current.user.xUserId,
       });
       const message = revoked
-        ? "Confirmed: Telegram has been unlinked from your Arc Bot X account. Your wallet and funds are unchanged."
-        : "No Telegram account is currently linked to your Arc Bot X account.";
+        ? "Confirmed: Telegram has been unlinked from your Arctos Bot X account. Your wallet and funds are unchanged."
+        : "No Telegram account is currently linked to your Arctos Bot X account.";
       const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: true, kind: "reply" });
       await ctx.runMutation(internal.xReplies.updateInteraction, {
         postId, status: "completed", commandKind: "unlink_telegram", responsePostId,
@@ -1601,7 +1610,7 @@ export const retryInteraction = internalAction({
           try {
             const tokenAddress = await ctx.runQuery(internal.wallets.resolveKnownToken, { identifier });
             const launch = await ctx.runQuery(api.site.getLaunch, { tokenAddress });
-            message = launch ? feeAssignmentMessage(launch) : "Could not find an Arc Bot launch for that token. Include its contract address in your question.";
+            message = launch ? feeAssignmentMessage(launch) : "Could not find an Arctos Bot launch for that token. Include its contract address in your question.";
           } catch (error) {
             message = String(error).includes("more than one token")
               ? "More than one token uses that ticker. Include the contract address in your question."
@@ -1736,7 +1745,7 @@ export const retryInteraction = internalAction({
           postId,
           status: "rejected",
           commandKind: "launch_missing_direct_mention",
-          safeError: "launch post did not explicitly mention @ArcChainBot",
+          safeError: "launch post did not explicitly mention @ArctosBot",
         });
         return;
       }
@@ -1866,7 +1875,7 @@ export const retryInteraction = internalAction({
             postId,
             safeError: intent.command.kind === "upgrade_fees" || intent.command.kind === "reassign_fees"
               ? AUTOMATED_FEE_WORKFLOW_CONTINUATION
-              : intent.command.kind === "claim_fees" ? "claim workflow continuation required" : "wallet confirmation is pending",
+              : intent.command.kind === "claim_fees" ? "claim workflow continuation required" : ARC_WALLET_PENDING,
           });
           return;
           }

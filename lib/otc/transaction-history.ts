@@ -2,14 +2,17 @@ import { decodeAbiParameters, decodeFunctionData, formatUnits, parseAbi, parseAb
 import { ARC_TOKEN_CATALOG } from "../arc/token-catalog";
 import { BASE_USDC } from "../base/usdc";
 import type { Transaction } from "./model";
+import {displayAmount} from "../amount-display";
 
 const abi=parseAbi(["function transfer(address recipient,uint256 amount)","function approve(address spender,uint256 amount)","function approve(address token,address spender,uint160 amount,uint48 expiration)","function execute(bytes commands,bytes[] inputs,uint256 deadline)"]);
-function amount(chain:number,address:string,raw:bigint){
+function amount(chain:number,address:string,raw:bigint,verifiedDecimals?:number,gas=false){
   const native=address.toLowerCase()===zeroAddress;
   const token=chain===5042?ARC_TOKEN_CATALOG.find(t=>t.address.toLowerCase()===address.toLowerCase()):undefined;
-  const decimals=native?18:chain===8453&&address.toLowerCase()===BASE_USDC.toLowerCase()?6:token?.decimals;
+  const decimals=verifiedDecimals??(native?18:chain===8453&&address.toLowerCase()===BASE_USDC.toLowerCase()?6:token?.decimals);
   const symbol=native?(chain===5042?"USDC":"ETH"):chain===8453&&address.toLowerCase()===BASE_USDC.toLowerCase()?"USDC":token?.symbol.replace(/^\$+/,"");
-  return decimals===undefined?`${raw} base units · ${address}`:`${formatUnits(raw,decimals)} ${symbol??address}`;
+  if(decimals===undefined)return `${raw} base units · ${address}`;
+  const exact=formatUnits(raw,decimals);
+  return `${gas||native&&chain===8453?exact:displayAmount(exact,symbol==="USDC"?2:0)} ${symbol??address}`;
 }
 const labels:Record<string,string>={send:"Send",swap:"Swap",allowance:"Token approval",approval:"Payment approval",payment:"OTC payment",payout:"OTC payout",fund:"Fund OTC position",return_arc:"Return remaining USDC",gas:"Deposit settlement gas",deposit:"Deposit OTC payment",arc:"Deliver Arc USDC",seller:"Pay seller",fee:"Service fee",return_gas:"Return unused gas"};
 
@@ -39,10 +42,10 @@ export function transactionHistory(record:Transaction){
       }
       if(call.functionName==="execute"&&record.leg==="swap"){
         const [commands,inputs]=call.args;
-        if(commands==="0x00"){
+        if(commands.startsWith("0x00")){
           const [,input,minimum,path]=decodeAbiParameters(parseAbiParameters("address,uint256,uint256,bytes,bool"),inputs[0]);
           details.push({label:"Input",value:amount(record.chainId,path.slice(0,42),input)},{label:"Minimum output",value:amount(record.chainId,`0x${path.slice(-40)}`,minimum)},{label:"Route",value:"V3"});
-        }else if(commands==="0x10"){
+        }else if(commands.startsWith("0x10")){
           const [actions,params]=decodeAbiParameters(parseAbiParameters("bytes,bytes[]"),inputs[0]);
           if(actions==="0x060c0f"||actions==="0x070c0f"){
             const [tokenIn,input]=decodeAbiParameters(parseAbiParameters("address,uint256"),params[1]);
@@ -56,6 +59,18 @@ export function transactionHistory(record:Transaction){
   if(record.swapOutput&&!details.some(d=>d.label==="Minimum output")){
     try{details.push({label:"Minimum output",value:amount(record.chainId,record.swapOutput.token,BigInt(record.swapOutput.minimum))});}catch{/* Malformed historical metadata must not hide history. */}
   }
+  if(record.status==="completed"&&record.swapOutput&&record.settlement?.output){
+    const actual=record.settlement.output;
+    const minimum=details.findIndex(d=>d.label==="Minimum output");
+    const received={label:"Received",value:amount(record.chainId,record.swapOutput.token,BigInt(actual.raw),actual.decimals)};
+    if(minimum>=0)details.splice(minimum,1,received);else details.push(received);
+  }
+  if(record.settlement&&record.chainId===5042)details.push({label:"Gas paid",value:amount(5042,zeroAddress,BigInt(record.settlement.gasWei),18,true)});
   return result;
+}
+export function transactionStatus(record:Transaction){
+  return {id:record.id,status:record.status,leg:record.leg,hash:record.hash,
+    ...(record.status==="submitted"&&record.chainId===8453&&record.leg==="send"&&record.confirmation?{confirmation:record.confirmation}:{}),
+    ...(record.status==="completed"&&record.leg==="swap"?{details:transactionHistory(record).details}:{}),};
 }
 export type WalletTransactionHistory=ReturnType<typeof transactionHistory>;

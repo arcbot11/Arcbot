@@ -1,8 +1,8 @@
 /** Display estimates only. Execution always uses a fresh trading quote. */
+import { formatBalanceUsd } from "../balance-display";
 export function formatTokenUsd(value?:number|null){
   if(value==null||!Number.isFinite(value)||value<0)return "USD estimate unavailable";
-  if(value>0&&value<0.01)return "≈ <$0.01 USD";
-  return `≈ ${new Intl.NumberFormat("en-US",{style:"currency",currency:"USD"}).format(value)} USD`;
+  return `${formatBalanceUsd(value)} USD`;
 }
 
 const prices=new Map<string,{expires:number;request:Promise<{priceUsd:number;pricedAt:string|null}|null>}>();

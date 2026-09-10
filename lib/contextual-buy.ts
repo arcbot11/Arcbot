@@ -3,7 +3,7 @@ export type ContextualBuy = { amount: string; unit: "usd" | "eth" };
 
 /** The reply author supplies all trading authority; the parent supplies only an identifier. */
 export function parseContextualBuy(text: string): ContextualBuy | undefined {
-  const clean = text.trim().replace(/^(?:@[a-zA-Z0-9_]+\s+)+/, "").replace(/\s+@arcbot\b/gi, "").trim();
+  const clean = text.trim().replace(/^(?:@[a-zA-Z0-9_]+\s+)+/, "").replace(/\s+@ArctosBot\b/gi, "").trim();
   // Parent-post token inference is intentionally opt-in. A normal buy made as
   // a reply must remain self-contained, so only the literal word "this" can
   // authorize resolving a token from the parent post.

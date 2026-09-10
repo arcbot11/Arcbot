@@ -38,13 +38,13 @@ export function parseFeeUpgradePhrase(raw: string):
 
 export const FEE_UPGRADE_RESARGUSES = {
   failed: "Failed: Could not complete that upgrade. Reply with the Upgrade request again shortly.",
-  unauthorized: "Required: Your Arc Bot wallet doesn't control the creator-fee rights for that token, so it can't upgrade it.",
-  already: "That token is already an Arc Bot V2 token",
-  notFound: "Required: Could not find that Arc Bot launch. Reply with the Upgrade request using the correct ticker or contract address.",
-  ambiguous: "Action needed: More than one Arc Bot launch uses that ticker. Reply with the full Upgrade request using the contract address.",
+  unauthorized: "Required: Your Arctos Bot wallet doesn't control the creator-fee rights for that token, so it can't upgrade it.",
+  already: "That token is already an Arctos Bot V2 token",
+  notFound: "Required: Could not find that Arctos Bot launch. Reply with the Upgrade request using the correct ticker or contract address.",
+  ambiguous: "Action needed: More than one Arctos Bot launch uses that ticker. Reply with the full Upgrade request using the contract address.",
   holders: "That token shares creator fees with holders, so it isn't eligible for this upgrade.",
   inProgress: "Pending: An upgrade is already being processed for that token. Wait for the result.",
-  review: "There's an issue with this token's upgrade - DM @ArcChainBot for help",
+  review: "There's an issue with this token's upgrade - DM @ArctosBot for help",
   unavailable: "Token upgrades aren't available right now. Reply with the Upgrade request again later.",
 } as const;
 
@@ -58,7 +58,7 @@ export function feeUpgradeAlreadyMessage(symbol?: string) {
 }
 
 export function feeUpgradeSuccessMessage(symbol: string | undefined, tokenPageUrl: string) {
-  return `${feeUpgradeTokenLabel(symbol)} has been upgraded to Arc Bot V2 - 95% of creator fees go to the creator, while 5% buys back and burns $ARCBOT
+  return `${feeUpgradeTokenLabel(symbol)} has been upgraded to Arctos Bot V2 - 95% of creator fees go to the creator, while 5% buys back and burns $ARCBOT
 ${tokenPageUrl}`;
 }
 

@@ -7,7 +7,7 @@ const token = `0x${"2".repeat(40)}`;
 
 it("reports actual confirmed dev-buy output in the launch sentence", async () => {
   const message = await transactionMessage(command, hash, token, undefined, "12345 EXAMPLE");
-  expect(message).toMatch(/and bought 12345 EXAMPLE \(≈\$20(?:\.00)?\)\./);
+  expect(message).toMatch(/and bought 12345 EXAMPLE \(\$20(?:\.00)?\)\./);
   expect(message).toContain("View Token:");
   expect(message).not.toContain("bought $20");
 });

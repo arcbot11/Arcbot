@@ -55,6 +55,9 @@ export type Wallet = { kind: "wallet"; id: string; owner: string; address: strin
 export type Transaction = { kind: "transaction"; id: string; owner: string; wallet: string; chainId: Chain;
   escrowRef?: {listingId:string;orderId?:string;step:string;sourceHold?:string;reserveWei?:string}; sourceRequestId?: string;
   swapOutput?: {token:string;minimum:string;recipient?:string};
+  settlement?: {gasWei:string;output?:{raw:string;decimals?:number}};
+  /** Read-only observation; not a settled transaction or permission to release holds. */
+  confirmation?: {status:"success"|"reverted";blockNumber:string};
   orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted";
   unsigned: string; raw?: string; hash?: string; blockNumber?: string; note?: string; createdAt: number; updatedAt: number };
 export type RecordValue = Listing | Order | Wallet | Transaction;

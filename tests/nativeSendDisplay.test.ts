@@ -25,21 +25,21 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs();
 
 describe("confirmed send-all ETH amount", () => {
   it("uses the confirmed net transfer amount rather than the requested 100 percent", async () => {
-    expect(await confirmedAllEthDisplay(command, sentWei)).toBe("0.00043251 ETH (≈$1.08)");
+    expect(await confirmedAllEthDisplay(command, sentWei)).toBe("0.00043251 ETH ($1.08)");
     expect(price).toHaveBeenCalledTimes(1);
   });
   it("calculates USD before rounding the ETH display", async () => {
     price.mockResolvedValue(1234.56);
     expect(await confirmedAllEthDisplay(command, parseEther("1.0000049").toString()))
-      .toBe("1 ETH (≈$1,234.57)");
+      .toBe("1 ETH ($1,234.57)");
   });
   it("keeps very small transfers nonzero and avoids scientific notation", async () => {
     expect(await confirmedAllEthDisplay(command, "1"))
-      .toBe("0.000000000000000001 ETH (≈$0.0000000000000025)");
+      .toBe("0.000000000000000001 ETH ($0.0000000000000025)");
   });
   it("supports omitted ETH and lowercase ETH", async () => {
-    expect(await confirmedAllEthDisplay({ ...command, token: undefined }, sentWei)).toContain("ETH (≈$");
-    expect(await confirmedAllEthDisplay({ ...command, token: "eth" }, sentWei)).toContain("ETH (≈$");
+    expect(await confirmedAllEthDisplay({ ...command, token: undefined }, sentWei)).toContain("ETH ($");
+    expect(await confirmedAllEthDisplay({ ...command, token: "eth" }, sentWei)).toContain("ETH ($");
   });
   it.each([
     { ...command, token: "ARCBOT" }, { ...command, amount: "50" },
@@ -96,7 +96,7 @@ describe("real confirmation reconstruction with mocked Convex records", () => {
       text: `send all ETH to ${recipient}`, parsedCommandJson: JSON.stringify(command),
     });
     expect(result.ok).toBe(true);
-    expect(result.message).toContain("Sent 0.00043251 ETH (≈$1.08) to");
+    expect(result.message).toContain("Sent 0.00043251 ETH ($1.08) to");
     expect(result.message).toContain(`Transaction: https://legacy-explorer.invalid/tx/${hash}`);
     expect(result.message).not.toContain("100%");
     expect(fitXReply(result.message)).toBe(result.message);

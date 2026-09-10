@@ -5,7 +5,7 @@ import { guidedLaunchPrompt } from "../lib/guided-launch-workflow";
 import { replyQueuePriority } from "../lib/x-reply-queue-policy";
 import { isConfirmedReply } from "../lib/voice";
 
-describe("Arc Bot response voice and workflow compatibility", () => {
+describe("Arctos Bot response voice and workflow compatibility", () => {
   it("keeps public help direct without greetings, hype, or emojis", () => {
     const replies = [conversationalWalletMessage(), unknownWalletMessage(),
       ...(["wallet", "fund", "gas", "send", "buy_sell", "launch", "fees"] as const).map(walletHelpMessage),

@@ -18,8 +18,8 @@ function desktopDeclaration(selector: string, property: string) {
 
 describe("stats page burn section", () => {
   it("uses the requested page title and an accessible burn heading", () => {
-    expect(page).toContain('title: "Arc Bot Stats"');
-    expect(page).toContain("<h1>Arc Bot Stats</h1>");
+    expect(page).toContain('title: "Arctos Bot Stats"');
+    expect(page).toContain("<h1>Arctos Bot Stats</h1>");
     expect(page).toContain('aria-labelledby="stats-burns-heading"');
     expect(page).toContain('<h2 id="stats-burns-heading">$ARCBOT Burned</h2>');
   });

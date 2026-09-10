@@ -12,13 +12,13 @@ const invoke = (f: any, ctx: any, args: any) => f._handler(ctx, args);
 afterEach(() => { vi.unstubAllGlobals(); vi.unstubAllEnvs(); });
 describe("burn inquiries", () => {
   it("admits the actual STARTUP reply including inherited participant mentions", async () => {
-    const text = "@StartupRH_ @arcbot how much $STARTUP 0xcc3cc9ce3a657472f3c10749ab8ebd3885b4b19e has been burned?";
+    const text = "@StartupRH_ @ArctosBot how much $STARTUP 0xcc3cc9ce3a657472f3c10749ab8ebd3885b4b19e has been burned?";
     const command = { kind: "show_burned", token: "0xcc3cc9ce3a657472f3c10749ab8ebd3885b4b19e", expectedTicker: "STARTUP" };
     expect(parseBurnedTokenInquiry(text)).toEqual(command);
     expect(straightforwardCommandOperation(text)).toBe("show_burned");
     expect(shouldHandlePassiveChainText(text)).toBe(true);
     expect(await parseXWalletIntent(text, false)).toEqual({ kind: "command", command });
-    expect(shouldHandlePassiveChainText("@StartupRH_ @arcbot so many burns lately")).toBe(false);
+    expect(shouldHandlePassiveChainText("@StartupRH_ @ArctosBot so many burns lately")).toBe(false);
   });
   it("shows whole tokens, supply percentage and current-MCap value without a footer", () => {
     expect(burnedTokenMessage(ca, { raw: "100055", decimals: 2, totalSupplyRaw: "1000000", symbol: "WSB", usdValue: 2.5 }))
@@ -28,7 +28,7 @@ describe("burn inquiries", () => {
   });
   it.each([
     "How much $WSB is burned?", "how many WSB tokens have been burnt so far?",
-    "Hey, @ArcBot could you tell me how much $WSB has been burned, please?",
+    "Hey, @ArctosBot could you tell me how much $WSB has been burned, please?",
     "Show me the total amount of WSB burned", "What's the burned supply of $WSB?",
     "Check WSB burn total", "$WSB burns?", "Total burned amount for WSB",
     "How much WSB is in the dead wallet?", "How much of WSB has burned in total?",
@@ -39,7 +39,7 @@ describe("burn inquiries", () => {
     expect(parseBurnedTokenInquiry(text)).toBeNull();
   });
   it.each(["WSB", "$WSB", "$COIN", "CA", ca, `$WSB CA: ${ca}`, "$パペット"])("recognizes %s without transaction authority", async token => {
-    const text = `@ArcBot How much ${token} has been burned?`;
+    const text = `@ArctosBot How much ${token} has been burned?`;
     const command = parseWalletCommand(text);
     expect(command.kind).toBe("show_burned");
     expect(isValueMovingCommand(command)).toBe(false);

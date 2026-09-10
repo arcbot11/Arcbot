@@ -23,7 +23,7 @@ One quote or settlement occupies a position at a time. Other positions can settl
 
 Each step waits for the preceding transfer's canonical, finalized receipt. ERC-20 transfers also require successful simulation return data, exact Transfer evidence, and recipient balance evidence. Transaction amounts, recipients, chain and position bindings are derived from durable records, never supplied as arbitrary payout instructions.
 
-All gas is participant-funded. Seller gas comes from the listing budget. Buyer Base ETH covers two incoming transactions plus three outgoing transaction allowances. The allowance is conservative, not a fee charged to Arc Bot. Base USDC purchases still require Base ETH for gas. No platform-funded gas wallet is used.
+All gas is participant-funded. Seller gas comes from the listing budget. Buyer Base ETH covers two incoming transactions plus three outgoing transaction allowances. The allowance is conservative, not a fee charged to Arctos Bot. Base USDC purchases still require Base ETH for gas. No platform-funded gas wallet is used.
 
 Return transactions reserve their own maximum gas cost. A small remainder can therefore stay in escrow. The backend records it against the originating buyer/order or seller/position and prevents later fills from spending it. Wallet history displays these credits. An automatic credit-claim/sweep flow is not implemented; recovery must preserve ownership and remain participant-funded. Never treat these credits as platform revenue.
 

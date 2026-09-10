@@ -3,7 +3,7 @@ import fs from "node:fs";
 import readline from "node:readline/promises";
 import process from "node:process";
 
-const TARGET_USERNAME = "ArcChainBot";
+const TARGET_USERNAME = "ArctosBot";
 const REQUEST_TOKEN_URL = "https://api.x.com/oauth/request_token";
 const ACCESS_TOKEN_URL = "https://api.x.com/oauth/access_token";
 const OUTPUT_FILE = ".env.x-oauth";
@@ -62,7 +62,7 @@ const local = readEnvFile(".env.local");
 const consumerKey = process.env.X_API_KEY || local.X_API_KEY;
 const consumerSecret = process.env.X_API_SECRET || local.X_API_SECRET;
 if (!consumerKey || !consumerSecret) {
-  console.error("Add the Arc Bot app's X_API_KEY and X_API_SECRET to .env.local first.");
+  console.error("Add the Arctos Bot app's X_API_KEY and X_API_SECRET to .env.local first.");
   process.exit(1);
 }
 
@@ -85,7 +85,7 @@ authorizeUrl.searchParams.set("screen_name", TARGET_USERNAME);
 
 console.log(`\nOpen this URL and sign in specifically as @${TARGET_USERNAME}:\n`);
 console.log(authorizeUrl.toString());
-console.log("\nApprove the Arc Bot app, then copy the PIN shown by X.\n");
+console.log("\nApprove the Arctos Bot app, then copy the PIN shown by X.\n");
 
 const terminal = readline.createInterface({ input: process.stdin, output: process.stdout });
 const verifier = (await terminal.question("X authorization PIN: ")).trim();

@@ -18,3 +18,13 @@ it.each([{owner:"bob"},{wallet:"0x2222222222222222222222222222222222222222"},{ki
 
 it("verifies submitted receipts without authorizing signing or rebroadcast",async()=>{m.advance.mockResolvedValue({...await m.read(),status:"completed"});expect(await(await GET(request())).json()).toMatchObject({status:"completed"});expect(m.advance).toHaveBeenCalledWith("trade:test",true);});
 it("retains status if receipt verification fails",async()=>{m.advance.mockRejectedValue(Error("unavailable"));expect(await(await GET(request())).json()).toMatchObject({status:"submitted"});});
+it("reports verified Base inclusion without treating it as finalized",async()=>{
+ m.advance.mockResolvedValue({...await m.read(),chainId:8453,leg:"send",confirmation:{status:"success",blockNumber:"100"}});
+ expect(await(await GET(request())).json()).toEqual({id:"trade:test",status:"submitted",leg:"send",confirmation:{status:"success",blockNumber:"100"}});
+});
+it("returns verified fill details without signed transaction bytes",async()=>{
+ m.read.mockResolvedValue({...await m.read(),chainId:5042,status:"completed",swapOutput:{token:"0x3600000000000000000000000000000000000000",minimum:"9000000"},settlement:{gasWei:"1000000000000000",output:{raw:"10230000",decimals:6}}});
+ const result=await(await GET(request())).json();
+ expect(result.details).toContainEqual({label:"Received",value:"10.23 USDC"});
+ expect(result).not.toHaveProperty("raw");expect(result).not.toHaveProperty("unsigned");
+});

@@ -1,4 +1,4 @@
-export type TransactionStatus={id:string;status:string;leg?:string};
+export type TransactionStatus={id:string;status:string;leg?:string;hash?:string;confirmation?:{status:"success"|"reverted";blockNumber:string};details?:Array<{label:string;value:string}>};
 export function transactionProgress(status:string,action:string){
   switch(status){
     case "prepared":return `Preparing ${action} signature…`;
@@ -16,16 +16,21 @@ export async function readTransactionStatus(id:string):Promise<TransactionStatus
 }
 export async function waitForTransaction(initial:TransactionStatus,action:string,io:{read:(id:string)=>Promise<TransactionStatus>;wait:()=>Promise<void>;active:()=>boolean;progress:(message:string)=>void}){
   let result=initial;
-  for(let attempt=0;attempt<=30;attempt++){
+  while(io.active()){
     if(!io.active())throw new Error("Tracking stopped. Check transaction history before submitting again.");
     if(result.id!==initial.id||result.leg!==initial.leg)throw new Error("Unexpected transaction status. Check transaction history.");
-    io.progress(transactionProgress(result.status,action));
+    io.progress(result.status==="submitted"&&result.confirmation
+      ?result.confirmation.status==="success"?`${action[0].toUpperCase()+action.slice(1)} received on Base. Waiting for final confirmation…`:`${action[0].toUpperCase()+action.slice(1)} reverted on Base. Waiting for final confirmation…`
+      :transactionProgress(result.status,action));
     if(result.status==="completed")return result;
     if(result.status==="reverted")throw new Error(transactionProgress(result.status,action));
-    if(attempt===30)break;
     await io.wait();
     if(!io.active())throw new Error("Tracking stopped. Check transaction history before submitting again.");
-    try{result=await io.read(initial.id);}catch{throw new Error("Status could not refresh. The transaction may still complete. Check transaction history before submitting again.");}
+    try{result=await io.read(initial.id);}catch{
+      io.progress(`Reconnecting to check ${action} confirmation…`);
+      // A failed read is not a failed transaction. Retry without authorizing another send.
+      do{await io.wait();if(!io.active())break;try{result=await io.read(initial.id);break;}catch{/* Retry while the controls remain active. */}}while(io.active());
+    }
   }
-  throw new Error(`${action[0].toUpperCase()+action.slice(1)} is still pending. Check transaction history before submitting again.`);
+  throw new Error("Tracking stopped. Check transaction history before submitting again.");
 }

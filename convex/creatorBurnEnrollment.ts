@@ -33,7 +33,7 @@ export async function queueCreatorBurnRequest(
     )
     .unique();
   if (!p || p.status !== "enrolled" || p.distributionMode !== "wallet")
-    throw new Error("This token needs an active Arc Bot vault first.");
+    throw new Error("This token needs an active Arctos Bot vault first.");
   const wallet = await ctx.db
     .query("cryptoWallets")
     .withIndex("by_owner_x_user_id", (q) =>

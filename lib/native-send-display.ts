@@ -30,7 +30,7 @@ export async function confirmedAllEthDisplay(command: WalletCommand, valueWei?: 
     const usd = new Intl.NumberFormat("en-US", value >= 0.01
       ? { minimumFractionDigits: 2, maximumFractionDigits: 2 }
       : { maximumSignificantDigits: 3 }).format(value);
-    return `${eth} (≈$${usd})`;
+    return `${eth} ($${usd})`;
   } catch {
     return eth;
   } finally {

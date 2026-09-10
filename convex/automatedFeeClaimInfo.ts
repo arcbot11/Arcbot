@@ -210,10 +210,10 @@ export const requestedClaimResult = internalQuery({
 });
 
 export const EMPTY_CLAIM_MESSAGES = {
-  v2: "Your tokens are Arc Bot V2 tokens. Creator-fee claims and payouts are automated: 95% goes to the creator, while 5% buys back and burns $ARCBOT. You don't need to claim manually.",
+  v2: "Your tokens are Arctos Bot V2 tokens. Creator-fee claims and payouts are automated: 95% goes to the creator, while 5% buys back and burns $ARCBOT. You don't need to claim manually.",
   legacy: "Your legacy tokens use manual fee claims. There are no ETH creator fees available to claim right now. Non-ETH-paired tokens must be claimed individually.",
-  mixed: "Your Arc Bot V2 launches use automated creator-fee claims and payouts. There are no legacy ETH fees available to claim manually right now. Claim non-ETH-paired legacy tokens individually.",
-  pausedV2: "Your Arc Bot V2 tokens use automated creator-fee claims and payouts, but processing is currently paused for one or more tokens. No manual claim was made.",
+  mixed: "Your Arctos Bot V2 launches use automated creator-fee claims and payouts. There are no legacy ETH fees available to claim manually right now. Claim non-ETH-paired legacy tokens individually.",
+  pausedV2: "Your Arctos Bot V2 tokens use automated creator-fee claims and payouts, but processing is currently paused for one or more tokens. No manual claim was made.",
 };
 type Guidance = { kind: "v2" | "legacy" | "mixed"; message: string };
 
@@ -246,7 +246,7 @@ export const emptyLegacyClaimMessage = internalQuery({
       const symbol = launch.symbol?.replace(/^\$/, "");
       const label = symbol && /^[A-Za-z0-9_]{1,32}$/.test(symbol) ? `$${symbol}` : "This token";
       if (program.status === "paused") return { kind: "v2", message: `ℹ️ ${label} uses automated creator-fee claims, but processing is currently paused. No manual claim was made.` };
-      return { kind: "v2", message: `ℹ️ ${label} is an Arc Bot V2 token. Creator-fee claims and payouts are automated: 95% goes to the creator, while 5% buys back and burns $ARCBOT.` };
+      return { kind: "v2", message: `ℹ️ ${label} is an Arctos Bot V2 token. Creator-fee claims and payouts are automated: 95% goes to the creator, while 5% buys back and burns $ARCBOT.` };
     }
 
     // Classify fee rights, not token holdings or historical launch ownership.

@@ -24,9 +24,9 @@ export async function arcSelectedTokenBalance(ownerAddress:string,tokenAddress:s
   return {address:token,balance,raw:raw.toString(),decimals,maxSellRaw,sellTaxBps,...await tokenUsdEstimate(token,balance)};
 }
 
-export function arcTokenBalances(address:string,known:string[]=[]):Promise<Result>{
+export function arcTokenBalances(address:string,known:string[]=[],fresh=false):Promise<Result>{
   const owner=getAddress(address),key=owner+known.sort().join();
-  const hit=cache.get(key);if(hit&&hit.expires>Date.now())return hit.request;
+  const hit=cache.get(key);if(!fresh&&hit&&hit.expires>Date.now())return hit.request;
   const request=readBalances(owner,known).catch(error=>{cache.delete(key);throw error;});
   if(cache.size>=100)cache.delete(cache.keys().next().value!);
   cache.set(key,{expires:Date.now()+15_000,request});return request;

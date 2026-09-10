@@ -1,6 +1,8 @@
 import { CdpClient } from "@coinbase/cdp-sdk";
 import { OTC_FEE_RECIPIENT } from "../project-config";
-import { getAddress, keccak256, stringToHex, parseTransaction, type Hex } from "viem";
+import { getAddress, parseTransaction, type Hex } from "viem";
+import {escrowAccountName,legacyEscrowAccountName} from "./escrow-name";
+export {escrowAccountName} from "./escrow-name";
 import { arcConfigFromEnv } from "../arc/config";
 import { baseConfigFromEnv } from "../base/config";
 import { type Store, type Listing, type Order, type Transaction, type Wallet, type RecordValue, locked, walletId } from "./model";
@@ -8,7 +10,6 @@ import { repository } from "./repository";
 import { advanceTransaction, balanceSnapshot, prepareCall, walletTransferConfiguration } from "./runtime";
 import { escrowCall, escrowRecords, escrowTxId, orderSteps, type EscrowStep } from "./escrow-model";
 
-export const escrowAccountName=(id:string)=>`arc-otc-${keccak256(stringToHex(id)).slice(2,34)}`;
 export function escrowConfiguration(){
   walletTransferConfiguration(5042);walletTransferConfiguration(8453);
   return {feeRecipient:getAddress(OTC_FEE_RECIPIENT),arc:arcConfigFromEnv(),base:baseConfigFromEnv()};
@@ -23,10 +24,12 @@ export async function assertEscrowTransaction(record:Transaction){
   if(call.from.toLowerCase()!==listing.escrow!.address!.toLowerCase()&&!await repository().identity(record.owner,record.wallet))throw new Error("Escrow participant wallet is not active.");
 }
 export async function provisionEscrow(listing:Listing){
-  if(!listing.escrow||listing.escrow.accountName!==escrowAccountName(listing.id))throw new Error("Escrow account name mismatch.");
+  const accountName=escrowAccountName(listing.id);
+  const repair=listing.status==="funding"&&!listing.escrow?.address&&listing.escrow?.accountName===legacyEscrowAccountName(listing.id);
+  if(!listing.escrow||listing.escrow.accountName!==accountName&&!repair)throw new Error("Escrow account name mismatch.");
   const cdp=new CdpClient({apiKeyId:process.env.CDP_API_KEY_ID,apiKeySecret:process.env.CDP_API_KEY_SECRET,walletSecret:process.env.CDP_WALLET_SECRET});
-  const account=await cdp.evm.getOrCreateAccount({name:listing.escrow.accountName});
-  return repository().command<Listing>("escrow_bind",{id:listing.id,address:account.address});
+  const account=await cdp.evm.getOrCreateAccount({name:accountName});
+  return repository().command<Listing>("escrow_bind",{id:listing.id,address:account.address,...(repair?{accountName}:{})});
 }
 async function runStep(listing:Listing,step:EscrowStep,order?:Order){
   const repo=repository(),id=escrowTxId(listing,step,order);let record=await repo.read<Transaction|null>({id});

@@ -12,19 +12,28 @@ function record(call:{to:Hex;value:bigint;data:Hex},leg:Transaction["leg"]="send
 it("shows ERC20 sends with the correct decimals and recipient without exposing signed bytes",()=>{
   const tx=record({to:usdc,value:0n,data:encodeFunctionData({abi:parseAbi(["function transfer(address,uint256)"]),functionName:"transfer",args:[recipient,2000000n]})});
   const result=transactionHistory(tx);
-  expect(result.details).toEqual([{label:"Amount",value:"2 USDC"},{label:"To",value:recipient}]);
+  expect(result.details).toEqual([{label:"Amount",value:"2.00 USDC"},{label:"To",value:recipient}]);
   expect(result).not.toHaveProperty("raw");expect(result).not.toHaveProperty("unsigned");
 });
 it("shows native Arc USDC in 18 decimals",()=>{
-  expect(transactionHistory(record({to:recipient,value:10n**18n,data:"0x"})).details[0].value).toBe("1 USDC");
+  expect(transactionHistory(record({to:recipient,value:10n**18n,data:"0x"})).details[0].value).toBe("1.00 USDC");
 });
 it.each(["v3","v4"] as const)("shows %s swap input and minimum, not an invented receipt amount",protocol=>{
   const route:Route={tokenIn:usdc,tokenOut:argus,pools:[protocol==="v3"?{protocol,address:recipient,currency0:usdc,currency1:argus,fee:10000}:{protocol,currency0:usdc,currency1:argus,fee:10000,tickSpacing:200,hooks:zeroAddress}]};
   const result=transactionHistory(record(encodeArcSwap(route,10000000n,9000n*10n**18n,9999999999n),"swap"));
-  expect(result.details).toContainEqual({label:"Input",value:"10 USDC"});
-  expect(result.details).toContainEqual({label:"Minimum output",value:"9000 ARGUS"});
+  expect(result.details).toContainEqual({label:"Input",value:"10.00 USDC"});
+  expect(result.details).toContainEqual({label:"Minimum output",value:"9,000 ARGUS"});
 });
 it("keeps older malformed records visible",()=>{
   const tx=record({to:recipient,value:0n,data:"0x"});tx.unsigned="invalid";
   expect(transactionHistory(tx)).toMatchObject({status:"completed",details:[]});
+});
+it.each([0,6,18])("replaces the minimum with the verified received amount using %s decimals",decimals=>{
+ const tx=record({to:recipient,value:0n,data:"0x1234"},"swap");
+ tx.swapOutput={token:argus,minimum:"1"};tx.settlement={gasWei:"1000000000000000",output:{raw:(12n*10n**BigInt(decimals)).toString(),decimals}};
+ const result=transactionHistory(tx);
+ expect(result.details).toContainEqual({label:"Received",value:"12 ARGUS"});
+ expect(result.details).toContainEqual({label:"Gas paid",value:"0.001 USDC"});
+ expect(result.details.some(d=>d.label==="Minimum output")).toBe(false);
+ tx.status="submitted";expect(transactionHistory(tx).details.some(d=>d.label==="Received")).toBe(false);
 });

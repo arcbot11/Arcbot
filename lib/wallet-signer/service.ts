@@ -1079,7 +1079,7 @@ export async function prepareAutomatedFeeControllerTransaction(request: Automate
     // The contract independently keys releaseReserve by msg.sender.
   } else if (request.operation.type === "withdraw") {
     if (request.operation.recipient.toLowerCase() !== request.expectedAddress.toLowerCase()) {
-      throw new Error("automated fee withdrawal recipient must be the Arc Bot wallet");
+      throw new Error("automated fee withdrawal recipient must be the Arctos Bot wallet");
     }
     const available = await client.readContract({
       address: vault, abi: automatedFeeVaultAbi, functionName: "claimable",

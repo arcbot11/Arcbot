@@ -17,8 +17,8 @@ describe("whole image instructions are not ticker values", () => {
     expect(groundedCanonicalCommand(post)).toMatchObject({ name: "River", symbol: "RIV" });
   });
   it.each([
-    ["@ArcBot launch a token $TOAST TOSTA ticker Use this image as logo Add Your Token Logo.", "TOAST"],
-    ["@ArcBot launch a token mosfik_eth ticker Use this image as logo", "MOSFIKETH"],
+    ["@ArctosBot launch a token $TOAST TOSTA ticker Use this image as logo Add Your Token Logo.", "TOAST"],
+    ["@ArctosBot launch a token mosfik_eth ticker Use this image as logo", "MOSFIKETH"],
   ])("does not reuse image syntax in the observed request: %s", (post, symbol) => {
     expect(parseWalletCommand(post)).toMatchObject({ kind: "launch", symbol });
     expect(groundedCanonicalCommand(post)).toMatchObject({ kind: "launch", symbol });
@@ -40,7 +40,7 @@ describe("whole image instructions are not ticker values", () => {
     ai.mockResolvedValueOnce(JSON.stringify({ kind: "command", operation: "launch", topic: null }))
       .mockResolvedValue(JSON.stringify({ kind: "launch", launchMode: "argus", name: "River", symbol: "AS" }));
     const diagnostics: AiWorkflowDiagnostics = { classificationAttempts: [], extractionAttempts: [] };
-    const result = await parseXWalletIntent("@ArcBot launch River ticker use this image as logo", hasImage, diagnostics);
+    const result = await parseXWalletIntent("@ArctosBot launch River ticker use this image as logo", hasImage, diagnostics);
     expect(result).toMatchObject({ kind: "command", command: { name: "River", symbol: "RIVER" } });
     expect(diagnostics.extractionAttempts).toHaveLength(2);
     expect(diagnostics.extractionAttempts.every(attempt => !attempt.accepted)).toBe(true);

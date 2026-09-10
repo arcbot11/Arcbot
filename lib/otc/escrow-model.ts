@@ -2,6 +2,7 @@ import { encodeFunctionData, getAddress, parseAbi, parseTransaction, type Hex } 
 import { BASE_USDC } from "../base/usdc";
 import { type Store, type Listing, type Order, type Transaction, wallet, locked, updateListingHold, finishOrder, paymentAsset } from "./model";
 import { prepareTransaction } from "./transactions";
+import {escrowAccountName,legacyEscrowAccountName} from "./escrow-name";
 
 
 const transferAbi=parseAbi(["function transfer(address,uint256) returns(bool)"]);
@@ -65,13 +66,17 @@ export async function prepareEscrowStep(store:Store,input:EscrowPrepare,now:numb
     else w.holds[holdId]=(held-BigInt(input.reserveWei)).toString();
     await store.put(w);
   }
-  const record=await prepareTransaction(store,{id,owner:call.owner,wallet:call.from,chainId:call.chainId,leg:"send",unsigned:input.unsigned,reserveWei:input.reserveWei,balanceWei:input.balanceWei,block:input.block},now);
+  const record=await prepareTransaction(store,{id,owner:call.owner,wallet:call.from,chainId:call.chainId,leg:"send",unsigned:input.unsigned,reserveWei:input.reserveWei,balanceWei:input.balanceWei,block:input.block},now,true);
   record.escrowRef={listingId:listing.id,...(order?{orderId:order.id}:{}),step:input.step,...(holdId?{sourceHold:holdId,reserveWei:input.reserveWei}:{})};await store.put(record);return record;
 }
-export async function bindEscrow(store:Store,id:string,address:string,now:number){
+export async function bindEscrow(store:Store,id:string,address:string,now:number,accountName?:string){
   const {listing}=await escrowRecords(store,id);const normalized=getAddress(address);
   if(normalized.toLowerCase()===listing.seller.toLowerCase()||/^0x0{40}$/i.test(normalized))throw new Error("Escrow must be a separate wallet.");
   if(listing.escrow!.address&&listing.escrow!.address!==normalized)throw new Error("Escrow wallet binding is immutable.");
+  if(accountName&&accountName!==listing.escrow!.accountName){
+    if(listing.escrow!.address||listing.status!=="funding"||accountName!==escrowAccountName(id)||listing.escrow!.accountName!==legacyEscrowAccountName(id))throw new Error("Escrow name cannot change after provisioning.");
+    listing.escrow!.accountName=accountName;
+  }
   listing.escrow!.address=normalized;listing.updatedAt=now;await store.put(listing);return listing;
 }
 export async function advanceEscrowState(store:Store,listingId:string,orderId:string|undefined,now:number,baseBalanceWei?:string,baseBlock?:string,arcBalanceWei?:string,arcBlock?:string){

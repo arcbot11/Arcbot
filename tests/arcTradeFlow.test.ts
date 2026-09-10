@@ -3,6 +3,14 @@ import { executeTradeFlow, estimatedTradeGasBudget, ARC_TRADE_GAS_BUDGET_WEI, ty
 const quote = (stage = "approve token", changes: Partial<TradeFlowQuote> = {}): TradeFlowQuote => ({ quote: stage, stage, amountOut: "100", minimumOut: "99", protocol: "v3", gasWei: "10", expiresAt: Date.now() + 60000, ...changes });
 const io = () => ({ confirm: vi.fn(), preview: vi.fn(), wait: vi.fn(async () => {}), active: () => true, progress: vi.fn() });
 describe("automatic trade setup", () => {
+  it("carries the latest verified route through both approvals", async () => {
+    const calls = io();
+    calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"c",leg:"swap",status:"completed"});
+    calls.preview.mockResolvedValueOnce(quote("approve router", {routeHint:"route-2"})).mockResolvedValueOnce(quote("swap", {routeHint:"route-3"}));
+    const result = await executeTradeFlow(quote("approve token", {amountIn:"10",routeHint:"route-1"}), calls);
+    expect(result.result?.id).toBe("c");
+    expect(calls.preview.mock.calls).toEqual([["10","route-1"],["10","route-2"]]);
+  });
   it("budgets swap work separately from the cheaper approval",async()=>{
     const calls=io();
     const budget=ARC_TRADE_GAS_BUDGET_WEI;
@@ -56,8 +64,9 @@ describe("automatic trade setup", () => {
   });
   it("does not advance while approval is still pending", async()=>{
     const calls=io();calls.confirm.mockResolvedValue({id:"a",leg:"allowance",status:"submitted"});
-    await expect(executeTradeFlow(quote(),calls)).rejects.toThrow("pending");expect(calls.preview).not.toHaveBeenCalled();
+    calls.active=()=>calls.confirm.mock.calls.length<40;
+    await expect(executeTradeFlow(quote(),calls)).rejects.toThrow("Tracking stopped");expect(calls.preview).not.toHaveBeenCalled();
   });
 });
 
-it("keeps the original token quantity after approval to avoid USD repricing approval loops",async()=>{const calls=io();calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"completed"});calls.preview.mockResolvedValue(quote("swap"));await executeTradeFlow(quote("approve token",{amountIn:"123.456789012345678901"}),calls);expect(calls.preview).toHaveBeenCalledWith("123.456789012345678901");});
+it("keeps the original token quantity after approval to avoid USD repricing approval loops",async()=>{const calls=io();calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"completed"});calls.preview.mockResolvedValue(quote("swap"));await executeTradeFlow(quote("approve token",{amountIn:"123.456789012345678901"}),calls);expect(calls.preview).toHaveBeenCalledWith("123.456789012345678901",undefined);});

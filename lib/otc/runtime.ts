@@ -154,6 +154,10 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
       }
     }
     if(record.leg==="send"&&tokenTransfer(tx.data,tx.value)){
+      if(!record.escrowRef&&record.chainId===8453&&tx.to?.toLowerCase()===BASE_USDC.toLowerCase()){
+        const transfer=tokenTransfer(tx.data,tx.value)!;
+        if(BigInt(w.usdcHolds?.[record.holdId]??"0")!==transfer.amount||BigInt(await baseUsdcBalance(record.wallet,snapshot.block))<lockedBaseUsdc(w))throw new Error("Base USDC reservation is not covered.");
+      }
       const simulation=await chainClient(record.chainId).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value,blockNumber:BigInt(snapshot.block)});
       verifyTransferReturn(simulation.data);
     }
@@ -172,12 +176,8 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     if (error?.name === "TransactionReceiptNotFoundError") return null; throw error;
   });
   if (receipt) {
+    const settlement:Transaction["settlement"]=record.chainId===5042&&record.leg==="swap"?{gasWei:(receipt.gasUsed*receipt.effectiveGasPrice).toString()}:undefined;
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt is not canonical.");
-    {
-      const finalized=await client.getBlock({blockTag:"finalized"});
-      if (typeof finalized.number !== "bigint" || finalized.number<receipt.blockNumber) return record;
-      if ((await client.getBlock({blockNumber:finalized.number})).hash !== finalized.hash) throw new Error("Finality evidence changed.");
-    }
     const chainTx=await client.getTransaction({hash:record.hash as Hex});
     if (chainTx.from.toLowerCase()!==record.wallet.toLowerCase() || chainTx.to?.toLowerCase()!==tx.to?.toLowerCase() || chainTx.value!==(tx.value??0n) || chainTx.input!==(tx.data??"0x")) throw new Error("Receipt transaction does not match the order.");
     if(receipt.status === "success" && record.leg === "send"){
@@ -203,6 +203,12 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
         const transfers=parseEventLogs({abi:transferAbi,logs:receipt.logs.filter(l=>l.address.toLowerCase()===token.toLowerCase()),eventName:"Transfer",strict:true});
         const incoming=transfers.filter(e=>e.args.to.toLowerCase()===outputRecipient.toLowerCase());
         const received=incoming.reduce((sum,e)=>sum+e.args.value,0n);
+        const outgoing=transfers.filter(e=>e.args.from.toLowerCase()===outputRecipient.toLowerCase()).reduce((sum,e)=>sum+e.args.value,0n);
+        // Native USDC gas is separate from the swap output.
+        const netReceived=nativeOutput?received:received-outgoing;
+        if(netReceived<0n)throw new Error("Invalid swap receipt amount.");
+        const decimals=nativeOutput?18:token.toLowerCase()===ARC_USDC.toLowerCase()?6:await client.readContract({address:token,abi:parseAbi(["function decimals() view returns (uint8)"]),functionName:"decimals",blockNumber:receipt.blockNumber}).catch(()=>undefined);
+        if(settlement)settlement.output={raw:netReceived.toString(),...(typeof decimals==="number"&&Number.isInteger(decimals)&&decimals>=0&&decimals<=255?{decimals}:{})};
         if(received<BigInt(output.minimum))throw new Error("Minimum swap output was not delivered.");
         if(record.chainId===5042&&(nativeOutput||token.toLowerCase()===ARC_USDC.toLowerCase())){
           const [before,after,block,blockLogs]=await Promise.all([
@@ -259,7 +265,13 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
       if (paymentAsset(order) === "USDC") await verifyUsdcPaymentDelivery(order, receipt.blockNumber, receipt.logs);
     }
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt changed during verification.");
-    return repo.command<Transaction>("settled",{id,block:receipt.blockNumber.toString(),success:receipt.status==="success"});
+    const finalized=await client.getBlock({blockTag:"finalized"});
+    if(typeof finalized.number!=="bigint"||finalized.number<receipt.blockNumber){
+      return record.chainId===8453&&record.leg==="send"&&!record.escrowRef
+        ?{...record,confirmation:{status:receipt.status,blockNumber:receipt.blockNumber.toString()}}:record;
+    }
+    if((await client.getBlock({blockNumber:finalized.number})).hash!==finalized.hash)throw new Error("Finality evidence changed.");
+    return repo.command<Transaction>("settled",{id,block:receipt.blockNumber.toString(),success:receipt.status==="success",...(settlement?{settlement}:{})});
   }
   if(receiptOnly)return record;
   if (snapshot.nonce>(tx.nonce??0)) throw new Error("Nonce consumed without a verified receipt. Funds remain reserved.");
@@ -341,7 +353,7 @@ export async function drainWork() {
     try { if(record.kind==="order") await advanceOrder(record.id); else if(record.kind==="listing")await (await import("./escrow-runtime")).advanceEscrowPosition(record.id);else await advanceTransaction(record.id); await repo.command("touch",{id:record.id}); processed++; }
     catch(error) {
       console.error("otc_worker",record.id,error instanceof Error?error.message:"Settlement failed");
-      await repo.command("note",{id:record.id,note:record.kind==="transaction"&&record.leg==="swap"?"Settlement is waiting for verification or recovery.":"Settlement is waiting for verification or recovery. Reserved funds remain locked."});
+      await repo.command("note",{id:record.id,note:record.kind==="listing"&&record.status==="funding"&&!record.escrow?.address?"Escrow wallet setup is pending. Listing funds remain reserved in your wallet.":"Pending verification"});
     }
   }
   return {processed};

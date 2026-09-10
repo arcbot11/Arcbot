@@ -1,6 +1,6 @@
 # Automated creator-fee engine (disabled foundation)
 
-This directory contains the unreleased on-chain foundation for per-launch Arc Bot creator-fee vaults. It is not connected to the current launch, claim, reassignment, terminal, or X workflows.
+This directory contains the unreleased on-chain foundation for per-launch Arctos Bot creator-fee vaults. It is not connected to the current launch, claim, reassignment, terminal, or X workflows.
 
 The entire backend feature is fail-closed behind:
 
@@ -34,6 +34,6 @@ Safety architecture now represented in the foundation:
 - ETH pairs use the canonical zero-core-fee Argus V4 pool through the native executor. Asset pairs use a separate two-leg executor with an administrator-reviewed direct V3 or V4 route from the catalog asset to native ETH, followed by the canonical ARCBOT pool. Routes can only be configured while processing is globally disabled, and both hop minima are authenticated.
 - Holder fee sharing is intentionally outside the automated flywheel. Selecting it at launch or reassigning to holders must not deploy or retain an automated vault.
 - Graduated pools expose a creator-callable hook sweep, but Argus requires its trusted operator whenever conversion or a Argus-native buyback is needed. The vault can perform the creator-safe sweep and otherwise waits for the Argus operator to move fees into escrow; it never fabricates or bypasses that authority.
-- Existing-token upgrades have a protected admin-CDP vault-deployment endpoint. The existing launch controller must still execute Argus's creator-fee-recipient transfer from its own Arc Bot wallet; a database record alone cannot enroll a token.
+- Existing-token upgrades have a protected admin-CDP vault-deployment endpoint. The existing launch controller must still execute Argus's creator-fee-recipient transfer from its own Arctos Bot wallet; a database record alone cannot enroll a token.
 
 Deployment order is control, vault implementation, vault factory, buyback adapter, native ARCBOT V4 executor, then paired-asset executor. There is no activation delay; adapter and executor changes are permitted only while global processing is disabled. Processing remains disabled throughout deployment and configuration.

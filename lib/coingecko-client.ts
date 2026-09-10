@@ -23,7 +23,7 @@ export function paidCoinGeckoUrl(freeUrl: string) {
 export function coinGeckoHeaders(paid: boolean, extra?: HeadersInit) {
   const headers = new Headers(extra);
   headers.set("accept", "application/json;version=20230302");
-  headers.set("user-agent", "ArcBot/1.0");
+  headers.set("user-agent", "ArctosBot/1.0");
   const key = coinGeckoPaidKey();
   if (paid && key) headers.set("x-cg-pro-api-key", key);
   return headers;

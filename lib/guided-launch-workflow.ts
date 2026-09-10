@@ -171,8 +171,8 @@ function explanation(phase: GuidedLaunchPhase) {
     twitter: "The optional X link must identify one X profile, either as @user or an x.com profile URL.",
     telegram: "The optional Telegram link must use the t.me/XXXXX format. A bare @handle is not accepted.",
     pair: `ETH is the default pairing asset. Supported Argus pairing assets are ${PUBLISHED_PAIR_SYMBOLS.join(", ")}.`,
-    dev_buy: "A developer buy purchases tokens for your Arc Bot wallet in the launch transaction. It is optional and uses your wallet funds.",
-    fees: "By default, 95% of creator fees go to your Arc Bot wallet and 5% buys back and burns $ARCBOT. Instead assign your share to another wallet or holders, or use a percentage of it to buy back and burn your launched token.",
+    dev_buy: "A developer buy purchases tokens for your Arctos Bot wallet in the launch transaction. It is optional and uses your wallet funds.",
+    fees: "By default, 95% of creator fees go to your Arctos Bot wallet and 5% buys back and burns $ARCBOT. Instead assign your share to another wallet or holders, or use a percentage of it to buy back and burn your launched token.",
     confirm: "Confirmation submits the launch using the details shown. A launch is an on-chain action and cannot be undone.",
   };
   return explanations[phase];
@@ -300,7 +300,7 @@ function summary(state: GuidedLaunchState) {
     `Telegram: ${d.telegram || "None"}`,
     `Pair: ${d.pairToken || "ETH"}`,
     `Developer buy: ${d.devBuy ? `${d.devBuy.unit === "usd" ? "$" : ""}${d.devBuy.amount}${d.devBuy.unit === "eth" ? " ETH" : d.devBuy.unit === "pair" ? ` ${d.pairToken}` : ""}` : "None"}`,
-    `Creator fees: ${d.holderFeeSharing ? "Shared with holders" : d.feeRecipient ? `Assigned to ${d.feeRecipient}` : d.selfBurnBps !== undefined ? `${d.selfBurnBps / 100}% of your share buys back and burns $${d.symbol}` : "Your Arc Bot wallet"}`,
+    `Creator fees: ${d.holderFeeSharing ? "Shared with holders" : d.feeRecipient ? `Assigned to ${d.feeRecipient}` : d.selfBurnBps !== undefined ? `${d.selfBurnBps / 100}% of your share buys back and burns $${d.symbol}` : "Your Arctos Bot wallet"}`,
     "",
     guidedLaunchPrompt("confirm"),
   ];
