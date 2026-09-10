@@ -1,21 +1,33 @@
 "use client";
 import { ArcTokenPicker } from "./ArcTokenPicker";
-import {useState} from "react";
-import {useOtcSession,webPost,units} from "./OtcClient";
-type Quote={quote:string;stage:string;amountOut:string;minimumOut:string;protocol:string;gasWei:string;expiresAt:number};
-export function ArcTradeControls({side,disabled=false}:{side:"buy"|"sell"|"swap";disabled?:boolean}){
+import {useState,useEffect,useRef} from "react";
+import { executeTradeFlow, type TradeFlowQuote as Quote } from "@/lib/arc/trade-flow";
+import {useOtcSession,webPost} from "./OtcClient";
+export function ArcTradeControls({side,disabled=false,onNotice=()=>{}}:{side:"buy"|"sell"|"swap";disabled?:boolean;onNotice?:(message:string)=>void}){
   const session=useOtcSession(),[token,setToken]=useState(""),[amount,setAmount]=useState(""),[output,setOutput]=useState("native"),[slippage,setSlippage]=useState("1");
-  const [quote,setQuote]=useState<Quote|null>(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");
-  const review=async()=>{setBusy(true);setNotice("");setQuote(null);try{if(side==="swap"&&(!/^0x[0-9a-fA-F]{40}$/.test(output)||output.toLowerCase()===token.toLowerCase()))throw new Error("Choose two different token contracts.");setQuote(await webPost("/api/wallet/trade",{action:"preview",tokenIn:side==="buy"?"native":token,tokenOut:side==="buy"?token:side==="sell"?"native":output,amount,slippageBps:Math.round(Number(slippage)*100)},session));}catch(e){setNotice(e instanceof Error?e.message:"Trade preview failed.");}finally{setBusy(false);}};
+  const [busy,setBusy]=useState(false);
+  const active=useRef(true),inFlight=useRef(false);
+  useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
+  const [progress,setProgress]=useState("");
+  const preview=()=>webPost("/api/wallet/trade",{action:"preview",tokenIn:side==="buy"?"native":token,tokenOut:side==="buy"?token:side==="sell"?"native":output,amount,slippageBps:Math.round(Number(slippage)*100)},session) as Promise<Quote>;
+  const execute=async()=>{
+    if(inFlight.current||disabled||!session?.authenticated)return;
+    inFlight.current=true;setBusy(true);setProgress("Checking…");
+    try{
+      if(side==="swap"&&(!/^0x[0-9a-fA-F]{40}$/.test(output)||output.toLowerCase()===token.toLowerCase()))throw new Error("Choose two different token contracts.");
+      const initial=await preview();
+      const outcome=await executeTradeFlow(initial,{preview,confirm:q=>webPost("/api/wallet/trade",{action:"confirm",quote:q},session),wait:()=>new Promise(resolve=>setTimeout(resolve,3000)),active:()=>active.current,progress:setProgress});
+      onNotice(outcome.result?`Trade recorded: ${outcome.result.status}. Check transaction history.`:outcome.message);
+    }catch(e){onNotice(e instanceof Error?e.message:"Trade failed. Check transaction history.");}
+    finally{inFlight.current=false;setBusy(false);setProgress("");}
+  };
   return <fieldset disabled={disabled||busy} className={`otc-form-panel arc-trade-controls${disabled?" wallet-preview-disabled":""}`}>
     <legend>{side==="buy"?"Buy":side==="sell"?"Sell":"Swap"}</legend>
-    <ArcTokenPicker label={side==="swap"?"From token":"Token"} value={token} disabled={disabled||busy} onChange={address=>{setToken(address);setQuote(null);}}/>
-    {side==="swap"&&<ArcTokenPicker label="To token" value={output==="native"?"":output} disabled={disabled||busy} onChange={address=>{setOutput(address);setQuote(null);}}/>}
+    <ArcTokenPicker label={side==="swap"?"From token":"Token"} value={token} disabled={disabled||busy} onChange={address=>{setToken(address);}}/>
+    {side==="swap"&&<ArcTokenPicker label="To token" value={output==="native"?"":output} disabled={disabled||busy} onChange={address=>{setOutput(address);}}/>}
     {side==="sell"&&<p className="otc-fine">Receive Arc USDC.</p>}
-    <label>{side==="buy"?"USDC to spend":"Tokens to spend"}<input inputMode="decimal" value={amount} onChange={e=>{setAmount(e.target.value);setQuote(null);}} placeholder="0.00"/></label>
-    <label>Slippage %<input inputMode="decimal" value={slippage} onChange={e=>{setSlippage(e.target.value);setQuote(null);}}/></label>
-    <button type="button" className="arc-button" onClick={()=>void review()} disabled={disabled||busy||!session?.authenticated||!token||(side==="swap"&&!/^0x[0-9a-fA-F]{40}$/.test(output))}>{busy?"Checking…":"Review trade"}</button>
-    {quote&&<div className="otc-quote"><h3>{quote.stage==="swap"?"Confirm swap":quote.stage}</h3><p>{quote.protocol.toUpperCase()} · Estimated output: {quote.amountOut}</p><p>Minimum output: {quote.minimumOut}</p><p>Gas allowance: {units(quote.gasWei,18)} USDC</p>{quote.stage!=="swap"&&<p>Approve access to the input amount. After confirmation, review the trade again for a fresh price.</p>}<button type="button" className="arc-button" disabled={busy} onClick={async()=>{setBusy(true);try{if(Date.now()>=quote.expiresAt)throw new Error("Quote expired. Review the trade again.");const r=await webPost("/api/wallet/trade",{action:"confirm",quote:quote.quote},session);setQuote(null);setNotice(`${r.leg==="allowance"?"Approval":"Swap"} recorded: ${r.status}. Check transaction history before continuing.`);}catch(e){setNotice(e instanceof Error?e.message:"Trade failed.");}finally{setBusy(false);}}}>Confirm {quote.stage}</button></div>}
-    {notice&&<p role="status">{notice} {notice.startsWith("Reconnect")&&<a href="/api/auth/x/start">Reconnect X</a>}</p>}
+    <label>{side==="buy"?"USDC to spend":"Tokens to spend"}<input inputMode="decimal" value={amount} onChange={e=>{setAmount(e.target.value);}} placeholder="0.00"/></label>
+    <label>Slippage %<input inputMode="decimal" value={slippage} onChange={e=>{setSlippage(e.target.value);}}/></label>
+    <button type="button" className="arc-button" onClick={()=>void execute()} disabled={disabled||busy||!session?.authenticated||!token||(side==="swap"&&!/^0x[0-9a-fA-F]{40}$/.test(output))}>{busy?progress:side==="buy"?"Buy":side==="sell"?"Sell":"Swap"}</button>
   </fieldset>;
 }

@@ -13,5 +13,5 @@ export async function generateMetadata({params}:Props):Promise<Metadata>{
 export default async function WalletPage({params}:Props){
   const {address}=await params;if(!isAddress(address))notFound();
   const owner=getAddress(address);
-  return <main><SiteHeader/><section className="arc-container otc-page"><p className="arc-kicker">ARC BOT / WALLET</p><div className="otc-heading"><h1>Wallet controls.</h1><a className="arc-text-link" href={`https://www.arcexplorer.org/address/${owner}`} target="_blank" rel="noreferrer">Arc Explorer ↗</a></div><CopyWalletAddress address={owner}/><p className="otc-fine">Connect the owning account to see balances, trade controls, and order records.</p><WalletDashboard address={owner}/></section><SiteFooter/></main>;
+  return <main><SiteHeader/><section className="arc-container otc-page"><p className="arc-kicker">ARC BOT / WALLET</p><div className="otc-heading"><h1>Wallet controls.</h1><a className="arc-text-link" href={`https://www.arcexplorer.org/address/${owner}`} target="_blank" rel="noreferrer">View on Arc Explorer ↗</a></div><CopyWalletAddress address={owner}/><p className="otc-fine">Connect the owning account to see balances, trade controls, and order records.</p><WalletDashboard address={owner}/></section><SiteFooter/></main>;
 }
