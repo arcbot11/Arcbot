@@ -56,6 +56,7 @@ export function readWebWalletSession(value: string | undefined, secret: string):
     if (!/^web_[a-zA-Z0-9_-]{16,80}$/.test(session.sessionId ?? "")) return null;
     if (!Number.isSafeInteger(session.authenticatedAt) || (session.authenticatedAt ?? 0) > Math.floor(Date.now() / 1000) + 60) return null;
     if (!Number.isSafeInteger(session.expiresAt) || (session.expiresAt ?? 0) <= Math.floor(Date.now() / 1000)) return null;
+    if (session.authenticatedAt! <= 0 || session.expiresAt! <= session.authenticatedAt! || session.expiresAt! - session.authenticatedAt! > WEB_WALLET_SESSION_SECONDS) return null;
     return session as WebWalletSession;
   } catch {
     return null;

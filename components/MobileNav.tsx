@@ -1,4 +1,5 @@
 "use client";
+import { WalletAccountMenu } from "@/components/WalletAccountMenu";
 
 import Image from "next/image";
 import { brand } from "@/lib/brand";
@@ -26,8 +27,8 @@ export function MobileNav() {
       <Link href="/" onClick={() => setOpen(false)}>Home</Link>
       <Link href="/wallet" onClick={() => setOpen(false)}>Wallet</Link>
       <Link href="/how-it-works" onClick={() => setOpen(false)}>Guide</Link>
-      <Link href="/otc" onClick={() => setOpen(false)}>OTC market</Link>
-      <a href="/api/auth/x/start">My wallet</a>
+      <Link href="/otc" onClick={() => setOpen(false)}>MARKET</Link>
+      <WalletAccountMenu />
     </div> : null}
   </div>;
 }

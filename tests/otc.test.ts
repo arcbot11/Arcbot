@@ -8,6 +8,7 @@ import { serializeTransaction,type Hex } from "viem";
 import { encodeFunctionData } from "viem";
 import { ARC_USDC } from "../lib/arc/config";
 import { nativeSpend } from "../lib/otc/native-spend";
+import { positionHistory } from "../lib/otc/position-history";
 import { transferAbi } from "../lib/otc/token-delivery";
 
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222";
@@ -120,10 +121,10 @@ describe("OTC reservations",()=>{
   it("checks the seller's reserved USDC again before taking payment",async()=>{
     const{store}=await fixture();await expect(acceptQuote(store,"order:1","buyer",{...snapshot,arcBalanceWei:"1"},now)).rejects.toThrow("Seller balance");
   });
-  it("cancel releases only unfilled inventory, preserving in-flight USDC",async()=>{
-    const{store}=await fixture();await accept(store);await cancelListing(store,"listing:1","seller",now);
-    const listing=(await store.get<Listing>("listing:1"))!;expect(listing.available).toBe("0");expect(listing.held).toBe("10000000");
-    expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(10n*W+gas);
+  it("cancel is blocked throughout settlement, preserving all listing funds",async()=>{
+    const{store}=await fixture();await accept(store);await expect(cancelListing(store,"listing:1","seller",now)).rejects.toThrow("locked");
+    const listing=(await store.get<Listing>("listing:1"))!;expect(listing.available).toBe("40000000");expect(listing.held).toBe("10000000");
+    expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(50n*W+5n*gas);
     await expect(finishOrder(store,(await store.get<Order>("order:1"))!,"expired",now+60_000)).rejects.toThrow();
   });
   it("allows spending other funds, but never the reserved USDC",async()=>{
@@ -184,4 +185,29 @@ describe("OTC durable settlement",()=>{
     await expect(verifyRaw(raw,unsigned,account.address)).resolves.toMatch(/^0x/);
     for(const changed of [{...tx,chainId:5042},{...tx,to:buyer as Hex},{...tx,value:2n}])await expect(verifyRaw(await account.signTransaction(changed),unsigned,account.address)).rejects.toThrow("different");
   });
+});
+
+describe("OTC position closure and history",()=>{
+ it("returns dust and gas only after finalized payout and preserves sale proceeds",async()=>{
+  const store=new Memory();await createListing(store,listingInput({amount:"15"}),now);await createQuote(store,quoteInput(),now);await accept(store);
+  await leg(store,"payment");await settled(store,"tx:payment","101",true,now);
+  await expect(cancelListing(store,"listing:1","seller",now)).rejects.toThrow("locked");
+  await leg(store,"payout");expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(15n*W+gas);
+  await settled(store,"tx:payout","102",true,now);
+  const listing=(await store.get<Listing>("listing:1"))!,order=(await store.get<Order>("order:1"))!;
+  expect(listing.status).toBe("filled");expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(0n);
+  expect(positionHistory(listing,[order])).toMatchObject({sold:"10000000",returnedUsdc:"5000000",receivedEthWei:order.sellerWei,settlementLocked:false});
+ });
+ it("cancels an idle position and releases its principal and gas exactly once",async()=>{
+  const s=new Memory();await createListing(s,listingInput(),now);const l=await cancelListing(s,"listing:1","seller",now);await cancelListing(s,l.id,"seller",now);
+  expect(locked((await s.get<Wallet>(walletId(5042,seller)))!)).toBe(0n);expect(positionHistory(l,[])).toMatchObject({sold:"0",returnedUsdc:"50000000",canCancel:false});
+ });
+ it("blocks cancellation during a quoted fill and allows it after expiry",async()=>{
+  const {store,order}=await fixture();await expect(cancelListing(store,"listing:1","seller",now)).rejects.toThrow("locked");await finishOrder(store,order,"expired",now+60000);await cancelListing(store,"listing:1","seller",now+60000);expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(0n);
+ });
+ it("retains dust and the settlement lock after payout failure",async()=>{
+  const store=new Memory();await createListing(store,listingInput({amount:"15"}),now);await createQuote(store,quoteInput(),now);await accept(store);await leg(store,"payment");await settled(store,"tx:payment","101",true,now);await leg(store,"payout");await settled(store,"tx:payout","102",false,now);
+  await expect(cancelListing(store,"listing:1","seller",now)).rejects.toThrow("locked");const l=(await store.get<Listing>("listing:1"))!,o=(await store.get<Order>("order:1"))!;
+  expect(positionHistory(l,[o])).toMatchObject({sold:"0",returnedUsdc:null,settlementLocked:true,receivedEthWei:o.sellerWei});expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(15n*W+gas);
+ });
 });

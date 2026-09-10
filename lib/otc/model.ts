@@ -156,6 +156,12 @@ export async function acceptQuote(store: Store, id: string, owner: string, snaps
 export async function cancelListing(store: Store, id: string, owner: string, now: number) {
   const listing = await store.get<Listing>(id);
   if (!listing || listing.kind !== "listing" || listing.owner !== owner) throw new Error("Listing not found.");
+  if (listing.status !== "active") return listing;
+  const seller = await wallet(store, 5042, listing.seller, listing.owner, now);
+  // pendingFills spans the Base payment AND Arc payout, including failed payouts.
+  // A quote also holds this lock until it expires, so accept/cancel cannot race.
+  if (listing.pendingFills !== 0 || BigInt(listing.held) !== 0n || seller.activeTx)
+    throw new Error("Position is locked by a pending quote or transaction. Wait for settlement.");
   listing.status = "cancelled"; listing.available = "0";
   await updateListingHold(store, listing, now); return listing;
 }

@@ -1,0 +1,16 @@
+import {beforeEach,afterEach,it,expect,vi} from 'vitest';
+import {NextRequest} from 'next/server';
+const m=vi.hoisted(()=>({action:vi.fn()}));
+vi.mock('convex/browser',()=>({ConvexHttpClient:class{action=m.action;}}));
+import {DELETE} from '../app/api/auth/x/session/route';
+import {createWebWalletSession,readWebWalletSession,webWalletCsrfToken,WEB_WALLET_SESSION_COOKIE} from '../lib/web-wallet-session';
+const secret='test-secret',site='https://www.arcchainbot.io';let cookie:string,csrf:string;
+beforeEach(()=>{vi.clearAllMocks();m.action.mockResolvedValue(true);vi.stubEnv('WEB_AUTH_SECRET',secret);vi.stubEnv('NEXT_PUBLIC_SITE_URL',site);vi.stubEnv('NEXT_PUBLIC_CONVEX_URL','https://example.convex.cloud');cookie=createWebWalletSession('0x1111111111111111111111111111111111111111','123','tester',secret);csrf=webWalletCsrfToken(readWebWalletSession(cookie,secret)!.sessionId,secret);});
+afterEach(()=>vi.unstubAllEnvs());
+const req=(origin=site,token=csrf)=>new NextRequest(site+'/api/auth/x/session',{method:'DELETE',headers:{origin,'x-argus-csrf':token,cookie:`${WEB_WALLET_SESSION_COOKIE}=${cookie}`}});
+it('revokes server session before clearing its secure cookie',async()=>{const r=await DELETE(req());expect(r.status).toBe(200);expect(m.action).toHaveBeenCalledOnce();expect(r.headers.get('set-cookie')).toContain('Max-Age=0');expect(r.headers.get('set-cookie')).toContain('Secure');});
+it('rejects cross-origin logout without revocation',async()=>{expect((await DELETE(req('https://other.example'))).status).toBe(403);expect(m.action).not.toHaveBeenCalled();});
+it('rejects missing CSRF without revocation',async()=>{expect((await DELETE(req(site,''))).status).toBe(403);expect(m.action).not.toHaveBeenCalled();});
+it('keeps cookie when server revocation fails',async()=>{m.action.mockRejectedValue(Error('offline'));const r=await DELETE(req());expect(r.status).toBe(503);expect(r.headers.get('set-cookie')).toBeNull();});
+it('does not report successful revocation with missing storage configuration',async()=>{vi.stubEnv('NEXT_PUBLIC_CONVEX_URL','');expect((await DELETE(req())).status).toBe(503);});
+it('permits logout after spending reauthentication expires',async()=>{vi.useFakeTimers();try{vi.advanceTimersByTime(31*60*1000);expect((await DELETE(req())).status).toBe(200);}finally{vi.useRealTimers();}});

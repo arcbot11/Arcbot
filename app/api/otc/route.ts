@@ -1,5 +1,6 @@
 import { assertListingRetry } from "@/lib/otc/listing-submission";
 import { listingPreview } from "@/lib/otc/listing-preview";
+import { positionHistory } from "@/lib/otc/position-history";
 import { randomUUID } from "node:crypto";
 import { NextRequest } from "next/server";
 import { z } from "zod";
@@ -48,7 +49,9 @@ export async function GET(request:NextRequest) {
           baseUsdc = {balance, locked: baseUsdc.locked, available: (BigInt(balance) > BigInt(baseUsdc.locked) ? BigInt(balance) - BigInt(baseUsdc.locked) : 0n).toString()};
         } catch { /* A token read failure must not hide native balances. */ }
       }
-      return json({walletAddress:session.walletAddress,baseUsdc,balances,orders,transactions,listings:records.filter(r=>r.kind==="listing")});
+      const listings=records.filter((r):r is Listing=>r.kind==="listing").map(listing=>positionHistory(listing,
+        records.filter((r):r is Order=>r.kind==="order"), records.find((r):r is Wallet=>r.kind==="wallet"&&r.id===walletId(5042,listing.seller))));
+      return json({walletAddress:session.walletAddress,baseUsdc,balances,orders,transactions,listings});
     } catch(error){return webFailure(error);}
   }
   let enabled=false;
