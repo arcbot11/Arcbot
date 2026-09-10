@@ -1152,6 +1152,7 @@ export default defineSchema({
   })
     .index("by_normalized_address", ["normalizedAddress"])
     .index("by_symbol", ["symbol"])
+    .index("by_chain_active", ["chainId", "active"])
     .index("by_pair_candidate", ["pairCandidate"]),
 
   // Private resolution cache for launch-pair tickers that are not yet in the

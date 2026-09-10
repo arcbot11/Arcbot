@@ -1,6 +1,6 @@
 import { createPublicClient, http, parseAbi, serializeTransaction, size, TransactionReceiptNotFoundError, type Address, type Hex } from "viem";
-import { BASE_CHAIN_ID, baseChain, type BaseConfig } from "./config.ts";
-import type { BaseTransaction } from "./transfers.ts";
+import { BASE_CHAIN_ID, baseChain, type BaseConfig } from "./config";
+import type { BaseTransaction } from "./transfers";
 export type BaseBlock = { number: bigint; hash: Hex; timestamp: bigint };
 export type BaseCall = { from: Address; to: Address; data: Hex; value: bigint };
 export type BaseReceipt = { hash: Hex; status: "success" | "reverted"; blockNumber: bigint; blockHash: Hex;

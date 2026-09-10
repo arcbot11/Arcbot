@@ -1,8 +1,8 @@
 import { getAddress, isAddress, keccak256, stringToHex, zeroAddress, type Address, type Hex } from "viem";
 import { z } from "zod";
-import { exactAmount } from "../arc/amounts.ts";
-import { BASE_CHAIN_ID, type BaseConfig } from "./config.ts";
-import { checkBaseRpc, type BaseRpc } from "./rpc.ts";
+import { exactAmount } from "../arc/amounts";
+import { BASE_CHAIN_ID, type BaseConfig } from "./config";
+import { checkBaseRpc, type BaseRpc } from "./rpc";
 
 const address = z.string().refine(s => isAddress(s, { strict: true }) && s.toLowerCase() !== zeroAddress, "Use a nonzero checksummed address").transform(s => getAddress(s));
 export const sendIntent = z.object({ chainId: z.literal(BASE_CHAIN_ID), operation: z.literal("send"), from: address, recipient: address,

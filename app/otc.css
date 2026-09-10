@@ -24,3 +24,10 @@ html{scrollbar-gutter:stable;scroll-behavior:auto}
 .wallet-action-tabs button{min-height:44px}
 .wallet-action-tabs button:disabled{cursor:not-allowed;opacity:.45}
 @media(max-width:600px){.arc-nav-cta{min-width:138px}.otc-metrics strong{min-height:32px}.otc-book th:first-child{width:32%}.wallet-connection-slot{min-height:60px}}
+.arc-token-picker{position:relative;display:grid;gap:8px;min-width:0}
+.arc-token-picker label{font-size:12px;color:#b6ccdc}
+.arc-token-selection{font:10px/1.5 ui-monospace,monospace;color:#93a9bb;min-height:30px;overflow-wrap:anywhere}
+.arc-token-results{position:absolute;z-index:20;top:76px;left:0;right:0;max-height:280px;overflow-y:auto;margin:0;padding:5px;list-style:none;background:#0b1d30;border:1px solid #668195;box-shadow:0 12px 28px #0006}
+.arc-token-results li{padding:10px;display:grid;grid-template-columns:auto 1fr;gap:4px 12px;cursor:pointer;color:#d9e9f3}
+.arc-token-results li:hover,.arc-token-results li[aria-selected=true]{background:#17364d}
+.arc-token-results strong{font-size:13px}.arc-token-results span{font-size:12px;color:#afc0cf}.arc-token-results small{grid-column:1/-1;font:10px/1.5 ui-monospace,monospace;overflow-wrap:anywhere;color:#93a9bb}

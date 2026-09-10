@@ -1,6 +1,6 @@
 import { createPublicClient, parseAbi, TransactionReceiptNotFoundError, type Address, type Hex } from "viem";
 import { arcTransport } from "./transport";
-import { ARC_CHAIN_ID, arcChain, type ArcConfig } from "./config.ts";
+import { ARC_CHAIN_ID, arcChain, type ArcConfig } from "./config";
 
 export type ArcBlock = { number: bigint; hash: Hex; timestamp: bigint };
 export type ArcCall = { from: Address; to: Address; data: Hex; value: bigint };

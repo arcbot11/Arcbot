@@ -1,7 +1,7 @@
 import { pageMetadata } from "@/lib/site-metadata";
 export const metadata = pageMetadata("/how-it-works", "Arc Bot examples for buying, selling, swapping, and sending Arc tokens.");
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
-import Link from "next/link";
+import { OpenWalletLink } from "@/components/OpenWalletLink";
 
 const examples = [
   ["Buy", "Buy $25 of TOKEN", "Buy 50 TOKEN", "Use USDC to buy an Arc token."],
@@ -24,6 +24,6 @@ export default function Guide() {
         <p>{description}</p>
       </div></article>
     )}</div>
-    <Link className="arc-button" href="/wallet">Open wallet ↗</Link>
+    <OpenWalletLink className="arc-button" />
   </section><SiteFooter /></main>;
 }

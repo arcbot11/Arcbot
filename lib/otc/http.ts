@@ -28,6 +28,17 @@ export function webFailure(error:unknown) {
   const original=error instanceof Error?error.message:"";
   const message=(/Uncaught Error: ([^\n]+)/.exec(original)?.[1] ?? original).trim();
   console.error("otc_request_failed",message);
+  // Fixed messages identify operational failures without exposing credentials or provider URLs.
+  if (message.startsWith("Configure ARC_MAINNET_RPC_URL, ARC_CHECKPOINT_NUMBER and ARC_CHECKPOINT_HASH"))
+    return json({error:"Arc transaction settings are missing on the website server. Contact Arc Bot support."},503);
+  if (/^(CDP_API_KEY_ID|CDP_API_KEY_SECRET|CDP_WALLET_SECRET) is not configured\.$/.test(message))
+    return json({error:"Wallet signing is not configured on the website server. Contact Arc Bot support."},503);
+  if (message === "OTC storage is not configured." || message === "OTC service authorization failed.")
+    return json({error:"Wallet reservation service is unavailable. Contact Arc Bot support."},503);
+  if (message.includes("No healthy Arc RPC supports this request"))
+    return json({error:"Arc network request failed. Check transaction history before retrying."},503);
+  if (message === "No supported liquid Arc route found.")
+    return json({error:"No supported trading route has liquidity for this token pair."},400);
   const safe=/^(Minimum |Maximum |Enter a premium|Use a positive|Amount |You |Not enough |Listing |Quote |Order not found|Wallet has |A wallet transaction|Balance snapshot|Seller |Gas exceeded|Transaction exceeds|Not enough available|OTC trading is not enabled)/.test(message)&&!message.includes("http");
   return json({error:safe?message.slice(0,240):"Request could not be confirmed. Check order or transaction history before retrying."},400);
 }

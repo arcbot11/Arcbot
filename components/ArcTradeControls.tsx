@@ -1,4 +1,5 @@
 "use client";
+import { ArcTokenPicker } from "./ArcTokenPicker";
 import {useState} from "react";
 import {useOtcSession,webPost,units} from "./OtcClient";
 type Quote={quote:string;stage:string;amountOut:string;minimumOut:string;protocol:string;gasWei:string;expiresAt:number};
@@ -8,12 +9,12 @@ export function ArcTradeControls({side,disabled=false}:{side:"buy"|"sell"|"swap"
   const review=async()=>{setBusy(true);setNotice("");setQuote(null);try{if(side==="swap"&&(!/^0x[0-9a-fA-F]{40}$/.test(output)||output.toLowerCase()===token.toLowerCase()))throw new Error("Choose two different token contracts.");setQuote(await webPost("/api/wallet/trade",{action:"preview",tokenIn:side==="buy"?"native":token,tokenOut:side==="buy"?token:side==="sell"?"native":output,amount,slippageBps:Math.round(Number(slippage)*100)},session));}catch(e){setNotice(e instanceof Error?e.message:"Trade preview failed.");}finally{setBusy(false);}};
   return <fieldset disabled={disabled||busy} className={`otc-form-panel arc-trade-controls${disabled?" wallet-preview-disabled":""}`}>
     <legend>{side==="buy"?"Buy":side==="sell"?"Sell":"Swap"}</legend>
-    <label>{side==="swap"?"From token contract":"Token contract"}<input value={token} onChange={e=>{setToken(e.target.value);setQuote(null);}} placeholder="0x…"/></label>
-    {side==="swap"&&<label>To token contract<input aria-label="Output token contract" placeholder="0x…" value={output==="native"?"":output} onChange={e=>{setOutput(e.target.value);setQuote(null);}}/></label>}
+    <ArcTokenPicker label={side==="swap"?"From token":"Token"} value={token} disabled={disabled||busy} onChange={address=>{setToken(address);setQuote(null);}}/>
+    {side==="swap"&&<ArcTokenPicker label="To token" value={output==="native"?"":output} disabled={disabled||busy} onChange={address=>{setOutput(address);setQuote(null);}}/>}
     {side==="sell"&&<p className="otc-fine">Receive Arc USDC.</p>}
     <label>{side==="buy"?"USDC to spend":"Tokens to spend"}<input inputMode="decimal" value={amount} onChange={e=>{setAmount(e.target.value);setQuote(null);}} placeholder="0.00"/></label>
     <label>Slippage %<input inputMode="decimal" value={slippage} onChange={e=>{setSlippage(e.target.value);setQuote(null);}}/></label>
-    <button type="button" className="arc-button" onClick={()=>void review()} disabled={disabled||busy||!session?.authenticated}>{busy?"Checking…":"Review trade"}</button>
+    <button type="button" className="arc-button" onClick={()=>void review()} disabled={disabled||busy||!session?.authenticated||!token||(side==="swap"&&!/^0x[0-9a-fA-F]{40}$/.test(output))}>{busy?"Checking…":"Review trade"}</button>
     {quote&&<div className="otc-quote"><h3>{quote.stage==="swap"?"Confirm swap":quote.stage}</h3><p>{quote.protocol.toUpperCase()} · Estimated output: {quote.amountOut}</p><p>Minimum output: {quote.minimumOut}</p><p>Gas allowance: {units(quote.gasWei,18)} USDC</p>{quote.stage!=="swap"&&<p>Approve access to the input amount. After confirmation, review the trade again for a fresh price.</p>}<button type="button" className="arc-button" disabled={busy} onClick={async()=>{setBusy(true);try{if(Date.now()>=quote.expiresAt)throw new Error("Quote expired. Review the trade again.");const r=await webPost("/api/wallet/trade",{action:"confirm",quote:quote.quote},session);setQuote(null);setNotice(`${r.leg==="allowance"?"Approval":"Swap"} recorded: ${r.status}. Check transaction history before continuing.`);}catch(e){setNotice(e instanceof Error?e.message:"Trade failed.");}finally{setBusy(false);}}}>Confirm {quote.stage}</button></div>}
     {notice&&<p role="status">{notice} {notice.startsWith("Reconnect")&&<a href="/api/auth/x/start">Reconnect X</a>}</p>}
   </fieldset>;
