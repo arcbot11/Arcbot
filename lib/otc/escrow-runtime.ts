@@ -47,10 +47,20 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
     if(returning){
       const w=await repo.read<Wallet|null>({id:walletId(probe.chainId,probe.from)});
       const others=w?locked(w)-BigInt(w.holds[listing.id]??"0"):0n;
-      const value=BigInt(prepared.snapshot.balanceWei)-others-BigInt(prepared.gasWei);
-      if(value<=0n)throw new Error("Escrow needs gas to return the remaining funds.");
-      const call=await escrowCall(readStore(),listing,step,order,value);
-      prepared=await prepareCall(call.chainId,call);
+      for(let attempt=0;attempt<3;attempt++){
+        const value=BigInt(prepared.snapshot.balanceWei)-others-BigInt(prepared.gasWei);
+        if(value<=0n)throw new Error("Escrow needs gas to return the remaining funds.");
+        const call=await escrowCall(readStore(),listing,step,order,value);
+        try{
+          const next=await prepareCall(call.chainId,call);
+          if(BigInt(next.reserveWei)+others>BigInt(next.snapshot.balanceWei))throw new Error("Not enough funds for the amount and gas.");
+          prepared=next;break;
+        }catch(error){
+          if(attempt===2||!(error instanceof Error)||error.message!=="Not enough funds for the amount and gas.")throw error;
+          // Recalculate only an unsigned refund. Never touch another owner's credits or a submitted transaction.
+          prepared=await prepareCall(probe.chainId,probe);
+        }
+      }
     }
     record=await repo.command<Transaction>("escrow_prepare",{listingId:listing.id,...(order?{orderId:order.id}:{}),step,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,gasWei:prepared.gasWei,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
   }

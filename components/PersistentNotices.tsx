@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useState, type ReactNode } from "react";
 
 export function usePersistentNotices() {
   const [notices, setNotices] = useState<string[]>([]);
@@ -10,9 +10,9 @@ export function usePersistentNotices() {
   return { notices, notify, dismiss };
 }
 
-export function PersistentNotices({ notices, dismiss }: { notices: string[]; dismiss: (message: string) => void }) {
+export function PersistentNotices({ notices, dismiss, renderMessage }: { notices: string[]; dismiss: (message: string) => void; renderMessage?: (message: string) => ReactNode }) {
   return <div aria-live="polite">{notices.map(message => <div className="otc-notice persistent-notice" key={message}>
-    <span>{message} {/^Reconnect/.test(message) && <a href="/api/auth/x/start?returnTo=/wallet">Reconnect X</a>}</span>
+    <span>{renderMessage?renderMessage(message):message} {/^Reconnect/.test(message) && <a href="/api/auth/x/start?returnTo=/wallet">Reconnect X</a>}</span>
     <button type="button" className="otc-inline-button" aria-label="Dismiss message" onClick={() => dismiss(message)}>×</button>
   </div>)}</div>;
 }

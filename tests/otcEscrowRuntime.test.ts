@@ -3,10 +3,11 @@ import { serializeTransaction } from "viem";
 import { type RecordValue, type Listing, type Order, type Transaction } from "../lib/otc/model";
 import { escrowTxId } from "../lib/otc/escrow-model";
 
-const m=vi.hoisted(()=>({read:vi.fn(),command:vi.fn(),identity:vi.fn(),account:vi.fn()}));
+const m=vi.hoisted(()=>({read:vi.fn(),command:vi.fn(),identity:vi.fn(),account:vi.fn(),prepare:vi.fn(),advance:vi.fn()}));
+vi.mock("../lib/otc/runtime",()=>({prepareCall:m.prepare,advanceTransaction:m.advance,balanceSnapshot:vi.fn(),walletTransferConfiguration:vi.fn()}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.command,identity:m.identity})}));
 vi.mock("@coinbase/cdp-sdk",()=>({CdpClient:class{evm={getOrCreateAccount:m.account};}}));
-import { assertEscrowTransaction, escrowAccountName, provisionEscrow } from "../lib/otc/escrow-runtime";
+import { assertEscrowTransaction, escrowAccountName, provisionEscrow, advanceEscrowPosition } from "../lib/otc/escrow-runtime";
 
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222",escrow="0x3333333333333333333333333333333333333333",fee="0x4444444444444444444444444444444444444444";
 let records:Map<string,RecordValue>,listing:Listing,order:Order;
@@ -24,6 +25,23 @@ function arcPayout(to=buyer):Transaction{
 function verifyDeposits(){
   for(const step of ["fund","gas","deposit"] as const){const id=escrowTxId(listing,step,step==="fund"?undefined:order);records.set(id,{...arcPayout(),id,status:"completed",hash:"receipt-hash",blockNumber:"100"});}
 }
+it("recalculates an unsigned refund when gas rises without consuming other credits",async()=>{
+  listing.status="closing";listing.pendingFills=0;listing.held="0";listing.available="10000000";
+  const balance=10n**19n,credit=10000n;
+  const walletKey=`wallet:5042:${escrow.toLowerCase()}`;
+  const originalRead=m.read.getMockImplementation()!;
+  m.read.mockImplementation(async(arg:{id:string})=>arg.id===walletKey?{holds:{[listing.id]:balance.toString(),"gas-credit:other":credit.toString()}}:originalRead(arg));
+  const prepared=(gas:bigint)=>({unsigned:"0x",gasWei:gas.toString(),reserveWei:(balance-credit).toString(),snapshot:{balanceWei:balance.toString(),block:"100"}});
+  m.prepare.mockResolvedValueOnce(prepared(1000n)).mockRejectedValueOnce(new Error("Not enough funds for the amount and gas.")).mockResolvedValueOnce(prepared(1500n)).mockResolvedValueOnce(prepared(1500n));
+  m.command.mockImplementation(async(action:string,args:{step:string})=>{
+    expect(action).toBe("escrow_prepare");expect(args.step).toBe("return_arc");
+    const tx={...arcPayout(),id:escrowTxId(listing,"return_arc"),status:"submitted" as const};records.set(tx.id,tx);return tx;
+  });
+  await advanceEscrowPosition(listing.id);
+  expect(m.prepare.mock.calls[1][1].value).toBe(balance-credit-1000n);
+  expect(m.prepare.mock.calls[3][1].value).toBe(balance-credit-1500n);
+  expect(m.command).toHaveBeenCalledTimes(1);
+});
 describe("escrow signing authority",()=>{
   it("uses a stable CDP account name per position",async()=>{
     expect(escrowAccountName(listing.id)).toMatch(/^[A-Za-z0-9][A-Za-z0-9-]{0,34}[A-Za-z0-9]$/);

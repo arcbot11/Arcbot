@@ -6,6 +6,7 @@ import {escrowAccountName,legacyEscrowAccountName} from "./escrow-name";
 
 
 const transferAbi=parseAbi(["function transfer(address,uint256) returns(bool)"]);
+export const ARC_RETURN_GAS_FLEX_WEI=10n**16n; // At most 0.01 USDC from unsold funds for return gas.
 export type EscrowStep="fund"|"gas"|"deposit"|"arc"|"seller"|"fee"|"return_arc"|"return_gas";
 export const orderSteps:EscrowStep[]=["gas","deposit","arc","seller","fee","return_gas"];
 export const settlementSteps=(order:Order):EscrowStep[]=>order.escrow?.version===2?["deposit","arc","seller","fee","return_gas"]:orderSteps;
@@ -38,7 +39,7 @@ export async function escrowCall(store:Store,listing:Listing,step:EscrowStep,ord
     if(listing.status!=="funding")throw new Error("Position is not funding.");
   }else{
     if(step!=="return_arc"||listing.status!=="closing"||listing.pendingFills||BigInt(listing.held)>0n)throw new Error("Position cannot return funds during settlement.");
-    if(returnWei===undefined||returnWei<0n||(step==="return_arc"&&returnWei<BigInt(listing.available)*10n**12n))throw new Error("Escrow return does not cover remaining principal.");
+    if(returnWei===undefined||returnWei<=0n||returnWei+ARC_RETURN_GAS_FLEX_WEI<BigInt(listing.available)*10n**12n)throw new Error("Escrow return does not cover remaining principal within the gas allowance.");
   }
   const chainId=step==="fund"||step==="arc"||step==="return_arc"?5042 as const:8453 as const;
   const from=step==="fund"?listing.seller:(step==="gas"||step==="deposit")?order!.buyer:escrow.address;
@@ -57,7 +58,9 @@ export async function prepareEscrowStep(store:Store,input:EscrowPrepare,now:numb
   if(tx.chainId!==call.chainId||tx.to?.toLowerCase()!==call.to.toLowerCase()||(tx.value??0n)!==call.value||(tx.data??"0x")!==call.data)throw new Error("Escrow transaction does not match its step.");
   if(BigInt(input.gasWei)<=0n||BigInt(input.reserveWei)!==call.value+BigInt(input.gasWei))throw new Error("Invalid escrow reservation.");
   const gasLimit=input.step==="fund"?listing.escrow!.fundingGasWei:input.step==="arc"?order!.arcGasWei:input.step==="return_arc"?listing.escrow!.closeGasWei:order?.baseGasWei;
-  if(gasLimit&&BigInt(input.gasWei)>BigInt(gasLimit))throw new Error("Gas exceeds the escrow allowance.");
+  const allowedGas=gasLimit?BigInt(gasLimit)+(input.step==="return_arc"?ARC_RETURN_GAS_FLEX_WEI:input.step==="return_gas"?BigInt(gasLimit):0n):undefined;
+  if(allowedGas!==undefined&&BigInt(input.gasWei)>allowedGas)throw new Error("Gas exceeds the escrow allowance.");
+  if(input.step==="return_arc"&&call.value+BigInt(input.gasWei)<BigInt(listing.available)*10n**12n)throw new Error("Only return gas may reduce unsold funds.");
   const w=await wallet(store,call.chainId,call.from,call.owner,now);
   if(w.activeTx)throw new Error("A wallet transaction is pending.");
   const holdId=input.step==="fund"||input.step==="arc"||input.step==="return_arc"?listing.id:(input.step==="deposit"||input.step==="gas")?order!.id:null;

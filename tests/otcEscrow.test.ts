@@ -35,6 +35,26 @@ async function complete(store:Memory,listing:Listing,step:EscrowStep,order?:Orde
   await signTransactionRecord(store,tx.id,"test-raw","test-hash",now);await settled(store,tx.id,"100",success,now);return tx;
 }
 async function funded(){const f=await setup();await complete(f.store,f.listing,"fund");f.listing=await advanceEscrowState(f.store,f.listing.id,undefined,now) as Listing;return f;}
+it("deducts a small return gas shortfall while retaining the lock until verification",async()=>{
+  const {store,listing}=await funded(),closing=await cancelListing(store,listing.id,"seller",now);
+  const principal=BigInt(closing.available)*10n**12n,gas=5n*G,value=principal-gas;
+  const call=await escrowCall(store,closing,"return_arc",undefined,value);
+  const unsigned=serializeTransaction({chainId:5042,type:"eip1559",to:call.to,value,gas:21000n,maxFeePerGas:1n});
+  const tx=await prepareEscrowStep(store,{listingId:listing.id,step:"return_arc",unsigned,gasWei:gas.toString(),reserveWei:principal.toString(),balanceWei:principal.toString(),block:"100"},now);
+  expect((await store.get<Listing>(listing.id))!.status).toBe("closing");
+  expect(locked((await store.get<Wallet>(walletId(5042,escrow)))!)).toBe(principal);
+  await signTransactionRecord(store,tx.id,"test-raw","test-hash",now);await settled(store,tx.id,"100",true,now);
+  const done=await advanceEscrowState(store,listing.id,undefined,now,undefined,undefined,"0","100") as Listing;
+  expect(done.escrow!.returnedWei).toBe(value.toString());expect(done.status).toBe("cancelled");
+});
+it("rejects a refund haircut above 0.01 USDC or unrelated to return gas",async()=>{
+  const {store,listing}=await funded(),closing=await cancelListing(store,listing.id,"seller",now);
+  const principal=BigInt(closing.available)*10n**12n;
+  await expect(escrowCall(store,closing,"return_arc",undefined,principal-10n**16n-1n)).rejects.toThrow("gas allowance");
+  const value=principal-5n*G;
+  const unsigned=serializeTransaction({chainId:5042,type:"eip1559",to:seller,value,gas:21000n,maxFeePerGas:1n});
+  await expect(prepareEscrowStep(store,{listingId:listing.id,step:"return_arc",unsigned,gasWei:G.toString(),reserveWei:(value+G).toString(),balanceWei:principal.toString(),block:"100"},now)).rejects.toThrow("Only return gas");
+});
 async function orderFor(store:Memory,listing:Listing,asset:"ETH"|"USDC"="ETH",amount="10",id="order:one"){
   const order=await createQuote(store,{id,owner:"buyer",buyer,listingId:listing.id,amount,paymentAsset:asset,ethUsdMicros:"2000000000",priceAt:now,baseGasWei:G.toString(),escrowGasBudgetWei:(3n*G).toString(),baseBalanceWei:W.toString(),baseUsdcBalance:"1000000000",baseBlock:"100",router:escrow,feeRecipient:fee},now);
   await acceptQuote(store,order.id,"buyer",{baseBalanceWei:W.toString(),baseUsdcBalance:"1000000000",baseBlock:"100",arcBalanceWei:(100n*W).toString(),arcBlock:"100"},now);

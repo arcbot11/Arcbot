@@ -1,6 +1,6 @@
 /** Public Arctos Bot identity and transaction policy. Credentials stay in the environment. */
-export const ARC_BOT_TELEGRAM_USERNAME = "TheArcChainBot";
-export const ARC_BOT_TELEGRAM_URL = "https://t.me/TheArcChainBot";
+export const ARC_BOT_TELEGRAM_USERNAME = "TheArctosBot";
+export const ARC_BOT_TELEGRAM_URL = "https://t.me/TheArctosBot";
 export const ARC_BOT_USERNAME = "ArctosBot";
 export const ARC_BOT_X_USER_ID = "2097696306135220226";
 export const ARC_BOT_X_URL = "https://x.com/ArctosBot";
