@@ -1,11 +1,10 @@
 import type { MetadataRoute } from "next";
 
-const configuredSiteUrl = (process.env.NEXT_PUBLIC_SITE_URL || "https://arcbot.invalid").trim().replace(/\/+$/, "");
-const siteUrl = configuredSiteUrl.startsWith("http") ? configuredSiteUrl : `https://${configuredSiteUrl}`;
+import { siteUrl } from "@/lib/site-metadata";
 
 export default function robots(): MetadataRoute.Robots {
   return {
-    rules: { userAgent: "*", allow: "/" },
+    rules: { userAgent: "*", allow: "/", disallow: "/api/" },
     sitemap: `${siteUrl}/sitemap.xml`,
     host: siteUrl,
   };

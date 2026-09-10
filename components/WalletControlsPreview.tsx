@@ -7,6 +7,7 @@ export function WalletControlsPreview({ loading = false }: { loading?: boolean }
     <div className="wallet-preview-controls">
       <ArcTradeControls side="buy" disabled/>
       <ArcTradeControls side="sell" disabled/>
+      <ArcTradeControls side="swap" disabled/>
       <fieldset disabled className="otc-form-panel wallet-preview-disabled"><legend>Send</legend><h3>Send from your wallet</h3>
         <p className="otc-fine">Arc network · USDC gas</p>
         <label>Asset<select defaultValue="native"><option value="native">USDC</option><option value="token">Arc token address</option></select></label>

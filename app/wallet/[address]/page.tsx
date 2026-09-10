@@ -1,3 +1,4 @@
+import { pageMetadata } from "@/lib/site-metadata";
 import type { Metadata } from "next";
 import { getAddress, isAddress } from "viem";
 import { notFound } from "next/navigation";
@@ -7,7 +8,7 @@ import { WalletDashboard } from "@/components/WalletDashboard";
 type Props={params:Promise<{address:string}>};
 export async function generateMetadata({params}:Props):Promise<Metadata>{
   const {address}=await params;
-  return {title:"Wallet",description:"Arc Bot wallet. Direct controls and OTC order history.",...(isAddress(address)?{alternates:{canonical:`/wallet/${address}`}}:{})};
+  return { ...pageMetadata(isAddress(address) ? `/wallet/${address}` : "/wallet"), robots: { index: false, follow: false } };
 }
 export default async function WalletPage({params}:Props){
   const {address}=await params;if(!isAddress(address))notFound();

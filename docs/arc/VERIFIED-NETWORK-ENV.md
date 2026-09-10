@@ -1,5 +1,13 @@
 # Network environment verification — 2026-09-10
 
+## Confirmed live transfer — 14:32 UTC
+
+With explicit user authorization, the fixed admin-only `arcTransferTest:run` action sent exactly 1 native Arc USDC from @ArcChainBot to @Arctos_Arc through Arcscan using the existing shared transaction runtime. The runtime persisted the reservation and signed bytes before broadcasting, verified the canonical finalized receipt, recorded completion, and released the wallet lock. The action has a fixed durable request ID so repeating it reconciles the same transfer instead of sending another dollar.
+
+Transaction: `0xbff636d8c59287db979d2e2cd32966d81a54e2259822e9fb22abd172247ac791`, block 20153076, success. Gas: 21,000 units; actual fee: 0.00084 USDC. Resulting balances: sender 44.99916 USDC, recipient 1 USDC. Argus independently returned the successful receipt and transaction details; its provider independence from Arcscan is unknown. The Convex wallet reservation has no active transaction and no remaining holds. Evidence: `one-usdc-transfer-2026-09-10.json`.
+
+This establishes live CDP signing, Arcscan broadcast, and finalized native-USDC settlement from Convex's Node runtime. It does not establish Vercel connectivity or successful token swaps. The RPC override is scoped to the fixed test action; production environment configuration was not changed.
+
 ## Follow-up: Arcscan reachable from Convex
 
 The funded-wallet probe at 14:25 UTC supersedes the local-only connectivity conclusion below. From the deployed Convex internal action, `https://rpc.arc-scan.org` returned chain 5042, fresh latest/finalized blocks (0–1 seconds old), the expected historical checkpoint hash, and the wallet's 46 USDC. A simulated $1 transfer to the second Arc Bot wallet succeeded through both native and ERC-20 interfaces; approval simulation, nonce, fee history, fee pricing and gas estimation also worked. Native transfer estimated 21,000 gas; ERC-20 transfer estimated 74,826 gas. These are simulations, not completed transfers.

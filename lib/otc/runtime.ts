@@ -9,6 +9,7 @@ import { createHash } from "node:crypto";
 import { createPublicClient, http, getAddress, keccak256, parseTransaction, recoverTransactionAddress, serializeTransaction, parseEventLogs, decodeFunctionData, parseAbi, type Address, type Hex } from "viem";
 import { arcConfigFromEnv } from "../arc/config";
 import { createArcRpc, checkArcRpc } from "../arc/rpc";
+import { arcTransport } from "../arc/transport";
 import { baseConfigFromEnv } from "../base/config";
 import { createBaseRpc, checkBaseRpc } from "../base/rpc";
 import type { BaseTransaction } from "../base/transfers";
@@ -35,7 +36,7 @@ export function otcConfiguration(_requireEnabled = true) {
 }
 export function chainClient(chain: Chain) {
   const config = chain === 5042 ? arcConfigFromEnv() : baseConfigFromEnv();
-  return createPublicClient({ transport: http(config.rpcUrl, { timeout: 12_000, retryCount: 0 }) });
+  return createPublicClient({ transport: chain === 5042 ? arcTransport(arcConfigFromEnv()) : http(config.rpcUrl, { timeout: 12_000, retryCount: 0 }) });
 }
 export async function balanceSnapshot(chain: Chain, address: string) {
   const owner = getAddress(address);

@@ -1,7 +1,8 @@
+import { pageMetadata } from "@/lib/site-metadata";
 import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "@/components/LegalDocument";
 
-export const metadata: Metadata = { title: "Terms of Use", description: "Terms that apply when accessing or using Arc Bot.", alternates: { canonical: "/terms" } };
+export const metadata: Metadata = pageMetadata("/terms", "Terms that apply when accessing or using Arc Bot.");
 
 const sections: LegalSection[] = [
   { title: "Agreement", paragraphs: ["These Terms of Use govern your access to the Arc Bot website and Arc Bot features offered through the website, X, wallets, and related services. By using Arc Bot, you agree to these Terms and the Privacy Policy. If you do not agree, do not use the service."] },

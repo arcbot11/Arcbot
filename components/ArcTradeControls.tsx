@@ -2,14 +2,15 @@
 import {useState} from "react";
 import {useOtcSession,webPost,units} from "./OtcClient";
 type Quote={quote:string;stage:string;amountOut:string;minimumOut:string;protocol:string;gasWei:string;expiresAt:number};
-export function ArcTradeControls({side,disabled=false}:{side:"buy"|"sell";disabled?:boolean}){
+export function ArcTradeControls({side,disabled=false}:{side:"buy"|"sell"|"swap";disabled?:boolean}){
   const session=useOtcSession(),[token,setToken]=useState(""),[amount,setAmount]=useState(""),[output,setOutput]=useState("native"),[slippage,setSlippage]=useState("1");
   const [quote,setQuote]=useState<Quote|null>(null),[busy,setBusy]=useState(false),[notice,setNotice]=useState("");
-  const review=async()=>{setBusy(true);setNotice("");setQuote(null);try{setQuote(await webPost("/api/wallet/trade",{action:"preview",tokenIn:side==="buy"?"native":token,tokenOut:side==="buy"?token:output,amount,slippageBps:Math.round(Number(slippage)*100)},session));}catch(e){setNotice(e instanceof Error?e.message:"Trade preview failed.");}finally{setBusy(false);}};
+  const review=async()=>{setBusy(true);setNotice("");setQuote(null);try{if(side==="swap"&&(!/^0x[0-9a-fA-F]{40}$/.test(output)||output.toLowerCase()===token.toLowerCase()))throw new Error("Choose two different token contracts.");setQuote(await webPost("/api/wallet/trade",{action:"preview",tokenIn:side==="buy"?"native":token,tokenOut:side==="buy"?token:side==="sell"?"native":output,amount,slippageBps:Math.round(Number(slippage)*100)},session));}catch(e){setNotice(e instanceof Error?e.message:"Trade preview failed.");}finally{setBusy(false);}};
   return <fieldset disabled={disabled||busy} className={`otc-form-panel arc-trade-controls${disabled?" wallet-preview-disabled":""}`}>
-    <legend>{side==="buy"?"Buy":"Sell / Swap"}</legend>
-    <label>Token contract<input value={token} onChange={e=>{setToken(e.target.value);setQuote(null);}} placeholder="0x…"/></label>
-    {side==="sell"&&<label>Receive<select value={output==="native"?"native":"token"} onChange={e=>{setOutput(e.target.value==="native"?"native":"");setQuote(null);}}><option value="native">Arc USDC</option><option value="token">Another Arc token</option></select>{output!=="native"&&<input aria-label="Output token contract" placeholder="0x…" value={output} onChange={e=>{setOutput(e.target.value);setQuote(null);}}/>}</label>}
+    <legend>{side==="buy"?"Buy":side==="sell"?"Sell":"Swap"}</legend>
+    <label>{side==="swap"?"From token contract":"Token contract"}<input value={token} onChange={e=>{setToken(e.target.value);setQuote(null);}} placeholder="0x…"/></label>
+    {side==="swap"&&<label>To token contract<input aria-label="Output token contract" placeholder="0x…" value={output==="native"?"":output} onChange={e=>{setOutput(e.target.value);setQuote(null);}}/></label>}
+    {side==="sell"&&<p className="otc-fine">Receive Arc USDC.</p>}
     <label>{side==="buy"?"USDC to spend":"Tokens to spend"}<input inputMode="decimal" value={amount} onChange={e=>{setAmount(e.target.value);setQuote(null);}} placeholder="0.00"/></label>
     <label>Slippage %<input inputMode="decimal" value={slippage} onChange={e=>{setSlippage(e.target.value);setQuote(null);}}/></label>
     <button type="button" className="arc-button" onClick={()=>void review()} disabled={disabled||busy||!session?.authenticated}>{busy?"Checking…":"Review trade"}</button>

@@ -1,4 +1,5 @@
 import { assertListingRetry } from "@/lib/otc/listing-submission";
+import { arcWalletBalance } from "@/lib/arc/wallet-balance";
 import { listingPreview } from "@/lib/otc/listing-preview";
 import { positionHistory } from "@/lib/otc/position-history";
 import { randomUUID } from "node:crypto";
@@ -28,12 +29,12 @@ export async function GET(request:NextRequest) {
     try {
       const session=await websiteSession(request),repo=repository();
       const records=await repo.read<RecordValue[]>({owner:session.xUserId});
-      const snapshots=await Promise.allSettled([balanceSnapshot(5042,session.walletAddress),balanceSnapshot(8453,session.walletAddress)]);
+      const snapshots=await Promise.allSettled([arcWalletBalance(session.walletAddress),balanceSnapshot(8453,session.walletAddress)]);
       const balances=[5042,8453].map((chain,index)=>{
         const w=records.find(r=>r.kind==="wallet"&&r.id===walletId(chain as 5042|8453,session.walletAddress)) as Wallet|undefined;
         const result=snapshots[index]; const balance=result.status==="fulfilled"?BigInt(result.value.balanceWei):null;
         const held=w?locked(w):0n;
-        return {chainId:chain,balanceWei:balance?.toString()??null,lockedWei:held.toString(),availableWei:balance===null?null:(balance>held?balance-held:0n).toString(),pending:Boolean(w?.activeTx)};
+        return {chainId:chain,balanceWei:balance?.toString()??null,lockedWei:held.toString(),availableWei:balance===null?null:(balance>held?balance-held:0n).toString(),pending:Boolean(w?.activeTx),error:result.status==="rejected"?`${chain===5042?"Arc":"Base"} balance unavailable. Retry shortly.`:null};
       });
       const orders=records.filter(r=>r.kind==="order").map(r=>{
         const o=r as Order; return {payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.xUserId?"buy":"sell"};

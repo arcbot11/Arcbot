@@ -1,4 +1,5 @@
-import { createPublicClient, http, parseAbi, TransactionReceiptNotFoundError, type Address, type Hex } from "viem";
+import { createPublicClient, parseAbi, TransactionReceiptNotFoundError, type Address, type Hex } from "viem";
+import { arcTransport } from "./transport";
 import { ARC_CHAIN_ID, arcChain, type ArcConfig } from "./config.ts";
 
 export type ArcBlock = { number: bigint; hash: Hex; timestamp: bigint };
@@ -21,7 +22,7 @@ export interface ArcRpc {
 const tokenAbi = parseAbi(["function decimals() view returns (uint8)", "function balanceOf(address) view returns (uint256)"]);
 
 export function createArcRpc(config: ArcConfig): ArcRpc {
-  const client = createPublicClient({ chain: arcChain(config), transport: http(config.rpcUrl, { batch: false, retryCount: 0, timeout: 12_000 }) });
+  const client = createPublicClient({ chain: arcChain(config), transport: arcTransport(config) });
   const request = (tx: ArcCall) => ({ account: tx.from, to: tx.to, value: tx.value, data: tx.data });
   return {
     chainId: () => client.getChainId(),

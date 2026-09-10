@@ -12,7 +12,8 @@ export const probe = internalAction({
     const abi = parseAbi(["function transfer(address,uint256) returns(bool)", "function approve(address,uint256) returns(bool)"]);
     const native = { from, to, value: "0xde0b6b3a7640000" }; // $1, simulation only.
     const erc20 = { from, to: usdc, data: encodeFunctionData({ abi, functionName: "transfer", args: [to, 1000000n] }) };
-    for (const endpoint of ["https://rpc.arc-scan.org", "https://arguspad.io/api/rpc", "https://arcexplorer.org/rpc"]) {
+    for (const endpoint of ["https://rpc.arc-scan.org", "https://arguspad.io/api/rpc", ...(process.env.ARC_INFURA_RPC_URL ? [process.env.ARC_INFURA_RPC_URL] : [])]) {
+      const endpointLabel = endpoint.includes("infura.io") ? "Infura Arc mainnet (key redacted)" : endpoint;
       for (const [method, params] of [
         ["eth_chainId", []],
         ["eth_getBlockByNumber", ["latest", false]],
@@ -39,14 +40,14 @@ export const probe = internalAction({
             body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: controller.signal,
           });
           const body = await response.json();
-          rows.push({ endpoint, method, params, http: response.status, ...body.error ? { error: body.error } : {
+          rows.push({ endpoint: endpointLabel, method, params, http: response.status, ...body.error ? { error: { code: body.error.code, message: endpoint.includes("infura.io") ? "Provider rejected request (details suppressed)" : body.error.message } } : {
             result: method === "eth_getBlockByNumber" && body.result ? {
               number: body.result.number, hash: body.result.hash, timestamp: body.result.timestamp,
               ageSeconds: Math.floor(Date.now() / 1000) - Number(body.result.timestamp),
             } : body.result ?? null,
           } });
         } catch (error) {
-          rows.push({ endpoint, method, error: String(error) });
+          rows.push({ endpoint: endpointLabel, method, error: "RPC connection unavailable" });
         } finally { clearTimeout(timer); }
       }
     }

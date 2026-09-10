@@ -1,0 +1,705 @@
+{
+  "checkedAt": "2026-09-10T14:44:50.932Z",
+  "location": "Convex",
+  "rows": [
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_chainId",
+      "params": [],
+      "result": "0x13b2"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "result": {
+        "ageSeconds": 0,
+        "hash": "0x3460c7f63e4b44dd0463a2f2e775092139d0344ee15ec0ee1e0573d504a1c1f6",
+        "number": "0x13388e6",
+        "timestamp": "0x6aa2c25d"
+      }
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_getBalance",
+      "params": [
+        "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+        "latest"
+      ],
+      "result": "0x2707d219aaef78000"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "finalized",
+        false
+      ],
+      "result": {
+        "ageSeconds": 1,
+        "hash": "0x6f52ec64348357d60341b9a2b399050f66efbafcb4042da0e7761a2167a99946",
+        "number": "0x13388e7",
+        "timestamp": "0x6aa2c25d"
+      }
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x1199e0e",
+        false
+      ],
+      "result": {
+        "ageSeconds": 862461,
+        "hash": "0xdd5a48032af8571d6a262f39e5cde7e6b91625aaa4330289f03e5a346dd3c358",
+        "number": "0x1199e0e",
+        "timestamp": "0x6a959961"
+      }
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+        "pending"
+      ],
+      "result": "0x1"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_gasPrice",
+      "params": [],
+      "result": "0x601ccc200"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_maxPriorityFeePerGas",
+      "params": [],
+      "result": "0x159b4fa00"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_feeHistory",
+      "params": [
+        "0x2",
+        "latest",
+        [
+          50
+        ]
+      ],
+      "result": {
+        "baseFeePerBlobGas": [
+          "0x1",
+          "0x1",
+          "0x1"
+        ],
+        "baseFeePerGas": [
+          "0x4a817c800",
+          "0x4a817c800",
+          "0x4a817c800"
+        ],
+        "blobGasUsedRatio": [
+          0,
+          0
+        ],
+        "gasUsedRatio": [
+          0.006631533333333333,
+          0.003985833333333333
+        ],
+        "oldestBlock": "0x13388e9",
+        "reward": [
+          [
+            "0x4a817c800"
+          ],
+          [
+            "0x4a817c800"
+          ]
+        ]
+      }
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_call",
+      "params": [
+        {
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+          "value": "0xde0b6b3a7640000"
+        },
+        "latest"
+      ],
+      "result": "0x"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+          "value": "0xde0b6b3a7640000"
+        }
+      ],
+      "result": "0x5208"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_call",
+      "params": [
+        {
+          "data": "0xa9059cbb0000000000000000000000007d381d70e3cc6532fd5546e5439bc3d5cecd28dc00000000000000000000000000000000000000000000000000000000000f4240",
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x3600000000000000000000000000000000000000"
+        },
+        "latest"
+      ],
+      "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "data": "0xa9059cbb0000000000000000000000007d381d70e3cc6532fd5546e5439bc3d5cecd28dc00000000000000000000000000000000000000000000000000000000000f4240",
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x3600000000000000000000000000000000000000"
+        }
+      ],
+      "result": "0xc0ba"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "http": 200,
+      "method": "eth_call",
+      "params": [
+        {
+          "data": "0x095ea7b30000000000000000000000007d381d70e3cc6532fd5546e5439bc3d5cecd28dc00000000000000000000000000000000000000000000000000000000000f4240",
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x3600000000000000000000000000000000000000"
+        },
+        "latest"
+      ],
+      "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "error": {
+        "code": -32601,
+        "message": "arc-scan.org does not serve debug_traceCall on this endpoint. This is our own policy decision, not a limitation of the Arc network. The debug_ namespace is not served here."
+      },
+      "http": 200,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+          "value": "0xde0b6b3a7640000"
+        },
+        "latest",
+        {
+          "tracer": "prestateTracer",
+          "tracerConfig": {
+            "diffMode": true
+          }
+        }
+      ]
+    },
+    {
+      "endpoint": "https://rpc.arc-scan.org",
+      "error": {
+        "code": -32602,
+        "message": "Invalid parameters: transaction could not be decoded: not enough input to decode"
+      },
+      "http": 200,
+      "method": "eth_sendRawTransaction",
+      "params": [
+        "0x"
+      ]
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_chainId",
+      "params": [],
+      "result": "0x13b2"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "result": {
+        "ageSeconds": 1,
+        "hash": "0x8aa8b278e1eb85bc748def8ba3b3ec690db240680db13ad6f0468ceb9e620e7d",
+        "number": "0x13388ed",
+        "timestamp": "0x6aa2c260"
+      }
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_getBalance",
+      "params": [
+        "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+        "latest"
+      ],
+      "result": "0x2707d219aaef78000"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "finalized",
+        false
+      ],
+      "result": {
+        "ageSeconds": 1,
+        "hash": "0x8aa8b278e1eb85bc748def8ba3b3ec690db240680db13ad6f0468ceb9e620e7d",
+        "number": "0x13388ed",
+        "timestamp": "0x6aa2c260"
+      }
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x1199e0e",
+        false
+      ],
+      "result": {
+        "ageSeconds": 862464,
+        "hash": "0xdd5a48032af8571d6a262f39e5cde7e6b91625aaa4330289f03e5a346dd3c358",
+        "number": "0x1199e0e",
+        "timestamp": "0x6a959961"
+      }
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+        "pending"
+      ],
+      "result": "0x1"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_gasPrice",
+      "params": [],
+      "result": "0x9502f9000"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_maxPriorityFeePerGas",
+      "params": [],
+      "result": "0x4a817c800"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_feeHistory",
+      "params": [
+        "0x2",
+        "latest",
+        [
+          50
+        ]
+      ],
+      "result": {
+        "baseFeePerBlobGas": [
+          "0x1",
+          "0x1",
+          "0x1"
+        ],
+        "baseFeePerGas": [
+          "0x4a817c800",
+          "0x4a817c800",
+          "0x4a817c800"
+        ],
+        "blobGasUsedRatio": [
+          0,
+          0
+        ],
+        "gasUsedRatio": [
+          0.00676,
+          0.00676
+        ],
+        "oldestBlock": "0x13388ed",
+        "reward": [
+          [
+            "0x4a817c800"
+          ],
+          [
+            "0x4a817c800"
+          ]
+        ]
+      }
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_call",
+      "params": [
+        {
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+          "value": "0xde0b6b3a7640000"
+        },
+        "latest"
+      ],
+      "result": "0x"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+          "value": "0xde0b6b3a7640000"
+        }
+      ],
+      "result": "0x5208"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_call",
+      "params": [
+        {
+          "data": "0xa9059cbb0000000000000000000000007d381d70e3cc6532fd5546e5439bc3d5cecd28dc00000000000000000000000000000000000000000000000000000000000f4240",
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x3600000000000000000000000000000000000000"
+        },
+        "latest"
+      ],
+      "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "data": "0xa9059cbb0000000000000000000000007d381d70e3cc6532fd5546e5439bc3d5cecd28dc00000000000000000000000000000000000000000000000000000000000f4240",
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x3600000000000000000000000000000000000000"
+        }
+      ],
+      "result": "0xc0ba"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "http": 200,
+      "method": "eth_call",
+      "params": [
+        {
+          "data": "0x095ea7b30000000000000000000000007d381d70e3cc6532fd5546e5439bc3d5cecd28dc00000000000000000000000000000000000000000000000000000000000f4240",
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x3600000000000000000000000000000000000000"
+        },
+        "latest"
+      ],
+      "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "error": {
+        "code": -32601,
+        "message": "method not supported: debug_traceCall"
+      },
+      "http": 200,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+          "value": "0xde0b6b3a7640000"
+        },
+        "latest",
+        {
+          "tracer": "prestateTracer",
+          "tracerConfig": {
+            "diffMode": true
+          }
+        }
+      ]
+    },
+    {
+      "endpoint": "https://arguspad.io/api/rpc",
+      "error": {
+        "code": -32601,
+        "message": "method not supported: eth_sendRawTransaction"
+      },
+      "http": 200,
+      "method": "eth_sendRawTransaction",
+      "params": [
+        "0x"
+      ]
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_chainId",
+      "params": [],
+      "result": "0x13b2"
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "latest",
+        false
+      ],
+      "result": {
+        "ageSeconds": 0,
+        "hash": "0x5c7d3d2cb1a6cfce1b949395fbb826eb01ba49e3734f6405883775595b48acbb",
+        "number": "0x13388f0",
+        "timestamp": "0x6aa2c262"
+      }
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_getBalance",
+      "params": [
+        "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+        "latest"
+      ],
+      "result": "0x2707d219aaef78000"
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "finalized",
+        false
+      ],
+      "result": {
+        "ageSeconds": 1,
+        "hash": "0xec47ea088ca8a92f7f7344607d98d2823c6d74226bc88ae05669fe4e15f27745",
+        "number": "0x13388ef",
+        "timestamp": "0x6aa2c261"
+      }
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_getBlockByNumber",
+      "params": [
+        "0x1199e0e",
+        false
+      ],
+      "result": {
+        "ageSeconds": 862465,
+        "hash": "0xdd5a48032af8571d6a262f39e5cde7e6b91625aaa4330289f03e5a346dd3c358",
+        "number": "0x1199e0e",
+        "timestamp": "0x6a959961"
+      }
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_getTransactionCount",
+      "params": [
+        "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+        "pending"
+      ],
+      "result": "0x1"
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_gasPrice",
+      "params": [],
+      "result": "0x5d21dba00"
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_maxPriorityFeePerGas",
+      "params": [],
+      "result": "0x4a817c800"
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_feeHistory",
+      "params": [
+        "0x2",
+        "latest",
+        [
+          50
+        ]
+      ],
+      "result": {
+        "baseFeePerBlobGas": [
+          "0x1",
+          "0x1",
+          "0x1"
+        ],
+        "baseFeePerGas": [
+          "0x4a817c800",
+          "0x4a817c800",
+          "0x4a817c800"
+        ],
+        "blobGasUsedRatio": [
+          0,
+          0
+        ],
+        "gasUsedRatio": [
+          0,
+          0.022777966666666667
+        ],
+        "oldestBlock": "0x13388f0",
+        "reward": [
+          [
+            "0x0"
+          ],
+          [
+            "0x12a05f200"
+          ]
+        ]
+      }
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "error": {
+        "code": -32600,
+        "message": "Provider rejected request (details suppressed)"
+      },
+      "http": 200,
+      "method": "eth_call",
+      "params": [
+        {
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+          "value": "0xde0b6b3a7640000"
+        },
+        "latest"
+      ]
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+          "value": "0xde0b6b3a7640000"
+        }
+      ],
+      "result": "0x5208"
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "error": {
+        "code": -32600,
+        "message": "Provider rejected request (details suppressed)"
+      },
+      "http": 200,
+      "method": "eth_call",
+      "params": [
+        {
+          "data": "0xa9059cbb0000000000000000000000007d381d70e3cc6532fd5546e5439bc3d5cecd28dc00000000000000000000000000000000000000000000000000000000000f4240",
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x3600000000000000000000000000000000000000"
+        },
+        "latest"
+      ]
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "http": 200,
+      "method": "eth_estimateGas",
+      "params": [
+        {
+          "data": "0xa9059cbb0000000000000000000000007d381d70e3cc6532fd5546e5439bc3d5cecd28dc00000000000000000000000000000000000000000000000000000000000f4240",
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x3600000000000000000000000000000000000000"
+        }
+      ],
+      "result": "0xc0ba"
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "error": {
+        "code": -32600,
+        "message": "Provider rejected request (details suppressed)"
+      },
+      "http": 200,
+      "method": "eth_call",
+      "params": [
+        {
+          "data": "0x095ea7b30000000000000000000000007d381d70e3cc6532fd5546e5439bc3d5cecd28dc00000000000000000000000000000000000000000000000000000000000f4240",
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x3600000000000000000000000000000000000000"
+        },
+        "latest"
+      ]
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "error": {
+        "code": -32601,
+        "message": "Provider rejected request (details suppressed)"
+      },
+      "http": 200,
+      "method": "debug_traceCall",
+      "params": [
+        {
+          "from": "0x96145386E08123F311EBe5c3548EBe706f0d85Dc",
+          "to": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+          "value": "0xde0b6b3a7640000"
+        },
+        "latest",
+        {
+          "tracer": "prestateTracer",
+          "tracerConfig": {
+            "diffMode": true
+          }
+        }
+      ]
+    },
+    {
+      "endpoint": "Infura Arc mainnet (key redacted)",
+      "error": {
+        "code": -32602,
+        "message": "Provider rejected request (details suppressed)"
+      },
+      "http": 200,
+      "method": "eth_sendRawTransaction",
+      "params": [
+        "0x"
+      ]
+    }
+  ]
+}

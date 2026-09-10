@@ -1,3 +1,5 @@
+import { pageMetadata } from "@/lib/site-metadata";
+export const metadata = pageMetadata("/how-it-works", "Arc Bot examples for buying, selling, swapping, and sending Arc tokens.");
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import Link from "next/link";
 

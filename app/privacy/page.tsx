@@ -1,7 +1,8 @@
+import { pageMetadata } from "@/lib/site-metadata";
 import type { Metadata } from "next";
 import { LegalDocument, type LegalSection } from "@/components/LegalDocument";
 
-export const metadata: Metadata = { title: "Privacy Policy", description: "How Arc Bot collects, uses, shares, and protects information.", alternates: { canonical: "/privacy" } };
+export const metadata: Metadata = pageMetadata("/privacy", "How Arc Bot collects, uses, shares, and protects information.");
 
 const sections: LegalSection[] = [
   { title: "About this policy", paragraphs: ["This Privacy Policy explains how Arc Bot collects, uses, shares, and protects information when you visit the Arc Bot website, connect an X account, use an Arc Bot wallet, submit commands, or otherwise use our services.", "Questions or privacy requests may be sent to Arc Bot support."] },

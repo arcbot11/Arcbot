@@ -1,30 +1,41 @@
 "use client";
 import { ArcTradeControls } from "./ArcTradeControls";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { WalletControlsPreview } from "./WalletControlsPreview";
 import { CopyWalletAddress } from "./CopyWalletAddress";
 import { useOtcSession, units, webPost } from "./OtcClient";
-type Data={baseUsdc?:{balance:string|null;locked:string;available:string|null};walletAddress:string;balances:Array<{chainId:number;balanceWei:string|null;lockedWei:string;availableWei:string|null;pending:boolean}>;
+type Data={baseUsdc?:{balance:string|null;locked:string;available:string|null};walletAddress:string;balances:Array<{chainId:number;balanceWei:string|null;lockedWei:string;availableWei:string|null;pending:boolean;error?:string|null}>;
   orders:Array<{paymentAsset?:"ETH"|"USDC";approvalHash?:string;payoutAttempt?:number;id:string;amount:string;premiumBps:number;feeWei:string;totalWei:string;status:string;paymentHash?:string;payoutHash?:string;note?:string;side:string;createdAt:number}>;
   listings:Array<{id:string;available:string;held:string;premiumBps:number;status:string;sold:string;receivedEthWei:string;receivedUsdcUnits:string;returnedUsdc:string|null;settlementLocked:boolean;canCancel:boolean}>;
   transactions:Array<{id:string;chainId:number;leg:string;status:string;hash?:string;note?:string;createdAt:number}>};
 type SendQuote={quote:string;amount:string;recipient:string;asset:string;gasWei:string;expiresAt:number};
 export function WalletDashboard({address}:{address?:string}){
-  const session=useOtcSession(),[data,setData]=useState<Data|null>(null),[tab,setTab]=useState<"buy"|"sell"|"send"|"withdraw">("buy");
+  const session=useOtcSession(),[data,setData]=useState<Data|null>(null),[tab,setTab]=useState<"buy"|"sell"|"swap"|"send"|"withdraw">("buy");
   const [error,setError]=useState(""),[busy,setBusy]=useState(false),[chain,setChain]=useState<5042|8453>(5042),[asset,setAsset]=useState("native"),[token,setToken]=useState(""),[amount,setAmount]=useState(""),[recipient,setRecipient]=useState(""),[quote,setQuote]=useState<SendQuote|null>(null),[now,setNow]=useState(Date.now());
+  const balanceRequest=useRef<AbortController|null>(null);
   const owns=Boolean(session?.authenticated&&session.walletAddress&&(!address||session.walletAddress?.toLowerCase()===address.toLowerCase()));
-  const refresh=useCallback(async()=>{if(!owns)return;try{const response=await fetch("/api/otc?scope=wallet",{cache:"no-store"});const result=await response.json();if(!response.ok)throw new Error(result.error);setData(result);setError("");}catch{setError("Wallet settlement data is unavailable. Balances and orders have not been confirmed.");}},[owns]);
-  useEffect(()=>{void refresh();const interval=setInterval(()=>void refresh(),10_000);return()=>clearInterval(interval);},[refresh]);
+  const refresh=useCallback(async()=>{
+    if(!owns||balanceRequest.current)return;
+    const controller=new AbortController();balanceRequest.current=controller;
+    try{
+      const response=await fetch("/api/otc?scope=wallet",{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])});
+      const result=await response.json();if(!response.ok)throw new Error(result.error||"Wallet data unavailable.");
+      if(result.walletAddress?.toLowerCase()!==session?.walletAddress?.toLowerCase())throw new Error("Wallet account changed. Refresh the page.");
+      if(!controller.signal.aborted){setData(result);setError("");}
+    }catch(e){if(!controller.signal.aborted)setError(e instanceof Error?e.message:"Wallet data unavailable. Retry shortly.");}
+    finally{if(balanceRequest.current===controller)balanceRequest.current=null;}
+  },[owns,session?.walletAddress]);
+  useEffect(()=>{setData(null);setError("");void refresh();const interval=setInterval(()=>void refresh(),10_000);return()=>{clearInterval(interval);balanceRequest.current?.abort();balanceRequest.current=null;};},[refresh]);
   useEffect(()=>{const interval=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(interval);},[]);
   if(!session)return address?null:<WalletControlsPreview loading/>;
   if(!owns)return address?null:<WalletControlsPreview/>;
   return <div className="wallet-dashboard">
     {!address&&session.walletAddress&&<CopyWalletAddress address={session.walletAddress}/>}
-    <div className="otc-wallet-balances">{[5042,...(data?.balances.some(b=>b.chainId===8453&&((b.balanceWei!=null&&BigInt(b.balanceWei)>0n)||BigInt(data?.baseUsdc?.balance??"0")>0n))?[8453]:[])].map(id=>{const b=data?.balances.find(item=>item.chainId===id);return <article key={id}><p className="arc-kicker">{id===5042?"ARC / USDC":"BASE / ETH"}</p><h2>{b?.availableWei==null?"—":units(b.availableWei,18)} <small>{id===5042?"USDC":"ETH"}</small></h2><span>Available</span><dl><dt>Reserved</dt><dd>{b?units(b.lockedWei,18):"—"}</dd><dt>Total balance</dt><dd>{b?.balanceWei==null?"—":units(b.balanceWei,18)}</dd></dl>{id===8453&&<dl><dt>Base USDC available</dt><dd>{data?.baseUsdc?.available==null?"—":units(data.baseUsdc.available)} USDC</dd><dt>Base USDC reserved</dt><dd>{units(data?.baseUsdc?.locked??"0")} USDC</dd><dt>Base USDC total</dt><dd>{data?.baseUsdc?.balance==null?"—":units(data.baseUsdc.balance)} USDC</dd></dl>}{b?.pending&&<p className="otc-fine">Transaction pending.</p>}{id===8453&&<button className="arc-button" disabled={busy||b?.availableWei==null||BigInt(b.availableWei)<=0n} onClick={()=>{setTab("withdraw");setChain(8453);setAsset("native");setAmount("");setRecipient("");setQuote(null);}}>Withdraw</button>}</article>;})}</div>
+    <div className="otc-wallet-balances">{[5042,...(data?.balances.some(b=>b.chainId===8453&&((b.balanceWei!=null&&BigInt(b.balanceWei)>0n)||BigInt(data?.baseUsdc?.balance??"0")>0n))?[8453]:[])].map(id=>{const b=data?.balances.find(item=>item.chainId===id);return <article key={id}><p className="arc-kicker">{id===5042?"ARC / USDC":"BASE / ETH"}</p><h2>{b?.availableWei==null?"—":units(b.availableWei,18)} <small>{id===5042?"USDC":"ETH"}</small></h2><span>Available</span><dl><dt>Reserved</dt><dd>{b?units(b.lockedWei,18):"—"}</dd><dt>Total balance</dt><dd>{b?.balanceWei==null?"—":units(b.balanceWei,18)}</dd></dl>{id===8453&&<dl><dt>Base USDC available</dt><dd>{data?.baseUsdc?.available==null?"—":units(data.baseUsdc.available)} USDC</dd><dt>Base USDC reserved</dt><dd>{units(data?.baseUsdc?.locked??"0")} USDC</dd><dt>Base USDC total</dt><dd>{data?.baseUsdc?.balance==null?"—":units(data.baseUsdc.balance)} USDC</dd></dl>}{b?.error&&<p className="otc-notice" role="status">{b.error} <button className="otc-inline-button" onClick={()=>void refresh()}>Retry</button></p>}{b?.pending&&<p className="otc-fine">Transaction pending.</p>}{id===8453&&<button className="arc-button" disabled={busy||b?.availableWei==null||BigInt(b.availableWei)<=0n} onClick={()=>{setTab("withdraw");setChain(8453);setAsset("native");setAmount("");setRecipient("");setQuote(null);}}>Withdraw</button>}</article>;})}</div>
     <div className="otc-panel-title"><h2>Move funds</h2><Link className="arc-text-link" href="/otc">Open OTC market ↗</Link></div>
-    <div className="otc-tabs wallet-action-tabs" role="group" aria-label="Wallet action">{["buy","sell","send"].map(action=><button key={action} aria-pressed={tab===action} onClick={()=>{setTab(action as typeof tab);setChain(5042);setAsset("native");setAmount("");setRecipient("");setQuote(null);}}>{action[0].toUpperCase()+action.slice(1)}</button>)}</div>
-    {tab==="buy"||tab==="sell"?<ArcTradeControls key={tab} side={tab}/>:<section className="otc-form-panel"><h2>{tab==="withdraw"?"Withdraw Base ETH":"Send Arc tokens"}</h2><form onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy(true);setError("");setQuote(null);try{setQuote(await webPost("/api/wallet/send",{action:"preview",chainId:chain,asset:asset==="token"?token:"native",amount,recipient},session));}catch(e){setError(e instanceof Error?e.message:"Send preview failed.");}finally{setBusy(false);}}}>
+    <div className="otc-tabs wallet-action-tabs" role="group" aria-label="Wallet action">{["buy","sell","swap","send"].map(action=><button key={action} aria-pressed={tab===action} onClick={()=>{setTab(action as typeof tab);setChain(5042);setAsset("native");setAmount("");setRecipient("");setQuote(null);}}>{action[0].toUpperCase()+action.slice(1)}</button>)}</div>
+    {tab==="buy"||tab==="sell"||tab==="swap"?<ArcTradeControls key={tab} side={tab}/>:<section className="otc-form-panel"><h2>{tab==="withdraw"?"Withdraw Base ETH":"Send Arc tokens"}</h2><form onSubmit={async e=>{e.preventDefault();if(busy)return;setBusy(true);setError("");setQuote(null);try{setQuote(await webPost("/api/wallet/send",{action:"preview",chainId:chain,asset:asset==="token"?token:"native",amount,recipient},session));}catch(e){setError(e instanceof Error?e.message:"Send preview failed.");}finally{setBusy(false);}}}>
       <p className="otc-fine">{chain===5042?"Arc network · USDC gas":"Base network · ETH gas"}</p>
       {chain===5042&&<label>Asset<select value={asset} onChange={e=>{setAsset(e.target.value);setQuote(null);}}><option value="native">USDC</option><option value="token">Arc token address</option></select></label>}
       {asset==="token"&&<label>Token contract<input required value={token} onChange={e=>{setToken(e.target.value);setQuote(null);}} placeholder="0x…"/></label>}

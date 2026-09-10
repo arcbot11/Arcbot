@@ -10,6 +10,7 @@
 
 import type * as arcRpcDiagnostics from "../arcRpcDiagnostics.js";
 import type * as arcTokenCatalog from "../arcTokenCatalog.js";
+import type * as arcTransferTest from "../arcTransferTest.js";
 import type * as automatedFeeClaimInfo from "../automatedFeeClaimInfo.js";
 import type * as automatedFeeEngine from "../automatedFeeEngine.js";
 import type * as automatedFeeOutcomes from "../automatedFeeOutcomes.js";
@@ -57,6 +58,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   arcRpcDiagnostics: typeof arcRpcDiagnostics;
   arcTokenCatalog: typeof arcTokenCatalog;
+  arcTransferTest: typeof arcTransferTest;
   automatedFeeClaimInfo: typeof automatedFeeClaimInfo;
   automatedFeeEngine: typeof automatedFeeEngine;
   automatedFeeOutcomes: typeof automatedFeeOutcomes;

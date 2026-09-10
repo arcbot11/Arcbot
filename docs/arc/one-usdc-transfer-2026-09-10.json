@@ -1,0 +1,15 @@
+{
+  "checkedAt": "2026-09-10T14:32:29.842Z",
+  "hash": "0xbff636d8c59287db979d2e2cd32966d81a54e2259822e9fb22abd172247ac791",
+  "status": "0x1",
+  "block": 20153076,
+  "finalizedBlock": 20153143,
+  "from": "0x96145386e08123f311ebe5c3548ebe706f0d85dc",
+  "to": "0x7d381d70e3cc6532fd5546e5439bc3d5cecd28dc",
+  "amountWei": "1000000000000000000",
+  "gasUsed": 21000,
+  "feeWei": "840000000000000",
+  "walletRecordFound": true,
+  "activeTx": null,
+  "holds": {}
+}
