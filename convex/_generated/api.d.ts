@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as arcRpcDiagnostics from "../arcRpcDiagnostics.js";
 import type * as arcTokenCatalog from "../arcTokenCatalog.js";
 import type * as automatedFeeClaimInfo from "../automatedFeeClaimInfo.js";
 import type * as automatedFeeEngine from "../automatedFeeEngine.js";
@@ -54,6 +55,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  arcRpcDiagnostics: typeof arcRpcDiagnostics;
   arcTokenCatalog: typeof arcTokenCatalog;
   automatedFeeClaimInfo: typeof automatedFeeClaimInfo;
   automatedFeeEngine: typeof automatedFeeEngine;

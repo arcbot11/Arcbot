@@ -69,6 +69,12 @@ import {
 } from "../lib/automated-fee-workflow";
 
 const LEGACY_NETWORK_CHAIN_ID = 4663;
+const WALLET_HOME_CHAIN_ID = 5042;
+
+// Accept the old metadata during migration without changing signer identities.
+function isWalletHomeChain(chainId: number) {
+  return chainId === WALLET_HOME_CHAIN_ID || chainId === LEGACY_NETWORK_CHAIN_ID;
+}
 // Transactions prepared before the broadcaster failover was introduced were
 // already reported to users as failed. They must never become executable merely
 // because a later deployment adds a working RPC route.
@@ -660,12 +666,19 @@ export const finishWalletProvisioning = internalMutation({
       if (
         !linked ||
         linked.ownerXUserId !== args.xUserId ||
-        linked.chainId !== LEGACY_NETWORK_CHAIN_ID ||
+        !isWalletHomeChain(linked.chainId) ||
         linked.address.toLowerCase() !== args.address.toLowerCase() ||
         linked.signerWalletRef.toLowerCase() !==
           args.signerWalletRef.toLowerCase()
       ) {
         throw new Error("canonical X wallet binding mismatch");
+      }
+      if (linked.chainId !== WALLET_HOME_CHAIN_ID || linked.launchEnabled !== false) {
+        await ctx.db.patch(linked._id, {
+          chainId: WALLET_HOME_CHAIN_ID,
+          launchEnabled: false,
+          updatedAt: Date.now(),
+        });
       }
       return linked._id;
     }
@@ -694,7 +707,7 @@ export const finishWalletProvisioning = internalMutation({
       (existing.address.toLowerCase() !== args.address.toLowerCase() ||
         existing.signerWalletRef.toLowerCase() !==
           args.signerWalletRef.toLowerCase() ||
-        existing.chainId !== LEGACY_NETWORK_CHAIN_ID)
+        !isWalletHomeChain(existing.chainId))
     )
       throw new Error("canonical X wallet binding mismatch");
     const now = Date.now();
@@ -706,9 +719,9 @@ export const finishWalletProvisioning = internalMutation({
         address: args.address,
         normalizedAddress,
         signerWalletRef: args.signerWalletRef,
-        chainId: LEGACY_NETWORK_CHAIN_ID,
+        chainId: WALLET_HOME_CHAIN_ID,
         status: "active",
-        launchEnabled: true,
+        launchEnabled: false,
         createdAt: now,
         updatedAt: now,
       }));
@@ -716,8 +729,10 @@ export const finishWalletProvisioning = internalMutation({
       const stats = await ctx.db.query("platformStatsCache").withIndex("by_key", (q) => q.eq("key", "public")).unique();
       if (stats) await ctx.db.patch(stats._id, { wallets: stats.wallets + 1, computedAt: now });
     }
-    if (existing && existing.xUsername !== user.username)
+    if (existing)
       await ctx.db.patch(existing._id, {
+        chainId: WALLET_HOME_CHAIN_ID,
+        launchEnabled: false,
         xUsername: user.username,
         updatedAt: now,
       });
@@ -3590,9 +3605,17 @@ export const ensureWallet = internalAction({
     if (current?.wallet) {
       if (
         current.wallet.ownerXUserId !== xUserId ||
-        current.wallet.chainId !== LEGACY_NETWORK_CHAIN_ID
+        !isWalletHomeChain(current.wallet.chainId)
       ) {
         throw new Error("canonical X wallet binding mismatch");
+      }
+      if (current.wallet.chainId !== WALLET_HOME_CHAIN_ID || current.wallet.launchEnabled !== false) {
+        await ctx.runMutation(internal.wallets.finishWalletProvisioning, {
+          xUserId,
+          address: current.wallet.address,
+          signerWalletRef: current.wallet.signerWalletRef,
+        });
+        return (await ctx.runQuery(internal.wallets.getXUserAndWallet, { xUserId }))?.wallet || null;
       }
       return current.wallet;
     }

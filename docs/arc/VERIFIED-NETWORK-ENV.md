@@ -1,5 +1,15 @@
 # Network environment verification — 2026-09-10
 
+## Follow-up: Arcscan reachable from Convex
+
+The funded-wallet probe at 14:25 UTC supersedes the local-only connectivity conclusion below. From the deployed Convex internal action, `https://rpc.arc-scan.org` returned chain 5042, fresh latest/finalized blocks (0–1 seconds old), the expected historical checkpoint hash, and the wallet's 46 USDC. A simulated $1 transfer to the second Arc Bot wallet succeeded through both native and ERC-20 interfaces; approval simulation, nonce, fee history, fee pricing and gas estimation also worked. Native transfer estimated 21,000 gas; ERC-20 transfer estimated 74,826 gas. These are simulations, not completed transfers.
+
+The empty `eth_sendRawTransaction` probe returned -32602 (transaction decoding error), demonstrating that the method is recognized, rather than rejected as unsupported. No valid signed transaction was submitted, so successful broadcast and settlement remain unverified. Local Node connections still reset; public DNS agrees with local DNS. The precise local connectivity cause is unknown.
+
+Argus continues to support reads/simulations but refuses broadcasts. Arcexplorer's RPC remains about ten days behind and incorrectly reports the newly funded wallet as empty. Arcscan rejects `debug_traceCall` by namespace policy; the existing V4 native-output trace requirement remains a separate limitation.
+
+Arcscan is now a viable candidate for the server RPC setting. Website transaction execution currently runs in Vercel, so Vercel connectivity still needs verification; Convex success does not establish Vercel success. No environment settings were changed. Evidence: `rpc-convex-2026-09-10.json` and `rpc-funded-wallet-2026-09-10.json`. The repeatable Convex diagnostic is internal/admin-only and has fixed endpoints, fixed calls, and no signing code.
+
 Read-only RPC checks used Node with `--use-system-ca`. TLS verification remained enabled. Broadcast-method probes supplied only invalid empty bytes (`0x`); no signed transaction was supplied or funds moved.
 
 ## Resolved values
