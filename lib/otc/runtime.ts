@@ -1,21 +1,27 @@
+import { otcWorkerUrl } from "../project-config";
+import { nativeSpend } from "./native-spend";
+import { ARC_ROUTER, ARC_ROUTER_CODE_HASH } from "../arc/routing";
+import { socialAuthority } from "../arc/social-authority";
+import { BASE_USDC, baseUsdcAbi } from "../base/usdc";
 import { tokenTransfer, transferAbi, verifyTransferReturn, verifyTransferDelivery } from "./token-delivery";
 import { CdpClient } from "@coinbase/cdp-sdk";
 import { createHash } from "node:crypto";
-import { createPublicClient, http, getAddress, keccak256, parseTransaction, recoverTransactionAddress, serializeTransaction, parseEventLogs, type Address, type Hex } from "viem";
+import { createPublicClient, http, getAddress, keccak256, parseTransaction, recoverTransactionAddress, serializeTransaction, parseEventLogs, decodeFunctionData, parseAbi, type Address, type Hex } from "viem";
 import { arcConfigFromEnv } from "../arc/config";
 import { createArcRpc, checkArcRpc } from "../arc/rpc";
 import { baseConfigFromEnv } from "../base/config";
 import { createBaseRpc, checkBaseRpc } from "../base/rpc";
 import type { BaseTransaction } from "../base/transfers";
 import { exactAmount } from "../arc/amounts";
-import { type Chain, type Order, type Transaction, type Wallet, locked, walletId, QUOTE_MS } from "./model";
-import { PAYMENT_ABI, orderHash, paymentCall, payoutCall } from "./transactions";
+import { type Chain, type Order, type Transaction, type Wallet, locked, lockedBaseUsdc, paymentAsset, walletId, QUOTE_MS } from "./model";
+import { PAYMENT_ABI, orderHash, paymentCall, approvalCall, payoutCall } from "./transactions";
 import { repository } from "./repository";
 
 const required = (key: string) => { const value = process.env[key]?.trim(); if (!value) throw new Error(`${key} is not configured.`); return value; };
+const tradeApprovalAbi=parseAbi(["function approve(address,uint256) returns (bool)","function approve(address,address,uint160,uint48)","function allowance(address,address) view returns (uint256)","function allowance(address,address,address) view returns (uint160,uint48,uint48)"]);
 export function walletTransferConfiguration(chain: Chain) {
   required("CDP_API_KEY_ID"); required("CDP_API_KEY_SECRET"); required("CDP_WALLET_SECRET");
-  required("OTC_WORKER_URL"); repository();
+  otcWorkerUrl(); repository();
   return chain === 5042 ? arcConfigFromEnv() : baseConfigFromEnv();
 }
 export function otcConfiguration(_requireEnabled = true) {
@@ -24,7 +30,7 @@ export function otcConfiguration(_requireEnabled = true) {
   const routerCodeHash = required("OTC_BASE_ROUTER_CODE_HASH") as Hex;
   if (!/^0x[0-9a-fA-F]{64}$/.test(routerCodeHash) || /^0x0{40}$/i.test(router) || /^0x0{40}$/i.test(feeRecipient)) throw new Error("Invalid OTC payment configuration.");
   required("CDP_API_KEY_ID"); required("CDP_API_KEY_SECRET"); required("CDP_WALLET_SECRET");
-  required("OTC_WORKER_URL"); repository();
+  otcWorkerUrl(); repository();
   return { router, feeRecipient, routerCodeHash, arc: arcConfigFromEnv(), base: baseConfigFromEnv() };
 }
 export function chainClient(chain: Chain) {
@@ -46,6 +52,16 @@ export async function verifyRouter(requireEnabled = true) {
   if (!code || keccak256(code).toLowerCase() !== config.routerCodeHash.toLowerCase() || recipient.toLowerCase() !== config.feeRecipient.toLowerCase()) throw new Error("Base payment contract does not match the configured deployment.");
   return config;
 }
+export async function baseUsdcBalance(address: string, block: string) {
+  return (await chainClient(8453).readContract({address: BASE_USDC, abi: baseUsdcAbi, functionName: "balanceOf", args: [getAddress(address)], blockNumber: BigInt(block)})).toString();
+}
+export async function verifyUsdcRouter(router: Address) {
+  const token = await chainClient(8453).readContract({address: router, abi: PAYMENT_ABI, functionName: "usdc"});
+  if (token.toLowerCase() !== BASE_USDC.toLowerCase()) throw new Error("Base payment contract does not support native USDC.");
+}
+async function verifyUsdcCoverage(order: Order, w: Wallet, block: string) {
+  if (BigInt(w.usdcHolds?.[order.id] ?? "0") !== BigInt(order.totalWei) || BigInt(await baseUsdcBalance(order.buyer, block)) < lockedBaseUsdc(w)) throw new Error("Base USDC reservation is not covered.");
+}
 export async function ethPrice() {
   const response = await fetch("https://api.coinbase.com/v2/prices/ETH-USD/spot",{cache:"no-store",signal:AbortSignal.timeout(6000)});
   if (!response.ok) throw new Error("ETH/USD price is unavailable.");
@@ -55,11 +71,13 @@ export async function ethPrice() {
 }
 export type Call = {from:Address;to:Address;data:Hex;value:bigint};
 export async function prepareCall(chain: Chain, call: Call) {
+  const spend = nativeSpend(chain, call);
   const snapshot = await balanceSnapshot(chain,call.from);
   if (snapshot.nonce !== snapshot.pendingNonce) throw new Error("Wallet has a pending transaction.");
   const client = chainClient(chain), blockNumber = BigInt(snapshot.block);
-  if(BigInt(snapshot.balanceWei)<call.value)throw new Error("Not enough funds for the amount and gas.");
+  if(BigInt(snapshot.balanceWei)<spend)throw new Error("Not enough funds for the amount and gas.");
   const simulation=await client.call({account:call.from,to:call.to,data:call.data,value:call.value,blockNumber});
+  if (call.data.startsWith("0x095ea7b3")) verifyTransferReturn(simulation.data);
   if(call.data.startsWith("0xa9059cbb")){ tokenTransfer(call.data,call.value); verifyTransferReturn(simulation.data); }
   const gas = ((await client.estimateGas({account:call.from,to:call.to,data:call.data,value:call.value,blockNumber}))*120n+99n)/100n;
   const fees = await client.estimateFeesPerGas({type:"eip1559",chain:null});
@@ -74,8 +92,8 @@ export async function prepareCall(chain: Chain, call: Call) {
     gasWei += 2n * (extra.l1FeeUpperBoundWei + extra.operatorFeeWei);
     if (gasWei > base.maxTotalFeeWei) throw new Error("Base fees exceed the configured cap.");
   }
-  if (BigInt(snapshot.balanceWei) < call.value + gasWei) throw new Error("Not enough funds for the amount and gas.");
-  return { unsigned:serializeTransaction(tx), gasWei:gasWei.toString(), reserveWei:(call.value+gasWei).toString(), snapshot };
+  if (BigInt(snapshot.balanceWei) < spend + gasWei) throw new Error("Not enough funds for the amount and gas.");
+  return { unsigned:serializeTransaction(tx), gasWei:gasWei.toString(), reserveWei:(spend+gasWei).toString(), snapshot };
 }
 export async function verifyRaw(raw: Hex, unsigned: Hex, sender: string) {
   if (!raw.startsWith("0x02")) throw new Error("Expected an EIP-1559 transaction.");
@@ -95,7 +113,7 @@ export async function advanceTransaction(id: string) {
   const repo=repository(); let record=await repo.read<Transaction>({id});
   if (!record || ["completed","reverted"].includes(record.status)) return record;
   walletTransferConfiguration(record.chainId);
-  if (record.leg === "payment" && !record.raw) {
+  if (["approval", "payment"].includes(record.leg) && !record.raw) {
     const config=await verifyRouter(false),order=await repo.read<Order>({id:record.orderId!});
     if(order.router.toLowerCase()!==config.router.toLowerCase()||order.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new Error("Payment configuration changed. Recovery required.");
   }
@@ -104,17 +122,40 @@ export async function advanceTransaction(id: string) {
   if (tx.type !== "eip1559" || tx.chainId !== record.chainId) throw new Error("Stored transaction chain mismatch.");
   if(record.orderId){
     const order=await repo.read<Order>({id:record.orderId});
-    const expected=record.leg==="payment"?paymentCall(order):payoutCall(order);
+    const expected=record.leg==="approval"?approvalCall(order):record.leg==="payment"?paymentCall(order):payoutCall(order);
     if(tx.to?.toLowerCase()!==expected.to.toLowerCase()||(tx.value??0n)!==expected.value||(tx.data??"0x")!==expected.data||record.wallet.toLowerCase()!==expected.from.toLowerCase())throw new Error("Stored settlement transaction does not match the order.");
   }
   if (!record.raw) {
+    if(record.sourceRequestId){
+      const authority=await socialAuthority(record.sourceRequestId);
+      if(authority.owner!==record.owner||authority.wallet.toLowerCase()!==record.wallet.toLowerCase())throw new Error("Social command authorization changed.");
+    }
+    if(record.leg==="swap"){
+      if(record.chainId!==5042||tx.to?.toLowerCase()!==ARC_ROUTER.toLowerCase())throw new Error("Invalid Arc swap target.");
+      const code=await chainClient(5042).getCode({address:ARC_ROUTER});
+      if(!code||keccak256(code)!==ARC_ROUTER_CODE_HASH)throw new Error("Arc router code changed.");
+      await chainClient(5042).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value});
+    }
     if(!await repo.identity(record.owner,record.wallet))throw new Error("Wallet ownership or active status changed before signing.");
     if (snapshot.nonce !== tx.nonce || snapshot.pendingNonce !== snapshot.nonce) throw new Error("Wallet nonce changed before signing. Recovery required.");
     const w=await repo.read<Wallet>({id:walletId(record.chainId,record.wallet)});
     if (!w || w.activeTx !== id || BigInt(snapshot.balanceWei)<locked(w)) throw new Error("Wallet reservation is not covered.");
+    const minimumReserve = nativeSpend(record.chainId, tx) + (tx.gas ?? 0n) * (tx.maxFeePerGas ?? 0n);
+    if (BigInt(w.holds[record.holdId] ?? "0") < minimumReserve) throw new Error("Transaction amount and gas exceed its reservation.");
+    if (record.orderId && ["approval", "payment"].includes(record.leg)) {
+      const order = await repo.read<Order>({id: record.orderId});
+      if (paymentAsset(order) === "USDC") {
+        await verifyUsdcRouter(getAddress(order.router));
+        await verifyUsdcCoverage(order, w, snapshot.block);
+      }
+    }
     if(record.leg==="send"&&tokenTransfer(tx.data,tx.value)){
       const simulation=await chainClient(record.chainId).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value,blockNumber:BigInt(snapshot.block)});
       verifyTransferReturn(simulation.data);
+    }
+    if(record.leg==="allowance"){
+      const simulation=await chainClient(record.chainId).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value,blockNumber:BigInt(snapshot.block)});
+      if(tx.data?.startsWith("0x095ea7b3"))verifyTransferReturn(simulation.data);
     }
     const cdp=new CdpClient({apiKeyId:required("CDP_API_KEY_ID"),apiKeySecret:required("CDP_API_KEY_SECRET"),walletSecret:required("CDP_WALLET_SECRET")});
     const {signature}=await cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey:signingId(id)});
@@ -141,15 +182,56 @@ export async function advanceTransaction(id: string) {
         if(!tx.to||receipt.blockNumber<=0n)throw new Error("Token delivery evidence unavailable.");
         const token=tx.to;
         const [before,after]=await Promise.all([receipt.blockNumber-1n,receipt.blockNumber].map(blockNumber=>client.readContract({address:token,abi:transferAbi,functionName:"balanceOf",args:[transfer.recipient],blockNumber})));
-        verifyTransferDelivery({token,sender:record.wallet,...transfer,before,after,logs:receipt.logs});
+        const blockLogs=await client.getLogs({address:token,fromBlock:receipt.blockNumber,toBlock:receipt.blockNumber});
+        verifyTransferDelivery({token,sender:record.wallet,...transfer,before,after,logs:receipt.logs,blockLogs});
       }
+    }
+    if(receipt.status==="success"&&record.leg==="swap"){
+      const output=record.swapOutput;
+      if(!output)throw new Error("Swap delivery terms missing.");
+      if(/^0x0{40}$/i.test(output.token)){
+        const trace=await client.request({method:"debug_traceTransaction",params:[record.hash,{tracer:"prestateTracer",tracerConfig:{diffMode:true}}]} as never) as unknown as {pre:Record<string,{balance?:string}>;post:Record<string,{balance?:string}>};
+        const key=record.wallet.toLowerCase(),before=trace.pre?.[key]?.balance,after=trace.post?.[key]?.balance;
+        if(before===undefined||after===undefined||BigInt(after)-BigInt(before)+receipt.gasUsed*receipt.effectiveGasPrice<BigInt(output.minimum))throw new Error("Native swap output is not verified.");
+      }else{
+        const token=getAddress(output.token);
+        const transfers=parseEventLogs({abi:transferAbi,logs:receipt.logs.filter(l=>l.address.toLowerCase()===token.toLowerCase()),eventName:"Transfer",strict:true});
+        const incoming=transfers.filter(e=>e.args.to.toLowerCase()===record.wallet.toLowerCase());
+        const received=incoming.reduce((sum,e)=>sum+e.args.value,0n);
+        if(received<BigInt(output.minimum))throw new Error("Minimum swap output was not delivered.");
+        const [before,after]=await Promise.all([receipt.blockNumber-1n,receipt.blockNumber].map(blockNumber=>client.readContract({address:token,abi:transferAbi,functionName:"balanceOf",args:[getAddress(record.wallet)],blockNumber})));
+        const blockLogs=await client.getLogs({address:token,fromBlock:receipt.blockNumber,toBlock:receipt.blockNumber});
+        for(const sender of new Set(incoming.map(e=>e.args.from.toLowerCase()))){
+          const amount=incoming.filter(e=>e.args.from.toLowerCase()===sender).reduce((sum,e)=>sum+e.args.value,0n);
+          verifyTransferDelivery({token,sender,recipient:record.wallet,amount,before,after,logs:receipt.logs,blockLogs});
+        }
+      }
+    }
+    if(receipt.status==="success"&&record.leg==="allowance"){
+      if(!tx.data||!tx.to)throw new Error("Approval terms missing.");
+      const decoded=decodeFunctionData({abi:tradeApprovalAbi,data:tx.data});
+      if(decoded.functionName!=="approve")throw new Error("Invalid approval call.");
+      if(decoded.args.length===2){
+        const amount=await client.readContract({address:tx.to,abi:tradeApprovalAbi,functionName:"allowance",args:[getAddress(record.wallet),decoded.args[0]],blockNumber:receipt.blockNumber});
+        if(amount!==decoded.args[1])throw new Error("Token approval was not verified.");
+      }else{
+        const [amount,expiration]=await client.readContract({address:tx.to,abi:tradeApprovalAbi,functionName:"allowance",args:[getAddress(record.wallet),decoded.args[0],decoded.args[1]],blockNumber:receipt.blockNumber});
+        if(amount!==decoded.args[2]||expiration!==decoded.args[3])throw new Error("Router approval was not verified.");
+      }
+    }
+    if (receipt.status === "success" && record.leg === "approval") {
+      const order = await repo.read<Order>({id: record.orderId!});
+      const logs = parseEventLogs({abi: baseUsdcAbi, logs: receipt.logs.filter(log => log.address.toLowerCase() === BASE_USDC.toLowerCase()), eventName: "Approval", strict: true});
+      const allowance = await client.readContract({address: BASE_USDC, abi: baseUsdcAbi, functionName: "allowance", args: [getAddress(order.buyer), getAddress(order.router)], blockNumber: receipt.blockNumber});
+      if (!logs.some(e => e.args.owner.toLowerCase() === order.buyer.toLowerCase() && e.args.spender.toLowerCase() === order.router.toLowerCase() && e.args.value === BigInt(order.totalWei)) || allowance !== BigInt(order.totalWei)) throw new Error("USDC approval was not verified.");
     }
     if (receipt.status === "success" && record.leg === "payment") {
       const order=await repo.read<Order>({id:record.orderId!});
-      const events=parseEventLogs({abi:PAYMENT_ABI,logs:receipt.logs.filter(log=>log.address.toLowerCase()===order.router.toLowerCase()),eventName:"Paid",strict:true});
+      const events=parseEventLogs({abi:PAYMENT_ABI,logs:receipt.logs.filter(log=>log.address.toLowerCase()===order.router.toLowerCase()),eventName:paymentAsset(order)==="USDC"?"PaidUsdc":"Paid",strict:true});
       const event=events.find(e=>e.args.orderId===orderHash(order.id));
       if (!event || event.args.buyer.toLowerCase()!==order.buyer.toLowerCase() || event.args.seller.toLowerCase()!==order.seller.toLowerCase()
         || event.args.arcBuyer.toLowerCase()!==order.buyer.toLowerCase() || event.args.arcUsdcUnits!==BigInt(order.amount) || event.args.sellerWei!==BigInt(order.sellerWei) || event.args.feeWei!==BigInt(order.feeWei)) throw new Error("Base split payment was not verified.");
+      if (paymentAsset(order) === "USDC") await verifyUsdcPaymentDelivery(order, receipt.blockNumber, receipt.logs);
     }
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt changed during verification.");
     return repo.command<Transaction>("settled",{id,block:receipt.blockNumber.toString(),success:receipt.status==="success"});
@@ -157,6 +239,10 @@ export async function advanceTransaction(id: string) {
   if (snapshot.nonce>(tx.nonce??0)) throw new Error("Nonce consumed without a verified receipt. Funds remain reserved.");
   const reserved=await repo.read<Wallet>({id:walletId(record.chainId,record.wallet)});
   if(!reserved || reserved.activeTx!==record.id || BigInt(snapshot.balanceWei)<locked(reserved)) throw new Error("Signed request is no longer covered by wallet reservations.");
+  if (record.orderId && ["approval", "payment"].includes(record.leg)) {
+    const order = await repo.read<Order>({id: record.orderId});
+    if (paymentAsset(order) === "USDC") await verifyUsdcCoverage(order, reserved, snapshot.block);
+  }
   if(record.chainId===8453){
     const extra=await createBaseRpc(baseConfigFromEnv()).extraFees(tx as BaseTransaction,BigInt(snapshot.block));
     if(extra.l1FeeUpperBoundWei<0n||extra.operatorFeeWei<0n)throw new Error("Invalid Base fee estimate.");
@@ -171,6 +257,18 @@ export async function advanceTransaction(id: string) {
   } catch { /* Ambiguous broadcasts retain the exact signature, reservation and nonce. */ }
   return record;
 }
+export async function verifyUsdcPaymentDelivery(order: Order, block: bigint, logs: Parameters<typeof verifyTransferDelivery>[0]["logs"]) {
+  if (block <= 0n) throw new Error("Token delivery evidence unavailable.");
+  const recipients = new Map<string, bigint>();
+  for (const [address, amount] of [[order.seller, order.sellerWei], [order.feeRecipient, order.feeWei]]) {
+    const key = address.toLowerCase(); recipients.set(key, (recipients.get(key) ?? 0n) + BigInt(amount));
+  }
+  for (const [recipient, amount] of recipients) {
+    const [before, after] = await Promise.all([block - 1n, block].map(blockNumber => chainClient(8453).readContract({address: BASE_USDC, abi: baseUsdcAbi, functionName: "balanceOf", args: [getAddress(recipient)], blockNumber})));
+    const blockLogs=await chainClient(8453).getLogs({address:BASE_USDC,fromBlock:block,toBlock:block});
+    verifyTransferDelivery({token: BASE_USDC, sender: order.buyer, recipient, amount, before, after, logs,blockLogs});
+  }
+}
 export async function advanceOrder(id: string) {
   const repo=repository(); const order=await repo.read<Order>({id});
   if (!order) throw new Error("Order missing.");
@@ -181,7 +279,9 @@ export async function advanceOrder(id: string) {
   const payment=["payment_pending","payment_submitted"].includes(order.status);
   const payout=["payment_finalized","payout_submitted"].includes(order.status);
   if (!payment && !payout) return;
-  const txId=`tx:${id}:${payment?"payment":"payout"}`;
+  const approval = payment && paymentAsset(order) === "USDC" && !order.approvalFinalized;
+  const leg = approval ? "approval" : payment ? "payment" : "payout";
+  const txId=`tx:${id}:${leg}${leg==="payout" && order.payoutAttempt ? `:${order.payoutAttempt}` : ""}`;
   let record=await repo.read<Transaction|null>({id:txId});
   if (!record) {
     if (payment) {
@@ -190,10 +290,10 @@ export async function advanceOrder(id: string) {
       const seller=await repo.read<Wallet>({id:walletId(5042,order.seller)});
       if (!seller || BigInt(preflight.snapshot.balanceWei)<locked(seller) || BigInt(preflight.gasWei)>BigInt(order.arcGasWei)) throw new Error("Seller cannot cover the exact Arc payout and reserved gas.");
     }
-    const chain=payment?8453:5042, call=payment?paymentCall(order):payoutCall(order);
+    const chain=payment?8453:5042, call=approval?approvalCall(order):payment?paymentCall(order):payoutCall(order);
     const prepared=await prepareCall(chain,call);
-    if (BigInt(prepared.gasWei)>BigInt(payment?order.baseGasWei:order.arcGasWei)) throw new Error("Gas exceeded the accepted reserve. Order remains reserved.");
-    record=await repo.command<Transaction>("prepare",{id:txId,owner:payment?order.owner:order.sellerOwner,wallet:call.from,chainId:chain,leg:payment?"payment":"payout",orderId:id,
+    if (BigInt(prepared.gasWei)>BigInt(approval?order.approvalGasWei!:payment?order.baseGasWei:order.arcGasWei)) throw new Error("Gas exceeded the accepted reserve. Order remains reserved.");
+    record=await repo.command<Transaction>("prepare",{id:txId,owner:payment?order.owner:order.sellerOwner,wallet:call.from,chainId:chain,leg,orderId:id,
       unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
   }
   await advanceTransaction(record.id);

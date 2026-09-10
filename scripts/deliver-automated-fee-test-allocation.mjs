@@ -1,3 +1,4 @@
+throw new Error("Legacy automated fee operations are permanently disabled in Arc Bot.");
 import { CdpClient } from "@coinbase/cdp-sdk";
 import {
   createPublicClient, encodeFunctionData, getAddress, http, keccak256, parseAbi, parseTransaction,
@@ -20,8 +21,8 @@ if (configuredTokens.length !== 1) throw new Error("exactly one manual test toke
 const TOKEN = getAddress(configuredTokens[0]);
 const VAULT = getAddress(required("AUTOMATED_FEE_MANUAL_TEST_VAULT_ADDRESS"));
 const BENEFICIARY = getAddress(required("AUTOMATED_FEE_PRIVATE_TEST_LAUNCHER_ADDRESS"));
-if (process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true") throw new Error("production automation must remain disabled");
-if (process.env.AUTOMATED_FEE_MANUAL_TEST_ENABLED?.trim().toLowerCase() !== "true") throw new Error("manual testing is disabled");
+if ("false"?.trim().toLowerCase() === "true") throw new Error("production automation must remain disabled");
+if ("false"?.trim().toLowerCase() !== "true") throw new Error("manual testing is disabled");
 const allowlist = configuredTokens.map((value) => value.toLowerCase());
 if (allowlist.length !== 1 || allowlist[0] !== TOKEN.toLowerCase()) throw new Error("manual testing must be restricted exclusively to UTEST");
 const keeper = getAddress(required("AUTOMATED_FEE_KEEPER_ADDRESS"));

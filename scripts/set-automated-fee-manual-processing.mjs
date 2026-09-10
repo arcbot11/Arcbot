@@ -1,3 +1,4 @@
+throw new Error("Legacy automated fee operations are permanently disabled in Arc Bot.");
 import { CdpClient } from "@coinbase/cdp-sdk";
 import {
   createPublicClient,
@@ -40,10 +41,10 @@ if (configuredTokens.length !== 1) throw new Error("exactly one manual test toke
 const UTEST = getAddress(configuredTokens[0]);
 const UTEST_VAULT = requiredAddress("AUTOMATED_FEE_MANUAL_TEST_VAULT_ADDRESS");
 
-if (process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true") {
+if ("false"?.trim().toLowerCase() === "true") {
   throw new Error("production automated buyback and burn must remain disabled during manual testing");
 }
-if (process.env.AUTOMATED_FEE_MANUAL_TEST_ENABLED?.trim().toLowerCase() !== "true") {
+if ("false"?.trim().toLowerCase() !== "true") {
   throw new Error("AUTOMATED_FEE_MANUAL_TEST_ENABLED must be true");
 }
 const allowlist = configuredTokens.map((value) => value.toLowerCase());

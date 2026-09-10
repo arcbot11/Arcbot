@@ -1,0 +1,68 @@
+{
+  "checkedAt": "2026-09-10T13:12:51.527Z",
+  "frontend": [
+    {
+      "u": "https://arguspad.io/_next/static/chunks/3qvvz0zzjomuk.js",
+      "term": "async function v(e){",
+      "context": "[r,t,n]});return o>=a&&s>i},o)}async function w(e,t){try{let r=await e.estimateGas({account:t.account,to:t.to,data:t.data,value:t.value??0n});return{gas:12n*r/10n}}catch{return{}}}async function v(e){if(await e.getChainId()!==s.arc.id)try{await e.switchChain({id:s.arc.id})}catch{await e.addChain({chain:s.arc}),await e.switchChain({id:s.arc.id})}}function x(e){let t=e??window.ethereum??null;if(!t)throw Error(\"No wallet found. Install a browser wallet to trade.\");return t}e.s([\"GAS_BUFFER_USDC6\",0,250000n,\"SLIPPAGE_BPS\",0,100n,\"SWAP_ROUTER\",0,\"0x53BF6B0684Ec7eF91e1387Da3D1a1769bC5A6F77\",\"USDC\",0,\"0x3600000000000000000000000000000000000000\",\"afterBuyTax\",0,function(e,t){return t<=0?e:e*(10000n-BigInt(t))/10000n},\"afterHookTax\",0,function(e,t){return t<=0?e:t>=1e4?0n:e*(10000n-BigInt(t))/10000n},\"encodeExactInputSingle\",0,"
+    },
+    {
+      "u": "https://arguspad.io/_next/static/chunks/2kx562d61q1-c.js",
+      "term": ".sendTransaction({",
+      "context": "deFunctionData)({abi:s.permit2Abi,functionName:\"approve\",args:[i,o.ARC_V4.universalRouter,z,Number(m)]}),l=await (0,s.gasParams)(a,{account:C,to:o.ARC_V4.permit2,data:e}),c=await t.sendTransaction({account:C,...l,to:o.ARC_V4.permit2,data:e,value:0n});M(c),I(\"Confirming approval\");let u=new AbortController,h=await Promise.race([(0,s.waitForPermit2Allowance)(r,i,C,o.ARC_V4.universalRouter,z,d,{timeoutMs:6e4,signal:u.signal}),(0,s.waitForPermit2Allowance)(a,i,C,o.ARC_V4.universalRouter,z,d,{timeoutMs:6e4,signal:u.signal})]);if(u.abort(),!h)return void _(\"The approval has not landed yet. Press trade again in a moment - if it did land, your wallet will not ask a second time.\");I(\"Confirm in wallet\")}}let x=W?o.ARC_V4.universalRouter:s.SWAP_ROUTER,b=W?(0,s.encodeV4ExactInSwap)({key:W.key,zeroForOne:V?!W.tokenIsToken0:W.token"
+    },
+    {
+      "u": "https://arguspad.io/_next/static/chunks/2kx562d61q1-c.js",
+      "term": ".sendTransaction({",
+      "context": "s.encodeExactInputSingle)({tokenIn:i,tokenOut:V?l:s.USDC,fee:f,recipient:C,amountIn:z,amountOutMinimum:Y.routerMinOut}),g=await (0,s.gasParams)(a,{account:C,to:x,data:b}),w=await t.sendTransaction({account:C,...g,to:x,data:b,value:0n});M(w),I(\"Confirming\");let v=await r.waitForTransactionReceipt({hash:w,timeout:9e4}).catch(()=>null);if(v&&\"reverted\"===v.status)return void _(\"The swap reverted on chain and nothing moved. The price most likely crossed your floor.\");P(\"\"),(0,u.track)(\"trade\",{token:l,side:S,amount_bucket:(0,u.usdBucket)(Number($)||0),confirmed:!!v}),Q(v?`Traded. You received about ${c}.`:\"Sent. We could not confirm it from here, so check the transaction below.\"),await Promise.all([H(),G(C)])}catch(t){let e=(0,d.readableError)(t);e&&_(e)}finally{I(null)}}},[C,k,Y,z,V,l,e,f,y,K,et,ea,H,G,W,S,$]),es=e=>(e/10"
+    },
+    {
+      "u": "https://arguspad.io/_next/static/chunks/2kx562d61q1-c.js",
+      "term": ".writeContract({",
+      "context": "gs:[C,h]})<z){I(\"Approve in wallet\");let e=(0,n.encodeFunctionData)({abi:s.erc20Abi,functionName:\"approve\",args:[h,z]}),l=await (0,s.gasParams)(a,{account:C,to:i,data:e}),o=await t.writeContract({account:C,...l,address:i,abi:s.erc20Abi,functionName:\"approve\",args:[h,z]});M(o),I(\"Confirming approval\");let d=new AbortController,c=await Promise.race([(0,s.waitForAllowance)(r,i,C,h,z,{timeoutMs:6e4,signal:d.signal}),(0,s.waitForAllowance)(a,i,C,h,z,{timeoutMs:6e4,signal:d.signal})]);if(d.abort(),!c)return void _(\"The approval has not landed yet. Press trade again in a moment - if it did land, your wallet will not ask a second time.\")}let m=0n;if(W)try{m=await a.readContract({address:a.chain.contracts.multicall3.address,abi:p,functionName:\"getCurrentBlockTimestamp\"})+1800n}catch{_(\"Could not read the chain's clock, and a v4"
+    },
+    {
+      "u": "https://arguspad.io/_next/static/chunks/2kx562d61q1-c.js",
+      "term": ".writeContract({",
+      "context": "K(null);try{let e=(0,p.walletClient)(F?.provider);await (0,p.ensureArc)(e);let t=(0,p.publicClient)(),a=(0,p.walletPublicClient)(F?.provider)??t;if(Y){L(\"Collecting\");let t=await e.writeContract({account:O,address:X.locker,abi:y,functionName:\"collect\"});K(t);let n=await a.waitForTransactionReceipt({hash:t,timeout:9e4}).catch(()=>null);if(!n)return void q(\"The collect was sent but we could not confirm it from here, so nothing else was done. Check the transaction below, then reload this page.\");if(\"reverted\"===n.status)return void q(\"The collect reverted on chain and nothing moved.\");let r=await H(O,X.locker);if(null===r)return void q(\"The collect landed, but your parked balance could not be read afterwards, so nothing was claimed. Reload this page and claim if a balance is showing.\");if(0n===r)return void await W()}L(\"C"
+    },
+    {
+      "u": "https://arguspad.io/_next/static/chunks/2kx562d61q1-c.js",
+      "term": ".writeContract({",
+      "context": "rked balance could not be read afterwards, so nothing was claimed. Reload this page and claim if a balance is showing.\");if(0n===r)return void await W()}L(\"Claiming\");let n=await e.writeContract({account:O,address:X.locker,abi:y,functionName:\"claim\"});K(n);let r=await a.waitForTransactionReceipt({hash:n,timeout:9e4}).catch(()=>null);if(r&&\"reverted\"===r.status)return void q(\"The claim reverted on chain and nothing moved.\");await Promise.all([W(),H(O,X.locker)])}catch(e){q((e instanceof Error?e.message:\"Transaction failed.\").split(\"\\n\")[0].slice(0,160))}finally{L(null)}}},[O,F,X,Y,W,H]),et=(0,a.useCallback)(async()=>{if(!O||!X)return;let e=X.splitter;if(e){q(null),K(null);try{await (0,p.ensureArc)((0,p.walletClient)(F?.provider));let t=(0,p.walletClient)(F?.provider);L(\"Claiming\");let a=(0,p.publicClient)(),n=await a.si"
+    },
+    {
+      "u": "https://arguspad.io/_next/static/chunks/2kx562d61q1-c.js",
+      "term": ".writeContract({",
+      "context": "Claiming\");let a=(0,p.publicClient)(),n=await a.simulateContract({account:O,address:e,abi:v,functionName:\"claim\",args:[X.creator],chain:i.arc}).then(()=>!0).catch(()=>!1),r=await t.writeContract({account:O,address:e,abi:v,functionName:\"claim\",...n?{args:[X.creator]}:{},chain:i.arc});K(r);let l=(0,p.walletPublicClient)(F?.provider)??(0,p.publicClient)(),s=await l.waitForTransactionReceipt({hash:r,timeout:9e4}).catch(()=>null);if(s&&\"reverted\"===s.status)return void q(\"The claim reverted on chain and nothing moved.\");await W()}catch(e){q((e instanceof Error?e.message:\"Transaction failed.\").split(/\\r?\\n/)[0].slice(0,160))}finally{L(null)}}},[O,F,X,W]),ea=(0,a.useCallback)(async()=>{if(!O||!X)return;let e=X.processor,t=X.creator;if(e){q(null),K(null);try{await (0,p.ensureArc)((0,p.walletClient)(F?.provider));let a=(0,p.wal"
+    }
+  ],
+  "trades": [
+    {
+      "token": "0x333a07961b50924056B15477b409a9Ae774e1Ed7",
+      "hash": "0x96d4fe8aee647221cc6e6ac198a82e8dff7b456050396c3176ae448114456d1c",
+      "block": "0x13348c1",
+      "from": "0x94526a5fb9d18545ff1767c8a6ffd3ef1c716b6c",
+      "to": "0x62265dbf38bce30f7fbc370dfa58f71dc2749e62",
+      "status": "success"
+    },
+    {
+      "token": "0x333a07961b50924056B15477b409a9Ae774e1Ed7",
+      "hash": "0xf02853936b9ff8ff175869c93bb8418025ea532181719201406dde45d390b2b9",
+      "block": "0x13351e9",
+      "from": "0xf4989068142a1b53ac337e523149d8771e8fdf0b",
+      "to": "0x919c548ea8a779e0e551ef35f6aba65565b140a7",
+      "status": "success"
+    },
+    {
+      "token": "0x333a07961b50924056B15477b409a9Ae774e1Ed7",
+      "hash": "0x51f76c1aa312881b8927de924e95b6438586c98936c7f92f8a951199861c0241",
+      "block": "0x1335a9b",
+      "from": "0x793acfe572b208556ce40b1643a0b0e379020ca8",
+      "to": "0x919c548ea8a779e0e551ef35f6aba65565b140a7",
+      "status": "success"
+    }
+  ],
+  "scannedTokens": 22,
+  "swapCount": 4
+}

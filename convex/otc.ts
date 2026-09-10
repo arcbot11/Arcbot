@@ -1,7 +1,8 @@
+import { otcWorkerUrl } from "../lib/project-config";
 import { mutation, query, action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { createListing, createQuote, acceptQuote, cancelListing, finishOrder, marketStats, type Store, type RecordValue, type Order, type Listing } from "../lib/otc/model";
-import { prepareTransaction, signTransactionRecord, submitted, settled } from "../lib/otc/transactions";
+import { prepareTransaction, signTransactionRecord, submitted, settled, retryPayout } from "../lib/otc/transactions";
 
 function authorize(secret: string) {
   if (!process.env.OTC_SERVICE_SECRET || secret !== process.env.OTC_SERVICE_SECRET) throw new Error("OTC service authorization failed.");
@@ -52,6 +53,7 @@ export const command = mutation({
       case "sign": return signTransactionRecord(store,input.id,input.raw,input.hash,now);
       case "submitted": return submitted(store,input.id,now);
       case "settled": return settled(store,input.id,input.block,input.success,now);
+      case "retry_payout": return retryPayout(store,input,now);
       case "touch": {
         const record=await store.get<RecordValue>(input.id);
         if(record){record.updatedAt=now;await store.put(record);} return null;
@@ -97,7 +99,7 @@ export const read = query({
 export const wakeWorker = action({
   args: { secret: v.string() }, handler: async (_ctx,args) => {
     authorize(args.secret);
-    const url = process.env.OTC_WORKER_URL;
+    const url = otcWorkerUrl();
     if (!url || !url.startsWith("https://")) throw new Error("OTC worker URL is not configured.");
     const response = await fetch(url,{ method:"POST",headers:{authorization:`Bearer ${args.secret}`} });
     if (!response.ok) throw new Error("OTC settlement worker failed.");
@@ -106,8 +108,9 @@ export const wakeWorker = action({
 });
 
 export const tick = internalAction({args:{},handler:async()=>{
-  const secret=process.env.OTC_SERVICE_SECRET,url=process.env.OTC_WORKER_URL;
-  if(!secret&&!url)return;
+  const secret=process.env.OTC_SERVICE_SECRET;
+  if(!secret)return;
+  const url=otcWorkerUrl();
   if(!secret||!url||!url.startsWith("https://"))throw new Error("Wallet worker configuration missing.");
   const response=await fetch(url,{method:"POST",headers:{authorization:`Bearer ${secret}`}});
   if(!response.ok)throw new Error("OTC worker failed.");

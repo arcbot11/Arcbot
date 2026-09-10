@@ -5,6 +5,10 @@ import { assertOutsideOtcWallet } from "../lib/otc/spend-guard";
 import { verifyRaw } from "../lib/otc/runtime";
 import { privateKeyToAccount } from "viem/accounts";
 import { serializeTransaction,type Hex } from "viem";
+import { encodeFunctionData } from "viem";
+import { ARC_USDC } from "../lib/arc/config";
+import { nativeSpend } from "../lib/otc/native-spend";
+import { transferAbi } from "../lib/otc/token-delivery";
 
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222";
 const now=1_800_000_000_000, W=10n**18n, gas=10n**15n;
@@ -45,6 +49,35 @@ describe("OTC exact pricing",()=>{
   });
 });
 describe("OTC reservations",()=>{
+  it.each(["send", "burn", "buy", "sell", "swap"])("blocks %s from spending listed USDC, while allowing unreserved funds",async(operation)=>{
+    const s=new Memory();await createListing(s,listingInput(),now);
+    const leg=operation==="send"||operation==="burn"?"send":"swap";
+    const spend=(amount:bigint)=>s.atomic(()=>prepareTransaction(s,{id:`${operation}:${amount}`,owner:"seller",wallet:seller,chainId:5042,leg,unsigned:"x",reserveWei:(amount+gas).toString(),balanceWei:(100n*W).toString(),block:"100"},now));
+    await expect(spend(50n*W)).rejects.toThrow("reservations");
+    await spend(10n*W);
+    expect((await s.get<Wallet>(walletId(5042,seller)))!.holds["listing:1"]).toBe((50n*W+5n*gas).toString());
+  });
+  it("shares the same lock across native sends and ERC-20 USDC sends or burns",async()=>{
+    for(const recipient of [buyer,"0x000000000000000000000000000000000000dead"] as const){
+      const s=new Memory();await createListing(s,listingInput(),now);
+      const data=encodeFunctionData({abi:transferAbi,functionName:"transfer",args:[recipient,50_000_000n]});
+      const amount=nativeSpend(5042,{to:ARC_USDC,value:0n,data});
+      expect(amount).toBe(50n*W);
+      await expect(s.atomic(()=>prepareTransaction(s,{id:"erc20:send",owner:"seller",wallet:seller,chainId:5042,leg:"send",unsigned:"x",reserveWei:(amount+gas).toString(),balanceWei:(100n*W).toString(),block:"100"},now))).rejects.toThrow("reservations");
+      expect(nativeSpend(8453,{to:ARC_USDC,value:0n,data})).toBe(0n);
+      expect(nativeSpend(5042,{to:buyer,value:50n*W,data:"0x"})).toBe(amount);
+    }
+  });
+  it("serializes listing creation against spending the same funds in either order",async()=>{
+    for(const listingFirst of [true,false]){
+      const s=new Memory();
+      const list=()=>s.atomic(()=>createListing(s,listingInput({amount:"60"}),now));
+      const send=()=>s.atomic(()=>prepareTransaction(s,{id:"send:race",owner:"seller",wallet:seller,chainId:5042,leg:"send",unsigned:"x",reserveWei:(60n*W+gas).toString(),balanceWei:(100n*W).toString(),block:"100"},now));
+      const results=await Promise.allSettled((listingFirst?[list,send]:[send,list]).map(fn=>fn()));
+      expect(results.filter(r=>r.status==="fulfilled")).toHaveLength(1);
+      expect(locked((await s.get<Wallet>(walletId(5042,seller)))!)).toBeLessThanOrEqual(100n*W);
+    }
+  });
   it("does not let an unfunded buyer reserve listing inventory",async()=>{
     const s=new Memory();await createListing(s,listingInput(),now);
     await expect(createQuote(s,quoteInput({baseBalanceWei:"0"}),now)).rejects.toThrow("Base ETH");
@@ -108,6 +141,11 @@ describe("OTC reservations",()=>{
   });
 });
 describe("OTC durable settlement",()=>{
+  it("blocks alternate executors when reservation storage is missing, even with OTC disabled",async()=>{
+    vi.stubEnv("OTC_ENABLED","false");vi.stubEnv("OTC_SERVICE_SECRET","");
+    await expect(assertOutsideOtcWallet(seller,5042)).rejects.toThrow("storage is not configured");
+    await expect(assertOutsideOtcWallet(buyer,8453)).rejects.toThrow("storage is not configured");
+  });
   it("cannot prepare a payout before verified Base payment",async()=>{const{store}=await fixture();await accept(store);await expect(leg(store,"payout")).rejects.toThrow("not authorized");});
   it("deduplicates acceptance and prepared transactions",async()=>{
     const{store}=await fixture();await accept(store);await accept(store);const o=(await store.get<Order>("order:1"))!;

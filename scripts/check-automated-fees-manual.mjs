@@ -8,8 +8,8 @@ const requiredAddress = (name) => {
   return value;
 };
 
-const automaticEnabled = truthy(process.env.AUTOMATED_BUYBACK_BURN_ENABLED);
-const manualEnabled = truthy(process.env.AUTOMATED_FEE_MANUAL_TEST_ENABLED);
+const automaticEnabled = truthy("false");
+const manualEnabled = truthy("false");
 if (automaticEnabled) throw new Error("Automatic processing must remain disabled during private testing");
 if (requireReady && !manualEnabled) throw new Error("Private manual testing is not enabled");
 

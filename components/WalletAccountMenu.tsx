@@ -28,6 +28,7 @@ export function WalletAccountMenu() {
     <div className="wallet-account-dropdown">
       <strong>@{session.username}</strong>
       <a href={`/wallet/${session.walletAddress}`}>View Wallet</a>
+      <a href="/api/auth/x/start?returnTo=/wallet">Refresh X sign-in</a>
       <button type="button" onClick={signOut}>Sign out</button>
     </div>
   </details>;

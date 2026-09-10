@@ -1,3 +1,4 @@
+import { retiredFeatureEnabled } from "./retired-features";
 export const AUTOMATED_FEE_ENGINE_INTERVAL_MS = 60 * 60_000;
 export const AUTOMATED_FEE_BUYBACK_BPS = 500;
 export const AUTOMATED_FEE_BPS_DENOMINATOR = 10_000;
@@ -64,14 +65,14 @@ export type AutomatedFeeEngineEnvironment = {
 };
 
 export function automatedFeeEngineConfiguration(environment: AutomatedFeeEngineEnvironment) {
-  const enabled = environment.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true";
+  const enabled = retiredFeatureEnabled();
   const requestedCapabilities = {
-    sweepBuybackBurn: environment.AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true",
-    newLaunchEnrollment: environment.AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED?.trim().toLowerCase() === "true",
-    existingLaunchUpgrade: environment.AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED?.trim().toLowerCase() === "true",
-    botCommands: environment.AUTOMATED_FEE_BOT_COMMANDS_ENABLED?.trim().toLowerCase() === "true",
+    sweepBuybackBurn: retiredFeatureEnabled(),
+    newLaunchEnrollment: retiredFeatureEnabled(),
+    existingLaunchUpgrade: retiredFeatureEnabled(),
+    botCommands: retiredFeatureEnabled(),
   };
-  const manualTestEnabled = environment.AUTOMATED_FEE_MANUAL_TEST_ENABLED?.trim().toLowerCase() === "true";
+  const manualTestEnabled = retiredFeatureEnabled();
   const addresses = {
     vaultFactory: environment.AUTOMATED_FEE_VAULT_FACTORY_ADDRESS?.trim() || "",
     vaultImplementation: environment.AUTOMATED_FEE_VAULT_IMPLEMENTATION_ADDRESS?.trim() || "",

@@ -1,0 +1,9 @@
+import{readFileSync,writeFileSync}from'node:fs';import{encodeFunctionData,parseAbi,decodeFunctionData,decodeAbiParameters,parseAbiParameters}from'viem';
+const path='docs/arc/rpc-capabilities-2026-09-10.json',r=JSON.parse(readFileSync(path));
+async function p(e,label,method,params){let row={endpoint:e,label,method};try{const res=await fetch(r.endpoints[e],{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params}),signal:AbortSignal.timeout(10000)});const b=await res.json();Object.assign(row,{http:res.status,...b.error?{error:b.error}:{result:b.result}});}catch(e){row.error={code:e.cause?.code||e.name};}r.rows.push(row);console.log(JSON.stringify({...row,result:typeof row.result==='object'?Object.keys(row.result||{}):row.result}));return row.result;}
+const logs=r.rows.find(x=>x.label==='V4 swap discovery').result;const log=logs.at(-1),id=log.topics[1];
+const abi=parseAbi(['function getSlot0(bytes32) view returns(uint160,int24,uint24,uint24)','function getLiquidity(bytes32) view returns(uint128)','function execute(bytes,bytes[],uint256) payable']);
+for(const e of Object.keys(r.endpoints))for(const fn of ['getSlot0','getLiquidity'])await p(e,'V4 '+fn,'eth_call',[{to:'0xf3334192d15450cdd385c8b70e03f9a6bd9e673b',data:encodeFunctionData({abi,functionName:fn,args:[id]})},r.fixture.block]);
+const tx=await p('argus','V4 fixture transaction','eth_getTransactionByHash',[log.transactionHash]);
+try{const d=decodeFunctionData({abi,data:tx.input});const [actions,inputs]=decodeAbiParameters(parseAbiParameters('bytes,bytes[]'),d.args[1][0]);console.log(JSON.stringify({commands:d.args[0],actions,input:inputs[0]}));r.v4Fixture={actions,input:inputs[0]};}catch(e){console.log(e.shortMessage||e.message);}
+writeFileSync(path,JSON.stringify(r,null,2));

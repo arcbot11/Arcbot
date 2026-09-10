@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
-import { readWebWalletSession, WEB_WALLET_SESSION_COOKIE } from "@/lib/web-wallet-session";
+import { readWebWalletSession, WEB_WALLET_SESSION_COOKIE, TERMINAL_RECENT_AUTH_SECONDS } from "@/lib/web-wallet-session";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const active = await new ConvexHttpClient(convexUrl).action(api.wallets.verifyWebSession, {
       secret: webSecret, sessionId: session.sessionId, ownerXUserId: session.xUserId,
     }).catch(() => false);
-    if (active) {
+    if (active && Math.floor(Date.now()/1000)-session.authenticatedAt < TERMINAL_RECENT_AUTH_SECONDS) {
       return NextResponse.redirect(new URL(returnTo, siteUrl));
     }
   }

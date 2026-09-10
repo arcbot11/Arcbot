@@ -1,3 +1,4 @@
+import { ARC_GAS_POLICY } from "../project-config";
 import { defineChain, type Hex } from "viem";
 import { z } from "zod";
 
@@ -13,8 +14,8 @@ const configuration = z.object({
   checkpointNumber: uint,
   checkpointHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
   maxHeadAgeSeconds: z.number().int().min(1).max(300).default(30),
-  maxGas: uint.default("1000000"),
-  maxFeePerGas: uint.default("1000000000000"),
+  maxGas: uint.default(ARC_GAS_POLICY.maxGas),
+  maxFeePerGas: uint.default(ARC_GAS_POLICY.maxFeePerGas),
 }).strict();
 
 export function arcConfig(input: unknown) {
@@ -31,8 +32,7 @@ export function arcConfigFromEnv(env: Record<string, string | undefined> = proce
   }
   return arcConfig({ rpcUrl: env.ARC_MAINNET_RPC_URL,
     checkpointNumber: env.ARC_CHECKPOINT_NUMBER, checkpointHash: env.ARC_CHECKPOINT_HASH,
-    ...(env.ARC_MAX_GAS ? { maxGas: env.ARC_MAX_GAS } : {}),
-    ...(env.ARC_MAX_FEE_PER_GAS ? { maxFeePerGas: env.ARC_MAX_FEE_PER_GAS } : {}),
+    ...ARC_GAS_POLICY,
   });
 }
 

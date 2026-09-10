@@ -1,5 +1,2 @@
-export function xBotUsername() {
-  const username = process.env.X_BOT_USERNAME?.trim().replace(/^@/, "") || "ArcChainBot";
-  if (!/^[A-Za-z0-9_]{1,15}$/.test(username)) throw new Error("Invalid X bot username.");
-  return username;
-}
+import { ARC_BOT_USERNAME } from "./project-config";
+export function xBotUsername() { return ARC_BOT_USERNAME; }

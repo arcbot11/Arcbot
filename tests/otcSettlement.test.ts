@@ -29,7 +29,7 @@ beforeEach(async()=>{
   mocks.client={getChainId:vi.fn(async()=>8453),getBlock:vi.fn(async(args:{blockNumber?:bigint;blockTag?:string}={})=>({number:args.blockNumber??(args.blockTag==="finalized"?finalized:200n),hash,timestamp:BigInt(Math.floor(Date.now()/1000))})),getBalance:vi.fn(async()=>10n**18n),getTransactionCount:vi.fn(async()=>nonce),
     getTransactionReceipt:vi.fn(async()=>{if(!receipt)throw Object.assign(new Error("missing"),{name:"TransactionReceiptNotFoundError"});return receipt;}),
     getTransaction:vi.fn(async()=>({from:account.address,to:router,value:BigInt(order.totalWei),input:call.data})),readContract:vi.fn(async()=>extraFee),
-    sendRawTransaction:vi.fn(async()=>record.hash)};
+    getLogs:vi.fn(async()=>receipt?.logs??[]),sendRawTransaction:vi.fn(async()=>record.hash)};
 });
 afterEach(()=>vi.unstubAllEnvs());
 describe("OTC receipt verification and retry boundaries",()=>{
@@ -92,4 +92,51 @@ describe("OTC deployment configuration", () => {
     const { otcConfiguration } = await import("../lib/otc/runtime");
     expect(() => otcConfiguration()).toThrow("OTC_BASE_PAYMENT_ROUTER is not configured");
   });
+});
+import {BASE_USDC,baseUsdcAbi} from "../lib/base/usdc";
+import {approvalCall} from "../lib/otc/transactions";
+import {encodeArcSwap} from "../lib/arc/routing";
+async function useSwap(){
+  const call=encodeArcSwap({tokenIn:"0x0000000000000000000000000000000000000000",tokenOut:seller,pools:[{protocol:"v4",currency0:"0x0000000000000000000000000000000000000000",currency1:seller,fee:500,tickSpacing:10,hooks:"0x0000000000000000000000000000000000000000"}]},1n,10n,9999999999n);
+  await useSend(5042);
+  const tx={type:"eip1559" as const,chainId:5042,nonce:0,gas:100000n,maxFeePerGas:100n,maxPriorityFeePerGas:1n,...call};
+  const raw=await account.signTransaction(tx);
+  record={...record,leg:"swap",unsigned:serializeTransaction(tx),raw,hash:keccak256(raw),swapOutput:{token:seller,minimum:"10"}};
+  receipt={...receipt,transactionHash:record.hash,logs:[{address:seller,topics:encodeEventTopics({abi:transferAbi,eventName:"Transfer",args:{from:router,to:account.address}}),data:encodeAbiParameters([{type:"uint256"}],[10n])}]};
+  mocks.client.getTransaction=vi.fn(async()=>({from:account.address,to:call.to,value:call.value,input:call.data}));
+  mocks.client.readContract=vi.fn(async({blockNumber}:{blockNumber:bigint})=>blockNumber===99n?0n:10n);
+}
+describe("Arc swap delivery",()=>{
+ it("completes only when minimum output and real balance changes agree",async()=>{await useSwap();await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));});
+ it("does not accept a successful receipt without output",async()=>{await useSwap();receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("Minimum swap output");expect(mocks.command).not.toHaveBeenCalled();});
+ it("rejects output below the accepted minimum",async()=>{await useSwap();record.swapOutput!.minimum="11";await expect(advanceTransaction(record.id)).rejects.toThrow("Minimum swap output");});
+ it("retains reservations if output metadata is missing",async()=>{await useSwap();delete record.swapOutput;await expect(advanceTransaction(record.id)).rejects.toThrow("terms missing");});
+});
+async function useUsdc(approval=false){
+  order.paymentAsset="USDC";order.sellerWei="10000000";order.feeWei="100000";order.totalWei="10100000";order.approvalGasWei=order.baseGasWei;
+  order.approvalFinalized=!approval;
+  const call=approval?approvalCall(order):paymentCall(order);
+  const tx={chainId:8453,type:"eip1559" as const,to:call.to,value:call.value,data:call.data,nonce:0,gas:100000n,maxFeePerGas:100n,maxPriorityFeePerGas:1n};
+  const unsigned=serializeTransaction(tx),raw=await account.signTransaction(tx);
+  record={...record,leg:approval?"approval":"payment",unsigned,raw,hash:keccak256(raw)};
+  wallet.usdcHolds={[order.id]:order.totalWei};wallet.holds={[order.id]:(BigInt(order.baseGasWei)*2n).toString()};
+  const paid={address:router,topics:encodeEventTopics({abi:PAYMENT_ABI,eventName:"PaidUsdc",args:{orderId:orderHash(order.id),buyer:account.address,seller}}),data:encodeAbiParameters([{type:"address"},{type:"uint256"},{type:"uint256"},{type:"uint256"}],[account.address,10000000n,10000000n,100000n])};
+  const transfer=(value:bigint)=>({address:BASE_USDC,topics:encodeEventTopics({abi:baseUsdcAbi,eventName:"Transfer",args:{from:account.address,to:seller}}),data:encodeAbiParameters([{type:"uint256"}],[value])});
+  const approved={address:BASE_USDC,topics:encodeEventTopics({abi:baseUsdcAbi,eventName:"Approval",args:{owner:account.address,spender:router}}),data:encodeAbiParameters([{type:"uint256"}],[10100000n])};
+  receipt={transactionHash:record.hash,status:"success",blockNumber:100n,blockHash:hash,logs:approval?[approved]:[paid,transfer(10000000n),transfer(100000n)]};
+  mocks.client.getTransaction=vi.fn(async()=>({from:account.address,to:call.to,value:call.value,input:call.data}));
+  mocks.client.readContract=vi.fn(async({functionName,blockNumber}:{functionName:string;blockNumber:bigint})=>functionName==="allowance"?10100000n:functionName==="balanceOf"?(blockNumber===99n?0n:10100000n):0n);
+}
+describe("Base USDC settlement evidence",()=>{
+ it("verifies split transfer amounts and balances even when seller is fee recipient",async()=>{await useUsdc();await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));});
+ it("rejects payment event without actual token transfers",async()=>{await useUsdc();receipt!.logs=(receipt!.logs as unknown[]).slice(0,1);await expect(advanceTransaction(record.id)).rejects.toThrow("delivery");expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
+ it("rejects missing fee transfer",async()=>{await useUsdc();receipt!.logs=(receipt!.logs as unknown[]).slice(0,2);await expect(advanceTransaction(record.id)).rejects.toThrow("delivery");});
+ it("rejects transfers emitted by another token",async()=>{await useUsdc();receipt!.logs=(receipt!.logs as Array<{address:string}>).map((l,i)=>i?{...l,address:router}:l);await expect(advanceTransaction(record.id)).rejects.toThrow("delivery");});
+ it("rejects logs without the recipient balance increase",async()=>{await useUsdc();mocks.client.readContract=vi.fn(async()=>0n);await expect(advanceTransaction(record.id)).rejects.toThrow("delivery");});
+ it("waits for payment finality",async()=>{await useUsdc();finalized=99n;await advanceTransaction(record.id);expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
+ it("verifies exact approval event and allowance",async()=>{await useUsdc(true);await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));});
+ it("rejects successful receipt with no approval evidence",async()=>{await useUsdc(true);receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("approval was not verified");});
+ it("rejects mismatched allowance",async()=>{await useUsdc(true);mocks.client.readContract=vi.fn(async()=>1n);await expect(advanceTransaction(record.id)).rejects.toThrow("approval was not verified");});
+ it("waits for approval finality",async()=>{await useUsdc(true);finalized=99n;await advanceTransaction(record.id);expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
+ it("retains signed transactions when USDC reservations are missing",async()=>{await useUsdc();receipt=null;nonce=0;wallet.usdcHolds={};await expect(advanceTransaction(record.id)).rejects.toThrow("USDC reservation");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
 });

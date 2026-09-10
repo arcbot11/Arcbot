@@ -1,8 +1,10 @@
+import { retiredFeatureEnabled } from "./retired-features";
 import { encodeAbiParameters, keccak256, parseAbi, type Address, type Hex } from "viem";
 
-/** Separate rollout gate. No existing fee processing depends on this flag. */
+/** Retired creator self-buyback; stale environment values cannot reactivate it. */
 export function creatorBurnEnabled(environment: Record<string, string | undefined>) {
-  return environment.CREATOR_SELF_BUYBACK_ENABLED === "true";
+  void environment;
+  return retiredFeatureEnabled();
 }
 
 export function creatorBurnPercentageBps(value: string): number {

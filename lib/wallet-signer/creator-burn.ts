@@ -1,3 +1,4 @@
+import { retiredFeatureEnabled } from "../retired-features";
 import { z } from "zod";
 import {
   decodeFunctionData,
@@ -81,7 +82,7 @@ function configured(name: string): Address {
   return v as Address;
 }
 function enabled() {
-  if (process.env.CREATOR_SELF_BUYBACK_ENABLED !== "true")
+  if (!retiredFeatureEnabled())
     throw new Error("CREATOR_BURN_DISABLED");
 }
 

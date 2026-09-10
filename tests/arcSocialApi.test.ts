@@ -1,0 +1,22 @@
+import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
+import {NextRequest} from "next/server";
+const m=vi.hoisted(()=>({auth:vi.fn(),read:vi.fn(),command:vi.fn(),advance:vi.fn(),prepare:vi.fn(),trade:vi.fn()}));
+vi.mock("../lib/arc/social-authority",()=>({socialAuthority:m.auth}));
+vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.command})}));
+vi.mock("../lib/otc/runtime",()=>({advanceTransaction:m.advance,prepareCall:m.prepare,chainClient:vi.fn()}));
+vi.mock("../lib/arc/trading",()=>({previewArcTrade:m.trade}));
+import {POST} from "../app/api/arc/command/route";
+const wallet="0x1111111111111111111111111111111111111111",recipient="0x2222222222222222222222222222222222222222";
+let command:unknown;
+const request=(secret="secret")=>new NextRequest("https://www.arcchainbot.io/api/arc/command",{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:"x:123:send"})});
+beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","secret");command={kind:"send",unit:"usd",amount:"10",recipient};m.auth.mockImplementation(async()=>({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()}));m.read.mockResolvedValue(null);m.prepare.mockResolvedValue({unsigned:"0x02",reserveWei:"10000000000000000100",snapshot:{balanceWei:"20000000000000000000",block:"1"}});m.command.mockImplementation(async(_kind,tx)=>({...tx,status:"prepared"}));m.advance.mockResolvedValue({status:"submitted",hash:"txhash"});});
+afterEach(()=>vi.unstubAllEnvs());
+describe("Arc social execution boundary",()=>{
+ it("rejects unauthenticated service calls",async()=>{expect((await POST(request("wrong"))).status).toBe(401);expect(m.auth).not.toHaveBeenCalled();});
+ it("rechecks stored request authority rather than trusting a supplied wallet",async()=>{m.auth.mockRejectedValue(Error("revoked"));await POST(request());expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();});
+ it("sends Arc USDC through the same durable reservation store",async()=>{const r=await POST(request());expect((await r.json()).pending).toBe(true);expect(m.prepare).toHaveBeenCalledWith(5042,expect.objectContaining({from:wallet,to:recipient,value:10n*10n**18n}));expect(m.command).toHaveBeenCalledWith("prepare",expect.objectContaining({owner:"alice",chainId:5042,sourceRequestId:"x:123:send"}));});
+ it("never executes Base ETH from social channels",async()=>{command={kind:"send",unit:"eth",amount:"1",recipient};expect((await(await POST(request())).json()).ok).toBe(false);expect(m.prepare).not.toHaveBeenCalled();});
+ it("rejects creation workflows",async()=>{command={kind:"launch",name:"test"};expect((await(await POST(request())).json()).ok).toBe(false);expect(m.command).not.toHaveBeenCalled();});
+ it("does not duplicate completed social transactions",async()=>{m.read.mockResolvedValue({status:"completed",leg:"send",hash:"old"});expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"old"});expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();});
+ it("keeps an ambiguous stored transaction pending",async()=>{m.read.mockResolvedValue({status:"submitted",leg:"send"});expect((await(await POST(request())).json()).pending).toBe(true);expect(m.prepare).not.toHaveBeenCalled();});
+});

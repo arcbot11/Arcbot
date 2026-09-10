@@ -1,3 +1,4 @@
+import { retiredFeatureEnabled } from "../retired-features";
 import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { retryFeeInspection, feeSnapshotIncludesReceipt } from "../fee-inspection-retry";
 import { CdpClient } from "@coinbase/cdp-sdk";
@@ -195,10 +196,10 @@ function rpcClient() {
 }
 
 function manualAutomatedFeeAllowlist() {
-  if (process.env.AUTOMATED_FEE_MANUAL_TEST_ENABLED?.trim().toLowerCase() !== "true") {
+  if (!retiredFeatureEnabled()) {
     throw new Error("automated fee manual testing is disabled");
   }
-  if (process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true") {
+  if (retiredFeatureEnabled()) {
     throw new Error("manual automated fee endpoints are unavailable while automatic processing is enabled");
   }
   const tokens = new Set(
@@ -230,8 +231,8 @@ export async function assertAutomatedFeeManualAccess(input: { vaultAddress?: str
 }
 
 export async function assertAutomatedFeeExecutionAccess(input: { vaultAddress?: string; tokenAddress?: string }) {
-  const productionEnabled = process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true"
-    && process.env.AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true";
+  const productionEnabled = retiredFeatureEnabled()
+    && retiredFeatureEnabled();
   if (!productionEnabled) return assertAutomatedFeeManualAccess(input);
 
   let token = input.tokenAddress?.toLowerCase();
@@ -252,7 +253,7 @@ export async function assertAutomatedFeeExecutionAccess(input: { vaultAddress?: 
 }
 
 function automatedFeeCapabilityEnabled(name: "AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED" | "AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED" | "AUTOMATED_FEE_BOT_COMMANDS_ENABLED") {
-  return process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true"
+  return retiredFeatureEnabled()
     && process.env[name]?.trim().toLowerCase() === "true";
 }
 
@@ -293,7 +294,7 @@ export async function assertAutomatedFeeDeliveryAccess(input: { vaultAddress: st
 }
 
 export function assertAutomatedFeeEnrollmentProof(headers: Headers, path: string, vaultAddress: string, body: unknown) {
-  const productionEnabled = process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true"
+  const productionEnabled = retiredFeatureEnabled()
     && ["AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED", "AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED", "AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED", "AUTOMATED_FEE_BOT_COMMANDS_ENABLED"]
       .some((name) => process.env[name]?.trim().toLowerCase() === "true");
   // Once a shared proof secret is configured, it also protects recovery calls
@@ -584,7 +585,7 @@ export async function automatedFeeInfrastructureStatus() {
   ] as const) {
     if (!process.env[name]?.trim()) missingConfiguration.push(name);
   }
-  if (process.env.AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED?.trim().toLowerCase() === "true") {
+  if (retiredFeatureEnabled()) {
     for (const name of [
       "CREATOR_SELF_BUYBACK_NEW_LAUNCH_FACTORY_ADDRESS",
       "CREATOR_SELF_BUYBACK_NEW_LAUNCH_EXECUTOR_ADDRESS",
@@ -603,8 +604,8 @@ export async function automatedFeeInfrastructureStatus() {
       missingConfiguration,
       invalidConfiguration,
       processingEnabled: null,
-      productionRequested: process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true",
-      processingRequested: process.env.AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true",
+      productionRequested: retiredFeatureEnabled(),
+      processingRequested: retiredFeatureEnabled(),
       balancesWei: {}, contractCode: {}, allContractsDeployed: false,
       controlMatches: false, factoryMatches: false,
       enrollmentProofConfigured: Boolean(process.env.AUTOMATED_FEE_ENROLLMENT_SECRET?.trim()),
@@ -669,8 +670,8 @@ export async function automatedFeeInfrastructureStatus() {
   return {
     chainId, processingEnabled, configurationValid: true,
     missingConfiguration: [], invalidConfiguration: [],
-    productionRequested: process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true",
-    processingRequested: process.env.AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true",
+    productionRequested: retiredFeatureEnabled(),
+    processingRequested: retiredFeatureEnabled(),
     balancesWei: { admin: adminBalance.toString(), keeper: keeperBalance.toString(), quoteAuthorizer: quoteAuthorizerBalance.toString(), guardian: guardianBalance.toString() },
     contractCode: Object.fromEntries(contractCode), allContractsDeployed: contractCode.every(([, present]) => present),
     controlMatches, factoryMatches, factoryFeeEscrow: factoryState[3], currentArgusFeeEscrow,
@@ -1060,7 +1061,7 @@ async function creatorLayerControllerCall(vault: Address, operation: AutomatedFe
 }
 
 export async function prepareAutomatedFeeControllerTransaction(request: AutomatedFeeControllerTransactionRequest) {
-  if(request.operation.type==="percentage"&&process.env.CREATOR_SELF_BUYBACK_ENABLED!=="true")throw new Error("CREATOR_BURN_DISABLED");
+  if(request.operation.type==="percentage"&&!retiredFeatureEnabled())throw new Error("CREATOR_BURN_DISABLED");
   await requireWalletNativeGas(request.expectedAddress);
   await assertAutomatedFeeControllerAccess({ vaultAddress: request.vaultAddress });
   const expected = await provisionWallet(request.ownerReference);

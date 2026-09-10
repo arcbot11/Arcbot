@@ -1,0 +1,23 @@
+import {describe,it,expect,vi,afterEach} from "vitest";
+import {readFileSync,readdirSync} from "node:fs";
+import {join} from "node:path";
+import {creatorBurnEnabled} from "../lib/creator-burn-policy";
+import {automatedFeeEngineConfiguration} from "../lib/automated-fee-policy";
+import {retiredFeatureEnabled,retiredFeatureEnvironmentValue} from "../lib/retired-features";
+import {ARC_GAS_POLICY,BASE_GAS_POLICY,otcWorkerUrl} from "../lib/project-config";
+import {arcConfigFromEnv} from "../lib/arc/config";
+import {baseConfigFromEnv} from "../lib/base/config";
+import {xBotUsername} from "../lib/x-bot-identity";
+import {brand} from "../lib/brand";
+const retired=['X_CRYPTO_EXECUTION_ENABLED','AUTOMATED_BUYBACK_BURN_ENABLED','AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED','AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED','AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED','AUTOMATED_FEE_BOT_COMMANDS_ENABLED','AUTOMATED_FEE_MANUAL_TEST_ENABLED','CREATOR_SELF_BUYBACK_ENABLED'];
+const hash='0x'+'a'.repeat(64);
+afterEach(()=>vi.unstubAllEnvs());
+describe("fixed Arc Bot configuration",()=>{
+ it("cannot restore retired features through stale environment values",()=>{const stale=Object.fromEntries(retired.map(key=>[key,'true']));for(const [key,value]of Object.entries(stale))vi.stubEnv(key,value);expect(retiredFeatureEnabled()).toBe(false);expect(retiredFeatureEnvironmentValue()).toBe('false');expect(creatorBurnEnabled(stale)).toBe(false);const config=automatedFeeEngineConfiguration(stale);expect(config.enabled).toBe(false);expect(config.manualTestEnabled).toBe(false);expect(Object.values(config.capabilities).every(value=>value===false)).toBe(true);});
+ it("pins X identity despite old environment overrides",()=>{vi.stubEnv('X_BOT_USERNAME','OldBot');vi.stubEnv('NEXT_PUBLIC_ARCBOT_X_URL','https://x.com/OldBot');expect(xBotUsername()).toBe('ArcChainBot');expect(brand.xUrl).toBe('https://x.com/ArcChainBot');});
+ it("pins production gas policy despite env overrides",()=>{const arc=arcConfigFromEnv({ARC_MAINNET_RPC_URL:'https://arc.invalid',ARC_CHECKPOINT_NUMBER:'1',ARC_CHECKPOINT_HASH:hash,ARC_MAX_GAS:'999999999',ARC_MAX_FEE_PER_GAS:'999999999'});expect(arc.maxGas).toBe(BigInt(ARC_GAS_POLICY.maxGas));expect(arc.maxFeePerGas).toBe(BigInt(ARC_GAS_POLICY.maxFeePerGas));const base=baseConfigFromEnv({BASE_MAINNET_RPC_URL:'https://base.invalid',BASE_CHECKPOINT_NUMBER:'1',BASE_CHECKPOINT_HASH:hash,BASE_MAX_GAS:'999999999',BASE_MAX_FEE_PER_GAS:'999999999',BASE_MAX_TOTAL_FEE_WEI:'999999999'});expect(base.maxGas).toBe(BigInt(BASE_GAS_POLICY.maxGas));expect(base.maxFeePerGas).toBe(BigInt(BASE_GAS_POLICY.maxFeePerGas));expect(base.maxTotalFeeWei).toBe(BigInt(BASE_GAS_POLICY.maxTotalFeeWei));});
+ it("derives the worker path from site origin, ignoring stale worker URLs",()=>{vi.stubEnv('OTC_WORKER_URL','https://old.invalid/worker');vi.stubEnv('NEXT_PUBLIC_SITE_URL','https://old.invalid');expect(otcWorkerUrl()).toBe('https://www.arcchainbot.io/api/otc/worker');expect(otcWorkerUrl('https://preview.example/')).toBe('https://preview.example/api/otc/worker');});
+ it.each(['http://example.com','https://user:pass@example.com','https://example.com/path','https://example.com/?x=1'])('rejects invalid worker origin %s',url=>{expect(()=>otcWorkerUrl(url)).toThrow();});
+ it("keeps required RPC and checkpoint validation",()=>{expect(()=>arcConfigFromEnv({})).toThrow('ARC_MAINNET_RPC_URL');expect(()=>baseConfigFromEnv({})).toThrow('BASE_MAINNET_RPC_URL');});
+ it("removes retired variables from the template and direct runtime reads",()=>{const example=readFileSync('.env.example','utf8');const sources:string[]=[];const walk=(p:string)=>{for(const e of readdirSync(p,{withFileTypes:true})){const f=join(p,e.name);if(e.isDirectory())walk(f);else if(f.endsWith('.ts'))sources.push(readFileSync(f,'utf8'));}};walk('lib');walk('convex');for(const key of retired){expect(example).not.toContain(key+'=');expect(sources.some(source=>source.includes('process.env.'+key))).toBe(false);}});
+});

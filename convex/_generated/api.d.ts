@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as arcTokenCatalog from "../arcTokenCatalog.js";
 import type * as automatedFeeClaimInfo from "../automatedFeeClaimInfo.js";
 import type * as automatedFeeEngine from "../automatedFeeEngine.js";
 import type * as automatedFeeOutcomes from "../automatedFeeOutcomes.js";
@@ -20,16 +21,16 @@ import type * as crons from "../crons.js";
 import type * as freeLaunches from "../freeLaunches.js";
 import type * as graduationAnnouncements from "../graduationAnnouncements.js";
 import type * as legacyClaims from "../legacyClaims.js";
-
+import type * as legacyLaunch from "../legacyLaunch.js";
 import type * as lib_terminalFeeReceipts from "../lib/terminalFeeReceipts.js";
 import type * as lib_xReplyQueueSchema from "../lib/xReplyQueueSchema.js";
 import type * as lib_xUnverifiedReplyLimit from "../lib/xUnverifiedReplyLimit.js";
 import type * as lifetimeVolume from "../lifetimeVolume.js";
 import type * as llm from "../llm.js";
 import type * as marketData from "../marketData.js";
-
-import type * as legacyLaunch from "../legacyLaunch.js";
+import type * as otc from "../otc.js";
 import type * as registry from "../registry.js";
+import type * as retiredTokenCleanup from "../retiredTokenCleanup.js";
 import type * as site from "../site.js";
 import type * as telegram from "../telegram.js";
 import type * as telegramDeliveries from "../telegramDeliveries.js";
@@ -37,7 +38,6 @@ import type * as walletCommands from "../walletCommands.js";
 import type * as walletContinuations from "../walletContinuations.js";
 import type * as wallets from "../wallets.js";
 import type * as xFloodProtection from "../xFloodProtection.js";
-
 import type * as xOperations from "../xOperations.js";
 import type * as xPublicationBudget from "../xPublicationBudget.js";
 import type * as xReplies from "../xReplies.js";
@@ -54,6 +54,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  arcTokenCatalog: typeof arcTokenCatalog;
   automatedFeeClaimInfo: typeof automatedFeeClaimInfo;
   automatedFeeEngine: typeof automatedFeeEngine;
   automatedFeeOutcomes: typeof automatedFeeOutcomes;
@@ -66,14 +67,16 @@ declare const fullApi: ApiFromModules<{
   freeLaunches: typeof freeLaunches;
   graduationAnnouncements: typeof graduationAnnouncements;
   legacyClaims: typeof legacyClaims;
+  legacyLaunch: typeof legacyLaunch;
   "lib/terminalFeeReceipts": typeof lib_terminalFeeReceipts;
   "lib/xReplyQueueSchema": typeof lib_xReplyQueueSchema;
   "lib/xUnverifiedReplyLimit": typeof lib_xUnverifiedReplyLimit;
   lifetimeVolume: typeof lifetimeVolume;
   llm: typeof llm;
   marketData: typeof marketData;
-  legacyLaunch: typeof legacyLaunch;
+  otc: typeof otc;
   registry: typeof registry;
+  retiredTokenCleanup: typeof retiredTokenCleanup;
   site: typeof site;
   telegram: typeof telegram;
   telegramDeliveries: typeof telegramDeliveries;

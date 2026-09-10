@@ -1,3 +1,4 @@
+import { BASE_GAS_POLICY } from "../project-config";
 import { type Hex } from "viem";
 import { base } from "viem/chains";
 import { z } from "zod";
@@ -13,9 +14,9 @@ const configuration = z.object({
   checkpointNumber: uint,
   checkpointHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
   maxHeadAgeSeconds: z.number().int().min(1).max(300).default(30),
-  maxGas: uint.default("1000000"),
-  maxFeePerGas: uint.default("1000000000000"),
-  maxTotalFeeWei: uint.default("1000000000000000"),
+  maxGas: uint.default(BASE_GAS_POLICY.maxGas),
+  maxFeePerGas: uint.default(BASE_GAS_POLICY.maxFeePerGas),
+  maxTotalFeeWei: uint.default(BASE_GAS_POLICY.maxTotalFeeWei),
 }).strict();
 
 export function baseConfig(input: unknown) {
@@ -32,9 +33,7 @@ export function baseConfigFromEnv(env: Record<string, string | undefined> = proc
   }
   return baseConfig({ rpcUrl: env.BASE_MAINNET_RPC_URL,
     checkpointNumber: env.BASE_CHECKPOINT_NUMBER, checkpointHash: env.BASE_CHECKPOINT_HASH,
-    ...(env.BASE_MAX_GAS ? { maxGas: env.BASE_MAX_GAS } : {}),
-    ...(env.BASE_MAX_FEE_PER_GAS ? { maxFeePerGas: env.BASE_MAX_FEE_PER_GAS } : {}),
-    ...(env.BASE_MAX_TOTAL_FEE_WEI ? { maxTotalFeeWei: env.BASE_MAX_TOTAL_FEE_WEI } : {}),
+    ...BASE_GAS_POLICY,
   });
 }
 

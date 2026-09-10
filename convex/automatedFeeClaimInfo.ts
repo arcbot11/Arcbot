@@ -1,3 +1,4 @@
+import { retiredFeatureEnabled } from "../lib/retired-features";
 import { v } from "convex/values";
 import { internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc, Id } from "./_generated/dataModel";
@@ -6,8 +7,8 @@ import { automatedFeeEngineConfiguration, automatedFeeProcessingAllowed, type Au
 import { vaultClaimResponse, type VaultClaimOutcome } from "../lib/vault-claim-response";
 
 export function requestedVaultClaimsEnabled() {
-  return process.env.X_CRYPTO_EXECUTION_ENABLED === "true"
-    && process.env.AUTOMATED_FEE_BOT_COMMANDS_ENABLED === "true"
+  return retiredFeatureEnabled()
+    && retiredFeatureEnabled()
     && automatedFeeProcessingAllowed(automatedFeeEngineConfiguration(process.env as AutomatedFeeEngineEnvironment));
 }
 

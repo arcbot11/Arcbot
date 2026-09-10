@@ -1,3 +1,4 @@
+import { retiredFeatureEnabled } from "../lib/retired-features";
 import { v } from "convex/values";
 import {
   internalAction,
@@ -58,7 +59,7 @@ type Receipt = {
   events?: LayerEvent[];
 };
 function enabled() {
-  return process.env.CREATOR_SELF_BUYBACK_ENABLED === "true";
+  return retiredFeatureEnabled();
 }
 async function journalEnvelope(
   ctx: MutationCtx,

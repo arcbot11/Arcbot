@@ -3,9 +3,9 @@ import { creatorBurnEnabled, creatorBurnPercentageBps, creatorBurnQuoteDigest, c
 import type { Address } from "viem";
 
 describe("creator self-buyback policy", () => {
-  it("is off by default and independent of existing automated fees", () => {
+  it("stays disabled even when inherited flags are true", () => {
     expect(creatorBurnEnabled({ AUTOMATED_BUYBACK_BURN_ENABLED: "true" })).toBe(false);
-    expect(creatorBurnEnabled({ CREATOR_SELF_BUYBACK_ENABLED: "true" })).toBe(true);
+    expect(creatorBurnEnabled({ CREATOR_SELF_BUYBACK_ENABLED: "true" })).toBe(false);
   });
   it.each([["0", 0], ["20%", 2000], ["0.25%", 25], ["100", 10000]])("parses %s exactly", (value, bps) => {
     expect(creatorBurnPercentageBps(String(value))).toBe(bps);

@@ -1,3 +1,4 @@
+throw new Error("Legacy automated fee operations are permanently disabled in Arc Bot.");
 import { CdpClient } from "@coinbase/cdp-sdk";
 import {
   createPublicClient,

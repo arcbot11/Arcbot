@@ -1,3 +1,4 @@
+import { retiredFeatureEnabled } from "../lib/retired-features";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 import { tokenPattern } from "../lib/token-pattern";
 
@@ -121,9 +122,9 @@ function repliesEnabled() {
 }
 
 function automatedFeeUpgradeCommandsEnabled() {
-  return process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true"
-    && process.env.AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED?.trim().toLowerCase() === "true"
-    && process.env.AUTOMATED_FEE_BOT_COMMANDS_ENABLED?.trim().toLowerCase() === "true";
+  return retiredFeatureEnabled()
+    && retiredFeatureEnabled()
+    && retiredFeatureEnabled();
 }
 
 function standaloneMentionsEnabled() {

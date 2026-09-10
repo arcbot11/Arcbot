@@ -1,3 +1,4 @@
+import { retiredFeatureEnabled } from "../lib/retired-features";
 import { v } from "convex/values";
 import {
   internalAction,
@@ -21,7 +22,7 @@ export async function queueCreatorBurnRequest(
     bps: number;
   },
 ) {
-  if (process.env.CREATOR_SELF_BUYBACK_ENABLED !== "true")
+  if (!retiredFeatureEnabled())
     throw new Error("Creator self-buyback is unavailable.");
   if (!Number.isInteger(a.bps) || a.bps < 0 || a.bps > 10000)
     throw new Error("Choose a percentage from 0 to 100.");
@@ -130,7 +131,7 @@ export const plan = internalQuery({
         .withIndex("by_address", (q) => q.eq("address", p.controllerAddress))
         .unique());
     return {
-      enabled: process.env.CREATOR_SELF_BUYBACK_ENABLED === "true",
+      enabled: retiredFeatureEnabled(),
       programId: p._id,
       status: p.status,
       tokenAddress: p.tokenAddress,
@@ -365,7 +366,7 @@ export const save = internalMutation({
 export const run = internalAction({
   args: { id: v.id("creatorBurnRequests") },
   handler: async (ctx, a): Promise<void> => {
-    const enabled = process.env.CREATOR_SELF_BUYBACK_ENABLED === "true";
+    const enabled = retiredFeatureEnabled();
     const leaseId = crypto.randomUUID(),
       r = await ctx.runMutation(internal.creatorBurnEnrollment.begin, {
         ...a,

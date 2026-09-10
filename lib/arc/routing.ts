@@ -81,7 +81,7 @@ export function minimumOutput(quoted: bigint, slippageBps: number): bigint {
 }
 
 /** Calldata only. This does not authorize signing; callers must verify runtime, allowances and simulate. */
-export function encodeArcSwap(route: Route, amountIn: bigint, amountOutMinimum: bigint, deadline: bigint) {
+export function encodeArcSwap(route: Route, amountIn: bigint, amountOutMinimum: bigint, deadline: bigint, verifiedHookPoolId?: string) {
   const currencies = routeCurrencies(route);
   if (amountIn <= 0n || amountOutMinimum <= 0n || deadline <= 0n) throw new Error("Swap limits must be positive");
   const protocol = route.pools[0].protocol;
@@ -92,7 +92,7 @@ export function encodeArcSwap(route: Route, amountIn: bigint, amountOutMinimum: 
     input = encodeAbiParameters(parseAbiParameters("address,uint256,uint256,bytes,bool"), ["0x0000000000000000000000000000000000000001", amountIn, amountOutMinimum, v3Path(route), true]);
   } else {
     if (amountIn >= 2n ** 128n || amountOutMinimum >= 2n ** 128n) throw new Error("V4 amount exceeds uint128");
-    if (route.pools.some(p => p.protocol === "v4" && !same(p.hooks, zeroAddress))) throw new Error("Hook execution requires a reviewed adapter");
+    if (route.pools.some(p => p.protocol === "v4" && !same(p.hooks, zeroAddress) && poolId(p)!==verifiedHookPoolId)) throw new Error("Hook execution requires a reviewed adapter");
     if (route.pools.length !== 1) throw new Error("V4 multihop execution awaits an observed codec fixture");
     const pool = route.pools[0] as V4Pool;
     const swap = encodeAbiParameters(v4SingleParameters, [{ poolKey: pool, zeroForOne: same(currencies[0], pool.currency0), amountIn, amountOutMinimum, minHopPriceX36: 0n, hookData: "0x" }]);

@@ -10,6 +10,8 @@ import { BaseSendExecutor, inspectBaseSend, cancelUnsignedBaseSend, verifySigned
 import { FileBaseJournal, parseJournalJson, journalJson } from "../lib/base/journal.ts";
 import { baseReceiptFinality, checkBaseRpc, type BaseRpc, type BaseReceipt } from "../lib/base/rpc.ts";
 import { localBaseSigner } from "../lib/base/local-signer.ts";
+// These executor fixtures are explicitly outside the managed wallet registry.
+vi.mock("../lib/otc/repository.ts", () => ({repository: () => ({read: async () => null})}));
 // Public test fixture. Never funded or used against a live RPC.
 const key = `0x${"1".padStart(64, "0")}` as Hex;
 const account = privateKeyToAccount(key);

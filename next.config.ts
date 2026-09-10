@@ -10,6 +10,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // CDP loads optional x402 adapters dynamically. Keep the Node SDK external so
+  // webpack does not resolve unused x402 peer dependencies during deployment.
+  serverExternalPackages: ["@coinbase/cdp-sdk"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
   },

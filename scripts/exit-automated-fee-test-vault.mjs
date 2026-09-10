@@ -49,7 +49,7 @@ if (plan.chainId !== CHAIN_ID || plan.launch?.name !== "Test" || plan.launch?.sy
 if (launchState.launch?.status !== "confirmed" || launchState.vault?.status !== "confirmed") {
   throw new Error("test launch and vault must both be confirmed before exit");
 }
-if (process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true") {
+if ("false"?.trim().toLowerCase() === "true") {
   throw new Error("automatic processing must remain disabled during the exit test");
 }
 

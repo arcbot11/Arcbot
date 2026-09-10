@@ -1,3 +1,4 @@
+import { retiredFeatureEnvironmentValue } from "../lib/retired-features";
 import { v } from "convex/values";
 import { redactSignerDiagnostic } from "../lib/signer-diagnostics";
 import { retryFeeInspection } from "../lib/fee-inspection-retry";
@@ -115,11 +116,11 @@ async function signerRequestOnce<T>(path: string, body: unknown, timeoutMs: numb
 
 function configuration() {
   return automatedFeeEngineConfiguration({
-    AUTOMATED_BUYBACK_BURN_ENABLED: process.env.AUTOMATED_BUYBACK_BURN_ENABLED,
-    AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED: process.env.AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED,
-    AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED: process.env.AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED,
-    AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED: process.env.AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED,
-    AUTOMATED_FEE_BOT_COMMANDS_ENABLED: process.env.AUTOMATED_FEE_BOT_COMMANDS_ENABLED,
+    AUTOMATED_BUYBACK_BURN_ENABLED: retiredFeatureEnvironmentValue(),
+    AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED: retiredFeatureEnvironmentValue(),
+    AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED: retiredFeatureEnvironmentValue(),
+    AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED: retiredFeatureEnvironmentValue(),
+    AUTOMATED_FEE_BOT_COMMANDS_ENABLED: retiredFeatureEnvironmentValue(),
     AUTOMATED_FEE_VAULT_FACTORY_ADDRESS: process.env.AUTOMATED_FEE_VAULT_FACTORY_ADDRESS,
     AUTOMATED_FEE_VAULT_IMPLEMENTATION_ADDRESS: process.env.AUTOMATED_FEE_VAULT_IMPLEMENTATION_ADDRESS,
     AUTOMATED_FEE_EXECUTION_ADAPTER_ADDRESS: process.env.AUTOMATED_FEE_EXECUTION_ADAPTER_ADDRESS,
@@ -136,7 +137,7 @@ function configuration() {
     AUTOMATED_FEE_V3_ROUTER_ADDRESS: process.env.AUTOMATED_FEE_V3_ROUTER_ADDRESS,
     AUTOMATED_FEE_V3_QUOTER_ADDRESS: process.env.AUTOMATED_FEE_V3_QUOTER_ADDRESS,
     AUTOMATED_FEE_WETH_ADDRESS: process.env.AUTOMATED_FEE_WETH_ADDRESS,
-    AUTOMATED_FEE_MANUAL_TEST_ENABLED: process.env.AUTOMATED_FEE_MANUAL_TEST_ENABLED,
+    AUTOMATED_FEE_MANUAL_TEST_ENABLED: retiredFeatureEnvironmentValue(),
     AUTOMATED_FEE_MANUAL_TEST_TOKEN_ADDRESSES: process.env.AUTOMATED_FEE_MANUAL_TEST_TOKEN_ADDRESSES,
   });
 }

@@ -76,23 +76,23 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 describe("creator burn enrollment authorization and persistence", () => {
+  it.each(["true", "false", ""])("rejects new enrollment without mutating existing state for flag %s", async flag => {
+    vi.stubEnv("CREATOR_SELF_BUYBACK_ENABLED", flag);
+    const {ctx, rows} = setup();
+    rows.creatorBurnRequests.push({_id:"old",...args,programId:"p",status:"pending",deploymentSigned:"0x1234"});
+    const before = structuredClone(rows);
+    await expect(enrollment.queueCreatorBurnRequest(ctx as any, args)).rejects.toThrow("unavailable");
+    expect(rows).toEqual(before);
+    expect(ctx.scheduler.runAfter).not.toHaveBeenCalled();
+    expect(signer).not.toHaveBeenCalled();
+  });
   it("does not exhaust recovery while waiting for genuine escrow fees", async () => {
     const { ctx, rows } = setup();
     rows.creatorBurnRequests.push({ _id: "r", ...args, programId: "p", attempts: 12, leaseId: "lease", status: "pending" });
     await (enrollment.save as any)._handler(ctx, { id: "r", leaseId: "lease", diagnostic: "Waiting for Argus to credit creator fees to escrow" });
     expect(rows.creatorBurnRequests[0].status).toBe("pending");
   });
-  it("pins the canonical half-total conversion without rewriting old requests", async () => {
-    vi.stubEnv("CREATOR_SELF_BUYBACK_ENABLED", "true");
-    const { ctx, rows } = setup();
-    const tokenAddress = "0xb1e9b822b81bbbdab375f7f4d86e44fa04d12b07";
-    Object.assign(rows.automatedFeePrograms[0], { tokenAddress, normalizedTokenAddress: tokenAddress });
-    await enrollment.queueCreatorBurnRequest(ctx as any, { ...args, tokenAddress });
-    expect(rows.creatorBurnRequests[0]).toMatchObject({ bps: 5000, executionBps: 4737 });
-    delete rows.creatorBurnRequests[0].executionBps;
-    await enrollment.queueCreatorBurnRequest(ctx as any, { ...args, tokenAddress });
-    expect(rows.creatorBurnRequests[0].executionBps).toBeUndefined();
-  });
+  
   it.each([false, true])("caps unsigned failures but preserves unresolved signed work: %s", async (signed) => {
     const { ctx, rows } = setup();
     rows.creatorBurnRequests.push({ _id: "r", ...args, programId: "p", attempts: 12, leaseId: "lease", status: "pending",
@@ -117,41 +117,13 @@ describe("creator burn enrollment authorization and persistence", () => {
       if (kind === "wrong-chain") rows.cryptoWallets[0].chainId = 1;
       await expect(
         enrollment.queueCreatorBurnRequest(ctx as any, args),
-      ).rejects.toThrow("Only the current");
+      ).rejects.toThrow("unavailable");
       expect(rows.creatorBurnRequests).toHaveLength(0);
     },
   );
-  it("deduplicates the same request and refuses changed parameters", async () => {
-    vi.stubEnv("CREATOR_SELF_BUYBACK_ENABLED", "true");
-    const { ctx, rows } = setup();
-    const id = await enrollment.queueCreatorBurnRequest(ctx as any, args);
-    expect(await enrollment.queueCreatorBurnRequest(ctx as any, args)).toBe(id);
-    await expect(
-      enrollment.queueCreatorBurnRequest(ctx as any, { ...args, bps: 1000 }),
-    ).rejects.toThrow("conflict");
-    expect(rows.creatorBurnRequests).toHaveLength(1);
-  });
-  it("blocks competing percentage requests", async () => {
-    vi.stubEnv("CREATOR_SELF_BUYBACK_ENABLED", "true");
-    const { ctx } = setup();
-    await enrollment.queueCreatorBurnRequest(ctx as any, args);
-    await expect(
-      enrollment.queueCreatorBurnRequest(ctx as any, {
-        ...args,
-        requestId: "sibling",
-      }),
-    ).rejects.toThrow("already processing");
-  });
-  it("freezes ordinary fee processing before creator configuration starts", async () => {
-    vi.stubEnv("CREATOR_SELF_BUYBACK_ENABLED", "true");
-    const { ctx, rows } = setup();
-    rows.automatedFeePrograms[0].nextProcessAt = 123;
-    await enrollment.queueCreatorBurnRequest(ctx as any, args);
-    expect(rows.automatedFeePrograms[0]).toMatchObject({
-      configurationChangeRequestId: args.requestId,
-      nextProcessAt: undefined,
-    });
-  });
+  
+  
+  
   it("repairs scheduling locks for requests accepted before the barrier existed", async () => {
     const { ctx, rows } = setup();
     rows.automatedFeePrograms[0].nextProcessAt = 123;

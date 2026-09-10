@@ -26,7 +26,7 @@ describe("automated creator fee policy", () => {
     });
   });
 
-  it("requires both the master switch and each independent capability switch", () => {
+  it("ignores retired master and capability switches", () => {
     const infrastructure = {
       AUTOMATED_FEE_VAULT_FACTORY_ADDRESS: address("1"), AUTOMATED_FEE_VAULT_IMPLEMENTATION_ADDRESS: address("2"),
       AUTOMATED_FEE_EXECUTION_ADAPTER_ADDRESS: address("3"), AUTOMATED_FEE_NATIVE_BUYBACK_EXECUTOR_ADDRESS: address("8"),
@@ -42,17 +42,17 @@ describe("automated creator fee policy", () => {
     const selective = automatedFeeEngineConfiguration({
       ...infrastructure, AUTOMATED_BUYBACK_BURN_ENABLED: "true", AUTOMATED_FEE_SWEEP_BUYBACK_BURN_ENABLED: "true",
     });
-    expect(selective.capabilities).toEqual({ sweepBuybackBurn: true, newLaunchEnrollment: false, existingLaunchUpgrade: false, botCommands: false });
+    expect(selective.capabilities).toEqual({ sweepBuybackBurn: false, newLaunchEnrollment: false, existingLaunchUpgrade: false, botCommands: false });
   });
 
-  it("fails closed when enabled without every deployed contract address", () => {
+  it("stays disabled with an inherited enabled flag", () => {
     const config = automatedFeeEngineConfiguration({ AUTOMATED_BUYBACK_BURN_ENABLED: "true" });
-    expect(config.enabled).toBe(true);
+    expect(config.enabled).toBe(false);
     expect(config.ready).toBe(false);
     expect(config.invalid.length).toBe(16);
   });
 
-  it("becomes ready only with every valid deployment address", () => {
+  it("stays disabled even with every valid deployment address", () => {
     const config = automatedFeeEngineConfiguration({
       AUTOMATED_BUYBACK_BURN_ENABLED: "true",
       AUTOMATED_FEE_VAULT_FACTORY_ADDRESS: address("1"),
@@ -72,7 +72,7 @@ describe("automated creator fee policy", () => {
       AUTOMATED_FEE_V3_QUOTER_ADDRESS: address("c"),
       AUTOMATED_FEE_WETH_ADDRESS: address("d"),
     });
-    expect(config.ready).toBe(true);
+    expect(config.ready).toBe(false);
     expect(config.invalid).toEqual([]);
   });
 
@@ -145,7 +145,7 @@ describe("automated creator fee policy", () => {
     })).toThrow(/zero-buyback burn invariant/);
   });
 
-  it("requires an explicit valid existing-token allowlist for private test mode", () => {
+  it("retains allowlist parsing while retired private test mode stays disabled", () => {
     const token = address("a");
     const config = automatedFeeEngineConfiguration({
       AUTOMATED_BUYBACK_BURN_ENABLED: "false",
@@ -169,10 +169,10 @@ describe("automated creator fee policy", () => {
       AUTOMATED_FEE_WETH_ADDRESS: address("e"),
     });
     expect(config.ready).toBe(false);
-    expect(config.manualTestReady).toBe(true);
+    expect(config.manualTestReady).toBe(false);
     expect(isAutomatedFeeManualTestToken(token.toUpperCase().replace("0X", "0x"), config.manualTestTokens)).toBe(true);
     expect(isAutomatedFeeManualTestToken(address("b"), config.manualTestTokens)).toBe(false);
-    expect(automatedFeeEnrollmentAllowed(config, token, "upgrade", false, true)).toBe(true);
+    expect(automatedFeeEnrollmentAllowed(config, token, "upgrade", false, true)).toBe(false);
     expect(automatedFeeEnrollmentAllowed(config, token, "new_launch", false, true)).toBe(false);
     expect(automatedFeeEnrollmentAllowed(config, address("b"), "upgrade", false, true)).toBe(false);
   });

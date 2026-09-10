@@ -5,10 +5,10 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { boundedJson } from "@/lib/bounded-json";
 import { repository } from "@/lib/otc/repository";
-import { balanceSnapshot, otcConfiguration, verifyRouter, ethPrice, prepareCall, advanceOrder } from "@/lib/otc/runtime";
+import { balanceSnapshot, otcConfiguration, verifyRouter, ethPrice, prepareCall, advanceOrder, baseUsdcBalance, verifyUsdcRouter } from "@/lib/otc/runtime";
 import { json, webFailure, websiteSession, WebError } from "@/lib/otc/http";
-import { type Listing, type Order, type RecordValue, type Wallet, locked, walletId, usdc, price } from "@/lib/otc/model";
-import { payoutCall, paymentCall } from "@/lib/otc/transactions";
+import { type Listing, type Order, type RecordValue, type Wallet, locked, lockedBaseUsdc, paymentAsset, walletId, usdc, price, usdcPrice } from "@/lib/otc/model";
+import { payoutCall, paymentCall, approvalCall } from "@/lib/otc/transactions";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -17,9 +17,10 @@ const amount=z.string().max(30), id=z.string().regex(/^[A-Za-z0-9:_-]{8,120}$/);
 const bodySchema=z.discriminatedUnion("action",[
   z.object({action:z.literal("list_preview"),amount,premium:z.string().max(12)}).strict(),
   z.object({action:z.literal("list"),requestId:id,amount,premium:z.string().max(12),maxGasReserveWei:z.string().regex(/^[1-9][0-9]{0,77}$/)}).strict(),
-  z.object({action:z.literal("quote"),listingId:id,amount}).strict(),
+  z.object({action:z.literal("quote"),listingId:id,amount,paymentAsset:z.enum(["ETH","USDC"]).default("ETH")}).strict(),
   z.object({action:z.literal("accept"),orderId:id}).strict(),
   z.object({action:z.literal("cancel"),listingId:id}).strict(),
+  z.object({action:z.literal("retry_payout"),orderId:id,attempt:z.number().int().min(0)}).strict(),
 ]);
 export async function GET(request:NextRequest) {
   if(request.nextUrl.searchParams.get("scope")==="wallet"){
@@ -34,10 +35,20 @@ export async function GET(request:NextRequest) {
         return {chainId:chain,balanceWei:balance?.toString()??null,lockedWei:held.toString(),availableWei:balance===null?null:(balance>held?balance-held:0n).toString(),pending:Boolean(w?.activeTx)};
       });
       const orders=records.filter(r=>r.kind==="order").map(r=>{
-        const o=r as Order; return {id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.xUserId?"buy":"sell"};
+        const o=r as Order; return {payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.xUserId?"buy":"sell"};
       });
       const transactions=records.filter(r=>r.kind==="transaction").map(r=>{if(r.kind!=="transaction")throw new Error("Unexpected record");return {id:r.id,chainId:r.chainId,leg:r.leg,status:r.status,hash:r.hash,note:r.note,createdAt:r.createdAt};});
-      return json({walletAddress:session.walletAddress,balances,orders,transactions,listings:records.filter(r=>r.kind==="listing")});
+      const baseSnapshot = snapshots[1];
+      let baseUsdc = {balance: null as string|null, locked: "0", available: null as string|null};
+      const baseWallet = records.find(r => r.kind === "wallet" && r.id === walletId(8453, session.walletAddress)) as Wallet|undefined;
+      baseUsdc.locked = (baseWallet ? lockedBaseUsdc(baseWallet) : 0n).toString();
+      if (baseSnapshot.status === "fulfilled") {
+        try {
+          const balance = await baseUsdcBalance(session.walletAddress, baseSnapshot.value.block);
+          baseUsdc = {balance, locked: baseUsdc.locked, available: (BigInt(balance) > BigInt(baseUsdc.locked) ? BigInt(balance) - BigInt(baseUsdc.locked) : 0n).toString()};
+        } catch { /* A token read failure must not hide native balances. */ }
+      }
+      return json({walletAddress:session.walletAddress,baseUsdc,balances,orders,transactions,listings:records.filter(r=>r.kind==="listing")});
     } catch(error){return webFailure(error);}
   }
   let enabled=false;
@@ -52,6 +63,15 @@ export async function POST(request:NextRequest) {
     const session=await websiteSession(request,true),body=bodySchema.parse(await boundedJson(request,4096));
     const repo=repository();
     if(body.action==="cancel")return json(await repo.command("cancel",{id:body.listingId,owner:session.xUserId}));
+    if(body.action==="retry_payout"){
+      const order=await repo.read<Order|null>({id:body.orderId});
+      if(!order||order.sellerOwner!==session.xUserId||order.seller.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Order not found.",404);
+      const prepared=await prepareCall(5042,payoutCall(order));
+      if(BigInt(prepared.gasWei)>BigInt(order.arcGasWei))throw new WebError("Gas exceeded the original payout allowance. Retry when fees fall.");
+      const result=await repo.command<Order>("retry_payout",{id:order.id,owner:session.xUserId,attempt:body.attempt,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
+      try{await advanceOrder(order.id);}catch{/* Durable retry is picked up by the worker. */}
+      return json(publicOrder(result));
+    }
     if(body.action==="list"){
       const prior=await repo.read<Listing|null>({id:`listing:${session.xUserId}:${body.requestId}`});
       if(prior){assertListingRetry(prior,body.amount,body.premium,session.walletAddress);return json(prior);}
@@ -71,14 +91,21 @@ export async function POST(request:NextRequest) {
     if(body.action==="quote"){
       const listing=await repo.read<Listing|null>({id:body.listingId});
       if(!listing||listing.kind!=="listing")throw new WebError("Listing not found.",404);
-      const amount=usdc(body.amount),rate=await ethPrice();
-      const cost=price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros));
+      const amount=usdc(body.amount),asset=body.paymentAsset;
+      if (asset === "USDC" && session.walletAddress.toLowerCase() === config.feeRecipient.toLowerCase()) throw new WebError("Fee wallet cannot buy with Base USDC.");
+      if (asset === "USDC") await verifyUsdcRouter(config.router);
+      const rate=asset === "USDC" ? {ethUsdMicros:"1000000",priceAt:Date.now()} : await ethPrice();
+      const cost=asset === "USDC" ? usdcPrice(amount,listing.premiumBps) : price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros));
       const quoteId=`order:${randomUUID()}`;
-      const payment=await prepareCall(8453,paymentCall({id:quoteId,buyer:session.walletAddress,seller:listing.seller,amount:amount.toString(),router:config.router,...cost}));
+      const terms={id:quoteId,buyer:session.walletAddress,seller:listing.seller,amount:amount.toString(),router:config.router,paymentAsset:asset,...cost};
+      // Before approval, payment simulation would revert. Reserve a capped fee allowance for
+      // each leg; simulate and estimate the actual payment after approval is finalized.
+      const payment=await prepareCall(8453,asset === "USDC" ? approvalCall(terms) : paymentCall(terms));
       const buffered=(BigInt(payment.gasWei)*125n+99n)/100n;
-      const gas=buffered<config.base.maxTotalFeeWei?buffered:config.base.maxTotalFeeWei;
+      const gas=asset === "USDC" ? config.base.maxTotalFeeWei : buffered<config.base.maxTotalFeeWei?buffered:config.base.maxTotalFeeWei;
+      const funding=asset === "USDC" ? {baseUsdcBalance:await baseUsdcBalance(session.walletAddress,payment.snapshot.block),approvalGasWei:config.base.maxTotalFeeWei.toString()} : {};
       return json(publicOrder(await repo.command<Order>("quote",{id:quoteId,owner:session.xUserId,buyer:session.walletAddress,listingId:body.listingId,
-        amount:body.amount,...rate,baseGasWei:gas.toString(),baseBalanceWei:payment.snapshot.balanceWei,baseBlock:payment.snapshot.block,router:config.router,feeRecipient:config.feeRecipient,...cost})));
+        amount:body.amount,paymentAsset:asset,...rate,...funding,baseGasWei:gas.toString(),baseBalanceWei:payment.snapshot.balanceWei,baseBlock:payment.snapshot.block,router:config.router,feeRecipient:config.feeRecipient,...cost})));
     }
     const order=await repo.read<Order|null>({id:body.orderId});
     if(!order||order.kind!=="order"||order.owner!==session.xUserId)throw new WebError("Order not found.",404);
@@ -86,7 +113,8 @@ export async function POST(request:NextRequest) {
     if(order.router.toLowerCase()!==config.router.toLowerCase()||order.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new WebError("Quote configuration changed. Request a new quote.");
     const [base,arc]=await Promise.all([balanceSnapshot(8453,session.walletAddress),prepareCall(5042,payoutCall(order))]);
     if(base.nonce!==base.pendingNonce||BigInt(arc.gasWei)>BigInt(order.arcGasWei))throw new WebError("Wallet has a pending transaction or insufficient gas reserve.");
-    const accepted=await repo.command<Order>("accept",{id:order.id,owner:session.xUserId,snapshot:{baseBalanceWei:base.balanceWei,baseBlock:base.block,arcBalanceWei:arc.snapshot.balanceWei,arcBlock:arc.snapshot.block}});
+    const funding = paymentAsset(order) === "USDC" ? {baseUsdcBalance: await baseUsdcBalance(session.walletAddress,base.block)} : {};
+    const accepted=await repo.command<Order>("accept",{id:order.id,owner:session.xUserId,snapshot:{...funding,baseBalanceWei:base.balanceWei,baseBlock:base.block,arcBalanceWei:arc.snapshot.balanceWei,arcBlock:arc.snapshot.block}});
     // A failure after acceptance does not undo the durable order or release its inventory.
     try{await advanceOrder(order.id);}catch{await repo.command("note",{id:order.id,note:"Order accepted. Settlement is waiting for verification. Funds remain reserved."});}
     return json(publicOrder(await repo.read<Order>({id:accepted.id})));
@@ -95,5 +123,5 @@ export async function POST(request:NextRequest) {
 
 function publicOrder(order:Order){
   const {id,amount,premiumBps,sellerWei,feeWei,totalWei,baseGasWei,expiresAt,status,paymentHash,payoutHash,note}=order;
-  return {id,amount,premiumBps,sellerWei,feeWei,totalWei,baseGasWei,expiresAt,status,paymentHash,payoutHash,note};
+  return {paymentAsset:paymentAsset(order),approvalGasWei:order.approvalGasWei??"0",approvalHash:order.approvalHash,id,amount,premiumBps,sellerWei,feeWei,totalWei,baseGasWei,expiresAt,status,paymentHash,payoutHash,note};
 }

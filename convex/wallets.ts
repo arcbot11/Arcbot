@@ -1,3 +1,4 @@
+import { retiredFeatureEnabled } from "../lib/retired-features";
 import { canIndexArcToken, CANONICAL_ARC_USDC, isArcUsdcSymbol } from "../lib/arc/token-catalog";
 import { disabledCreationKind } from "../lib/disabled-creation";
 import { tokenPattern } from "../lib/token-pattern";
@@ -3559,7 +3560,7 @@ async function submit(
 ) {
   if (disabledCreationKind(String(operation.type))) throw new Error("Token creation is unavailable.");
   // This executor still targets chain 4663; it is not an Arc deployment path.
-  if (process.env.X_CRYPTO_EXECUTION_ENABLED !== "true") throw new Error("Legacy chain execution is disabled.");
+  if (!retiredFeatureEnabled()) throw new Error("Legacy chain execution is disabled.");
   await requireTelegramRequestAuthorization(ctx, requestId);
   const launch =
     operation.type === "legacy_launch_launch" ||
@@ -3685,7 +3686,7 @@ export const executeCommand = internalAction({
       command = normalizeLaunchTelegram(command, args.text);
       command = normalizeLaunchFeeOptions(command, args.text);
       if(command.kind==="launch"&&command.selfBurnBps!==undefined
-        &&(process.env.CREATOR_SELF_BUYBACK_ENABLED!=="true"||process.env.AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED!=="true"))
+        &&(!retiredFeatureEnabled()||!retiredFeatureEnabled()))
         return {ok:false,message:"Token creation is unavailable."};
     } catch (error) {
       return { ok: false, message: safeFailure(error) };
@@ -3869,6 +3870,9 @@ Your wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`,
         channel: args.channel || "x_reply",
       },
     );
+    if((source==="x"||source==="telegram")&&["buy","sell","send","burn","swap_token_for_token","buy_and_send","buy_and_burn","buy_top_five"].includes(command.kind)){
+      return await ctx.runAction(internal.wallets.continueArcCommand,{requestId});
+    }
     if (!reserved.inserted) {
       const prior = reserved.request;
       if (prior?.diagnosticCode === LEGACY_CLAIM_SUPERSEDED) return { ok: false, message: "", deferred: true };
@@ -4473,9 +4477,9 @@ ${resultBlocks}\n\nTransactions\n\n${transactionLinks}${warning}`;
         }
         if (command.kind === "upgrade_fees") {
           if (
-            process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() !== "true" ||
-            process.env.AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED?.trim().toLowerCase() !== "true" ||
-            process.env.AUTOMATED_FEE_BOT_COMMANDS_ENABLED?.trim().toLowerCase() !== "true"
+            !retiredFeatureEnabled() ||
+            !retiredFeatureEnabled() ||
+            !retiredFeatureEnabled()
           ) {
             throw new Error("automated fee upgrades are not enabled");
           }
@@ -4641,8 +4645,8 @@ ${resultBlocks}\n\nTransactions\n\n${transactionLinks}${warning}`;
           if (
             automatedFeeProgram &&
             (!(["enrolled", "paused"] as string[]).includes(automatedFeeProgram.status) ||
-              process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() !== "true" ||
-              process.env.AUTOMATED_FEE_BOT_COMMANDS_ENABLED?.trim().toLowerCase() !== "true")
+              !retiredFeatureEnabled() ||
+              !retiredFeatureEnabled())
           ) {
             throw new Error("automated fee controller commands are not enabled");
           }
@@ -4707,8 +4711,8 @@ ${resultBlocks}\n\nTransactions\n\n${transactionLinks}${warning}`;
           if (automatedFeeProgram) {
             if (
               !["enrolled", "paused"].includes(automatedFeeProgram.status) ||
-              process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() !== "true" ||
-              process.env.AUTOMATED_FEE_BOT_COMMANDS_ENABLED?.trim().toLowerCase() !== "true"
+              !retiredFeatureEnabled() ||
+              !retiredFeatureEnabled()
             ) {
               throw new Error("automated fee controller commands are not enabled");
             }
@@ -4805,8 +4809,8 @@ Transaction: ${transactionUrl(routed.transactionHash)}${warning}`;
         if (command.kind === "reassign_fees" && command.recipient !== "holders" && automatedFeeProgram) {
           if (
             automatedFeeProgram.status !== "enrolled" ||
-            process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() !== "true" ||
-            process.env.AUTOMATED_FEE_BOT_COMMANDS_ENABLED?.trim().toLowerCase() !== "true"
+            !retiredFeatureEnabled() ||
+            !retiredFeatureEnabled()
           ) {
             throw new Error("automated fee controller commands are not enabled");
           }
@@ -5612,8 +5616,8 @@ If no burn was confirmed, submit “burn ${purchasedForBurn} ${commandToken}” 
           const enrollmentPairToken = String(operation.pairToken || "0x0000000000000000000000000000000000000000");
           const automatedPairSupported = /^0x0{40}$/i.test(enrollmentPairToken)
             || AUTOMATED_FEE_PAIR_ROUTES.some((route) => route.pairAsset.toLowerCase() === enrollmentPairToken.toLowerCase());
-          const automatedLaunchRequired = process.env.AUTOMATED_BUYBACK_BURN_ENABLED?.trim().toLowerCase() === "true"
-            && process.env.AUTOMATED_FEE_NEW_LAUNCH_ENROLLMENT_ENABLED?.trim().toLowerCase() === "true"
+          const automatedLaunchRequired = retiredFeatureEnabled()
+            && retiredFeatureEnabled()
             && !(executionCommand as Extract<WalletCommand, { kind: "launch" }>).holderFeeSharing;
           // With production enrollment enabled, every wallet-distribution
           // launch must be prebound to the automated vault. A catalog omission
@@ -6990,6 +6994,37 @@ export const revokeWebSession = action({
     return true;
   },
 });
+
+export const authorizeArcCommand=action({args:{secret:v.string(),requestId:v.string()},handler:async(ctx,args):Promise<{owner:string;wallet:string;command:string;createdAt:number}>=>{
+  if(!process.env.WEB_AUTH_SECRET||args.secret!==process.env.WEB_AUTH_SECRET)throw new Error("Unauthorized.");
+  const request=await ctx.runQuery(internal.wallets.getWalletRequest,{requestId:args.requestId});
+  if(!request||!["x","telegram"].includes(request.source??"x")||["rejected","failed","skipped"].includes(request.status))throw new Error("Request is not authorized.");
+  if(request.source!=="telegram"&&request.ownerXUserId===process.env.X_BOT_USER_ID)throw new Error("Bot wallet spending is not authorized.");
+  if(request.source==="telegram"&&!await ctx.runQuery(internal.telegram.executionAuthorized,{updateId:request.telegramUpdateId,ownerXUserId:request.ownerXUserId}))throw new Error("Telegram authorization changed.");
+  const context=await ctx.runQuery(internal.wallets.getXUserAndWallet,{xUserId:request.ownerXUserId});
+  if(!context?.wallet||context.wallet.status!=="active"||context.wallet._id!==request.walletId)throw new Error("Wallet authorization changed.");
+  return {owner:request.ownerXUserId,wallet:context.wallet.address,command:request.normalizedJson,createdAt:request._creationTime};
+}});
+
+export const continueArcCommand=internalAction({args:{requestId:v.string(),attempt:v.optional(v.number())},handler:async(ctx,args):Promise<CommandResult>=>{
+  const secret=process.env.WEB_AUTH_SECRET;
+  if(!secret)return {ok:false,message:"Arc service authentication is not configured."};
+  const request=await ctx.runQuery(internal.wallets.getWalletRequest,{requestId:args.requestId});
+  if(!request)return {ok:false,message:"Request not found."};
+  if(["confirmed","failed","rejected"].includes(request.status))return {ok:request.status==="confirmed",message:request.finalMessage??"Check wallet history."};
+  let result:{ok?:boolean;pending?:boolean;message:string;hash?:string};
+  try{
+    const response=await fetch("https://www.arcchainbot.io/api/arc/command",{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:args.requestId}),signal:AbortSignal.timeout(110000)});
+    if(!response.ok)throw new Error("Arc command service unavailable.");
+    result=await response.json();
+  }catch{result={pending:true,message:"Arc request is waiting for verification. Check wallet history."};}
+  if(result.pending){
+    if((args.attempt??0)<60)await ctx.scheduler.runAfter(20_000,internal.wallets.continueArcCommand,{requestId:args.requestId,attempt:(args.attempt??0)+1});
+    return {ok:false,pending:true,message:result.message,...(result.hash?{transactionHash:result.hash}:{})};
+  }
+  await ctx.runMutation(internal.wallets.updateWalletRequest,{requestId:args.requestId,status:result.ok?"confirmed":"failed",finalMessage:result.message,...(result.hash?{transactionHash:result.hash}:{})});
+  return {ok:!!result.ok,message:result.message,...(result.hash?{transactionHash:result.hash}:{})};
+}});
 
 export const provisionWebWallet = action({
   args: {

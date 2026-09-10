@@ -2,6 +2,8 @@ import { mkdtemp, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { describe, expect, it, vi } from "vitest";
+// These executor fixtures are explicitly outside the managed wallet registry.
+vi.mock("../lib/otc/repository.ts", () => ({repository: () => ({read: async () => null})}));
 import { decodeFunctionData, keccak256, parseAbi, type Hex } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
 import { arcConfig, ARC_USDC } from "../lib/arc/config.ts";

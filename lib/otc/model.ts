@@ -4,6 +4,8 @@ export const MIN_USDC = 10_000_000n;
 export const MAX_PREMIUM_BPS = 1_000_000;
 export const QUOTE_MS = 30_000;
 export const SERVICE_FEE_BPS = 100;
+export type PaymentAsset = "ETH" | "USDC";
+export const paymentAsset = (order: {paymentAsset?: PaymentAsset}): PaymentAsset => order.paymentAsset ?? "ETH";
 export type Chain = 5042 | 8453;
 export const ceil = (a: bigint, b: bigint) => (a + b - 1n) / b;
 export function usdc(value: string) {
@@ -25,6 +27,12 @@ export function price(amount: bigint, premiumBps: number, ethUsdMicros: bigint) 
   const feeWei = ceil(sellerWei, 100n);
   return { sellerWei: sellerWei.toString(), feeWei: feeWei.toString(), totalWei: (sellerWei + feeWei).toString() };
 }
+export function usdcPrice(amount: bigint, premiumBps: number) {
+  if (amount < MIN_USDC || !Number.isSafeInteger(premiumBps) || premiumBps < 0 || premiumBps > MAX_PREMIUM_BPS) throw new Error("Invalid OTC price inputs.");
+  const sellerWei = ceil(amount * BigInt(10_000 + premiumBps), 10_000n);
+  const feeWei = ceil(sellerWei, 100n);
+  return {sellerWei: sellerWei.toString(), feeWei: feeWei.toString(), totalWei: (sellerWei + feeWei).toString()};
+}
 export type Listing = {
   kind: "listing"; id: string; owner: string; seller: string; premiumBps: number;
   originalAmount?: string; available: string; held: string; pendingFills: number; gasPerFillWei: string;
@@ -33,15 +41,19 @@ export type Listing = {
 export type OrderStatus = "quoted" | "payment_pending" | "payment_submitted" | "payment_finalized" | "payout_submitted" | "payout_failed" | "completed" | "expired" | "payment_failed";
 export type Order = {
   kind: "order"; id: string; owner: string; buyer: string; seller: string; sellerOwner: string; listingId: string;
+  paymentAsset?: PaymentAsset; approvalGasWei?: string; approvalHash?: string; approvalFinalized?: boolean;
   amount: string; premiumBps: number; ethUsdMicros: string; priceAt: number;
+  // Legacy names: atomic payment units (18 decimals for ETH, 6 for Base USDC).
   sellerWei: string; feeWei: string; totalWei: string; baseGasWei: string; arcGasWei: string;
   router: string; feeRecipient: string; expiresAt: number; status: OrderStatus;
-  paymentHash?: string; payoutHash?: string; note?: string; createdAt: number; updatedAt: number;
+  paymentHash?: string; payoutHash?: string; payoutAttempt?: number; note?: string; createdAt: number; updatedAt: number;
 };
 export type Wallet = { kind: "wallet"; id: string; owner: string; address: string; chainId: Chain;
-  holds: Record<string, string>; activeTx?: string; lastSettledBlock?: string; updatedAt: number };
+  holds: Record<string, string>; usdcHolds?: Record<string, string>; activeTx?: string; lastSettledBlock?: string; updatedAt: number };
 export type Transaction = { kind: "transaction"; id: string; owner: string; wallet: string; chainId: Chain;
-  orderId?: string; leg: "payment" | "payout" | "send"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted";
+  sourceRequestId?: string;
+  swapOutput?: {token:string;minimum:string};
+  orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted";
   unsigned: string; raw?: string; hash?: string; blockNumber?: string; note?: string; createdAt: number; updatedAt: number };
 export type RecordValue = Listing | Order | Wallet | Transaction;
 export interface Store {
@@ -50,6 +62,8 @@ export interface Store {
 }
 export const walletId = (chain: Chain, address: string) => `wallet:${chain}:${address.toLowerCase()}`;
 export const locked = (wallet: Wallet) => Object.values(wallet.holds).reduce((sum, value) => sum + BigInt(value), 0n);
+export const lockedBaseUsdc = (w: Wallet) => Object.values(w.usdcHolds ?? {}).reduce((sum, value) => sum + BigInt(value), 0n);
+export const paymentNativeReserve = (o: Order) => BigInt(o.baseGasWei) + (paymentAsset(o) === "ETH" ? BigInt(o.totalWei) : 0n);
 export async function wallet(store: Store, chain: Chain, address: string, owner: string, now: number) {
   const id = walletId(chain, address);
   const existing = await store.get<Wallet>(id);
@@ -95,7 +109,7 @@ export async function createListing(store: Store, input: { id: string; owner: st
   await store.put(w); await store.put(listing);
   return listing;
 }
-export async function createQuote(store: Store, input: { id: string; owner: string; buyer: string; listingId: string; amount: string; ethUsdMicros: string; priceAt: number; baseGasWei: string; baseBalanceWei:string; baseBlock:string; router: string; feeRecipient: string }, now: number) {
+export async function createQuote(store: Store, input: { id: string; owner: string; buyer: string; listingId: string; amount: string; ethUsdMicros: string; priceAt: number; baseGasWei: string; baseBalanceWei:string; baseUsdcBalance?:string; paymentAsset?:PaymentAsset; approvalGasWei?:string; baseBlock:string; router: string; feeRecipient: string }, now: number) {
   const existing = await store.get<Order>(input.id);
   if (existing) { if (existing.owner !== input.owner) throw new Error("Quote owner mismatch."); return existing; }
   const listing = await store.get<Listing>(input.listingId);
@@ -104,11 +118,15 @@ export async function createQuote(store: Store, input: { id: string; owner: stri
   const amount = usdc(input.amount);
   if (amount > BigInt(listing.available)) throw new Error("Listing amount changed. Request a new quote.");
   if (now - input.priceAt > QUOTE_MS || input.priceAt > now || BigInt(input.baseGasWei) <= 0n) throw new Error("Price or gas estimate expired.");
-  const quote = price(amount, listing.premiumBps, BigInt(input.ethUsdMicros));
+  if (input.paymentAsset && !["ETH", "USDC"].includes(input.paymentAsset)) throw new Error("Unsupported Base payment asset.");
+  const asset = paymentAsset(input);
+  const quote = asset === "USDC" ? usdcPrice(amount, listing.premiumBps) : price(amount, listing.premiumBps, BigInt(input.ethUsdMicros));
   const funding = await wallet(store,8453,input.buyer,input.owner,now);
   checkSnapshot(funding,input.baseBlock);
-  if(BigInt(input.baseBalanceWei)-locked(funding)<BigInt(quote.totalWei)+BigInt(input.baseGasWei))throw new Error("Not enough available Base ETH for this quote and gas.");
+  if (asset === "USDC" && (BigInt(input.approvalGasWei ?? "0") <= 0n || BigInt(input.baseUsdcBalance ?? "0") - lockedBaseUsdc(funding) < BigInt(quote.totalWei))) throw new Error("Not enough available Base USDC or approval gas allowance.");
+  if(BigInt(input.baseBalanceWei)-locked(funding)<(asset === "ETH" ? BigInt(quote.totalWei) : BigInt(input.approvalGasWei!))+BigInt(input.baseGasWei))throw new Error("Not enough available Base ETH for this quote and gas.");
   const order: Order = { kind: "order", id: input.id, owner: input.owner, buyer: input.buyer, seller: listing.seller, sellerOwner: listing.owner, listingId: listing.id,
+    paymentAsset: asset, ...(asset === "USDC" ? {approvalGasWei: input.approvalGasWei} : {}),
     amount: amount.toString(), premiumBps: listing.premiumBps, ethUsdMicros: input.ethUsdMicros, priceAt: input.priceAt, ...quote,
     baseGasWei: input.baseGasWei, arcGasWei: listing.gasPerFillWei, router: input.router, feeRecipient: input.feeRecipient,
     expiresAt: now + QUOTE_MS, status: "quoted", createdAt: now, updatedAt: now };
@@ -116,7 +134,7 @@ export async function createQuote(store: Store, input: { id: string; owner: stri
   listing.held = (BigInt(listing.held) + amount).toString(); listing.pendingFills++;
   await updateListingHold(store, listing, now); await store.put(order); return order;
 }
-export async function acceptQuote(store: Store, id: string, owner: string, snapshot: { baseBalanceWei: string; baseBlock: string; arcBalanceWei: string; arcBlock: string }, now: number) {
+export async function acceptQuote(store: Store, id: string, owner: string, snapshot: { baseBalanceWei: string; baseBlock: string; baseUsdcBalance?: string; arcBalanceWei: string; arcBlock: string }, now: number) {
   const order = await store.get<Order>(id);
   if (!order || order.kind !== "order" || order.owner !== owner) throw new Error("Order not found.");
   if (order.status !== "quoted") return order;
@@ -126,7 +144,12 @@ export async function acceptQuote(store: Store, id: string, owner: string, snaps
   if (BigInt(snapshot.arcBalanceWei) < locked(seller)) throw new Error("Seller balance or gas reserve is insufficient. No Base payment was sent.");
   const buyer = await wallet(store, 8453, order.buyer, order.owner, now);
   checkSnapshot(buyer, snapshot.baseBlock);
-  reserve(buyer, order.id, BigInt(order.totalWei) + BigInt(order.baseGasWei), BigInt(snapshot.baseBalanceWei));
+  reserve(buyer, order.id, paymentNativeReserve(order) + BigInt(order.approvalGasWei ?? "0"), BigInt(snapshot.baseBalanceWei));
+  if (paymentAsset(order) === "USDC") {
+    if (lockedBaseUsdc(buyer) > 0n) throw new Error("A Base USDC purchase is pending. Wait for payment verification.");
+    if (BigInt(snapshot.baseUsdcBalance ?? "0") - lockedBaseUsdc(buyer) < BigInt(order.totalWei)) throw new Error("Not enough available Base USDC.");
+    buyer.usdcHolds = {...buyer.usdcHolds, [order.id]: order.totalWei};
+  }
   order.status = "payment_pending"; order.updatedAt = now;
   await store.put(buyer); await store.put(order); return order;
 }
@@ -145,7 +168,7 @@ export async function finishOrder(store: Store, order: Order, outcome: "complete
   if (outcome !== "completed" && listing.status === "active") listing.available = (BigInt(listing.available) + BigInt(order.amount)).toString();
   if (listing.pendingFills < 0 || BigInt(listing.held) < 0n) throw new Error("Reservation mismatch.");
   const buyer = await wallet(store, 8453, order.buyer, order.owner, now);
-  delete buyer.holds[order.id]; await store.put(buyer);
+  delete buyer.holds[order.id]; if (buyer.usdcHolds) delete buyer.usdcHolds[order.id]; await store.put(buyer);
   order.status = outcome; order.updatedAt = now;
   delete order.note;
   await updateListingHold(store, listing, now); await store.put(order); return order;

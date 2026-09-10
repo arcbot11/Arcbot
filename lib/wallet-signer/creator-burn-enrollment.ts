@@ -1,3 +1,4 @@
+import { retiredFeatureEnabled } from "../retired-features";
 import { z } from "zod";
 import {
   encodeFunctionData,
@@ -57,7 +58,7 @@ const eq = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 /** Read-only preflight before creating a token. This cannot make separate
  * deployment/configuration transactions atomic with the Argus launch. */
 export async function creatorLayerLaunchPreflight() {
-  if (process.env.CREATOR_SELF_BUYBACK_ENABLED !== "true") throw new Error("CREATOR_BURN_DISABLED");
+  if (!retiredFeatureEnabled()) throw new Error("CREATOR_BURN_DISABLED");
   const { client, role } = creatorBurnSignerContext();
   if (await client.getChainId() !== 4663) throw new Error("Wrong chain");
   const factory = address.parse(process.env.CREATOR_SELF_BUYBACK_FACTORY_ADDRESS) as Address;
@@ -82,7 +83,7 @@ export async function creatorLayerLaunchPreflight() {
 
 /** The deterministic stack used by every new wallet-distribution launch. */
 export async function creatorNewLaunchPreflight() {
-  if (process.env.CREATOR_SELF_BUYBACK_ENABLED !== "true") throw new Error("CREATOR_BURN_DISABLED");
+  if (!retiredFeatureEnabled()) throw new Error("CREATOR_BURN_DISABLED");
   const { client, role } = creatorBurnSignerContext();
   if (await client.getChainId() !== 4663) throw new Error("Wrong chain");
   const factory = address.parse(process.env.CREATOR_SELF_BUYBACK_NEW_LAUNCH_FACTORY_ADDRESS) as Address;
@@ -179,7 +180,7 @@ export async function deployCreatorNewLaunchLayer(input: unknown) {
 }
 export async function deployCreatorLayer(input: unknown) {
   const r = layerDeploymentRequest.parse(input);
-  const enabled = process.env.CREATOR_SELF_BUYBACK_ENABLED === "true";
+  const enabled = retiredFeatureEnabled();
   if (!enabled && !r.signedTransaction)
     throw new Error("CREATOR_BURN_DISABLED");
   const { client, role, cdp, executionAccess } = creatorBurnSignerContext();

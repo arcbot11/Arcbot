@@ -12,6 +12,8 @@ import { FileArcJournal, parseJournalJson, journalJson, type WalletJournal } fro
 import { parseArcManageArgs } from "../lib/arc/manage-args.ts";
 import { checkArcRpc, type ArcRpc } from "../lib/arc/rpc.ts";
 import { localArcSigner } from "../lib/arc/local-signer.ts";
+// These executor fixtures are explicitly outside the managed wallet registry.
+vi.mock("../lib/otc/repository.ts", () => ({repository: () => ({read: async () => null})}));
 
 // Public deterministic fixture account, never funded or used for network calls.
 const account = privateKeyToAccount(`0x${"1".padStart(64, "0")}`);
