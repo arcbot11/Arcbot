@@ -6,6 +6,7 @@ import { makeFunctionReference } from "convex/server";
 import { useWalletSession } from "./WalletSessionProvider";
 import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
+import { listingCostPercent } from "@/lib/otc/listing-cost";
 import { listingSubmission, type ListingSubmission } from "@/lib/otc/listing-submission";
 import { formatUnits } from "viem";
 import {displayUsdc} from "@/lib/amount-display";
@@ -103,9 +104,19 @@ export function OtcClient(){
     <p className="market-refresh-status" role="status">{marketError?"Market refresh failed. Displayed listings may be outdated. Retrying…":""}</p>
     <div className="otc-single">
       {<section className="otc-book"><div className="otc-panel-title"><h2>Listings</h2><button className="arc-button" onClick={()=>openForm("sell")}>Sell USDC</button></div>
-        <div className="otc-table-wrap"><table><thead><tr><th>Seller</th><th>Arc USDC</th><th>Premium</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>{market?.listings.map(l=><tr key={l.id}><td><Link href={`/wallet/${l.seller}`}>{l.seller.slice(0,6)}…{l.seller.slice(-4)}</Link></td><td>{units(l.available)}</td><td>{pct(l.premiumBps)}</td><td><button className="otc-inline-button" disabled={marketError||l.seller.toLowerCase()===session?.walletAddress?.toLowerCase()} onClick={()=>openForm("buy",l.id)}>Buy ↗</button></td></tr>)}</tbody></table></div>
+        <div className="otc-market-cards">{market?.listings.map(l=>{
+          const cost=listingCostPercent(l.premiumBps),percent=(value:number)=>`${value.toLocaleString(undefined,{maximumFractionDigits:6})}%`;
+          const own=l.seller.toLowerCase()===session?.walletAddress?.toLowerCase();
+          return <article className="otc-market-card" key={l.id}>
+            <div className="otc-market-amount"><span>Available Arc USDC</span><h3>{units(l.available)} <small>USDC</small></h3></div>
+            <p className="otc-market-seller">Seller <Link href={`/wallet/${l.seller}`} title={l.seller}>{l.seller.slice(0,6)}…{l.seller.slice(-4)}</Link></p>
+            <dl><div><dt>Premium</dt><dd>{pct(l.premiumBps)}</dd></div><div><dt>Service fee</dt><dd>{SERVICE_FEE_BPS/100}%</dd></div><div className="otc-market-total"><dt>Premium + fee</dt><dd>+{percent(cost.aboveFaceValue)}</dd></div><div><dt>Total cost</dt><dd>{percent(cost.total)} of face value</dd></div></dl>
+            <p className="otc-fine">The service fee applies after the premium. Network gas is additional.</p>
+            <button className="arc-button" disabled={marketError||own} onClick={()=>openForm("buy",l.id)}>{own?"Your listing":"Buy USDC ↗"}</button>
+          </article>;
+        })}</div>
         {!market?.listings.length&&<div className="otc-empty"><strong>{!market?(marketError?"Listings unavailable.":"Loading listings…"):market.available?"No listings.":"Listings unavailable."}</strong><p>{!market&&!marketError?"Checking available listings.":market?.available?"Fund your wallet with Arc USDC to list it for sale.":"Unable to load listings. Try again."}</p></div>}
-        <p className="otc-fine">Each fill delivers at least 10 Arc USDC. You can buy part of a listing.</p>
+        <p className="otc-fine">Minimum purchase $10. You can buy part of a listing.</p>
       </section>}
       <dialog ref={dialog} className="otc-modal" aria-labelledby="otc-form-title" onCancel={e=>{if(busy)e.preventDefault();}} onClose={()=>setFormOpen(false)}>
       {formOpen&&<section className="otc-form-panel" id="otc-order-form">
