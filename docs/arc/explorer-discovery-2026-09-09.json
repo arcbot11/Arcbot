@@ -1,0 +1,282 @@
+{
+  "observedAt": "2026-09-09T10:57:44.959Z",
+  "checks": [
+    {
+      "name": "stats",
+      "url": "https://www.arcexplorer.org/api/v1/stats",
+      "status": 200,
+      "value": {
+        "chainId": 5042,
+        "nativeCurrency": {
+          "name": "USDC",
+          "symbol": "USDC",
+          "decimals": 18,
+          "displayDecimals": 6
+        },
+        "nodeHead": 18456078,
+        "latestIndexedBlock": 19957023,
+        "oldestIndexedBlock": 0,
+        "indexedBlocks": 19957023,
+        "indexedTransactions": 5275608,
+        "transactionsPerSecond": 1,
+        "averageBlockTime": 1,
+        "averageTransactionFee": "6883076446392000",
+        "averageGasPrice": "34968464000",
+        "averageTransactionFeeChangePercent": -7.261523796309438,
+        "feeSampleSize": 250,
+        "historicalCursor": -1
+      }
+    },
+    {
+      "name": "pools",
+      "url": "https://www.arcexplorer.org/api/v1/dex/pools?limit=3",
+      "status": 200,
+      "value": {
+        "items": [
+          {
+            "address": "0x2e8180fa3967caf9abf57bbaeab9ae9063bcd7ba",
+            "protocol": "v3",
+            "factoryAddress": "0xf0db7b58379503491d857db50ac9ece64c653918",
+            "feeTier": 10000,
+            "createdBlock": 19748292,
+            "createdAt": "2026-09-08T05:08:15.000Z",
+            "creationTx": "0x91301e28f3da44fd7f776cb34069e879d130beb032f90ba21c62cbe4a706b14d",
+            "token0": {
+              "address": "0x2ba0f44bdfc17fba30eda9cdbecb908ca45b043b",
+              "name": "Circle Internet Group • Arc Token",
+              "symbol": "CRCL",
+              "decimals": 18,
+              "totalSupply": "2391353943641032510",
+              "burnedSupply": "0",
+              "holderCount": 189,
+              "imageUrl": null
+            },
+            "token1": {
+              "address": "0x3600000000000000000000000000000000000000",
+              "name": "USDC",
+              "symbol": "USDC",
+              "decimals": 6,
+              "totalSupply": "8373142452681",
+              "burnedSupply": "10005",
+              "holderCount": 26791,
+              "imageUrl": null
+            },
+            "baseToken": {
+              "address": "0x2ba0f44bdfc17fba30eda9cdbecb908ca45b043b",
+              "name": "Circle Internet Group • Arc Token",
+              "symbol": "CRCL",
+              "decimals": 18,
+              "totalSupply": "2391353943641032510",
+              "burnedSupply": "0",
+              "holderCount": 189,
+              "imageUrl": null
+            },
+            "quoteToken": {
+              "address": "0x3600000000000000000000000000000000000000",
+              "name": "USDC",
+              "symbol": "USDC",
+              "decimals": 6,
+              "totalSupply": "8373142452681",
+              "burnedSupply": "10005",
+              "holderCount": 26791,
+              "imageUrl": null
+            },
+            "pairName": "CRCL/USDC",
+            "usdAnchored": true,
+            "priceUsd": 56.554868502847945,
+            "priceQuote": 56.554868502847945,
+            "change24h": -32.38658999809029,
+            "volume24hUsd": 262266.37132899795,
+            "volume1hUsd": 1388.609821,
+            "liquidityUsd": 3611.268772,
+            "marketCapUsd": 135.24270782638544,
+            "fdvUsd": 135.24270782638544,
+            "pooledBase": 68.78453343352653,
+            "pooledQuote": 1805.634386,
+            "swaps24h": 5115,
+            "buys24h": 3081,
+            "sells24h": 2034,
+            "lastSwapAt": "2026-09-09T10:45:23.000Z"
+          },
+          {
+            "address": "0x162df51c504e7b8321e07387932f333d9be16a72",
+            "protocol": "v3",
+            "factoryAddress": "0xf0db7b58379503491d857db50ac9ece64c653918",
+            "feeTier": 10000,
+            "createdBlock": 13570662,
+            "createdAt": "2026-08-02T22:44:56.000Z",
+            "creationTx": "0xb87d52c828ee765d3592b64e09919611f30a073e1bd8c2c5b9826690fe149440",
+            "token0": {
+              "address": "0x3600000000000000000000000000000000000000",
+              "name": "USDC",
+              "symbol": "USDC",
+              "decimals": 6,
+              "totalSupply": "8373142452681",
+              "burnedSupply": "10005",
+              "holderCount": 26791,
+              "imageUrl": null
+            },
+            "token1": {
+              "address": "0xbc43ce8dec648ea298c4275559b81d6261c90b67",
+              "name": "Tolly",
+              "symbol": "TOLLY",
+              "decimals": 18,
+              "totalSupply": "1000000000000000000000000000",
+              "burnedSupply": "26831299996832414891422619",
+              "holderCount": 1118,
+              "imageUrl": null
+            },
+            "baseToken": {
+              "address": "0xbc43ce8dec648ea298c4275559b81d6261c90b67",
+              "name": "Tolly",
+              "symbol": "TOLLY",
+              "decimals": 18,
+              "totalSupply": "1000000000000000000000000000",
+              "burnedSupply": "26831299996832414891422619",
+              "holderCount": 1118,
+              "imageUrl": null
+            },
+            "quoteToken": {
+              "address": "0x3600000000000000000000000000000000000000",
+              "name": "USDC",
+              "symbol": "USDC",
+              "decimals": 6,
+              "totalSupply": "8373142452681",
+              "burnedSupply": "10005",
+              "holderCount": 26791,
+              "imageUrl": null
+            },
+            "pairName": "TOLLY/USDC",
+            "usdAnchored": true,
+            "priceUsd": 0.0025653689409307345,
+            "priceQuote": 0.0025653689409307345,
+            "change24h": -6.718207664564966,
+            "volume24hUsd": 249891.98896799964,
+            "volume1hUsd": 4833.916054,
+            "liquidityUsd": 216870.239068,
+            "marketCapUsd": 2496536.7572740656,
+            "fdvUsd": 2565368.9409307344,
+            "pooledBase": 43998860.49286183,
+            "pooledQuote": 108435.119534,
+            "swaps24h": 617,
+            "buys24h": 462,
+            "sells24h": 155,
+            "lastSwapAt": "2026-09-09T10:53:51.000Z"
+          },
+          {
+            "address": "0x40732e01ba7a829dea44f51a10e7c58cd9f37765",
+            "protocol": "v3",
+            "factoryAddress": "0xf0db7b58379503491d857db50ac9ece64c653918",
+            "feeTier": 10000,
+            "createdBlock": 14584784,
+            "createdAt": "2026-08-08T21:26:51.000Z",
+            "creationTx": "0x6902e660aa6405bbe713a56cde86f158ce63a60fabec0c12a3f0c047ceca1eb1",
+            "token0": {
+              "address": "0x3600000000000000000000000000000000000000",
+              "name": "USDC",
+              "symbol": "USDC",
+              "decimals": 6,
+              "totalSupply": "8373142452681",
+              "burnedSupply": "10005",
+              "holderCount": 26791,
+              "imageUrl": null
+            },
+            "token1": {
+              "address": "0xeb64987643db71c76b2a2be7e723decc995e5b37",
+              "name": "usdc is cool",
+              "symbol": "COOL",
+              "decimals": 18,
+              "totalSupply": "1000000000000000000000000000",
+              "burnedSupply": "31418094642913222599102666",
+              "holderCount": 1229,
+              "imageUrl": null
+            },
+            "baseToken": {
+              "address": "0xeb64987643db71c76b2a2be7e723decc995e5b37",
+              "name": "usdc is cool",
+              "symbol": "COOL",
+              "decimals": 18,
+              "totalSupply": "1000000000000000000000000000",
+              "burnedSupply": "31418094642913222599102666",
+              "holderCount": 1229,
+              "imageUrl": null
+            },
+            "quoteToken": {
+              "address": "0x3600000000000000000000000000000000000000",
+              "name": "USDC",
+              "symbol": "USDC",
+              "decimals": 6,
+              "totalSupply": "8373142452681",
+              "burnedSupply": "10005",
+              "holderCount": 26791,
+              "imageUrl": null
+            },
+            "pairName": "COOL/USDC",
+            "usdAnchored": true,
+            "priceUsd": 0.0029178362143958956,
+            "priceQuote": 0.0029178362143958956,
+            "change24h": 12.313317700265282,
+            "volume24hUsd": 93059.37317799998,
+            "volume1hUsd": 711.7436150000001,
+            "liquidityUsd": 234903.33689,
+            "marketCapUsd": 2826163.360059486,
+            "fdvUsd": 2917836.2143958956,
+            "pooledBase": 42351737.21511151,
+            "pooledQuote": 117451.668445,
+            "swaps24h": 321,
+            "buys24h": 191,
+            "sells24h": 130,
+            "lastSwapAt": "2026-09-09T10:54:14.000Z"
+          }
+        ],
+        "totals": {
+          "totalPools": 8645,
+          "activePools": 711,
+          "usdcAnchoredPools": 618,
+          "swaps24h": 17462,
+          "volume24hUsd": 1369183.1943580033,
+          "topMarketCapUsd": 2826163.360059486,
+          "topMarketCapSymbol": "COOL"
+        },
+        "updatedAt": "2026-09-09T10:57:46.588Z",
+        "searchQuery": "",
+        "watchQuery": null,
+        "sort": "trending",
+        "order": "desc",
+        "minLiquidity": 0,
+        "offset": 0,
+        "requestedOffset": 0,
+        "limit": 3,
+        "matchingPools": 711
+      }
+    },
+    {
+      "name": "blocks",
+      "url": "https://www.arcexplorer.org/api/v1/blocks?limit=1",
+      "status": 200,
+      "value": {
+        "items": [
+          {
+            "number": "19957023",
+            "hash": "0xdf82a2a1bd46c6346bbc7ae7737924e302944a8ad9373c3e18871cc0e2430c13",
+            "parentHash": "0x6a969c7506fc75a41fd5167485a0cb3b34afdb88141fe8b3ac9d4113e815309e",
+            "timestamp": "2026-09-09T10:57:44.000Z",
+            "miner": "0x3f37c5a86f07c06b8888171d0a73a22f4cf35c8c",
+            "gasUsed": "0",
+            "gasLimit": "30000000",
+            "baseFeePerGas": "20000000000",
+            "size": "629",
+            "txCount": 0
+          }
+        ],
+        "nextCursor": "19957023"
+      }
+    },
+    {
+      "name": "arcpadStatus",
+      "url": "https://arcpad.meme/api/status",
+      "error": "fetch failed",
+      "cause": "ECONNRESET"
+    }
+  ]
+}

@@ -1,0 +1,95 @@
+import { describe,it,expect,vi,beforeEach,afterEach } from "vitest";
+import { privateKeyToAccount } from "viem/accounts";
+import { encodeFunctionData,encodeAbiParameters,encodeEventTopics,keccak256,serializeTransaction,type Hex } from "viem";
+import { transferAbi } from "../lib/otc/token-delivery";
+import { PAYMENT_ABI,paymentCall,orderHash } from "../lib/otc/transactions";
+import { type Order,type Transaction,type Wallet,walletId } from "../lib/otc/model";
+import { advanceTransaction,selectSettlementWork } from "../lib/otc/runtime";
+
+const mocks=vi.hoisted(()=>({client:{} as Record<string,unknown>,read:vi.fn(),command:vi.fn(),identity:vi.fn(async()=>true)}));
+vi.mock("viem",async original=>({...await original<typeof import("viem")>(),createPublicClient:()=>mocks.client}));
+vi.mock("../lib/otc/repository",()=>({repository:()=>({read:mocks.read,command:mocks.command,identity:mocks.identity})}));
+const key=`0x${"1".padStart(64,"0")}` as Hex,account=privateKeyToAccount(key);
+const hash=`0x${"a".repeat(64)}` as Hex,otherHash=`0x${"b".repeat(64)}` as Hex;
+const seller="0x2222222222222222222222222222222222222222",router="0x3333333333333333333333333333333333333333";
+let order:Order,record:Transaction,wallet:Wallet,receipt:Record<string,unknown>|null,finalized:bigint,nonce:number,extraFee:bigint;
+beforeEach(async()=>{
+  vi.clearAllMocks();
+  for(const [name,value] of Object.entries({OTC_ENABLED:"true",OTC_SERVICE_SECRET:"s".repeat(32),NEXT_PUBLIC_CONVEX_URL:"https://example.convex.cloud",OTC_BASE_PAYMENT_ROUTER:router,OTC_FEE_WALLET:seller,OTC_BASE_ROUTER_CODE_HASH:hash,
+    OTC_WORKER_URL:"https://example.com/api/otc/worker",CDP_API_KEY_ID:"fixture",CDP_API_KEY_SECRET:"fixture",CDP_WALLET_SECRET:"fixture",ARC_MAINNET_RPC_URL:"https://arc.invalid",ARC_CHECKPOINT_NUMBER:"1",ARC_CHECKPOINT_HASH:hash,BASE_MAINNET_RPC_URL:"https://base.invalid",BASE_CHECKPOINT_NUMBER:"1",BASE_CHECKPOINT_HASH:hash}))vi.stubEnv(name,value);
+  order={kind:"order",id:"order:test",owner:"buyer",buyer:account.address,seller,sellerOwner:"seller",listingId:"listing:test",amount:"10000000",premiumBps:0,ethUsdMicros:"2000000000",priceAt:Date.now(),sellerWei:"5000000000000000",feeWei:"50000000000000",totalWei:"5050000000000000",baseGasWei:"1000000000000000",arcGasWei:"1000000000000000",router,feeRecipient:seller,expiresAt:Date.now()+30000,status:"payment_submitted",createdAt:Date.now(),updatedAt:Date.now()};
+  const call=paymentCall(order),tx={chainId:8453,type:"eip1559" as const,to:call.to,value:call.value,data:call.data,nonce:0,gas:100000n,maxFeePerGas:100n,maxPriorityFeePerGas:1n};
+  const unsigned=serializeTransaction(tx),raw=await account.signTransaction(tx);
+  record={kind:"transaction",id:"tx:order:test:payment",owner:"buyer",wallet:account.address,chainId:8453,orderId:order.id,leg:"payment",holdId:order.id,status:"submitted",unsigned,raw,hash:keccak256(raw),createdAt:Date.now(),updatedAt:Date.now()};
+  wallet={kind:"wallet",id:walletId(8453,account.address),owner:"buyer",address:account.address,chainId:8453,holds:{[order.id]:(BigInt(order.totalWei)+BigInt(order.baseGasWei)).toString()},activeTx:record.id,updatedAt:Date.now()};
+  receipt={transactionHash:record.hash,status:"success",blockNumber:100n,blockHash:hash,logs:[{address:router,topics:encodeEventTopics({abi:PAYMENT_ABI,eventName:"Paid",args:{orderId:orderHash(order.id),buyer:account.address,seller}}),data:encodeAbiParameters([{type:"address"},{type:"uint256"},{type:"uint256"},{type:"uint256"}],[account.address,10000000n,BigInt(order.sellerWei),BigInt(order.feeWei)])}]};
+  finalized=101n;nonce=1;extraFee=0n;
+  mocks.read.mockImplementation(async({id}:{id:string})=>structuredClone(id===record.id?record:id===order.id?order:id===wallet.id?wallet:null));
+  mocks.command.mockImplementation(async(command:string,input:{id:string})=>{if(command==="submitted")record.status="submitted";if(command==="settled")record.status="completed";return structuredClone(record);});
+  mocks.client={getChainId:vi.fn(async()=>8453),getBlock:vi.fn(async(args:{blockNumber?:bigint;blockTag?:string}={})=>({number:args.blockNumber??(args.blockTag==="finalized"?finalized:200n),hash,timestamp:BigInt(Math.floor(Date.now()/1000))})),getBalance:vi.fn(async()=>10n**18n),getTransactionCount:vi.fn(async()=>nonce),
+    getTransactionReceipt:vi.fn(async()=>{if(!receipt)throw Object.assign(new Error("missing"),{name:"TransactionReceiptNotFoundError"});return receipt;}),
+    getTransaction:vi.fn(async()=>({from:account.address,to:router,value:BigInt(order.totalWei),input:call.data})),readContract:vi.fn(async()=>extraFee),
+    sendRawTransaction:vi.fn(async()=>record.hash)};
+});
+afterEach(()=>vi.unstubAllEnvs());
+describe("OTC receipt verification and retry boundaries",()=>{
+  it("skips fresh quotes and deduplicates order transactions while rotating old work",()=>{
+    const fresh={...order,id:"fresh",status:"quoted" as const,expiresAt:Date.now()+30_000,updatedAt:1};
+    const expired={...order,id:"expired",status:"quoted" as const,expiresAt:Date.now()-1,updatedAt:5};
+    const waiting={...order,updatedAt:10};
+    expect(selectSettlementWork([fresh,waiting,record,expired]).map(r=>r.id)).toEqual(["expired",waiting.id]);
+  });
+  it("does not authorize payout from a mined but unfinalized Base receipt",async()=>{finalized=99n;await advanceTransaction(record.id);expect(mocks.command).not.toHaveBeenCalled();});
+  it("only settles a canonical finalized split payment",async()=>{await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
+  it("rejects missing payment event proof",async()=>{receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command).not.toHaveBeenCalled();});
+  it("rejects the wrong actual transaction recipient",async()=>{(mocks.client.getTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({from:account.address,to:seller,value:BigInt(order.totalWei),input:paymentCall(order).data});await expect(advanceTransaction(record.id)).rejects.toThrow("does not match");});
+  it("rejects a noncanonical receipt",async()=>{receipt!.blockHash=otherHash;await expect(advanceTransaction(record.id)).rejects.toThrow("not canonical");});
+  it("keeps an unknown nonce consumption reserved",async()=>{receipt=null;nonce=1;await expect(advanceTransaction(record.id)).rejects.toThrow("Nonce consumed");expect(mocks.command).not.toHaveBeenCalled();});
+  it("persists submitted state before rebroadcasting identical bytes after timeout",async()=>{receipt=null;nonce=0;(mocks.client.sendRawTransaction as ReturnType<typeof vi.fn>).mockImplementation(async()=>{expect(mocks.command).toHaveBeenCalledWith("submitted",{id:record.id});throw new Error("network timeout");});await advanceTransaction(record.id);expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:record.raw});expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
+  it("does not rebroadcast if Base extra fees outgrow the allowance",async()=>{receipt=null;nonce=0;extraFee=10n**18n;await expect(advanceTransaction(record.id)).rejects.toThrow("fees exceeded");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
+  it("does not broadcast if other wallet reservations are no longer covered",async()=>{receipt=null;nonce=0;wallet.holds.other=(10n**20n).toString();await expect(advanceTransaction(record.id)).rejects.toThrow("no longer covered");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
+});
+
+async function useSend(chainId:5042|8453=8453,data:Hex="0x") {
+  const tx={chainId,type:"eip1559" as const,to:seller as Hex,value:data==="0x"?10n:0n,data,nonce:0,gas:100000n,maxFeePerGas:100n,maxPriorityFeePerGas:1n};
+  const raw=await account.signTransaction(tx);
+  record={...record,chainId,leg:"send",orderId:undefined,holdId:record.id,unsigned:serializeTransaction(tx),raw,hash:keccak256(raw)};
+  wallet={...wallet,id:walletId(chainId,account.address),chainId,holds:{[record.id]:"1000000000000000"}};
+  receipt={...receipt,transactionHash:record.hash,logs:[]};
+  (mocks.client.getChainId as ReturnType<typeof vi.fn>).mockResolvedValue(chainId);
+  (mocks.client.getTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({from:account.address,to:seller,value:tx.value,input:data});
+}
+describe("independent wallet transfers and retained verification locks",()=>{
+  it.each([5042,8453] as const)("settles chain %s sends with OTC disabled and the other chain unconfigured",async chain=>{
+    await useSend(chain);vi.stubEnv("OTC_ENABLED","false");vi.stubEnv("OTC_BASE_PAYMENT_ROUTER","");vi.stubEnv("OTC_FEE_WALLET","");vi.stubEnv("OTC_BASE_ROUTER_CODE_HASH","");
+    vi.stubEnv(chain===5042?"BASE_MAINNET_RPC_URL":"ARC_MAINNET_RPC_URL","");
+    await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});
+  });
+  it("retains Arc reservations until finality is verified",async()=>{await useSend(5042);finalized=99n;await advanceTransaction(record.id);expect(mocks.command).not.toHaveBeenCalled();});
+  it("retains locks if receipt or finality lookup fails",async()=>{await useSend();(mocks.client.getBlock as ReturnType<typeof vi.fn>).mockImplementation(async(args:{blockTag?:string;blockNumber?:bigint})=>{if(args.blockTag==="finalized")throw Error("unavailable");return {number:args.blockNumber??200n,hash,timestamp:BigInt(Math.floor(Date.now()/1000))};});await expect(advanceTransaction(record.id)).rejects.toThrow();expect(mocks.command).not.toHaveBeenCalled();});
+});
+describe("ERC20 settlement locks",()=>{
+  async function tokenSend(){
+    await useSend(5042,encodeFunctionData({abi:transferAbi,functionName:"transfer",args:[router,10n]}));
+    receipt!.logs=[{address:seller,topics:encodeEventTopics({abi:transferAbi,eventName:"Transfer",args:{from:account.address,to:router}}),data:encodeAbiParameters([{type:"uint256"}],[10n])}];
+    (mocks.client.readContract as ReturnType<typeof vi.fn>).mockImplementation(async({blockNumber}:{blockNumber:bigint})=>blockNumber===99n?5n:15n);
+  }
+  it("completes only after finalized event and balance proof",async()=>{await tokenSend();await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
+  it("retains reservations when a successful receipt has no transfer",async()=>{await tokenSend();receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command).not.toHaveBeenCalled();});
+  it("retains reservations if recipient balance did not increase",async()=>{await tokenSend();(mocks.client.readContract as ReturnType<typeof vi.fn>).mockResolvedValue(5n);await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command).not.toHaveBeenCalled();});
+  it("retains reservations if historical token state is unavailable",async()=>{await tokenSend();(mocks.client.readContract as ReturnType<typeof vi.fn>).mockRejectedValue(Error("pruned"));await expect(advanceTransaction(record.id)).rejects.toThrow("pruned");expect(mocks.command).not.toHaveBeenCalled();});
+});
+
+
+describe("OTC deployment configuration", () => {
+  it.each(["false", ""])("does not gate configured OTC on the rollout flag %s", async flag => {
+    vi.stubEnv("OTC_ENABLED", flag);
+    const { otcConfiguration } = await import("../lib/otc/runtime");
+    expect(otcConfiguration().router.toLowerCase()).toBe(router.toLowerCase());
+  });
+  it("still requires the payment contract", async () => {
+    vi.stubEnv("OTC_BASE_PAYMENT_ROUTER", "");
+    const { otcConfiguration } = await import("../lib/otc/runtime");
+    expect(() => otcConfiguration()).toThrow("OTC_BASE_PAYMENT_ROUTER is not configured");
+  });
+});

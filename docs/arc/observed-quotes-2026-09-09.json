@@ -1,0 +1,219 @@
+{
+  "observedAt": "2026-09-09T13:23:48.247Z",
+  "source": "https://arguspad.io/api/rpc",
+  "chainId": 5042,
+  "block": {
+    "number": "19974334",
+    "hash": "0x46408b2e68d482c80d14cc18594334a1a6086b4c510ce1a6f9ca9b7373d6d43c",
+    "timestamp": "1788960225"
+  },
+  "results": [
+    {
+      "pool": {
+        "protocol": "v3",
+        "address": "0x6a3bacaa6493734c1ac221ebf42cf530a96c1e02",
+        "currency0": "0x3600000000000000000000000000000000000000",
+        "currency1": "0xece5ca8bf9220718e5727754026757512212cb3c",
+        "fee": 10000
+      },
+      "poolId": "0x6a3bacaa6493734c1ac221ebf42cf530a96c1e02",
+      "direction": "buy",
+      "amountIn": "1000000",
+      "result": [
+        "1918192686105485704880",
+        [
+          "3487412964151896275369839849338581692"
+        ],
+        [
+          0
+        ],
+        "102987"
+      ]
+    },
+    {
+      "pool": {
+        "protocol": "v3",
+        "address": "0x6a3bacaa6493734c1ac221ebf42cf530a96c1e02",
+        "currency0": "0x3600000000000000000000000000000000000000",
+        "currency1": "0xece5ca8bf9220718e5727754026757512212cb3c",
+        "fee": 10000
+      },
+      "poolId": "0x6a3bacaa6493734c1ac221ebf42cf530a96c1e02",
+      "direction": "sell",
+      "amountIn": "1000000000000000000",
+      "result": [
+        "510",
+        [
+          "3487488874447536564861601784495294499"
+        ],
+        [
+          0
+        ],
+        "72408"
+      ]
+    },
+    {
+      "pool": {
+        "protocol": "v4",
+        "currency0": "0x0000000000000000000000000000000000000000",
+        "currency1": "0x0aaa41b455a4edcc75333e62d2bbe9d17379ed84",
+        "fee": 2500,
+        "tickSpacing": 25,
+        "hooks": "0x0000000000000000000000000000000000000000"
+      },
+      "poolId": "0x1431cfc582a69694f8362cecbb056e26a660855203f0b1157e00bb2ef0304d7a",
+      "direction": "buy",
+      "amountIn": "1000000000000000000",
+      "result": [
+        "130014801856456973450703",
+        "37501"
+      ]
+    },
+    {
+      "pool": {
+        "protocol": "v4",
+        "currency0": "0x0000000000000000000000000000000000000000",
+        "currency1": "0x0aaa41b455a4edcc75333e62d2bbe9d17379ed84",
+        "fee": 2500,
+        "tickSpacing": 25,
+        "hooks": "0x0000000000000000000000000000000000000000"
+      },
+      "poolId": "0x1431cfc582a69694f8362cecbb056e26a660855203f0b1157e00bb2ef0304d7a",
+      "direction": "sell",
+      "amountIn": "1000000000000000000",
+      "result": [
+        "7651791441937",
+        "37115"
+      ]
+    },
+    {
+      "pool": {
+        "protocol": "v4",
+        "currency0": "0x3600000000000000000000000000000000000000",
+        "currency1": "0x62249dd3f1f359607408d4a3682f2f3bcea09f2e",
+        "fee": 10000,
+        "tickSpacing": 200,
+        "hooks": "0xfee72808cae93a795049966eddc101d700fe6044"
+      },
+      "poolId": "0x6b51bd671f1e611cf4c6b1f78228b7d51d0e844f0991686b16642557bd2b0d32",
+      "direction": "buy",
+      "amountIn": "1000000",
+      "result": [
+        "349441853225317703417795",
+        "112355"
+      ]
+    },
+    {
+      "pool": {
+        "protocol": "v4",
+        "currency0": "0x3600000000000000000000000000000000000000",
+        "currency1": "0x62249dd3f1f359607408d4a3682f2f3bcea09f2e",
+        "fee": 10000,
+        "tickSpacing": 200,
+        "hooks": "0xfee72808cae93a795049966eddc101d700fe6044"
+      },
+      "poolId": "0x6b51bd671f1e611cf4c6b1f78228b7d51d0e844f0991686b16642557bd2b0d32",
+      "direction": "sell",
+      "amountIn": "1000000000000000000",
+      "result": [
+        "2",
+        "50314"
+      ]
+    }
+  ],
+  "validation": {
+    "checkpointTrust": "Same-provider diagnostic only; not an independent production checkpoint",
+    "results": [
+      {
+        "quotes": [
+          {
+            "route": {
+              "tokenIn": "0x3600000000000000000000000000000000000000",
+              "tokenOut": "0xece5ca8bf9220718e5727754026757512212cb3c",
+              "pools": [
+                {
+                  "protocol": "v3",
+                  "address": "0x6a3bacaa6493734c1ac221ebf42cf530a96c1e02",
+                  "currency0": "0x3600000000000000000000000000000000000000",
+                  "currency1": "0xece5ca8bf9220718e5727754026757512212cb3c",
+                  "fee": 10000
+                }
+              ]
+            },
+            "amountIn": "1000000",
+            "amountOut": "1918192686105485704880",
+            "amountOutMinimum": "1899010759244430847831",
+            "gasEstimate": "102987",
+            "snapshot": {
+              "number": "19974740",
+              "hash": "0xe4d4e87f4398f86e61e8aa6f45731ab7e22f0c89c1c26f3c6821235876ad8539"
+            },
+            "expiresAt": 1788960460289
+          }
+        ],
+        "rejected": []
+      },
+      {
+        "quotes": [
+          {
+            "route": {
+              "tokenIn": "0x0000000000000000000000000000000000000000",
+              "tokenOut": "0x0aaa41b455a4edcc75333e62d2bbe9d17379ed84",
+              "pools": [
+                {
+                  "protocol": "v4",
+                  "currency0": "0x0000000000000000000000000000000000000000",
+                  "currency1": "0x0aaa41b455a4edcc75333e62d2bbe9d17379ed84",
+                  "fee": 2500,
+                  "tickSpacing": 25,
+                  "hooks": "0x0000000000000000000000000000000000000000"
+                }
+              ]
+            },
+            "amountIn": "1000000000000000000",
+            "amountOut": "130014801856456973450703",
+            "amountOutMinimum": "128714653837892403716195",
+            "gasEstimate": "37501",
+            "snapshot": {
+              "number": "19974743",
+              "hash": "0xea61854496cec0300ea6e9190c9d6bbbd4a9e610dac41497eee4bd1ab6d9abe4"
+            },
+            "expiresAt": 1788960462214
+          }
+        ],
+        "rejected": []
+      },
+      {
+        "quotes": [
+          {
+            "route": {
+              "tokenIn": "0x3600000000000000000000000000000000000000",
+              "tokenOut": "0x62249dd3f1f359607408d4a3682f2f3bcea09f2e",
+              "pools": [
+                {
+                  "protocol": "v4",
+                  "currency0": "0x3600000000000000000000000000000000000000",
+                  "currency1": "0x62249dd3f1f359607408d4a3682f2f3bcea09f2e",
+                  "fee": 10000,
+                  "tickSpacing": 200,
+                  "hooks": "0xfee72808cae93a795049966eddc101d700fe6044"
+                }
+              ]
+            },
+            "amountIn": "1000000",
+            "amountOut": "349441853225317703417795",
+            "amountOutMinimum": "345947434693064526383617",
+            "gasEstimate": "112355",
+            "snapshot": {
+              "number": "19974746",
+              "hash": "0x1a358f7569c44641227b40a1ba51f261af595759de7adc1c9ce5136946d1cbeb"
+            },
+            "expiresAt": 1788960463802,
+            "executionBlocker": "Hook requires a reviewed adapter and sender-specific simulation"
+          }
+        ],
+        "rejected": []
+      }
+    ]
+  }
+}

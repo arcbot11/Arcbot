@@ -1,0 +1,9 @@
+{
+  "chainId": 5042,
+  "operation": "send",
+  "requestId": "replace-with-unique-id",
+  "from": "REPLACE_WITH_YOUR_ARC_WALLET_ADDRESS",
+  "recipient": "REPLACE_WITH_RECIPIENT_ADDRESS",
+  "asset": "native",
+  "amount": "1.00"
+}

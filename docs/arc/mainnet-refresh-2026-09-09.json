@@ -1,0 +1,50 @@
+{
+  "observedAt": "2026-09-09T10:18:08.598Z",
+  "checks": [
+    {
+      "name": "rpc.latest",
+      "httpStatus": 200,
+      "value": {
+        "number": "0x1199e0e",
+        "hash": "0xdd5a48032af8571d6a262f39e5cde7e6b91625aaa4330289f03e5a346dd3c358",
+        "timestamp": "0x6a959961",
+        "ageSeconds": 760063,
+        "baseFeePerGas": "0x4a817c800"
+      }
+    },
+    {
+      "name": "index.latest",
+      "httpStatus": 200,
+      "value": {
+        "items": [
+          {
+            "number": "19952325",
+            "hash": "0x4a7b50a660b6df30ccc2276e1b9e5387a171c8f952c4ec2f98a2eec0ad8347ae",
+            "parentHash": "0x625fe03ccefba741c5dc5b59da83f9cd1becf5e617761d4ae320b731757257e3",
+            "timestamp": "2026-09-09T10:18:06.000Z",
+            "miner": "0x7e8f45d07f1a182fa59aa5b62012459c15309791",
+            "gasUsed": "982083",
+            "gasLimit": "30000000",
+            "baseFeePerGas": "20000000000",
+            "size": "4467",
+            "txCount": 2
+          }
+        ],
+        "nextCursor": "19952325"
+      }
+    },
+    {
+      "name": "rpc.chainId",
+      "httpStatus": 200,
+      "value": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x13b2"
+      }
+    },
+    {
+      "name": "argus.rpc.chainId",
+      "error": "fetch failed"
+    }
+  ]
+}

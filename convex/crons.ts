@@ -1,0 +1,30 @@
+import { cronJobs, makeFunctionReference } from "convex/server";
+import { internal } from "./_generated/api";
+
+const crons = cronJobs();
+
+// X jobs exit before contacting X unless replies are explicitly enabled.
+crons.interval("poll direct X mentions", { minutes: 1 }, internal.xReplies.pollMentions);
+crons.interval("recover queued X publications", { minutes: 1 }, internal.xReplyQueue.kick);
+crons.interval("recover interrupted X interactions", { minutes: 5 }, internal.xReplies.recoverStaleInteractions);
+crons.interval("recover Telegram wallet result delivery", { minutes: 1 }, internal.telegramDeliveries.recover);
+crons.interval("maintain registry migrations", { hours: 1 }, internal.registry.ensureInitialized);
+crons.interval("refresh public platform statistics", { hours: 1 }, internal.site.refreshPlatformStatsCache);
+crons.interval("value creator fees at historical ETH prices", { hours: 1 }, internal.creatorFeeHistory.refresh);
+crons.interval("refresh lifetime trading volume", { hours: 3 }, internal.lifetimeVolume.requestRefresh);
+crons.interval("clean market viewer rate limits", { hours: 1 }, internal.site.cleanupMarketViewerRateLimits);
+crons.interval("clean expired website market cache", { hours: 1 }, internal.marketData.cleanup);
+crons.interval("reconcile CoinGecko account usage", { hours: 6 }, internal.marketData.syncCoinGeckoUsage);
+// The action exits without reading or writing state unless the unreleased
+// automated fee engine is explicitly enabled and fully configured.
+// Wake/recover each minute: 10m cadence for launches under four hours, hourly afterward.
+crons.interval("process automated creator fees", { minutes: 1 }, internal.automatedFeeEngine.runScheduledProcessing);
+crons.interval("process optional creator self buybacks", { minutes: 1 }, internal.creatorBurnEngine.tick);
+crons.interval("recover automated fee enrollments", { minutes: 1 }, internal.automatedFeeEngine.recoverPreparedEnrollments);
+crons.interval("recover automated fee controller changes", { minutes: 1 }, internal.automatedFeeEngine.recoverControllerChanges);
+crons.interval("monitor automated fee health", { minutes: 5 }, internal.automatedFeeEngine.monitorOperationalHealth);
+crons.interval("expire automated fee enrollment reservations", { hours: 1 }, internal.automatedFeeEngine.expirePrelaunchEnrollments);
+
+crons.interval("settle website OTC orders", { minutes: 1 }, makeFunctionReference<"action">("otc:tick"));
+
+export default crons;

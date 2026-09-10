@@ -1,0 +1,64 @@
+{
+  "observedAt": "2026-09-09T10:56:33.795Z",
+  "checks": [
+    {
+      "url": "https://rpc.arc-scan.org",
+      "method": "eth_chainId",
+      "error": "fetch failed",
+      "cause": "ECONNRESET"
+    },
+    {
+      "url": "https://arc.argus.vip/api/arc-rpc",
+      "method": "eth_chainId",
+      "error": "fetch failed",
+      "cause": "ECONNRESET"
+    },
+    {
+      "url": "https://rpc.arc-scan.org",
+      "method": "eth_getBlockByNumber",
+      "error": "fetch failed",
+      "cause": "ECONNRESET"
+    },
+    {
+      "url": "https://arcexplorer.org/rpc",
+      "method": "eth_chainId",
+      "error": "fetch failed",
+      "cause": "ECONNRESET"
+    },
+    {
+      "url": "https://arc.argus.vip/api/arc-rpc",
+      "method": "eth_getBlockByNumber",
+      "error": "fetch failed",
+      "cause": "ECONNRESET"
+    },
+    {
+      "url": "https://arcexplorer.org/rpc",
+      "method": "eth_getBlockByNumber",
+      "error": "fetch failed",
+      "cause": "ECONNRESET"
+    },
+    {
+      "url": "https://5042.rpc.thirdweb.com/",
+      "method": "eth_chainId",
+      "http": 200,
+      "result": {
+        "id": 1,
+        "jsonrpc": "2.0",
+        "result": "0x13b2"
+      }
+    },
+    {
+      "url": "https://5042.rpc.thirdweb.com/",
+      "method": "eth_getBlockByNumber",
+      "http": 200,
+      "result": {
+        "error": {
+          "code": -32603,
+          "message": "We are not able to process your request at this time. Please contact thirdweb support 9dcbfe09-4cb6-47da-bcb1-21e6df799e72."
+        },
+        "id": 1,
+        "jsonrpc": "2.0"
+      }
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "observedAt": "2026-09-09T10:58:06.859Z",
+  "source": "https://dagg.fun/docs",
+  "endpoint": "https://arc-mainnet.infura.io/v3/[public-docs-project-id]",
+  "checks": [
+    {
+      "method": "eth_chainId",
+      "http": 200,
+      "result": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": "0x13b2"
+      }
+    },
+    {
+      "method": "eth_getBlockByNumber",
+      "http": 200,
+      "result": {
+        "jsonrpc": "2.0",
+        "id": 1,
+        "result": {
+          "number": "0x130854d",
+          "hash": "0x8376df74d06e7409d4c17e36fe05fb90c6bbb0a0569ad46f56dd322eb1af0185",
+          "timestamp": "0x6aa13bbf",
+          "ageSeconds": 0
+        }
+      }
+    }
+  ]
+}

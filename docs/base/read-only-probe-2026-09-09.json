@@ -1,0 +1,26 @@
+{
+  "observedAt": "2026-09-09T13:49:27.279Z",
+  "source": "https://mainnet.base.org",
+  "chainId": 8453,
+  "checkpointTrust": "same-provider diagnostic only",
+  "head": {
+    "number": "51086210",
+    "hash": "0xc1eddcd162b456240ddbfc5a60ed8c52b01494c3636fc0c9b44568d343e92a0e",
+    "timestamp": "1788961767"
+  },
+  "fees": {
+    "l1FeeUpperBoundWei": "1783673397",
+    "operatorFeeWei": "0"
+  },
+  "safe": {
+    "number": "51086193",
+    "hash": "0xb6b722a3178c611dbd84af4beb85eba4584f0ae100b582a0874d123fc4dbf428",
+    "timestamp": "1788961733"
+  },
+  "finalized": {
+    "number": "51085611",
+    "hash": "0x0489d372d457986d30a48233bcd42f6f483f5d076d2c7117ef4025406a35aea7",
+    "timestamp": "1788960569"
+  },
+  "submitted": false
+}

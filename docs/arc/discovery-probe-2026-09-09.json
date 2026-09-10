@@ -1,0 +1,345 @@
+{
+  "observedAt": "2026-09-09T14:05:10.080Z",
+  "pools": [
+    {
+      "protocol": "v3",
+      "address": "0x2e8180fa3967CAF9abf57bbAeaB9AE9063Bcd7ba",
+      "currency0": "0x2ba0f44BDfC17FbA30edA9cdBeCB908cA45B043B",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x162Df51C504e7b8321e07387932f333D9be16a72",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xBc43CE8DEc648EA298C4275559b81D6261c90b67",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x40732e01ba7A829DEA44f51a10e7C58cd9F37765",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xEb64987643db71c76b2a2BE7E723DECC995E5b37",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x6A3bAcAa6493734c1Ac221EBF42CF530A96C1e02",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x0069cb6F70e2f848405f4483f232274c720CE6f9",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x8bcb94279FC2c984EC34e0C1f2192df8c69EA4F0",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x7dbceC05f12b14E21a79a0DC15EA9859322A4ab2",
+      "currency0": "0x0BFFa97f774824e9dA843699aEDd2835cb1b8022",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xfbba1D0Be2b653FB9149F0491EB07340B012332e",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x49660f600019fd743aFe2eE11B71eF160d813C85",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xe59c7FaDA87C866cfFC9261c4E7Cb19848f0F3Db",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x3EAd4E80e9e5bC0e01682D7Ee74C4881b040D3EA",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xF89005Ccf237a59Eeee1521e74B15c7d8d022Ab7",
+      "currency0": "0x1EA1e4f9A9975F1f6e9c0a9f6e8Ada7a66E6de52",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x1F7f6A5E2Ba06E9b3644AFA8Db8E1c606B5A5aBb",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x41c8A71f630c636294009fa4FB0CC4c3bBE674fe",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x43D92668d942D5eaF24817387593e9cd052dF35d",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x99b37b7fccAA7a1030617b6195eB3045c523BB97",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x0AE60c489C8Fc238027A695897Ff209d1a402Eea",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xA23632D6a32174fF4EE8E76aAcf9f244E10cFd73",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x7284a37ce09652233804eC5457F6989f3a560982",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xc55A4468A3E1C2dfe58dDdaD0188c71D5dFFd740",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x6a2596B1C4D597e709A0EE22F5554Ed6FBd6Ff0b",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x4Cc878731ae13276C72455663A83DC985D953553",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x482A249eb473B7de0cA8357b5496ccb7c55Dfb72",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xbE0CaD585Ea2D13DE2f4E36376be755C0AfD8B97",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x9303008818D08773A3AAD24266aeE81cC0b919C9",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xF77Aec0f5eA8C23E69396515aA76521A57AdDAd5",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xA4B5318c06447b64203c98EBB9547C4baE2BabcD",
+      "currency0": "0x19209E55049bc613c5cC8b66B7DF7824096e78CF",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xeFaE3808eBce882E41801315532EC3a7F1BeE7cd",
+      "currency0": "0x0006ED5d37A9d6687d1ecc8B642Ff9C4760d9a16",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x4268AD801DC449b12341ADd14d61119D470959F0",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x6505506540dC99f7366316B10E9CF1A584cbD42a",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xCA202B228a13f741acfedb489E089A8f69b23B47",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xbf5F829F19414dc1019E2797aa78cC950C25ec3e",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x6a724cb510847B22f74c9d539300f9756F932895",
+      "currency0": "0x2bFE315f219CC9fDc9cE0266E6C115927f0e4C10",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x01Be77f0a364BddAFd34521892eA4745eBF9b5A2",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x4cb8382b9dAF7992d3b27D32f7dB650C57881DaA",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xa49F4bE35055BA59E256b4a127135d64a77857B6",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x5C39079DAa36265Dfdbb52739Ee35EB11727Efe1",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xd488e2D8dD29Bb23036839C9334EF1BBf6DC6c87",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xa37C1f9b2483b3b45Ced74b10e19223Aa76d18F2",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xC4bB8F51E1732e80d16929180e2A9387E8A0C4e1",
+      "currency0": "0x1D1bcA89b79a2d6a7757E86F8A39ae0f51bB652b",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x7115C352b1726CB09DaC8E44B385B8eD0b2beA31",
+      "currency0": "0x1061d7f4934542B654e2a4eF7f04f101B4e8018D",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x6754b0851C20d39170a63dAE45CcCe908a2A5C92",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x56176c03A76e891326072Ee1C3fa85589B91D972",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xD45E792C194F592D0E9ecaf58Fa61716b852F996",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xdA22aa01fc0CC4970b67A8f3Be37fE60eBe1e322",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x6d17A97ef9cF189F1EA0375dBa5837711DafeD42",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xb41315609fb9807A15e9e96Fc4eE675cbe3269eC",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xe381ADea1057F54F94F2EA93a6cb0549C669ad70",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x802D3166AD677d3AA993c85910598885568099bf",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x6d8db35396B5eb98DeE495e32B8ccA992682316d",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xF3715bF5C2De299F08B81180ffb739A8372a175f",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x93e755E9e3D7f7bC0FEc4ce4cE481A60B5E3eE65",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x72EF3E31a4bE3Ec84C8b8A32B13DaEef39a98E01",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xc8dC6Bc5B6443860A0fCe56388C1E46F97A912bE",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x6719768B632d1Aeb7E3126278ca29db48C3546ba",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x305F9b69B18871b25CBCb0D273f37daB2A27574C",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x8D4A0fd9F573E45E50005f8076F91d1E193e975c",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x204C4969aba1EB4e0D7A64268C3B9ed5F6a03136",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x891406AC300c330a58A2ADde58d46673F32D3521",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x0fdd8c2565e2feed6e551e50EffDF99EF69D7911",
+      "currency0": "0x18ab8315271b7f60d05331bFDf3ca91F7AA84cC3",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x7a5dE3edaaB5780DbCc9a84a3DD9a25A5F4B5d8c",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xD02D2b38d9CCF08044f0A493350A2339FE8D708b",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xE84C354704Ed698Ad49291B85dD40441DFBfb07a",
+      "currency0": "0x1570489708c328AA51Ba8004c95A60e6F9f757e3",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xf1bA8d6bbd94c1b6b379ae3e22627777ea723136",
+      "currency0": "0x127f80844FF3d672410Ce4B6F4f9EA1a8d6a7aE6",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x4e7C7EFB10EB71691C59EF87b17431330d87135C",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xD40ED72054bCe37D2284Bb315ffCa122b690DC4B",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x245c299539c6b7D3E612C3eEbec924B5A235e035",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xc1B8c6632c287dB40EE193F7cAa9Dda06b0ca59E",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x0CB4c5FA081B9f0Eb92704F62Bd9Fd6703b2Ab18",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xF2627E7566d01F6c8FF2892F4A802FEE6d2898af",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x9651493f7640a3798ce5B5b975d3B094953E0811",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x86b93ea0efcDC8405421B70185eA9cfB15D24BB0",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x8e47543A999D9Bbd72bC65A8043673842268E14A",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xE38155325BC2Cf766E3fce035931417B3616fAd9",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xC7CF0c94850c912A5045f2A0f2d70Ca18085b829",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0x5042419b1F2498959787Bc23Be1F484Ed1306650",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xcf3a1F614B5d26796b6197c51Bc5434DdfdC08b6",
+      "currency0": "0x099C3fE7DfEA6aEbcf9CdE9ff9bDEc3d843418ab",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0x6cc340a65Ec243551ADeEdd3D140a85DCa97635A",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xC98FdA9251fEa581BeEf6e15Eb975306bbe7E380",
+      "fee": 10000
+    },
+    {
+      "protocol": "v3",
+      "address": "0xffD50f62fc01DB53fEbc0610eA557b7380b73B9A",
+      "currency0": "0x11C87c506ACF3Ea0799F8717127Fe55a184f8Efd",
+      "currency1": "0x3600000000000000000000000000000000000000",
+      "fee": 10000
+    }
+  ],
+  "ignored": 2,
+  "source": "https://www.arcexplorer.org/api/v1/dex/pools",
+  "coverage": "bounded-v3-candidates",
+  "executionVerified": false
+}

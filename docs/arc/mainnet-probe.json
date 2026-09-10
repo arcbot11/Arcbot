@@ -1,0 +1,97 @@
+{
+  "observedAt": "2026-09-09T01:43:37.175Z",
+  "rpcUrl": "https://arcexplorer.org/rpc",
+  "checks": [
+    {
+      "name": "chainId",
+      "value": "0x13b2"
+    },
+    {
+      "name": "head",
+      "value": {
+        "number": "0x1199e0e",
+        "hash": "0xdd5a48032af8571d6a262f39e5cde7e6b91625aaa4330289f03e5a346dd3c358",
+        "timestamp": "0x6a959961",
+        "ageSeconds": 729197,
+        "baseFeePerGas": "0x4a817c800",
+        "extraData": "0x00000004a817c800"
+      }
+    },
+    {
+      "name": "PoolManager.code",
+      "value": {
+        "address": "0x8366a39cc670b4001a1121b8f6a443a643e40951",
+        "bytes": 24009,
+        "keccak256": "0xbd3881180b547f5fe817545743cfb4343e96b1bc6640dcd70c106b0066e95626"
+      }
+    },
+    {
+      "name": "StateView.code",
+      "value": {
+        "address": "0xf3334192d15450cdd385c8b70e03f9a6bd9e673b",
+        "bytes": 3531,
+        "keccak256": "0x7d9c591e0956fd89d98feb4ffcfe8bf1f7a62bd485edd979fa21d104b49878a6"
+      }
+    },
+    {
+      "name": "V4Quoter.code",
+      "value": {
+        "address": "0x8dc178efb8111bb0973dd9d722ebeff267c98f94",
+        "bytes": 6118,
+        "keccak256": "0xd707b1da8cb165e5ea35a3b4450d971eb562ec171e23492aa117036b78a868f6"
+      }
+    },
+    {
+      "name": "UniversalRouter.code",
+      "value": {
+        "address": "0x4fca4a51ab4f23a7447b3284fbd7d73289a89fb1",
+        "bytes": 24546,
+        "keccak256": "0x7f949fe75d3483670e17a9ab398a3dc71f285026bba755b48fffd1e42aefad71"
+      }
+    },
+    {
+      "name": "Permit2.code",
+      "value": {
+        "address": "0x000000000022D473030F116dDEE9F6B43aC78BA3",
+        "bytes": 9152,
+        "keccak256": "0x05a793d6bdba8b8715c8f4cef0725ec3a961f567d33ebb2d360f541f19f70c8f"
+      }
+    },
+    {
+      "name": "portal.poolManager",
+      "error": "Cannot decode zero data (\"0x\") with ABI parameters.\n\nVersion: viem@2.55.10"
+    },
+    {
+      "name": "portal.quoteAsset",
+      "error": "Cannot decode zero data (\"0x\") with ABI parameters.\n\nVersion: viem@2.55.10"
+    },
+    {
+      "name": "portal.PERMIT2",
+      "error": "Cannot decode zero data (\"0x\") with ABI parameters.\n\nVersion: viem@2.55.10"
+    },
+    {
+      "name": "portal.LAUNCH_STRUCT_WORDS",
+      "error": "Cannot decode zero data (\"0x\") with ABI parameters.\n\nVersion: viem@2.55.10"
+    },
+    {
+      "name": "USDC.decimals",
+      "value": 6
+    },
+    {
+      "name": "V4Quoter.poolManager",
+      "value": "0x8366a39CC670B4001A1121B8F6A443A643e40951"
+    },
+    {
+      "name": "gasPrice",
+      "value": "0x9502f9000"
+    },
+    {
+      "name": "priorityFee",
+      "value": "0x4a817c800"
+    },
+    {
+      "name": "portal.getTokens",
+      "error": "Cannot decode zero data (\"0x\") with ABI parameters.\n\nVersion: viem@2.55.10"
+    }
+  ]
+}

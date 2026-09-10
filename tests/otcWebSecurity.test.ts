@@ -1,0 +1,20 @@
+import { beforeEach,afterEach,describe,it,expect,vi } from "vitest";
+import { NextRequest } from "next/server";
+import { websiteSession } from "../lib/otc/http";
+import { createWebWalletSession,readWebWalletSession,webWalletCsrfToken,WEB_WALLET_SESSION_COOKIE } from "../lib/web-wallet-session";
+const mocks=vi.hoisted(()=>({active:vi.fn(async()=>true),identity:vi.fn(async()=>true)}));
+vi.mock("convex/browser",()=>({ConvexHttpClient:class{action=mocks.active;}}));
+vi.mock("../lib/otc/repository",()=>({repository:()=>({identity:mocks.identity})}));
+const secret="test-session-secret-not-a-production-key";
+let cookie:string,csrf:string;
+beforeEach(()=>{vi.stubEnv("WEB_AUTH_SECRET",secret);vi.stubEnv("NEXT_PUBLIC_CONVEX_URL","https://example.convex.cloud");vi.stubEnv("NEXT_PUBLIC_SITE_URL","https://arcbot.example");mocks.active.mockResolvedValue(true);mocks.identity.mockResolvedValue(true);cookie=createWebWalletSession("0x1111111111111111111111111111111111111111","123","alice",secret);csrf=webWalletCsrfToken(readWebWalletSession(cookie,secret)!.sessionId,secret);});
+afterEach(()=>vi.unstubAllEnvs());
+const request=(overrides:Record<string,string>={})=>new NextRequest("https://arcbot.example/api/otc",{method:"POST",headers:{cookie:`${WEB_WALLET_SESSION_COOKIE}=${cookie}`,origin:"https://arcbot.example","x-argus-csrf":csrf,...overrides}});
+describe("OTC website authorization",()=>{
+  it("accepts an active, fresh, same-origin owning session",async()=>{expect((await websiteSession(request(),true)).xUserId).toBe("123");});
+  it("rejects requests without a website session",async()=>{await expect(websiteSession(request({cookie:""}),true)).rejects.toThrow("Connect");});
+  it("rejects cross-site requests even with a valid cookie",async()=>{await expect(websiteSession(request({origin:"https://other.example"}),true)).rejects.toThrow("origin");});
+  it("rejects a missing CSRF token",async()=>{await expect(websiteSession(request({"x-argus-csrf":""}),true)).rejects.toThrow("token");});
+  it("rejects revoked sessions",async()=>{mocks.active.mockResolvedValue(false);await expect(websiteSession(request(),true)).rejects.toThrow("Reconnect");});
+  it("rejects a frozen or reassigned wallet",async()=>{mocks.identity.mockResolvedValue(false);await expect(websiteSession(request(),true)).rejects.toThrow("ownership");});
+});

@@ -1,0 +1,9 @@
+{
+  "sourceUrl": "https://developers.uniswap.org/deployments.json",
+  "source": {
+    "repo": "https://github.com/Uniswap/contracts",
+    "commit": "37936185dee7decf681360ec799c124e0e034672"
+  },
+  "generatedAt": "2026-07-15T22:25:40.000Z",
+  "records": []
+}

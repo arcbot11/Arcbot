@@ -1,0 +1,111 @@
+{
+  "checkedAt": "2026-09-09T14:02:34.445Z",
+  "readOnly": true,
+  "checks": [
+    {
+      "name": "OpenRouter",
+      "ok": true,
+      "status": 200,
+      "chainAgnostic": true,
+      "inferenceTested": false
+    },
+    {
+      "name": "X",
+      "ok": true,
+      "status": 200,
+      "chainAgnostic": true,
+      "messagesSent": false,
+      "localRepliesEnabled": false
+    },
+    {
+      "name": "Convex public query",
+      "ok": true,
+      "status": 200,
+      "querySucceeded": true,
+      "chainAgnostic": true,
+      "arcDataValidated": false
+    },
+    {
+      "name": "Configured inherited RPC",
+      "ok": false,
+      "status": 200,
+      "chainId": 4663,
+      "note": "Diagnostic only; never installed as an Arc fallback"
+    },
+    {
+      "name": "Coinbase CDP",
+      "ok": true,
+      "accountReadSucceeded": true,
+      "arcSigningTested": false,
+      "note": "EOA signing supports custom EVM chains; Arc managed send/balance APIs are not established"
+    },
+    {
+      "name": "CoinGecko credentials and asset platforms",
+      "ok": true,
+      "authStatus": 200,
+      "platformStatus": 200,
+      "matches": [
+        {
+          "id": "arc",
+          "name": "Arc",
+          "chainId": 5042002
+        }
+      ]
+    },
+    {
+      "name": "ArgusPad RPC",
+      "ok": true,
+      "chainId": 5042,
+      "block": "0x130dab5",
+      "ageSeconds": 1,
+      "submissionTested": false
+    },
+    {
+      "name": "Telegram",
+      "ok": true,
+      "status": 200,
+      "webhookConfigured": true,
+      "chainAgnostic": true,
+      "messagesSent": false
+    },
+    {
+      "name": "Arc Explorer",
+      "ok": true,
+      "chainId": 5042,
+      "nodeHead": 18456078,
+      "indexedHead": 19978930,
+      "poolItems": 1
+    },
+    {
+      "name": "Vercel",
+      "ok": true,
+      "userEndpointStatus": 404,
+      "projectsEndpointStatus": 200,
+      "chainAgnostic": true,
+      "deploymentTested": false
+    },
+    {
+      "name": "Alchemy account API",
+      "ok": true,
+      "status": 200,
+      "arcMainnetVerified": false,
+      "note": "Account API success does not establish chain-5042 RPC access"
+    },
+    {
+      "name": "CoinGecko onchain networks",
+      "ok": true,
+      "status": 200,
+      "complete": true,
+      "networksChecked": 227,
+      "matches": []
+    },
+    {
+      "name": "GeckoTerminal networks",
+      "ok": true,
+      "status": 200,
+      "complete": true,
+      "networksChecked": 227,
+      "matches": []
+    }
+  ]
+}
