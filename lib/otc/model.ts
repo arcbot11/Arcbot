@@ -35,7 +35,7 @@ export function usdcPrice(amount: bigint, premiumBps: number) {
 }
 export type Listing = {
   kind: "listing"; id: string; owner: string; seller: string; premiumBps: number;
-  originalAmount?: string; available: string; held: string; pendingFills: number; gasPerFillWei: string;
+  originalAmount?: string; originalBudget?: string; available: string; held: string; pendingFills: number; gasPerFillWei: string;
   status: "active" | "cancelled" | "filled"; createdAt: number; updatedAt: number;
 };
 export type OrderStatus = "quoted" | "payment_pending" | "payment_submitted" | "payment_finalized" | "payout_submitted" | "payout_failed" | "completed" | "expired" | "payment_failed";
@@ -91,20 +91,30 @@ export async function updateListingHold(store: Store, listing: Listing, now: num
   listing.updatedAt = w.updatedAt = now;
   await store.put(w); await store.put(listing);
 }
-export async function createListing(store: Store, input: { id: string; owner: string; seller: string; amount: string; premium: string; gasPerFillWei: string; balanceWei: string; block: string }, now: number) {
-  const amount = usdc(input.amount), premiumBps = premium(input.premium), gas = BigInt(input.gasPerFillWei);
+/** Maximum sellable six-decimal USDC within a total budget, including all possible minimum-size fills. */
+export function listingBudget(budget: bigint, gasPerFill: bigint) {
+  if(gasPerFill<=0n)throw new Error("Gas estimate is unavailable.");
+  let low=0n,high=budget;
+  const cost=(amount:bigint)=>amount*USDC_SCALE+(amount/MIN_USDC)*gasPerFill;
+  while(low<high){const middle=(low+high+1n)/2n;if(cost(middle)<=budget*USDC_SCALE)low=middle;else high=middle-1n;}
+  if(low<MIN_USDC)throw new Error("Minimum listing is 10 USDC after gas. Increase the total amount.");
+  return {amount:low,gasReserve:low/MIN_USDC*gasPerFill,requiredWei:cost(low)};
+}
+export async function createListing(store: Store, input: { id: string; owner: string; seller: string; amount: string; amountIncludesGas?: boolean; premium: string; gasPerFillWei: string; balanceWei: string; block: string }, now: number) {
+  const entered = usdc(input.amount), premiumBps = premium(input.premium), gas = BigInt(input.gasPerFillWei);
   if (gas <= 0n) throw new Error("Gas estimate is unavailable.");
   const previous = await store.get<Listing>(input.id);
   if (previous) {
     // Reusing an ID must never create a second listing or change the seller.
-    if (previous.owner !== input.owner || previous.seller !== input.seller || previous.originalAmount !== amount.toString() || previous.premiumBps !== premiumBps) throw new Error("Listing identity or terms mismatch.");
+    if (previous.owner !== input.owner || previous.seller !== input.seller || (input.amountIncludesGas ? previous.originalBudget : previous.originalAmount) !== entered.toString() || previous.premiumBps !== premiumBps) throw new Error("Listing identity or terms mismatch.");
     return previous;
   }
   const w = await wallet(store, 5042, input.seller, input.owner, now);
   checkSnapshot(w, input.block);
+  const amount=input.amountIncludesGas?listingBudget(entered,gas).amount:entered;
   const required = amount * USDC_SCALE + amount / MIN_USDC * gas;
-  if (BigInt(input.balanceWei) - locked(w) < required) throw new Error(`You don't have enough for gas on top of ${input.amount} USDC.`);
-  const listing: Listing = { kind: "listing", id: input.id, owner: input.owner, seller: input.seller, premiumBps, originalAmount: amount.toString(), available: amount.toString(), held: "0", pendingFills: 0, gasPerFillWei: gas.toString(), status: "active", createdAt: now, updatedAt: now };
+  if (BigInt(input.balanceWei) - locked(w) < required) throw new Error(input.amountIncludesGas?"Not enough available USDC for this listing budget.":`You don't have enough for gas on top of ${input.amount} USDC.`);
+  const listing: Listing = { kind: "listing", id: input.id, owner: input.owner, seller: input.seller, premiumBps, ...(input.amountIncludesGas?{originalBudget:entered.toString()}:{}), originalAmount: amount.toString(), available: amount.toString(), held: "0", pendingFills: 0, gasPerFillWei: gas.toString(), status: "active", createdAt: now, updatedAt: now };
   reserve(w, listing.id, required, BigInt(input.balanceWei));
   await store.put(w); await store.put(listing);
   return listing;

@@ -1,7 +1,7 @@
 import { usdc, premium, type Listing } from "./model";
 export type ListingSubmission={action:"list";requestId:string;amount:string;premium:string;maxGasReserveWei:string};
 export function assertListingRetry(listing:Listing,amount:string,premiumText:string,seller:string){
-  if(listing.seller.toLowerCase()!==seller.toLowerCase() || listing.originalAmount!==usdc(amount).toString() || listing.premiumBps!==premium(premiumText))
+  if(listing.seller.toLowerCase()!==seller.toLowerCase() || (listing.originalBudget??listing.originalAmount)!==usdc(amount).toString() || listing.premiumBps!==premium(premiumText))
     throw new Error("Listing request ID belongs to different or unverifiable terms. Check your listings.");
 }
 export function listingSubmission(requestId:string,amount:string,premiumText:string,maxGasReserveWei:string):ListingSubmission{

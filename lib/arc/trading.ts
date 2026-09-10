@@ -1,11 +1,12 @@
-import { encodeFunctionData, getAddress, zeroAddress, parseAbi, keccak256, formatUnits, type Address } from "viem";
+import { createPublicClient, encodeFunctionData, getAddress, zeroAddress, parseAbi, keccak256, formatUnits, type Address } from "viem";
+import { arcTransport } from "./transport";
 import { arcConfigFromEnv, ARC_USDC } from "./config";
 import { createArcRpc, checkArcRpc } from "./rpc";
 import { discoverArgusPool } from "./argus-discovery";
 import { V3_FACTORY, quoteAbi, quoteRoutes, type RouteQuote } from "./quotes";
 import { ARC_ROUTER, ARC_ROUTER_CODE_HASH, encodeArcSwap, findRoutes, type V3Pool, type Route } from "./routing";
 import { exactAmount } from "./amounts";
-import { chainClient, prepareCall, type Call } from "../otc/runtime";
+import { prepareCall, type Call } from "../otc/runtime";
 
 export const PERMIT2=getAddress("0x000000000022D473030F116dDEE9F6B43aC78BA3");
 const allowanceAbi=parseAbi(["function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"]);
@@ -14,8 +15,8 @@ export type TradeInput={tokenIn:string;tokenOut:string;amount:string;slippageBps
 const native=(a:string)=>a==="native"||a.toLowerCase()===ARC_USDC.toLowerCase()||a===zeroAddress;
 
 /** Exact-input routes only. Candidate pool identities are verified on chain by quoteRoutes. */
-export async function previewArcTrade(wallet:Address,input:TradeInput){
-  const config=arcConfigFromEnv(),rpc=createArcRpc(config),client=chainClient(5042);
+async function quoteArcTrade(wallet:Address,input:TradeInput){
+  const config=arcConfigFromEnv(),transport=arcTransport(config),rpc=createArcRpc(config,transport),client=createPublicClient({transport});
   const head=await checkArcRpc(rpc,config);
   const code=await rpc.code(ARC_ROUTER,head.number);
   if(!code||keccak256(code)!==ARC_ROUTER_CODE_HASH)throw new Error("Arc router code does not match the reviewed deployment.");
@@ -34,11 +35,11 @@ export async function previewArcTrade(wallet:Address,input:TradeInput){
       const pairs:[[Address,Address],...[Address,Address][]]=[[tokenIn,tokenOut]];
       if(tokenIn.toLowerCase()!==ARC_USDC.toLowerCase()&&tokenOut.toLowerCase()!==ARC_USDC.toLowerCase())pairs.push([tokenIn,getAddress(ARC_USDC)],[getAddress(ARC_USDC),tokenOut]);
       const pools:V3Pool[]=[];
-      for(const [a,b]of pairs)for(const fee of [100,500,3000,10000]){
+      for(const [a,b]of pairs)await Promise.all([100,500,3000,10000].map(async fee=>{
         const address=await client.readContract({address:V3_FACTORY,abi:quoteAbi,functionName:"getPool",args:[a,b,fee],blockNumber:head.number});
         const [currency0,currency1]=[a,b].sort((x,y)=>BigInt(x)<BigInt(y)?-1:1);
         if(address!==zeroAddress)pools.push({protocol,address,currency0,currency1,fee});
-      }
+      }));
       routes.push(...findRoutes(tokenIn,tokenOut,pools).slice(0,32));
     }else for(const [fee,tickSpacing]of [[100,1],[500,10],[2500,25],[3000,60],[10000,200]])
       routes.push({tokenIn,tokenOut,pools:[{protocol,currency0,currency1,fee,tickSpacing,hooks:zeroAddress}]});
@@ -49,7 +50,19 @@ export async function previewArcTrade(wallet:Address,input:TradeInput){
   // USDC has 18 native decimals and 6 ERC-20 decimals, but is the same currency.
   const normalized=(q:RouteQuote)=>q.amountOut*(q.route.tokenOut.toLowerCase()===ARC_USDC.toLowerCase()?10n**12n:1n);
   groups.sort((a,b)=>normalized(a)>normalized(b)?-1:normalized(a)<normalized(b)?1:0);
-  const q=groups[0],token=q.route.tokenIn;
+  return {q:groups[0],rpc,client,head,discovered};
+}
+
+export async function estimateArcTrade(wallet:Address,input:TradeInput){
+  const {q,rpc,head}=await quoteArcTrade(wallet,input);
+  const decimals=q.route.tokenOut===zeroAddress?18:await rpc.decimals(q.route.tokenOut,head.number);
+  if(q.expiresAt<=Date.now())throw new Error("Quote expired. Try again.");
+  return {minimumOut:formatUnits(q.amountOutMinimum,decimals),amountOut:formatUnits(q.amountOut,decimals),expiresAt:q.expiresAt};
+}
+
+export async function previewArcTrade(wallet:Address,input:TradeInput){
+  const {q,rpc,client,head,discovered}=await quoteArcTrade(wallet,input);
+  const token=q.route.tokenIn;
   const balance=token===zeroAddress?await rpc.balance(wallet,head.number):await rpc.tokenBalance(token,wallet,head.number);
   if(balance<q.amountIn)throw new Error("Not enough input tokens.");
   let call:Call,leg:"swap"|"allowance"="swap",stage="swap";

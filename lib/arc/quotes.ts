@@ -26,16 +26,22 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
   const head = await checkArcRpc(rpc, config, now);
   const quotes: RouteQuote[] = [];
   const rejected: { index: number; reason: string }[] = [];
+  const callCache = new Map<string, Promise<unknown>>();
+  const codeCache = new Map<string, Promise<void>>();
   const call = async (to: Address, functionName: typeof quoteAbi[number]["name"], args: readonly unknown[]): Promise<unknown> => {
     const data = encodeFunctionData({ abi: quoteAbi, functionName, args } as Parameters<typeof encodeFunctionData>[0]);
-    const result = await rpc.call({ from: sender, to, data, value: 0n }, head.number);
-    return decodeFunctionResult({ abi: quoteAbi, functionName, data: result });
+    const key = to.toLowerCase() + data;
+    let pending = callCache.get(key);
+    if (!pending) { pending = rpc.call({ from: sender, to, data, value: 0n }, head.number).then(result => decodeFunctionResult({ abi: quoteAbi, functionName, data: result })); callCache.set(key, pending); }
+    return pending;
   };
-  const requireCode = async (address: Address) => {
-    const code = await rpc.code(address, head.number);
-    if (!code || code === "0x") throw new Error("Contract code missing");
+  const requireCode = (address: Address) => {
+    const key = address.toLowerCase();
+    let pending = codeCache.get(key);
+    if (!pending) { pending = rpc.code(address, head.number).then(code => { if (!code || code === "0x") throw new Error("Contract code missing"); }); codeCache.set(key, pending); }
+    return pending;
   };
-  for (const [index, route] of routes.entries()) {
+  const evaluate = async (route: Route, index: number) => {
     try {
       const currencies = routeCurrencies(route);
       if (route.pools.some(p => p.protocol !== route.pools[0].protocol)) throw new Error("Mixed-protocol quotes are unsupported");
@@ -74,6 +80,9 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
       rejected.push({ index, reason: allowed.includes(message) ? message : "Route validation or quote failed" });
     }
   }
+  // Bound parallel reads; all candidates remain pinned to this invocation's block.
+  for (let start = 0; start < routes.length; start += 4) await Promise.all(routes.slice(start, start + 4).map((route, offset) => evaluate(route, start + offset)));
+  rejected.sort((a, b) => a.index - b.index);
   const pinned = await rpc.block(head.number);
   if (pinned.hash.toLowerCase() !== head.hash.toLowerCase()) throw new Error("Quote snapshot changed");
   // Compare output in the same asset only. Gas estimate is diagnostic, not an all-in fee quote.

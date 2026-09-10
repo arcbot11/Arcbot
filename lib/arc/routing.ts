@@ -89,7 +89,9 @@ export function encodeArcSwap(route: Route, amountIn: bigint, amountOutMinimum: 
   let commands: Hex; let input: Hex;
   if (protocol === "v3") {
     commands = "0x00";
-    input = encodeAbiParameters(parseAbiParameters("address,uint256,uint256,bytes,bool"), ["0x0000000000000000000000000000000000000001", amountIn, amountOutMinimum, v3Path(route), true]);
+    // The deployed router requires one minimum-hop-price entry per pool. Zero
+    // disables that optional bound; amountOutMinimum still protects total output.
+    input = encodeAbiParameters(parseAbiParameters("address,uint256,uint256,bytes,bool,uint256[]"), ["0x0000000000000000000000000000000000000001", amountIn, amountOutMinimum, v3Path(route), true, route.pools.map(() => 0n)]);
   } else {
     if (amountIn >= 2n ** 128n || amountOutMinimum >= 2n ** 128n) throw new Error("V4 amount exceeds uint128");
     if (route.pools.some(p => p.protocol === "v4" && !same(p.hooks, zeroAddress) && poolId(p)!==verifiedHookPoolId)) throw new Error("Hook execution requires a reviewed adapter");

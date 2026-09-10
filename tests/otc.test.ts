@@ -1,5 +1,5 @@
 import { describe,it,expect,vi,afterEach } from "vitest";
-import { type Store,type RecordValue,type Listing,type Order,type Wallet,type Transaction,createListing,createQuote,acceptQuote,cancelListing,finishOrder,locked,walletId,price,premium,usdc,marketStats } from "../lib/otc/model";
+import { type Store,type RecordValue,type Listing,type Order,type Wallet,type Transaction,listingBudget,createListing,createQuote,acceptQuote,cancelListing,finishOrder,locked,walletId,price,premium,usdc,marketStats } from "../lib/otc/model";
 import { prepareTransaction,signTransactionRecord,submitted,settled,paymentCall,payoutCall } from "../lib/otc/transactions";
 import { assertOutsideOtcWallet } from "../lib/otc/spend-guard";
 import { verifyRaw } from "../lib/otc/runtime";
@@ -210,4 +210,30 @@ describe("OTC position closure and history",()=>{
   await expect(cancelListing(store,"listing:1","seller",now)).rejects.toThrow("locked");const l=(await store.get<Listing>("listing:1"))!,o=(await store.get<Order>("order:1"))!;
   expect(positionHistory(l,[o])).toMatchObject({sold:"0",returnedUsdc:null,settlementLocked:true,receivedEthWei:o.sellerWei});expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(15n*W+gas);
  });
+});
+
+describe("OTC total listing budgets",()=>{
+  it("deducts partial-fill gas from a 100 USDC budget and accepts exactly that balance",async()=>{
+    const store=new Memory();const input=listingInput({amount:"100",amountIncludesGas:true,balanceWei:(100n*W).toString()});
+    const listing=await createListing(store,input,now);
+    expect(listing.originalBudget).toBe("100000000");expect(listing.available).toBe("99991000");
+    expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(100n*W);
+    expect((await createListing(store,{...input,gasPerFillWei:(gas*2n).toString()},now)).available).toBe(listing.available);
+    await expect(createListing(store,{...input,id:"listing:duplicate"},now)).rejects.toThrow("Not enough");
+    await cancelListing(store,listing.id,"seller",now);
+    expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(0n);
+  });
+  it("requires 10 USDC sellable after gas",()=>{
+    expect(()=>listingBudget(10_000_000n,gas)).toThrow("after gas");
+    expect(listingBudget(10_001_000n,gas).amount).toBe(10_000_000n);
+  });
+  it("covers every possible minimum-size fill without exceeding the budget",()=>{
+    for(const budget of [20_000_000n,100_000_000n,100_000_001n]){
+      const result=listingBudget(budget,gas+1n);
+      expect(result.requiredWei).toBeLessThanOrEqual(budget*10n**12n);
+      expect(result.gasReserve).toBe(result.amount/10_000_000n*(gas+1n));
+      const next=result.amount+1n;
+      expect(next*10n**12n+next/10_000_000n*(gas+1n)).toBeGreaterThan(budget*10n**12n);
+    }
+  });
 });

@@ -2,7 +2,7 @@ import { randomUUID,createHmac } from "node:crypto";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { parseTransaction } from "viem";
-import { previewArcTrade } from "@/lib/arc/trading";
+import { previewArcTrade, estimateArcTrade } from "@/lib/arc/trading";
 import { boundedJson } from "@/lib/bounded-json";
 import { websiteSession,json,webFailure,sameSecret,WebError } from "@/lib/otc/http";
 import { repository } from "@/lib/otc/repository";
@@ -12,6 +12,7 @@ export const runtime="nodejs";
 export const maxDuration=120;
 const asset=z.union([z.literal("native"),z.string().regex(/^0x[0-9a-fA-F]{40}$/)]);
 const schema=z.discriminatedUnion("action",[
+  z.object({action:z.literal("estimate"),tokenIn:asset,tokenOut:asset,amount:z.string().max(60),slippageBps:z.number().int().min(0).max(1000)}).strict(),
   z.object({action:z.literal("preview"),tokenIn:asset,tokenOut:asset,amount:z.string().max(60),slippageBps:z.number().int().min(0).max(1000)}).strict(),
   z.object({action:z.literal("confirm"),quote:z.string().max(16000)}).strict(),
 ]);
@@ -19,6 +20,7 @@ const mac=(s:string)=>createHmac("sha256",process.env.WEB_AUTH_SECRET!).update(`
 export async function POST(request:NextRequest){
   try{
     const session=await websiteSession(request,true),input=schema.parse(await boundedJson(request,18000)),repo=repository();
+    if(input.action==="estimate")return json(await estimateArcTrade(session.walletAddress,input));
     if(input.action==="preview"){
       const p=await previewArcTrade(session.walletAddress,input);
       const w=await repo.read<Wallet|null>({id:walletId(5042,session.walletAddress)});

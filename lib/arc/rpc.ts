@@ -21,8 +21,8 @@ export interface ArcRpc {
 }
 const tokenAbi = parseAbi(["function decimals() view returns (uint8)", "function balanceOf(address) view returns (uint256)"]);
 
-export function createArcRpc(config: ArcConfig): ArcRpc {
-  const client = createPublicClient({ chain: arcChain(config), transport: arcTransport(config) });
+export function createArcRpc(config: ArcConfig, transport = arcTransport(config)): ArcRpc {
+  const client = createPublicClient({ chain: arcChain(config), transport });
   const request = (tx: ArcCall) => ({ account: tx.from, to: tx.to, value: tx.value, data: tx.data });
   return {
     chainId: () => client.getChainId(),

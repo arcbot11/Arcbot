@@ -22,9 +22,10 @@ describe("Arc routing", () => {
     const tx = encodeArcSwap({ tokenIn: a, tokenOut: c, pools: [p, second] }, 100n, 90n, 123n);
     const { args } = decodeFunctionData({ abi: routerAbi, data: tx.data });
     expect(args[0]).toBe("0x00");
-    const values = decodeAbiParameters(parseAbiParameters("address,uint256,uint256,bytes,bool"), args[1][0]);
+    const values = decodeAbiParameters(parseAbiParameters("address,uint256,uint256,bytes,bool,uint256[]"), args[1][0]);
     expect(values.slice(1, 3)).toEqual([100n, 90n]);
     expect(values[3]).toBe(`${a}000bb8${b.slice(2)}0001f4${c.slice(2)}`);
+    expect(values[5]).toEqual([0n, 0n]);
     expect(tx.value).toBe(0n);
   });
   it("includes hook identity in pool IDs", () => {

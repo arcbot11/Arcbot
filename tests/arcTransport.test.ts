@@ -17,8 +17,38 @@ function fixture(handle: (url: string, method: string) => any) {
   const client = createPublicClient({ transport: arcTransport(config) });
   return { calls, client };
 }
-afterEach(() => vi.unstubAllGlobals());
+afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 describe("Arc RPC failover", () => {
+  it("shares provider validation across concurrent reads", async () => {
+    const f = fixture(() => undefined);
+    await Promise.all(Array.from({length:8},()=>f.client.getBalance({address:"0x1111111111111111111111111111111111111111"})));
+    expect(f.calls.filter(c=>c.method==="eth_chainId")).toHaveLength(1);
+    expect(f.calls.filter(c=>c.method==="eth_getBlockByNumber")).toHaveLength(2);
+  });
+  it("cools down failed providers and validates them again before recovery", async () => {
+    let now=Date.now(), offline=true;
+    vi.spyOn(Date,"now").mockImplementation(()=>now);
+    const f=fixture((url)=>{if(url===primary&&offline)throw Error("offline");});
+    await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});
+    await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});
+    expect(f.calls.filter(c=>c.url===primary)).toHaveLength(1);
+    now+=11000;offline=false;
+    await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});
+    expect(f.calls.filter(c=>c.url===primary&&c.method==="eth_getBlockByNumber")).toHaveLength(2);
+    expect(f.calls.at(-1)?.url).toBe(primary);
+  });
+  it("revalidates after the freshness cache expires",async()=>{
+    let now=Date.now();vi.spyOn(Date,"now").mockImplementation(()=>now);
+    const f=fixture(()=>undefined);
+    await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});now+=6000;
+    await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});
+    expect(f.calls.filter(c=>c.method==="eth_chainId")).toHaveLength(2);
+  });
+  it("does not repeat a quota-failing method for each read",async()=>{
+    const f=fixture((url,method)=>url===primary&&method==="eth_call"?{error:{code:-32600,message:"quota"}}:undefined);
+    for(let i=0;i<3;i++)await f.client.request({method:"eth_call",params:[{},"latest"]});
+    expect(f.calls.filter(c=>c.url===primary&&c.method==="eth_call")).toHaveLength(1);
+  });
   it("falls back on contract-call quota errors", async () => {
     const f = fixture((url, method) => url !== readOnly && method === "eth_call" ? { error: { code: -32600, message: "project ID exceeded quota" } } : undefined);
     expect(await f.client.request({ method: "eth_call", params: [{ to: "0x1111111111111111111111111111111111111111" }, "latest"] })).toBe("0x2");

@@ -1,8 +1,8 @@
-import { getAddress } from "viem";
+import { getAddress, formatUnits } from "viem";
 import { arcConfigFromEnv } from "../arc/config";
 import { balanceSnapshot, chainClient } from "./runtime";
 import { repository } from "./repository";
-import { type Wallet, locked, walletId, usdc, premium, MIN_USDC } from "./model";
+import { type Wallet, locked, walletId, usdc, premium, listingBudget } from "./model";
 
 export async function listingPreview(address:string,amount:string,premiumPercent:string) {
   const config=arcConfigFromEnv(),from=getAddress(address),client=chainClient(5042);
@@ -17,7 +17,7 @@ export async function listingPreview(address:string,amount:string,premiumPercent
   const perFill=gas*rate;
   const w=await repository().read<Wallet|null>({id:walletId(5042,from)});
   if(w?.activeTx)throw new Error("Wallet has a pending transaction.");
-  const gasReserve=units/MIN_USDC*perFill,requiredWei=units*10n**12n+gasReserve,available=BigInt(snapshot.balanceWei)-(w?locked(w):0n);
-  if(requiredWei>available)throw new Error(`You don't have enough for gas on top of ${amount} USDC.`);
-  return {snapshot,gasPerFillWei:perFill.toString(),gasReserveWei:gasReserve.toString(),requiredWei:requiredWei.toString(),availableWei:available.toString(),amount};
+  const {amount:listingUnits,gasReserve,requiredWei}=listingBudget(units,perFill),available=BigInt(snapshot.balanceWei)-(w?locked(w):0n);
+  if(requiredWei>available)throw new Error("Not enough available USDC for this listing budget.");
+  return {snapshot,gasPerFillWei:perFill.toString(),gasReserveWei:gasReserve.toString(),requiredWei:requiredWei.toString(),availableWei:available.toString(),amount,listingAmount:formatUnits(listingUnits,6)};
 }

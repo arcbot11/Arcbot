@@ -33,3 +33,5 @@ html{scrollbar-gutter:stable;scroll-behavior:auto}
 .arc-token-results strong{font-size:13px}.arc-token-results span{font-size:12px;color:#afc0cf}.arc-token-results small{grid-column:1/-1;font:10px/1.5 ui-monospace,monospace;overflow-wrap:anywhere;color:#93a9bb}
 
 .persistent-notice{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}.persistent-notice>span{min-width:0;overflow-wrap:anywhere}.persistent-notice>button{flex-shrink:0;font-size:22px;line-height:1;padding:4px 8px}
+
+.arc-trade-estimate{min-height:64px}.arc-trade-estimate p{margin:8px 0}.arc-trade-estimate small{opacity:.7}.arc-trade-estimate strong{font-variant-numeric:tabular-nums;overflow-wrap:anywhere}

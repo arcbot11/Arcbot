@@ -14,6 +14,9 @@ class RpcFailure extends Error {
 /** Validated read failover; a broadcast is attempted on exactly one provider. */
 export function arcTransport(config: ArcConfig) {
   const verifiedUntil = new Map<string, number>();
+  const unavailableUntil = new Map<string, number>();
+  const validating = new Map<string, Promise<void>>();
+  const methodUnavailableUntil = new Map<string, number>();
   async function call(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
     let response: Response;
     try {
@@ -34,8 +37,7 @@ export function arcTransport(config: ArcConfig) {
     if (!Object.prototype.hasOwnProperty.call(body, "result")) throw new RpcFailure("Missing Arc RPC result", -32098, true);
     return body.result;
   }
-  async function validate(url: string) {
-    if ((verifiedUntil.get(url) ?? 0) > Date.now()) return;
+  async function verify(url: string) {
     const chain = await call(url, "eth_chainId");
     if (chain !== "0x13b2") throw new RpcFailure("Arc RPC chain mismatch", -32098, true);
     const checkpoint = await call(url, "eth_getBlockByNumber", [`0x${config.checkpointNumber.toString(16)}`, false]);
@@ -44,6 +46,19 @@ export function arcTransport(config: ArcConfig) {
     const age = isBlock(head) ? Math.floor(Date.now() / 1000) - Number(head.timestamp) : NaN;
     if (!isBlock(head) || !Number.isFinite(age) || age < -5 || age > config.maxHeadAgeSeconds || BigInt(head.number) < config.checkpointNumber) throw new RpcFailure("Arc RPC head is stale", -32098, true);
     verifiedUntil.set(url, Date.now() + Math.min(5000, Math.max(0, (config.maxHeadAgeSeconds - age) * 1000)));
+  }
+  async function validate(url: string) {
+    if ((unavailableUntil.get(url) ?? 0) > Date.now()) throw new RpcFailure("Arc RPC cooling down", -32098, true);
+    if ((verifiedUntil.get(url) ?? 0) > Date.now()) return;
+    const pending = validating.get(url);
+    if (pending) return pending;
+    const check = verify(url).catch(error => {
+      verifiedUntil.delete(url);
+      unavailableUntil.set(url, Date.now() + 10000);
+      throw error;
+    }).finally(() => validating.delete(url));
+    validating.set(url, check);
+    return check;
   }
   return custom({ request: async ({ method, params }) => {
     const broadcast = method === "eth_sendRawTransaction";
@@ -54,11 +69,16 @@ export function arcTransport(config: ArcConfig) {
       : [...config.rpcFallbackUrls, ...config.readOnlyRpcUrls];
     const endpoints = [...new Set([config.rpcUrl, ...backups])];
     for (const url of endpoints) {
+      const methodKey = `${url}:${method}`;
+      if (!broadcast && (methodUnavailableUntil.get(methodKey) ?? 0) > Date.now()) continue;
       try { await validate(url); } catch { continue; }
       // Do not fail over after a broadcast attempt: its outcome may be unknown.
       if (broadcast) return call(url, method, params as unknown[]);
       try { return await call(url, method, params as unknown[]); }
-      catch (error) { if (!(error instanceof RpcFailure) || !error.retryable) throw error; }
+      catch (error) {
+        if (!(error instanceof RpcFailure) || !error.retryable) throw error;
+        methodUnavailableUntil.set(methodKey, Date.now() + 5000);
+      }
     }
     throw new RpcFailure("No healthy Arc RPC supports this request", -32098, false);
   } }, { retryCount: 0 });

@@ -22,7 +22,7 @@ export async function executeTradeFlow(initial: TradeFlowQuote, io: {
     if (Date.now() >= current.expiresAt) throw new Error("Quote expired. Submit the trade again.");
     if (spent + BigInt(current.gasWei) > budget || decimal(current.minimumOut) < minimum)
       return { quote: current, message: "Trade paused because price or gas changed. Check transaction history before submitting again." };
-    io.progress(current.stage === "swap" ? "Submitting trade…" : "Preparing trade…");
+    io.progress(current.stage === "swap" ? "Preparing trade…" : current.stage === "reset token approval" ? "Preparing approval reset…" : current.stage === "approve router" ? "Preparing router approval…" : "Preparing token approval…");
     let result = await io.confirm(current.quote);
     if (result.leg !== (current.stage === "swap" ? "swap" : "allowance")) throw new Error("Unexpected transaction. Check transaction history.");
     if (result.status === "reverted") throw new Error("Transaction reverted. Check transaction history.");

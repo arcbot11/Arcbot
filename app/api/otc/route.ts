@@ -29,12 +29,14 @@ export async function GET(request:NextRequest) {
     try {
       const session=await websiteSession(request),repo=repository();
       const records=await repo.read<RecordValue[]>({owner:session.xUserId});
+      const listingReservedWei=records.reduce((sum,r)=>r.kind==="listing"&&r.owner===session.xUserId&&r.seller.toLowerCase()===session.walletAddress.toLowerCase()
+        ?sum+(BigInt(r.available)+BigInt(r.held))*10n**12n:sum,0n).toString();
       const snapshots=await Promise.allSettled([arcWalletBalance(session.walletAddress),balanceSnapshot(8453,session.walletAddress)]);
       const balances=[5042,8453].map((chain,index)=>{
         const w=records.find(r=>r.kind==="wallet"&&r.id===walletId(chain as 5042|8453,session.walletAddress)) as Wallet|undefined;
         const result=snapshots[index]; const balance=result.status==="fulfilled"?BigInt(result.value.balanceWei):null;
         const held=w?locked(w):0n;
-        return {chainId:chain,balanceWei:balance?.toString()??null,lockedWei:held.toString(),availableWei:balance===null?null:(balance>held?balance-held:0n).toString(),pending:Boolean(w?.activeTx),error:result.status==="rejected"?`${chain===5042?"Arc":"Base"} balance unavailable. Retry shortly.`:null};
+        return {chainId:chain,listingReservedWei:chain===5042?listingReservedWei:"0",balanceWei:balance?.toString()??null,lockedWei:held.toString(),availableWei:balance===null?null:(balance>held?balance-held:0n).toString(),pending:Boolean(w?.activeTx),error:result.status==="rejected"?`${chain===5042?"Arc":"Base"} balance unavailable. Retry shortly.`:null};
       });
       const orders=records.filter(r=>r.kind==="order").map(r=>{
         const o=r as Order; return {payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.xUserId?"buy":"sell"};
@@ -90,7 +92,7 @@ export async function POST(request:NextRequest) {
       const snapshot=preview.snapshot;
       if(snapshot.nonce!==snapshot.pendingNonce)throw new WebError("Wallet has a pending transaction.");
       return json(await repo.command("listing",{id:`listing:${session.xUserId}:${body.requestId}`,owner:session.xUserId,seller:session.walletAddress,
-        amount:body.amount,premium:body.premium,gasPerFillWei:preview.gasPerFillWei,balanceWei:snapshot.balanceWei,block:snapshot.block}));
+        amount:body.amount,amountIncludesGas:true,premium:body.premium,gasPerFillWei:preview.gasPerFillWei,balanceWei:snapshot.balanceWei,block:snapshot.block}));
     }
     if(body.action==="quote"){
       const listing=await repo.read<Listing|null>({id:body.listingId});
