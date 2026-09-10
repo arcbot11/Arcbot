@@ -1,4 +1,5 @@
 "use client";
+import { useWalletSession } from "./WalletSessionProvider";
 import { useCallback, useEffect, useState, useRef } from "react";
 import Link from "next/link";
 import { listingSubmission, type ListingSubmission } from "@/lib/otc/listing-submission";
@@ -11,11 +12,7 @@ type Market={available:boolean;enabled:boolean;listings:Listing[];stats:{count:n
 type Quote={paymentAsset?:"ETH"|"USDC";approvalGasWei?:string;id:string;amount:string;premiumBps:number;sellerWei:string;feeWei:string;totalWei:string;baseGasWei:string;expiresAt:number;status:string};
 export function units(value:string,decimals=6){return formatUnits(BigInt(value),decimals);}
 const pct=(bps:number|null)=>bps===null?"—":`${(bps/100).toLocaleString("en-US",{maximumFractionDigits:2})}%`;
-export function useOtcSession(){
-  const [session,setSession]=useState<OtcSession|null>(null);
-  useEffect(()=>{let active=true;fetch("/api/auth/x/session",{cache:"no-store"}).then(r=>r.json()).then(s=>{if(active)setSession(s);}).catch(()=>{if(active)setSession({authenticated:false});});return()=>{active=false;};},[]);
-  return session;
-}
+export const useOtcSession = useWalletSession;
 export async function webPost(path:string,body:unknown,session:OtcSession|null){
   const response=await fetch(path,{method:"POST",headers:{"content-type":"application/json","x-argus-csrf":session?.csrfToken??""},body:JSON.stringify(body)});
   const result=await response.json();if(!response.ok)throw new Error(result.error??"Request failed.");return result;
@@ -35,8 +32,16 @@ export function OtcClient(){
   const [formOpen,setFormOpen]=useState(false);
   useEffect(()=>{if(formOpen)dialog.current?.showModal();else dialog.current?.close();},[formOpen]);
   const openForm=(direction:"buy"|"sell",id="")=>{setTab(direction);setSelected(id);setAmount(direction==="sell"&&pendingListing?pendingListing.amount:"10");setPremium(direction==="sell"&&pendingListing?pendingListing.premium:"0");setQuote(null);setListingPreview(null);setNotice("");setFormOpen(true);};
-  const refresh=useCallback(async()=>{try{const r=await fetch("/api/otc",{cache:"no-store"});if(!r.ok)throw new Error();setMarket(await r.json());}catch{setMarket({available:false,enabled:false,listings:[],stats:{count:0,available:"0",lowestBps:null,averageBps:null}});}},[]);
-  useEffect(()=>{void refresh();const timer=setInterval(()=>void refresh(),10_000);return()=>clearInterval(timer);},[refresh]);
+  const marketRequest=useRef<AbortController|null>(null);
+  const [marketError,setMarketError]=useState(false);
+  const refresh=useCallback(async()=>{
+    if(marketRequest.current)return;
+    const controller=new AbortController();marketRequest.current=controller;
+    try{const r=await fetch("/api/otc",{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});if(!r.ok)throw new Error();const next=await r.json();if(!next.available)throw new Error();if(!controller.signal.aborted){setMarket(next);setMarketError(false);}}
+    catch{if(!controller.signal.aborted)setMarketError(true);}
+    finally{if(marketRequest.current===controller)marketRequest.current=null;}
+  },[]);
+  useEffect(()=>{void refresh();const timer=setInterval(()=>void refresh(),10_000);return()=>{clearInterval(timer);marketRequest.current?.abort();marketRequest.current=null;};},[refresh]);
   useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
 
   const run=async(body:unknown)=>{
@@ -50,11 +55,11 @@ export function OtcClient(){
   const ready=Boolean(session?.authenticated&&!inputError);
   return <div className="otc-workspace">
     {<div className="otc-metrics"><article><span>Available Arc USDC</span><strong>{market?.available?units(market.stats.available):"—"}</strong></article><article><span>Lowest premium</span><strong>{pct(market?.stats.lowestBps??null)}</strong></article><article><span>Average premium <small>weighted by available USDC</small></span><strong>{pct(market?.stats.averageBps??null)}</strong></article></div>}
-    {market&&!market.available&&<p className="otc-notice">Market unavailable. Try again.</p>}
+    <p className="market-refresh-status" role="status">{marketError?"Market refresh failed. Displayed listings may be outdated. Retrying…":""}</p>
     <div className="otc-single">
       {<section className="otc-book"><div className="otc-panel-title"><h2>Listings</h2><button className="arc-button" onClick={()=>openForm("sell")}>Sell USDC</button></div>
-        <div className="otc-table-wrap"><table><thead><tr><th>Seller</th><th>Arc USDC</th><th>Premium</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>{market?.listings.map(l=><tr key={l.id}><td><Link href={`/wallet/${l.seller}`}>{l.seller.slice(0,6)}…{l.seller.slice(-4)}</Link></td><td>{units(l.available)}</td><td>{pct(l.premiumBps)}</td><td><button className="otc-inline-button" disabled={l.seller.toLowerCase()===session?.walletAddress?.toLowerCase()} onClick={()=>openForm("buy",l.id)}>Buy ↗</button></td></tr>)}</tbody></table></div>
-        {!market?.listings.length&&<div className="otc-empty"><strong>{!market?"Loading listings…":market.available?"No listings.":"Listings unavailable."}</strong><p>{market?.available?"Fund your wallet with Arc USDC to list it for sale.":"Unable to load listings. Try again."}</p></div>}
+        <div className="otc-table-wrap"><table><thead><tr><th>Seller</th><th>Arc USDC</th><th>Premium</th><th><span className="sr-only">Action</span></th></tr></thead><tbody>{market?.listings.map(l=><tr key={l.id}><td><Link href={`/wallet/${l.seller}`}>{l.seller.slice(0,6)}…{l.seller.slice(-4)}</Link></td><td>{units(l.available)}</td><td>{pct(l.premiumBps)}</td><td><button className="otc-inline-button" disabled={marketError||l.seller.toLowerCase()===session?.walletAddress?.toLowerCase()} onClick={()=>openForm("buy",l.id)}>Buy ↗</button></td></tr>)}</tbody></table></div>
+        {!market?.listings.length&&<div className="otc-empty"><strong>{!market?(marketError?"Listings unavailable.":"Loading listings…"):market.available?"No listings.":"Listings unavailable."}</strong><p>{!market&&!marketError?"Checking available listings.":market?.available?"Fund your wallet with Arc USDC to list it for sale.":"Unable to load listings. Try again."}</p></div>}
         <p className="otc-fine">Each fill delivers at least 10 Arc USDC. You can buy part of a listing.</p>
       </section>}
       <dialog ref={dialog} className="otc-modal" aria-labelledby="otc-form-title" onCancel={e=>{if(busy)e.preventDefault();}} onClose={()=>setFormOpen(false)}>

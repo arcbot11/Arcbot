@@ -27,7 +27,7 @@ export function MobileNav() {
       <Link href="/" onClick={() => setOpen(false)}>Home</Link>
       <Link href="/wallet" onClick={() => setOpen(false)}>Wallet</Link>
       <Link href="/how-it-works" onClick={() => setOpen(false)}>Guide</Link>
-      <Link href="/otc" onClick={() => setOpen(false)}>MARKET</Link>
+      <Link href="/otc" onClick={() => setOpen(false)}>OTC Market</Link>
       <WalletAccountMenu />
     </div> : null}
   </div>;

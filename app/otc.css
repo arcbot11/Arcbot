@@ -3,3 +3,24 @@
 .wallet-preview-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}.wallet-preview-disabled{min-width:0;margin:0;display:flex;flex-direction:column;gap:18px;filter:grayscale(1);opacity:.45}.wallet-preview-disabled legend{padding:0 8px;font-size:16px}.wallet-preview-disabled h3{margin:0}.wallet-preview-disabled label{display:grid;gap:8px}.wallet-preview-disabled button{margin-top:auto}.wallet-preview-disabled :disabled{cursor:not-allowed}.wallet-preview-muted{opacity:.45;filter:grayscale(1)}@media(max-width:1000px){.wallet-preview-controls{grid-template-columns:1fr}}
 .arc-trade-controls{min-width:0;margin:0;display:grid;gap:18px}.arc-trade-controls legend{padding:0 8px}.arc-trade-controls h3{margin:0}.arc-trade-controls label{display:grid;gap:8px}.arc-trade-controls :disabled{cursor:not-allowed}.otc-wallet-balances>article:only-child{grid-column:1/-1}.otc-wallet-balances article>.arc-button{margin-top:20px}
 .otc-modal{width:min(560px,calc(100vw - 32px));max-height:85dvh;padding:0;background:#0b1d30;color:#d9e9f3;border:1px solid #344c60;overflow:auto}.otc-modal::backdrop{background:rgba(0,7,16,.78)}.otc-modal .otc-form-panel{border:0}.otc-modal .otc-panel-title{margin-bottom:18px}.otc-modal:focus{outline:none}
+/* Stable layout while sessions, balances and route content load. */
+html{scrollbar-gutter:stable;scroll-behavior:auto}
+.arc-nav-cta{display:inline-flex;align-items:center;justify-content:center;min-width:148px;min-height:44px;white-space:nowrap;box-sizing:border-box}
+.wallet-account-menu summary.arc-nav-cta{display:flex}
+.wallet-connection-slot{min-height:48px;display:flex;align-items:center;min-width:0}
+.wallet-connection-slot .wallet-address-copy{margin:0;max-width:100%}
+.wallet-dashboard>.otc-form-panel{min-height:450px;max-width:780px}
+.arc-trade-controls,.arc-trade-controls.wallet-preview-disabled{display:flex;flex-direction:column;gap:18px;margin:0;min-width:0}
+.arc-trade-controls label{display:grid;gap:8px}
+.arc-trade-controls>.arc-button{margin-top:auto;align-self:flex-start;min-width:150px}
+.otc-wallet-balances h2{min-height:36px;line-height:1.25}
+.otc-wallet-balances h2,.otc-wallet-balances dd,.otc-metrics strong,.otc-book td{font-variant-numeric:tabular-nums}
+.otc-metrics strong{min-height:40px}
+.otc-book{min-height:330px}
+.otc-book table{table-layout:fixed;width:100%}
+.otc-book th:first-child{width:34%}
+.otc-book th:last-child{width:18%}
+.market-refresh-status{min-height:34px;margin:8px 0;color:#93a9bb;font-size:12px;line-height:1.5}
+.wallet-action-tabs button{min-height:44px}
+.wallet-action-tabs button:disabled{cursor:not-allowed;opacity:.45}
+@media(max-width:600px){.arc-nav-cta{min-width:138px}.otc-metrics strong{min-height:32px}.otc-book th:first-child{width:32%}.wallet-connection-slot{min-height:60px}}

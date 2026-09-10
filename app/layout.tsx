@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { WalletSessionProvider } from "@/components/WalletSessionProvider";
 import "./globals.css";
 import "./arc-design.css";
 import "./otc.css";
@@ -29,5 +30,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body>{children}</body></html>;
+  return <html lang="en"><body><WalletSessionProvider>{children}</WalletSessionProvider></body></html>;
 }
