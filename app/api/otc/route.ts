@@ -1,6 +1,6 @@
-import { encodeFunctionData, parseAbi, getAddress, zeroAddress } from "viem";
-import { orderSteps } from "@/lib/otc/escrow-model";
-import { BASE_USDC } from "@/lib/base/usdc";
+import { getAddress, zeroAddress } from "viem";
+import { settlementSteps } from "@/lib/otc/escrow-model";
+import { escrowBaseGasBudget } from "@/lib/otc/base-gas-budget";
 import { escrowConfiguration, escrowAccountName, advanceEscrowPosition } from "@/lib/otc/escrow-runtime";
 import { assertListingRetry } from "@/lib/otc/listing-submission";
 import { arcWalletBalance } from "@/lib/arc/wallet-balance";
@@ -12,10 +12,10 @@ import { NextRequest } from "next/server";
 import { z } from "zod";
 import { boundedJson } from "@/lib/bounded-json";
 import { repository } from "@/lib/otc/repository";
-import { balanceSnapshot, verifyRouter, ethPrice, prepareCall, advanceOrder, baseUsdcBalance, verifyUsdcRouter } from "@/lib/otc/runtime";
+import { balanceSnapshot, verifyRouter, ethPrice, prepareCall, advanceOrder, baseUsdcBalance, chainClient } from "@/lib/otc/runtime";
 import { json, webFailure, websiteSession, WebError } from "@/lib/otc/http";
-import { SERVICE_FEE_BPS, type Transaction, type Listing, type Order, type RecordValue, type Wallet, locked, lockedBaseUsdc, paymentAsset, walletId, usdc, price, usdcPrice } from "@/lib/otc/model";
-import { payoutCall, paymentCall, approvalCall } from "@/lib/otc/transactions";
+import { SERVICE_FEE_BPS, type Transaction, type Listing, type Order, type RecordValue, type Wallet, locked, paymentAsset, walletId, usdc, price } from "@/lib/otc/model";
+import { payoutCall } from "@/lib/otc/transactions";
 
 export const runtime="nodejs";
 export const dynamic="force-dynamic";
@@ -24,7 +24,7 @@ const amount=z.string().max(30), id=z.string().regex(/^[A-Za-z0-9:_-]{8,120}$/);
 const bodySchema=z.discriminatedUnion("action",[
   z.object({action:z.literal("list_preview"),amount,premium:z.string().max(12)}).strict(),
   z.object({action:z.literal("list"),requestId:id,amount,premium:z.string().max(12),maxGasReserveWei:z.string().regex(/^[1-9][0-9]{0,77}$/)}).strict(),
-  z.object({action:z.literal("quote"),listingId:id,amount,paymentAsset:z.enum(["ETH","USDC"]).default("ETH")}).strict(),
+  z.object({action:z.literal("quote"),listingId:id,amount,paymentAsset:z.literal("ETH").default("ETH")}).strict(),
   z.object({action:z.literal("accept"),orderId:id}).strict(),
   z.object({action:z.literal("cancel"),listingId:id}).strict(),
   z.object({action:z.literal("retry_escrow"),listingId:id,orderId:id.optional()}).strict(),
@@ -46,7 +46,7 @@ export async function GET(request:NextRequest) {
       });
       const retryAvailable=async(record:Order|Listing)=>{
         if(!record.escrow||["quoted","completed","expired","payment_failed","active","filled","cancelled"].includes(record.status))return false;
-        const steps=record.kind==="order"?orderSteps:[record.status==="funding"?"fund":"return_arc"];
+        const steps=record.kind==="order"?settlementSteps(record):[record.status==="funding"?"fund":"return_arc"];
         const txs=await Promise.all(steps.map(step=>repo.read<Transaction|null>({id:'escrow:'+record.id+':'+step+':'+(record.escrow!.attempts?.[step]??0)})));
         const next=txs.find(tx=>!tx||tx.status!=="completed");
         return Boolean(next?.status==="reverted"&&next.hash&&next.blockNumber);
@@ -55,19 +55,9 @@ export async function GET(request:NextRequest) {
         const o=r as Order; return {listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.xUserId?"buy":"sell"};
       }));
       const transactions=records.filter((r):r is Transaction=>r.kind==="transaction"&&r.leg!=="allowance"&&r.leg!=="approval").map(transactionHistory);
-      const baseSnapshot = snapshots[1];
-      let baseUsdc = {balance: null as string|null, locked: "0", available: null as string|null};
-      const baseWallet = records.find(r => r.kind === "wallet" && r.id === walletId(8453, session.walletAddress)) as Wallet|undefined;
-      baseUsdc.locked = (baseWallet ? lockedBaseUsdc(baseWallet) : 0n).toString();
-      if (baseSnapshot.status === "fulfilled") {
-        try {
-          const balance = await baseUsdcBalance(session.walletAddress, baseSnapshot.value.block);
-          baseUsdc = {balance, locked: baseUsdc.locked, available: (BigInt(balance) > BigInt(baseUsdc.locked) ? BigInt(balance) - BigInt(baseUsdc.locked) : 0n).toString()};
-        } catch { /* A token read failure must not hide native balances. */ }
-      }
       const listings=await Promise.all(records.filter((r):r is Listing=>r.kind==="listing").map(async listing=>({...positionHistory(listing,
         records.filter((r):r is Order=>r.kind==="order"), records.find((r):r is Wallet=>r.kind==="wallet"&&r.id===walletId(5042,listing.status==="funding"?listing.seller:listing.escrow?.address??listing.seller))),canRetry:await retryAvailable(listing)})));
-      return json({walletAddress:session.walletAddress,baseUsdc,balances,orders,transactions,listings});
+      return json({walletAddress:session.walletAddress,balances,orders,transactions,listings});
     } catch(error){return webFailure(error);}
   }
   let enabled=false;
@@ -114,32 +104,26 @@ export async function POST(request:NextRequest) {
     if(body.action==="quote"){
       const listing=await repo.read<Listing|null>({id:body.listingId});
       if(!listing||listing.kind!=="listing")throw new WebError("Listing not found.",404);
-      const amount=usdc(body.amount),asset=body.paymentAsset;
-      if (!listing.escrow && asset === "USDC" && session.walletAddress.toLowerCase() === config.feeRecipient.toLowerCase()) throw new WebError("Fee wallet cannot buy with Base USDC.");
-      if (asset === "USDC" && !listing.escrow) await verifyUsdcRouter(config.router);
-      const rate=asset === "USDC" ? {ethUsdMicros:"1000000",priceAt:Date.now()} : await ethPrice();
-      const feeBps=listing.escrow?SERVICE_FEE_BPS:100;
-      const cost=asset === "USDC" ? usdcPrice(amount,listing.premiumBps,feeBps) : price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros),feeBps);
-      const quoteId=`order:${randomUUID()}`;
-      if(listing.escrow){
-        if(!listing.escrow.address||listing.escrow.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new WebError("Listing escrow configuration changed.");
-        const call=asset==="ETH"?{from:getAddress(session.walletAddress),to:getAddress(listing.escrow.address),value:BigInt(cost.totalWei),data:"0x" as const}:{from:getAddress(session.walletAddress),to:BASE_USDC,value:0n,data:encodeFunctionData({abi:parseAbi(["function transfer(address,uint256) returns(bool)"]),functionName:"transfer",args:[getAddress(listing.escrow.address),BigInt(cost.totalWei)]})};
-        const payment=await prepareCall(8453,call),cap=config.base.maxTotalFeeWei.toString();
-        return json(publicOrder(await repo.command<Order>("quote",{id:quoteId,owner:session.xUserId,buyer:session.walletAddress,listingId:listing.id,amount:body.amount,paymentAsset:asset,...rate,baseGasWei:cap,escrowGasBudgetWei:(3n*config.base.maxTotalFeeWei).toString(),approvalGasWei:"0",...(asset==="USDC"?{baseUsdcBalance:await baseUsdcBalance(session.walletAddress,payment.snapshot.block)}:{}),baseBalanceWei:payment.snapshot.balanceWei,baseBlock:payment.snapshot.block,router:listing.escrow.address,feeRecipient:listing.escrow.feeRecipient})))
-      }
-      const terms={id:quoteId,buyer:session.walletAddress,seller:listing.seller,amount:amount.toString(),router:config.router,paymentAsset:asset,...cost};
-      // Before approval, payment simulation would revert. Reserve a capped fee allowance for
-      // each leg; simulate and estimate the actual payment after approval is finalized.
-      const payment=await prepareCall(8453,asset === "USDC" ? approvalCall(terms) : paymentCall(terms));
-      const buffered=(BigInt(payment.gasWei)*125n+99n)/100n;
-      const gas=asset === "USDC" ? config.base.maxTotalFeeWei : buffered<config.base.maxTotalFeeWei?buffered:config.base.maxTotalFeeWei;
-      const funding=asset === "USDC" ? {baseUsdcBalance:await baseUsdcBalance(session.walletAddress,payment.snapshot.block),approvalGasWei:config.base.maxTotalFeeWei.toString()} : {};
-      return json(publicOrder(await repo.command<Order>("quote",{id:quoteId,owner:session.xUserId,buyer:session.walletAddress,listingId:body.listingId,
-        amount:body.amount,paymentAsset:asset,...rate,...funding,baseGasWei:gas.toString(),baseBalanceWei:payment.snapshot.balanceWei,baseBlock:payment.snapshot.block,router:config.router,feeRecipient:config.feeRecipient,...cost})));
+      const amount=usdc(body.amount),rate=await ethPrice();
+      if(!listing.escrow?.address||listing.escrow.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new WebError("Listing escrow configuration changed.");
+      const cost=price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros),SERVICE_FEE_BPS);
+      const from=getAddress(session.walletAddress),to=getAddress(listing.escrow.address);
+      // One validated native-transfer estimate includes Base L1/operator fees.
+      // All settlement recipients must be EOAs; there is no calldata or contract execution.
+      const payment=await prepareCall(8453,{from,to,value:BigInt(cost.totalWei),data:"0x"});
+      const destinations=[getAddress(listing.seller),getAddress(listing.escrow.feeRecipient),from,to];
+      const client=chainClient(8453);
+      const codes=await Promise.all(destinations.map(address=>client.getCode({address,blockNumber:BigInt(payment.snapshot.block)})));
+      if(codes.some(code=>code&&code!=="0x"))throw new WebError("OTC settlement requires standard EVM wallets.");
+      const estimate=BigInt(payment.gasWei),gas=escrowBaseGasBudget([estimate,estimate,estimate],config.base.maxTotalFeeWei);
+      const perTransfer=gas.perTransferWei;
+      // Durable quote reservation checks payment + settlement gas + deposit gas together.
+      return json(publicOrder(await repo.command<Order>("quote",{id:`order:${randomUUID()}`,owner:session.xUserId,buyer:session.walletAddress,listingId:listing.id,amount:body.amount,paymentAsset:"ETH",...rate,baseGasWei:perTransfer.toString(),escrowGasBudgetWei:gas.settlementWei.toString(),baseBalanceWei:payment.snapshot.balanceWei,baseBlock:payment.snapshot.block,router:listing.escrow.address,feeRecipient:listing.escrow.feeRecipient})));
     }
     const order=await repo.read<Order|null>({id:body.orderId});
     if(!order||order.kind!=="order"||order.owner!==session.xUserId)throw new WebError("Order not found.",404);
     if(order.status!=="quoted")return json(publicOrder(order));
+    if(paymentAsset(order)!=="ETH"||order.escrow&&order.escrow.version!==2)throw new WebError("Payment options changed. Request a new ETH quote.");
     if(order.router.toLowerCase()!==config.router.toLowerCase()||order.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new WebError("Quote configuration changed. Request a new quote.");
     if(order.escrow){
       const [base,arc]=await Promise.all([balanceSnapshot(8453,session.walletAddress),balanceSnapshot(5042,order.escrow.address)]);
@@ -160,5 +144,5 @@ export async function POST(request:NextRequest) {
 
 function publicOrder(order:Order){
   const {id,amount,premiumBps,sellerWei,feeWei,totalWei,baseGasWei,expiresAt,status,paymentHash,payoutHash,note}=order;
-  return {serviceFeeBps:order.serviceFeeBps??100,escrowAddress:order.escrow?.address,escrowGasBudgetWei:order.escrow?.gasBudgetWei,gasRemainderWei:order.escrow?.gasRemainderWei,sellerPaymentHash:order.sellerPaymentHash,serviceFeeHash:order.serviceFeeHash,gasRefundHash:order.gasRefundHash,paymentAsset:paymentAsset(order),approvalGasWei:order.approvalGasWei??"0",approvalHash:order.approvalHash,id,amount,premiumBps,sellerWei,feeWei,totalWei,baseGasWei,expiresAt,status,paymentHash,payoutHash,note};
+  return {serviceFeeBps:order.serviceFeeBps??100,escrowAddress:order.escrow?.address,escrowVersion:order.escrow?.version,escrowGasBudgetWei:order.escrow?.gasBudgetWei,gasRemainderWei:order.escrow?.gasRemainderWei,sellerPaymentHash:order.sellerPaymentHash,serviceFeeHash:order.serviceFeeHash,gasRefundHash:order.gasRefundHash,paymentAsset:paymentAsset(order),approvalGasWei:order.approvalGasWei??"0",approvalHash:order.approvalHash,id,amount,premiumBps,sellerWei,feeWei,totalWei,baseGasWei,expiresAt,status,paymentHash,payoutHash,note};
 }

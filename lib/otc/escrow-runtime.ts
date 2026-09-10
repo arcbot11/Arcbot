@@ -8,7 +8,7 @@ import { baseConfigFromEnv } from "../base/config";
 import { type Store, type Listing, type Order, type Transaction, type Wallet, type RecordValue, locked, walletId } from "./model";
 import { repository } from "./repository";
 import { advanceTransaction, balanceSnapshot, prepareCall, walletTransferConfiguration } from "./runtime";
-import { escrowCall, escrowRecords, escrowTxId, orderSteps, type EscrowStep } from "./escrow-model";
+import { escrowCall, escrowRecords, escrowTxId, settlementSteps, type EscrowStep } from "./escrow-model";
 
 export function escrowConfiguration(){
   walletTransferConfiguration(5042);walletTransferConfiguration(8453);
@@ -72,7 +72,7 @@ export async function advanceEscrowPosition(id:string){
 export async function advanceEscrowOrder(order:Order){
   if(!order.escrow||["quoted","completed","expired","payment_failed"].includes(order.status))return;
   const repo=repository(),listing=await repo.read<Listing>({id:order.listingId});
-  for(const step of orderSteps){
+  for(const step of settlementSteps(order)){
     if(!await runStep(listing,step,order))return;
     if(step!=="return_gas")await repo.command("escrow_advance",{listingId:listing.id,orderId:order.id});
   }

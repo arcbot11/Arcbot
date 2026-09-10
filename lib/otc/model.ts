@@ -34,7 +34,7 @@ export function usdcPrice(amount: bigint, premiumBps: number, feeBps=100) {
   return {sellerWei: sellerWei.toString(), feeWei: feeWei.toString(), totalWei: (sellerWei + feeWei).toString()};
 }
 export type EscrowPosition = {version:1;accountName:string;address?:string;fundingWei:string;feeRecipient:string;fundingGasWei:string;closeGasWei:string;closeReason?:"cancelled"|"filled";returnedWei?:string;gasRemainderWei?:string;attempts?:Record<string,number>;note?:string};
-export type EscrowOrder = {version:1;address:string;gasBudgetWei:string;gasRemainderWei?:string;attempts?:Record<string,number>};
+export type EscrowOrder = {version:1|2;address:string;gasBudgetWei:string;gasRemainderWei?:string;attempts?:Record<string,number>};
 export type Listing = {
   kind: "listing"; id: string; owner: string; seller: string; premiumBps: number;
   originalAmount?: string; originalBudget?: string; available: string; held: string; pendingFills: number; gasPerFillWei: string;
@@ -68,7 +68,7 @@ export interface Store {
 export const walletId = (chain: Chain, address: string) => `wallet:${chain}:${address.toLowerCase()}`;
 export const locked = (wallet: Wallet) => Object.values(wallet.holds).reduce((sum, value) => sum + BigInt(value), 0n);
 export const lockedBaseUsdc = (w: Wallet) => Object.values(w.usdcHolds ?? {}).reduce((sum, value) => sum + BigInt(value), 0n);
-export const paymentNativeReserve = (o: Order) => (o.escrow?2n*BigInt(o.baseGasWei)+BigInt(o.escrow.gasBudgetWei):BigInt(o.baseGasWei)) + (paymentAsset(o) === "ETH" ? BigInt(o.totalWei) : 0n);
+export const paymentNativeReserve = (o: Order) => (o.escrow?(o.escrow.version===2?1n:2n)*BigInt(o.baseGasWei)+BigInt(o.escrow.gasBudgetWei):BigInt(o.baseGasWei)) + (paymentAsset(o) === "ETH" ? BigInt(o.totalWei) : 0n);
 export async function wallet(store: Store, chain: Chain, address: string, owner: string, now: number) {
   const id = walletId(chain, address);
   const existing = await store.get<Wallet>(id);
@@ -134,7 +134,7 @@ export async function createQuote(store: Store, input: { id: string; owner: stri
   const amount = usdc(input.amount);
   if (amount > BigInt(listing.available)) throw new Error("Listing amount changed. Request a new quote.");
   if (now - input.priceAt > QUOTE_MS || input.priceAt > now || BigInt(input.baseGasWei) <= 0n) throw new Error("Price or gas estimate expired.");
-  if (input.paymentAsset && !["ETH", "USDC"].includes(input.paymentAsset)) throw new Error("Unsupported Base payment asset.");
+  if (input.paymentAsset && input.paymentAsset !== "ETH") throw new Error("Unsupported Base payment asset.");
   const asset = paymentAsset(input);
   const serviceFeeBps=listing.escrow?SERVICE_FEE_BPS:100;
   const quote = asset === "USDC" ? usdcPrice(amount, listing.premiumBps,serviceFeeBps) : price(amount, listing.premiumBps, BigInt(input.ethUsdMicros),serviceFeeBps);
@@ -142,9 +142,9 @@ export async function createQuote(store: Store, input: { id: string; owner: stri
   checkSnapshot(funding,input.baseBlock);
   if (asset === "USDC" && ((!listing.escrow&&BigInt(input.approvalGasWei ?? "0") <= 0n) || BigInt(input.baseUsdcBalance ?? "0") - lockedBaseUsdc(funding) < BigInt(quote.totalWei))) throw new Error("Not enough available Base USDC or approval gas allowance.");
   if(listing.escrow&&(!input.escrowGasBudgetWei||BigInt(input.escrowGasBudgetWei)<=0n||input.router.toLowerCase()!==listing.escrow.address!.toLowerCase()||input.feeRecipient.toLowerCase()!==listing.escrow.feeRecipient.toLowerCase()))throw new Error("Invalid escrow payment terms.");
-  if(BigInt(input.baseBalanceWei)-locked(funding)<(listing.escrow?BigInt(input.escrowGasBudgetWei!)+BigInt(input.baseGasWei):0n)+(asset === "ETH" ? BigInt(quote.totalWei) : BigInt(input.approvalGasWei??"0"))+BigInt(input.baseGasWei))throw new Error("Not enough available Base ETH for this quote and gas.");
+  if(BigInt(input.baseBalanceWei)-locked(funding)<(listing.escrow?BigInt(input.escrowGasBudgetWei!):0n)+(asset === "ETH" ? BigInt(quote.totalWei) : BigInt(input.approvalGasWei??"0"))+BigInt(input.baseGasWei))throw new Error("Not enough available Base ETH for this quote and gas.");
   const order: Order = { kind: "order", id: input.id, owner: input.owner, buyer: input.buyer, seller: listing.seller, sellerOwner: listing.owner, listingId: listing.id,
-    ...(listing.escrow?{escrow:{version:1 as const,address:listing.escrow.address!,gasBudgetWei:input.escrowGasBudgetWei!}}:{}),
+    ...(listing.escrow?{escrow:{version:2 as const,address:listing.escrow.address!,gasBudgetWei:input.escrowGasBudgetWei!}}:{}),
     paymentAsset: asset, ...(asset === "USDC" ? {approvalGasWei: input.approvalGasWei} : {}),
     amount: amount.toString(), premiumBps: listing.premiumBps, ethUsdMicros: input.ethUsdMicros, priceAt: input.priceAt, ...quote,
     baseGasWei: input.baseGasWei, arcGasWei: listing.gasPerFillWei, router: input.router, feeRecipient: input.feeRecipient,serviceFeeBps,
@@ -157,6 +157,7 @@ export async function acceptQuote(store: Store, id: string, owner: string, snaps
   const order = await store.get<Order>(id);
   if (!order || order.kind !== "order" || order.owner !== owner) throw new Error("Order not found.");
   if (order.status !== "quoted") return order;
+  if(paymentAsset(order)!=="ETH"||order.escrow&&order.escrow.version!==2)throw new Error("Payment options changed. Request a new ETH quote.");
   if (now >= order.expiresAt) throw new Error("Quote expired. Request a new quote.");
   const seller = await wallet(store, 5042, order.escrow?.address??order.seller, order.sellerOwner, now);
   checkSnapshot(seller, snapshot.arcBlock);

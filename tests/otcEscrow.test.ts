@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { serializeTransaction, decodeFunctionData, parseAbi } from "viem";
+import { serializeTransaction } from "viem";
 import { createListing, createQuote, acceptQuote, cancelListing, locked, walletId, type Store, type RecordValue, type Listing, type Order, type Wallet, type Transaction } from "../lib/otc/model";
-import { bindEscrow, escrowCall, escrowTxId, prepareEscrowStep, advanceEscrowState, retryEscrow, orderSteps, type EscrowStep } from "../lib/otc/escrow-model";
+import { bindEscrow, escrowCall, escrowTxId, prepareEscrowStep, advanceEscrowState, retryEscrow, settlementSteps, type EscrowStep } from "../lib/otc/escrow-model";
 import { signTransactionRecord, settled } from "../lib/otc/transactions";
 import {escrowAccountName,legacyEscrowAccountName} from "../lib/otc/escrow-name";
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222",escrow="0x3333333333333333333333333333333333333333",fee="0x4444444444444444444444444444444444444444";
@@ -40,6 +40,44 @@ async function orderFor(store:Memory,listing:Listing,asset:"ETH"|"USDC"="ETH",am
   await acceptQuote(store,order.id,"buyer",{baseBalanceWei:W.toString(),baseUsdcBalance:"1000000000",baseBlock:"100",arcBalanceWei:(100n*W).toString(),arcBlock:"100"},now);
   return (await store.get<Order>(order.id))!;
 }
+it("blocks new Base USDC quotes before locking inventory",async()=>{
+  const {store,listing}=await funded();
+  const before=await store.get<Listing>(listing.id);
+  await expect(orderFor(store,listing,"USDC")).rejects.toThrow("Unsupported Base payment asset");
+  expect(await store.get<Listing>(listing.id)).toEqual(before);
+});
+it("new ETH orders have one combined deposit and reject a separate gas transfer",async()=>{
+  const {store,listing}=await funded(),order=await orderFor(store,listing);
+  expect(order.escrow?.version).toBe(2);
+  expect(settlementSteps(order)).toEqual(["deposit","arc","seller","fee","return_gas"]);
+  const w=(await store.get<Wallet>(walletId(8453,buyer)))!;
+  expect(BigInt(w.holds[order.id])).toBe(BigInt(order.totalWei)+3n*G+G);
+  await expect(escrowCall(store,listing,"gas",order)).rejects.toThrow("Invalid escrow step");
+  const call=await escrowCall(store,listing,"deposit",order);
+  expect(call.value).toBe(BigInt(order.totalWei)+3n*G);
+});
+it("existing accepted two-deposit orders keep their original amounts and steps",async()=>{
+  const {store,listing}=await funded(),order=await orderFor(store,listing);
+  order.escrow!.version=1;await store.put(order);
+  const w=(await store.get<Wallet>(walletId(8453,buyer)))!;
+  w.holds[order.id]=(BigInt(order.totalWei)+5n*G).toString();await store.put(w);
+  expect(settlementSteps(order)[0]).toBe("gas");
+  await complete(store,listing,"gas",order);
+  expect((await escrowCall(store,listing,"deposit",order)).value).toBe(BigInt(order.totalWei));
+  // Already accepted orders are idempotent even after payment options change.
+  await expect(acceptQuote(store,order.id,"buyer",{baseBalanceWei:"0",baseBlock:"100",arcBalanceWei:"0",arcBlock:"100"},now)).resolves.toMatchObject({status:"payment_pending"});
+});
+it("repeated preparation reuses one exact deposit without reserving twice",async()=>{
+ const {store,listing}=await funded(),order=await orderFor(store,listing);
+ const call=await escrowCall(store,listing,"deposit",order);
+ const unsigned=serializeTransaction({chainId:8453,type:"eip1559",to:call.to,value:call.value,data:call.data,nonce:1,gas:21000n,maxFeePerGas:1n});
+ const input={listingId:listing.id,orderId:order.id,step:"deposit" as const,unsigned,gasWei:G.toString(),reserveWei:(call.value+G).toString(),balanceWei:W.toString(),block:"100"};
+ const first=await prepareEscrowStep(store,input,now),holds=await store.get<Wallet>(walletId(8453,buyer));
+ expect(await prepareEscrowStep(store,input,now+1)).toEqual(first);
+ expect(await store.get<Wallet>(walletId(8453,buyer))).toEqual(holds);
+ expect(await store.get(escrowTxId(listing,"gas",order))).toBeNull();
+ await expect(escrowCall(store,listing,"arc",order)).rejects.toThrow("not verified");
+});
 describe("position CDP escrow",()=>{
   it("rejects buys below 10 and above the remaining inventory",async()=>{
     const {store,listing}=await funded();
@@ -54,7 +92,7 @@ describe("position CDP escrow",()=>{
   });
   it("closes a partial fill leaving under 10 only after settlement and returns that remainder",async()=>{
     const {store,listing}=await funded(),order=await orderFor(store,listing,"ETH","95");
-    for(const step of orderSteps){await complete(store,listing,step,order,100n);if(step!=="return_gas")await advanceEscrowState(store,listing.id,order.id,now);}
+    for(const step of settlementSteps(order)){await complete(store,listing,step,order,100n);if(step!=="return_gas")await advanceEscrowState(store,listing.id,order.id,now);}
     await advanceEscrowState(store,listing.id,order.id,now,"500","100");
     const closing=(await store.get<Listing>(listing.id))!;
     expect(closing.status).toBe("closing");expect(BigInt(closing.available)).toBeGreaterThan(0n);expect(BigInt(closing.available)).toBeLessThan(10000000n);
@@ -85,7 +123,7 @@ describe("position CDP escrow",()=>{
     const second=await setup();await complete(second.store,second.listing,"fund");
     await expect(cancelListing(second.store,second.listing.id,"seller",now)).rejects.toThrow("funding transaction");
   });
-  it.each(["ETH","USDC"] as const)("keeps partial %s fills locked until both deposits and all dispersals are verified",async asset=>{
+  it.each(["ETH"] as const)("keeps partial %s fills locked until the combined deposit and all dispersals are verified",async asset=>{
     const {store,listing}=await funded(),order=await orderFor(store,listing,asset,"12.345678");
     expect(order.serviceFeeBps).toBe(150);
     expect(BigInt(order.feeWei)).toBe((BigInt(order.sellerWei)*150n+9999n)/10000n);
@@ -93,13 +131,12 @@ describe("position CDP escrow",()=>{
     await expect(escrowCall(store,listing,"arc",order)).rejects.toThrow("not verified");
     await expect(cancelListing(store,listing.id,"seller",now)).rejects.toThrow("locked");
     await expect(orderFor(store,listing,asset,"10","order:two")).rejects.toThrow("settling");
-    for(const step of orderSteps){
+    for(const step of settlementSteps(order)){
       const call=await escrowCall(store,listing,step,order,100n);
-      if(step==="gas"||step==="deposit")expect(call.from.toLowerCase()).toBe(buyer);
+      if(step==="deposit"){expect(call.from.toLowerCase()).toBe(buyer);expect(call.value).toBe(BigInt(order.totalWei)+BigInt(order.escrow!.gasBudgetWei));}
       if(step==="arc")expect(call.value).toBe(12345678n*10n**12n);
       if(step==="fee"&&asset==="ETH"){expect(call.to.toLowerCase()).toBe(fee);expect(call.value).toBe(BigInt(order.feeWei));}
-      if(step==="fee"&&asset==="USDC")expect(decodeFunctionData({abi:parseAbi(["function transfer(address,uint256) returns(bool)"]),data:call.data}).args).toEqual([fee,BigInt(order.feeWei)]);
-      if(asset==="USDC"&&step==="deposit")expect(decodeFunctionData({abi:parseAbi(["function transfer(address,uint256) returns(bool)"]),data:call.data}).args).toEqual([escrow,BigInt(order.totalWei)]);
+
       await complete(store,listing,step,order,100n);
       if(step!=="return_gas")await advanceEscrowState(store,listing.id,order.id,now);
     }
@@ -111,7 +148,7 @@ describe("position CDP escrow",()=>{
     await advanceEscrowState(store,listing.id,order.id,now,"500","100");
     expect((await store.get<Listing>(listing.id))!.available).toBe(after.available);
     const next=await orderFor(store,after,asset,"10","order:two");
-    for(const step of orderSteps.slice(0,-1))await complete(store,after,step,next);
+    for(const step of settlementSteps(next).slice(0,-1))await complete(store,after,step,next);
     const call=await escrowCall(store,after,"return_gas",next,501n);
     const unsigned=serializeTransaction({chainId:8453,type:"eip1559",to:call.to,value:call.value,gas:21000n,maxFeePerGas:1n});
     // The second buyer cannot sweep even one wei from the first buyer's credit.

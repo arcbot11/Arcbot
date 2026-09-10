@@ -8,6 +8,7 @@ import {escrowAccountName,legacyEscrowAccountName} from "./escrow-name";
 const transferAbi=parseAbi(["function transfer(address,uint256) returns(bool)"]);
 export type EscrowStep="fund"|"gas"|"deposit"|"arc"|"seller"|"fee"|"return_arc"|"return_gas";
 export const orderSteps:EscrowStep[]=["gas","deposit","arc","seller","fee","return_gas"];
+export const settlementSteps=(order:Order):EscrowStep[]=>order.escrow?.version===2?["deposit","arc","seller","fee","return_gas"]:orderSteps;
 export function escrowTxId(listing:Listing,step:EscrowStep,order?:Order){
   const attempt=(order?.escrow??listing.escrow)?.attempts?.[step]??0;
   return `escrow:${order?.id??listing.id}:${step}:${attempt}`;
@@ -27,10 +28,11 @@ export async function escrowCall(store:Store,listing:Listing,step:EscrowStep,ord
   const escrow=listing.escrow;
   if(!escrow?.address)throw new Error("Escrow wallet is not provisioned.");
   if(order){
+    if(order.escrow?.version===2&&paymentAsset(order)!=="ETH")throw new Error("Combined escrow deposits require Base ETH.");
     if(["quoted","expired","payment_failed","completed"].includes(order.status))throw new Error("Order is not settling.");
-    const index=orderSteps.indexOf(step);
+    const steps=settlementSteps(order),index=steps.indexOf(step);
     if(index<0)throw new Error("Invalid escrow step.");
-    for(const prior of orderSteps.slice(0,index))if(!await completedStep(store,listing,prior,order))throw new Error("Escrow deposit or preceding payout is not verified.");
+    for(const prior of steps.slice(0,index))if(!await completedStep(store,listing,prior,order))throw new Error("Escrow deposit or preceding payout is not verified.");
     if(!await completedStep(store,listing,"fund"))throw new Error("Arc escrow deposit is not verified.");
   }else if(step==="fund"){
     if(listing.status!=="funding")throw new Error("Position is not funding.");
@@ -42,7 +44,7 @@ export async function escrowCall(store:Store,listing:Listing,step:EscrowStep,ord
   const from=step==="fund"?listing.seller:(step==="gas"||step==="deposit")?order!.buyer:escrow.address;
   const owner=(step==="gas"||step==="deposit")?order!.owner:listing.owner;
   const recipient=step==="fund"||step==="gas"||step==="deposit"?escrow.address:step==="arc"?order!.buyer:step==="fee"?order!.feeRecipient:step==="return_gas"?order!.buyer:listing.seller;
-  const amount=step==="fund"?BigInt(escrow.fundingWei):step==="gas"?BigInt(order!.escrow!.gasBudgetWei):step==="deposit"?BigInt(order!.totalWei):step==="arc"?BigInt(order!.amount)*10n**12n:step==="seller"?BigInt(order!.sellerWei):step==="fee"?BigInt(order!.feeWei):returnWei!;
+  const amount=step==="fund"?BigInt(escrow.fundingWei):step==="gas"?BigInt(order!.escrow!.gasBudgetWei):step==="deposit"?BigInt(order!.totalWei)+(order!.escrow!.version===2?BigInt(order!.escrow!.gasBudgetWei):0n):step==="arc"?BigInt(order!.amount)*10n**12n:step==="seller"?BigInt(order!.sellerWei):step==="fee"?BigInt(order!.feeWei):returnWei!;
   const token=!!order&&["deposit","seller","fee"].includes(step)&&paymentAsset(order)==="USDC";
   return {chainId,owner,from:getAddress(from),to:token?BASE_USDC:getAddress(recipient),value:token?0n:amount,data:token?encodeFunctionData({abi:transferAbi,functionName:"transfer",args:[getAddress(recipient),amount]}):"0x" as Hex};
 }
@@ -117,7 +119,7 @@ export async function advanceEscrowState(store:Store,listingId:string,orderId:st
 export async function retryEscrow(store:Store,listingId:string,orderId:string|undefined,owner:string,now:number){
   const {listing,order}=await escrowRecords(store,listingId,orderId);
   if(owner!==listing.owner&&owner!==order?.owner)throw new Error("Escrow owner mismatch.");
-  for(const step of order?orderSteps:listing.status==="funding"?["fund" as const]:["return_arc" as const]){
+  for(const step of order?settlementSteps(order):listing.status==="funding"?["fund" as const]:["return_arc" as const]){
     const tx=await store.get<Transaction>(escrowTxId(listing,step,order));
     if(tx?.status==="reverted"&&tx.hash&&tx.blockNumber){if(tx.escrowRef?.sourceHold&&tx.escrowRef.reserveWei){const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);w.holds[tx.escrowRef.sourceHold]=(BigInt(w.holds[tx.escrowRef.sourceHold]??"0")+BigInt(tx.escrowRef.reserveWei)).toString();await store.put(w);}const record=order??listing,e=record.escrow!;e.attempts={...e.attempts,[step]:(e.attempts?.[step]??0)+1};record.updatedAt=now;await store.put(record);return record;}
     if(!tx||tx.status!=="completed")break;

@@ -30,7 +30,7 @@ export async function POST(request:NextRequest){
       const recipient=getAddress(input.recipient),from=getAddress(session.walletAddress);
       if(recipient===from||/^0x0{40}$/i.test(recipient))throw new WebError("Use a different, nonzero recipient.");
       const baseUsdc=input.chainId===8453&&input.asset.toLowerCase()===BASE_USDC.toLowerCase();
-      if(input.chainId===8453&&input.asset!=="native"&&!baseUsdc)throw new WebError("Choose Base ETH or native Base USDC.");
+      if(input.chainId===8453&&input.asset!=="native")throw new WebError("Base withdrawals support ETH only.");
       if(input.chainId===8453&&input.percentage!==undefined)throw new WebError("Enter an amount for Base withdrawals.");
       if(input.percentage!==undefined&&input.amountUnit!=="tokens")throw new WebError("Choose a percentage or a USD value.");
       const native=input.asset==="native"||input.chainId===5042&&input.asset.toLowerCase()===ARC_USDC.toLowerCase();
@@ -81,6 +81,7 @@ export async function POST(request:NextRequest){
     if(Date.now()>=quote.expiresAt)throw new WebError("Quote expired. Check the amount again.");
     walletTransferConfiguration(quote.chainId);
     const snapshot=await balanceSnapshot(quote.chainId,quote.wallet),tx=parseTransaction(quote.unsigned);
+    if(quote.chainId===8453&&tx.data&&tx.data!=="0x")throw new WebError("Base withdrawals support ETH only. Request a new quote.");
     if(snapshot.nonce!==tx.nonce||snapshot.pendingNonce!==snapshot.nonce)throw new WebError("Wallet nonce changed. Request a new quote.");
     const usdc=quote.chainId===8453&&tx.to?.toLowerCase()===BASE_USDC.toLowerCase()?await baseUsdcBalance(quote.wallet,snapshot.block):undefined;
     await repo.command("prepare",{...quote,leg:"send",balanceWei:snapshot.balanceWei,block:snapshot.block,...(usdc!==undefined?{baseUsdcBalance:usdc}:{})});
