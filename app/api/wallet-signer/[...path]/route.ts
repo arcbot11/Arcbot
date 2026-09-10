@@ -1,3 +1,6 @@
+import { arcSignerPath } from "@/lib/arc/public-policy";
+import { arcTokenInfo } from "@/lib/arc/token-info";
+import { arcSocialBalance } from "@/lib/arc/social-balance";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { redactSignerDiagnostic } from "@/lib/signer-diagnostics";
@@ -7,8 +10,7 @@ import { automatedFeeClaimableRequestSchema, automatedFeeEnrollmentVerificationR
 import { automatedFeeControllerStatusRequestSchema } from "@/lib/wallet-signer/policy";
 import { automatedFeeControllerSweepRequestSchema, automatedFeeControllerSweepStatusRequestSchema } from "@/lib/wallet-signer/policy";
 import { assertAutomatedFeeDeliveryAccess } from "@/lib/wallet-signer/service";
-import { burnedTokenBalance } from "@/lib/wallet-signer/service";
-import { assertAutomatedFeeControllerAccess, assertAutomatedFeeEnrollmentAccess, assertAutomatedFeeExecutionAccess, automatedFeeTransactionStatus, authorizeAutomatedFeeQuote, authorizeSigner, broadcastAutomatedFeeControllerTransaction, broadcastAutomatedFeeDeliveryTransaction, broadcastAutomatedFeePairRoute, broadcastAutomatedFeeSweepTransaction, broadcastAutomatedFeeTransaction, broadcastTransaction, executeTransaction, feeClaimPlan, freeLaunchDevBuyEligibility, freeLaunchFundingEstimate, freeLaunchSponsorshipStatus, freeLaunchSponsorWallet, holderDistributorInfo, argusPairInfo, prepareAutomatedFeeControllerTransaction, prepareAutomatedFeeDeliveryTransaction, prepareAutomatedFeePairRoute, prepareAutomatedFeeSweepTransaction, prepareAutomatedFeeTransaction, prepareLaunchAddresses, provisionWallet, sponsorFreeLaunch, spendableEthBalance, tokenContractMetadata, tokenValueAtBlock, transactionStatus, usdTokenAmount, walletBalance } from "@/lib/wallet-signer/service";
+import { assertAutomatedFeeControllerAccess, assertAutomatedFeeEnrollmentAccess, assertAutomatedFeeExecutionAccess, automatedFeeTransactionStatus, authorizeAutomatedFeeQuote, authorizeSigner, broadcastAutomatedFeeControllerTransaction, broadcastAutomatedFeeDeliveryTransaction, broadcastAutomatedFeePairRoute, broadcastAutomatedFeeSweepTransaction, broadcastAutomatedFeeTransaction, broadcastTransaction, executeTransaction, feeClaimPlan, freeLaunchDevBuyEligibility, freeLaunchFundingEstimate, freeLaunchSponsorshipStatus, freeLaunchSponsorWallet, holderDistributorInfo, argusPairInfo, prepareAutomatedFeeControllerTransaction, prepareAutomatedFeeDeliveryTransaction, prepareAutomatedFeePairRoute, prepareAutomatedFeeSweepTransaction, prepareAutomatedFeeTransaction, prepareLaunchAddresses, provisionWallet, sponsorFreeLaunch, spendableEthBalance, tokenValueAtBlock, transactionStatus, usdTokenAmount } from "@/lib/wallet-signer/service";
 import { prepareAutomatedFeeVaultDeployment } from "@/lib/wallet-signer/service";
 import { broadcastAutomatedFeeAdminTransaction } from "@/lib/wallet-signer/service";
 import { automatedFeeClaimableBalance, automatedFeeVaultDeploymentStatus, inspectAutomatedFeeVault, predictAutomatedFeeVault, verifyAutomatedFeeEnrollment } from "@/lib/wallet-signer/service";
@@ -70,7 +72,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ pa
   if (!authorizeSigner(request.headers.get("authorization"))) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   try {
     const path = (await context.params).path.join("/");
-    if (/prepare-launch|free-launch|new-launch|launch-preflight/.test(path)) return NextResponse.json({ error: "Operation not supported." }, { status: 410 });
+    if (!arcSignerPath(path)) return NextResponse.json({ error: "Operation not supported." }, { status: 410 });
     const body = await boundedJson(request, 16_384);
 
     if (path === "v1/automated-fees/infrastructure-status") {
@@ -257,15 +259,15 @@ export async function POST(request: NextRequest, context: { params: Promise<{ pa
       if (input.walletRef.toLowerCase() !== input.expectedAddress.toLowerCase()) throw new Error("wallet reference mismatch");
       const expected = await provisionWallet(input.ownerReference);
       if (expected.address.toLowerCase() !== input.expectedAddress.toLowerCase()) throw new Error("wallet owner mismatch");
-      return NextResponse.json(await walletBalance(input.expectedAddress as `0x${string}`, input.token, input.knownTokens as `0x${string}`[] | undefined));
+      return NextResponse.json(await arcSocialBalance(input.expectedAddress as `0x${string}`, input.token));
     }
     if (path === "v1/tokens/metadata") {
       const input = tokenMetadataRequestSchema.parse(body);
-      return NextResponse.json(await tokenContractMetadata(input.token as `0x${string}`), { headers: { "cache-control": "no-store" } });
+      return NextResponse.json(await arcTokenInfo(input.token), { headers: { "cache-control": "no-store" } });
     }
     if (path === "v1/tokens/burned") {
       const input = tokenMetadataRequestSchema.parse(body);
-      return NextResponse.json(await burnedTokenBalance(input.token), { headers: { "cache-control": "no-store" } });
+      return NextResponse.json(await arcTokenInfo(input.token, "0x000000000000000000000000000000000000dEaD"), { headers: { "cache-control": "no-store" } });
     }
     if (path === "v1/wallets/spendable-eth") {
       const input = spendableEthRequestSchema.parse(body);

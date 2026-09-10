@@ -44,7 +44,7 @@ export const FEE_UPGRADE_RESARGUSES = {
   ambiguous: "Action needed: More than one Arc Bot launch uses that ticker. Reply with the full Upgrade request using the contract address.",
   holders: "That token shares creator fees with holders, so it isn't eligible for this upgrade.",
   inProgress: "Pending: An upgrade is already being processed for that token. Wait for the result.",
-  review: "There's an issue with this token's upgrade - DM @ArcBot for help",
+  review: "There's an issue with this token's upgrade - DM @ArcChainBot for help",
   unavailable: "Token upgrades aren't available right now. Reply with the Upgrade request again later.",
 } as const;
 

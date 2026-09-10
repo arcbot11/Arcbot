@@ -40,7 +40,7 @@ export async function retryPayout(store:Store,input:{id:string;owner:string;atte
   await store.put(order);
   return order;
 }
-export async function prepareTransaction(store: Store, input: { id: string; owner: string; wallet: string; chainId: Chain; leg: Transaction["leg"]; orderId?: string; sourceRequestId?: string; swapOutput?: {token:string;minimum:string}; unsigned: string; reserveWei: string; balanceWei: string; block: string }, now: number) {
+export async function prepareTransaction(store: Store, input: { id: string; owner: string; wallet: string; chainId: Chain; leg: Transaction["leg"]; orderId?: string; sourceRequestId?: string; swapOutput?: {token:string;minimum:string;recipient?:string}; unsigned: string; reserveWei: string; balanceWei: string; block: string }, now: number) {
   const previous = await store.get<Transaction>(input.id);
   if (previous) { if (previous.wallet !== input.wallet || previous.owner !== input.owner) throw new Error("Transaction identity mismatch."); return previous; }
   const w = await wallet(store, input.chainId, input.wallet, input.owner, now);
@@ -101,6 +101,7 @@ export async function settled(store: Store, id: string, block: string, success: 
   if (["send","swap","allowance","payment"].includes(tx.leg)) delete w.holds[tx.holdId];
   if (tx.leg === "payment" && w.usdcHolds) delete w.usdcHolds[tx.holdId];
   await store.put(w);
+  delete tx.note;
   tx.status = success ? "completed" : "reverted"; tx.blockNumber = block; tx.updatedAt = now; await store.put(tx);
   if (tx.orderId) {
     const order = await store.get<Order>(tx.orderId);

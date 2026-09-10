@@ -2295,7 +2295,7 @@ function launchSalt(request: ExecutionRequest) {
     .update(`argus-launch:${request.idempotencyKey}`).digest("hex")}` as Hex;
 }
 
-async function vanityLaunchSalt(
+async function predictLaunchFromSalt(
   client: ReturnType<typeof rpcClient>, request: ExecutionRequest,
   operation: Extract<ExecutionRequest["operation"], { type: "legacy_launch_launch" | "legacy_launch_launch_and_buy" }>,
   factory: Address, owner: Address, pairToken: Address,
@@ -2327,33 +2327,20 @@ async function vanityLaunchSalt(
       args: [{ ...base, salt: operation.preparedSalt as Hex }],
     });
     if (tokenAddress.toLowerCase() !== operation.predictedTokenAddress.toLowerCase()
-      || curveAddress.toLowerCase() !== operation.predictedCurveAddress.toLowerCase()
-      || !tokenAddress.toLowerCase().endsWith("b07")) throw new Error("persisted Argus b07 prediction is invalid");
+      || curveAddress.toLowerCase() !== operation.predictedCurveAddress.toLowerCase()) throw new Error("persisted Argus prediction is invalid");
     return { salt: operation.preparedSalt as Hex, tokenAddress, curveAddress };
   }
-  // Address prediction hashes two large creation-code payloads. Keep each on-chain
-  // multicall below ordinary RPC execution/gas limits while still amortizing requests.
-  const batchSize = 24;
-  for (let offset = 0; offset < 100_000; offset += batchSize) {
-    const candidates = Array.from({ length: Math.min(batchSize, 100_000 - offset) }, (_, index) => {
-      const salt = keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "uint256" }], [baseSalt, BigInt(offset + index)]));
-      return { salt, contract: { address: deployer, abi: argusLaunchDeployerAbi, functionName: "predictLaunchAddresses" as const, args: [{ ...base, salt }] } };
-    });
-    const results = await client.multicall({ contracts: candidates.map((candidate) => candidate.contract), allowFailure: true, multicallAddress: "0xcA11bde05977b3631167028862bE2a173976CA11" });
-    for (let index = 0; index < results.length; index++) {
-      const result = results[index];
-      if (result.status !== "success") continue;
-      const [tokenAddress, curveAddress] = result.result;
-      if (tokenAddress.toLowerCase().endsWith("b07")) return { salt: candidates[index].salt, tokenAddress, curveAddress };
-    }
-  }
-  throw new Error("could not find an Arc Bot b07 contract address");
+  const [tokenAddress, curveAddress] = await client.readContract({
+    address: deployer, abi: argusLaunchDeployerAbi, functionName: "predictLaunchAddresses",
+    args: [{ ...base, salt: baseSalt }],
+  });
+  return { salt: baseSalt, tokenAddress, curveAddress };
 }
 
 export async function prepareLaunchAddresses(request: ExecutionRequest) {
   const operation = request.operation;
   if (!operation || (operation.type !== "legacy_launch_launch" && operation.type !== "legacy_launch_launch_and_buy")) throw new Error("launch operation required");
-  const prediction = await vanityLaunchSalt(rpcClient(), request, operation, operation.factoryAddress as Address, request.expectedFrom as Address, operation.pairToken as Address);
+  const prediction = await predictLaunchFromSalt(rpcClient(), request, operation, operation.factoryAddress as Address, request.expectedFrom as Address, operation.pairToken as Address);
   return { preparedSalt: prediction.salt, predictedTokenAddress: prediction.tokenAddress, predictedCurveAddress: prediction.curveAddress };
 }
 
@@ -2490,12 +2477,12 @@ async function prepareArgusLaunch(
     client.readContract({ address: factory, abi: argusFactoryAbi, functionName: "previewLaunchEconomics", args: [launchConfigId, pairToken] }),
     client.readContract({ address: factory, abi: argusFactoryAbi, functionName: "launchFee" }),
   ]);
-  const vanity = await vanityLaunchSalt(client, request, operation, factory, owner, pairToken);
+  const prediction = await predictLaunchFromSalt(client, request, operation, factory, owner, pairToken);
   const params = {
     name: operation.name, symbol: operation.symbol, logo: operation.imageUri, description: operation.description,
     socials: { twitter: operation.socials.twitter, telegram: operation.socials.telegram, discord: "", website: operation.socials.website, farcaster: "" },
     creatorFeeRecipient: operation.creatorFeeRecipient as Address, creatorTaxBps: 0, buybackEnabled: false,
-    expectedEconomics, salt: vanity.salt,
+    expectedEconomics, salt: prediction.salt,
   } as const;
   if (operation.type === "legacy_launch_launch") {
     const simulation = await client.simulateContract({
@@ -2512,7 +2499,7 @@ async function prepareArgusLaunch(
     }
     const prepared = await prepareSigned(request, factory, data, launchFee, undefined, launchFee)
       .catch(error => { throw includeLaunchFeeInGasError(error, launchFee); });
-    if (simulation.result[0].toLowerCase() !== vanity.tokenAddress.toLowerCase() || simulation.result[1].toLowerCase() !== vanity.curveAddress.toLowerCase()) throw new Error("Argus expected launch address did not match the b07 prediction");
+    if (simulation.result[0].toLowerCase() !== prediction.tokenAddress.toLowerCase() || simulation.result[1].toLowerCase() !== prediction.curveAddress.toLowerCase()) throw new Error("Argus expected launch address did not match the saved prediction");
     return {
       ...prepared,
       tokenAddress: simulation.result[0],
@@ -2547,7 +2534,7 @@ async function prepareArgusLaunch(
     args: [params, launchConfigId, pairToken, quoteIn, 0n, owner, []], value,
     stateOverride: [{ address: owner, balance: value + parseEther("100") }],
   });
-  if (first.result[0].toLowerCase() !== vanity.tokenAddress.toLowerCase() || first.result[1].toLowerCase() !== vanity.curveAddress.toLowerCase()) throw new Error("Argus expected launch address did not match the b07 prediction");
+  if (first.result[0].toLowerCase() !== prediction.tokenAddress.toLowerCase() || first.result[1].toLowerCase() !== prediction.curveAddress.toLowerCase()) throw new Error("Argus expected launch address did not match the saved prediction");
   const minimum = first.result[2] * 9_750n / 10_000n;
   const data = encodeFunctionData({
     abi: argusRouterAbi, functionName: "launchAndBuy",

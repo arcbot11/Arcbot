@@ -10,8 +10,8 @@ export function graduationNextCheckAt(createdAt: number, now: number) {
 }
 
 export function graduationTokenPageUrl(address: string, siteUrl?: string) {
-  const site = siteUrl?.trim().replace(/\/$/, "") || "https://arcbot.invalid";
-  return `${site}/launch/${address}`;
+  void siteUrl;
+  return `https://www.arcchainbot.io/guide?token=${encodeURIComponent(address)}`;
 }
 
 export function graduationAnnouncementText(symbol: string, tokenUrl: string) {

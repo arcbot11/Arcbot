@@ -1,10 +1,12 @@
 import { createPublicClient, formatUnits, getAddress, isAddress, parseAbi } from "viem";
+import {inputTransferTax,maximumSell} from "./transfer-tax";
+import { tokenUsdEstimate } from "./token-value";
 import { arcDisplayConfig } from "./wallet-balance";
 import { arcTransport } from "./transport";
 import { checkArcRpc, createArcRpc } from "./rpc";
 import { ARC_TOKEN_CATALOG, CANONICAL_ARC_USDC, isArcUsdcSymbol } from "./token-catalog";
 
-export type ArcTokenBalance={address:string;symbol:string;name:string;balance:string};
+export type ArcTokenBalance={address:string;symbol:string;name:string;balance:string;usdValue?:number|null;pricedAt?:string|null};
 type Result={tokens:ArcTokenBalance[];partial:boolean;block:string};
 const cache=new Map<string,{expires:number;request:Promise<Result>}>();
 const metadataAbi=parseAbi(["function symbol() view returns (string)","function name() view returns (string)"]);
@@ -15,7 +17,11 @@ export async function arcSelectedTokenBalance(ownerAddress:string,tokenAddress:s
   const head=await checkArcRpc(rpc,config);
   const [raw,decimals]=await Promise.all([rpc.tokenBalance(token,owner,head.number),rpc.decimals(token,head.number)]);
   if((await rpc.block(head.number)).hash!==head.hash)throw Error("Token balance block changed");
-  return {address:token,balance:formatUnits(raw,decimals),raw:raw.toString(),decimals};
+  const sellTaxBps=await inputTransferTax(rpc,token,owner,head.number);
+  if((await rpc.block(head.number)).hash!==head.hash)throw Error("Token balance block changed");
+  const maxSellRaw=maximumSell(raw,sellTaxBps).toString();
+  const balance=formatUnits(raw,decimals);
+  return {address:token,balance,raw:raw.toString(),decimals,maxSellRaw,sellTaxBps,...await tokenUsdEstimate(token,balance)};
 }
 
 export function arcTokenBalances(address:string,known:string[]=[]):Promise<Result>{
@@ -48,7 +54,7 @@ async function readBalances(owner:`0x${string}`,known:string[]):Promise<Result>{
         const balance=await rpc.tokenBalance(token,owner,head.number);if(balance===0n)continue;
         const [decimals,symbol]=await Promise.all([rpc.decimals(token,head.number),metadata.symbol?Promise.resolve(metadata.symbol):client.readContract({address:token,abi:metadataAbi,functionName:"symbol",blockNumber:head.number})]);
         if(isArcUsdcSymbol(symbol))continue;
-        tokens.push({address:token,symbol:symbol.trim().replace(/^\$+/,""),name:metadata.name??symbol,balance:formatUnits(balance,decimals)});
+        tokens.push({address:token,symbol:symbol.trim().replace(/^\$+/,""),name:metadata.name??symbol,balance:formatUnits(balance,decimals),...await tokenUsdEstimate(token,formatUnits(balance,decimals))});
       }catch{partial=true;}
     }
   }));

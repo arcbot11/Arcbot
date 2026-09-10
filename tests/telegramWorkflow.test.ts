@@ -1,48 +1,75 @@
-import { describe, expect, it } from "vitest";
-import { isTelegramUnlinkCommand, telegramCommandText, telegramGuideOperation, telegramMenuGuideOperation, telegramRecipientAllowed } from "../convex/telegram";
+import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import { getFunctionName } from "convex/server";
+import { isTelegramUnlinkCommand, processUpdate } from "../convex/telegram";
+import { TELEGRAM_MENU, TELEGRAM_FORMATS, telegramInput, telegramWalletCommand, telegramResponse } from "../lib/telegram-commands";
 
-describe("Telegram command routing", () => {
+const address = "0x1111111111111111111111111111111111111111";
+describe("Telegram command-only interface", () => {
+  it.each(["hello", "buy 10 ARGUS", "resume", "10 USDC ARGUS", "guide:buy", "/fees", "/positions", "/launch", "/cancel"])("rejects chat and retired actions: %s", text => expect(telegramInput(text)).toBeNull());
+  it("checks command addressing and callback payloads", () => {
+    expect(telegramInput("/wallet@ArcChainBot", false, "ArcChainBot")?.name).toBe("wallet");
+    expect(telegramInput("/wallet@other", false, "ArcChainBot")).toBeNull();
+    expect(telegramInput("/buy 10 USDC ARGUS", true)).toBeNull();
+    expect(telegramInput("/buy", true)?.name).toBe("buy");
+  });
   it.each([
-    ["/wallet", "show my wallet"],
-    ["/balance", "show my balance"],
-    ["/balance ARCBOT", "show my ARCBOT balance"],
-    ["/buy $20 of ARCBOT", "buy $20 of ARCBOT"],
-    ["/sell all ARGUS", "sell all ARGUS"],
-    ["/swap $20 of ETH to USDG", "swap $20 of ETH to USDG"],
-    ["/send 1 ARCBOT to 0x0000000000000000000000000000000000000001", "send 1 ARCBOT to 0x0000000000000000000000000000000000000001"],
-    ["/burn 10 ARCBOT", "burn 10 ARCBOT"],
-    ["/fees ARCBOT", "claim fees for ARCBOT"],
-
-  ])("normalizes %s", (input, expected) => expect(telegramCommandText(input)).toBe(expected));
-
+    ["buy", "10 USDC ARGUS", {kind:"buy", amount:"10",unit:"usd",token:"ARGUS"}],
+    ["buy", "$10 ARGUS", {kind:"buy", amount:"10",unit:"usd",token:"ARGUS"}],
+    ["sell", "100 ARGUS", {kind:"sell",amount:"100",unit:"token"}],
+    ["sell", "$10 ARGUS", {kind:"sell",amount:"10",unit:"usd"}],
+    ["sell", "50% ARGUS", {kind:"sell",amount:"50",unit:"percent"}],
+    ["sell", "all ARGUS", {kind:"sell",amount:"100",unit:"percent"}],
+    ["swap", "50% ARGUS for TOKEN", {kind:"swap_token_for_token",fromToken:"ARGUS",toToken:"TOKEN",amount:"50"}],
+    ["send", `10 USDC to ${address}`, {kind:"send",token:"USDC",recipient:address}],
+    ["burn", "100 ARGUS", {kind:"burn",token:"ARGUS",amount:"100"}],
+    ["buyandsend", `10 USDC ARGUS to ${address}`, {kind:"buy_and_send",recipient:address}],
+    ["buyandburn", "10 USDC ARGUS", {kind:"buy_and_burn",token:"ARGUS"}],
+    ["wallet", "", {kind:"show_wallet"}],
+    ["balance", "USDC", {kind:"show_balance",token:"USDC"}],
+  ] as const)("parses /%s %s without AI", (name,args,expected) => expect(telegramWalletCommand(name,args)).toMatchObject(expected));
   it.each([
-    ["/buy", "buy"], ["/sell", "sell"], ["/fees", "claim_fees"],
-
-     ["guide:send", "send"],
-  ])("starts guided operation %s", (input, expected) => expect(telegramGuideOperation(input)).toBe(expected));
-
-  it("does not interpret arbitrary callback data as an operation", () => {
-    expect(telegramGuideOperation("confirm:untrusted-payload")).toBeNull();
+    ["buy", "10 ETH ARGUS"], ["buy", "10 USDC ARGUS then sell all"], ["buy", "-1 USDC ARGUS"],
+    ["sell", "101% ARGUS"], ["sell", "$all ARGUS"], ["send", "10 USDC to @alice"],
+    ["swap", "$10 ARGUS for TOKEN"], ["burn", "50% ARGUS"], ["send", "$10 ARGUS to " + address],
+    ["fees", "ARGUS"], ["wallet", "another person's wallet"],
+  ])("rejects unsupported or incomplete /%s %s", (name,args) => expect(telegramWalletCommand(name,args)).toBeNull());
+  it("has no retired feature buttons and every action button has a format", () => {
+    for (const button of TELEGRAM_MENU.inline_keyboard.flat()) expect(telegramInput(button.callback_data,true)).not.toBeNull();
+    expect(JSON.stringify(TELEGRAM_MENU)).not.toMatch(/fees|launch|base|otc|guide:/i);
+    for (const key of Object.keys(TELEGRAM_FORMATS)) expect(TELEGRAM_MENU.inline_keyboard.flat().some(b=>b.callback_data===`/${key}`)).toBe(true);
   });
-
-  it("accepts natural operation choices only while the root help menu is active", () => {
-    expect(telegramMenuGuideOperation("I want to buy", true)).toBe("buy");
-    expect(telegramMenuGuideOperation("please help me claim fees", true)).toBe("claim_fees");
-    expect(telegramMenuGuideOperation("I want to buy", false)).toBeNull();
-  });
-
-  it("requires wallet addresses for Telegram sends", () => {
-    expect(telegramRecipientAllowed({ kind: "send", amount: "1", unit: "eth", recipient: "@alice" })).toBe(false);
-    expect(telegramRecipientAllowed({ kind: "send", amount: "1", unit: "eth", recipient: "0x1111111111111111111111111111111111111111" })).toBe(true);
-    expect(telegramRecipientAllowed({ kind: "buy_and_send", amount: "5", unit: "usd", token: "ARCBOT", recipient: "@alice", slippageBps: 250 })).toBe(false);
-    expect(telegramRecipientAllowed({ kind: "buy", amount: "5", unit: "usd", token: "ARCBOT", slippageBps: 250 })).toBe(true);
-  });
-
-  it("accepts only the dedicated Telegram unlink controls", () => {
+  it("accepts only slash unlink and removes reply prompts from results", () => {
     expect(isTelegramUnlinkCommand("/unlink")).toBe(true);
-    expect(isTelegramUnlinkCommand("unlink TG")).toBe(true);
-    expect(isTelegramUnlinkCommand("UNLINK tg!")).toBe(true);
-    expect(isTelegramUnlinkCommand("please unlink TG")).toBe(false);
-    expect(isTelegramUnlinkCommand("unlink X")).toBe(false);
+    expect(isTelegramUnlinkCommand("unlink TG")).toBe(false);
+    expect(telegramResponse("Action needed: Fund it, then reply “resume”.")).toBe("Fund it, then submit the full /command again.");
+    expect(telegramResponse("Enter the contract address.")).toContain("full /command");
+  });
+});
+
+describe("Telegram update execution boundary", () => {
+  beforeEach(()=>{vi.stubEnv("TELEGRAM_BOT_TOKEN","offline"); vi.stubGlobal("fetch",vi.fn(async()=>new Response(JSON.stringify({ok:true}),{status:200})));});
+  afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
+  async function run(text:string,callback=false) {
+    const ctx={
+      runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegram:consumeRateLimit"?true:null),
+      runQuery:vi.fn(async()=>({valid:true,link:{_id:"link1",ownerXUserId:"99"}})),
+      runAction:vi.fn(async(_ref:Parameters<typeof getFunctionName>[0],_args:Record<string,unknown>)=>({ok:true,message:"Arc transaction confirmed."})),
+    };
+    const update=callback?{callback_query:{id:"cb",data:text,from:{id:1},message:{message_id:2,chat:{id:1,type:"private"}}}}:{message:{message_id:2,text,from:{id:1},chat:{id:1,type:"private"}}};
+    await (processUpdate as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{updateId:"42",updateJson:JSON.stringify(update)});
+    return ctx;
+  }
+  it.each(["buy 10 USDC ARGUS","resume","guide:buy","0x1111111111111111111111111111111111111111"])("never executes free text %s",async text=>{
+    const ctx=await run(text);expect(ctx.runAction).not.toHaveBeenCalled();expect(ctx.runQuery).not.toHaveBeenCalled();
+  });
+  it("buttons show formats without executing or creating conversation state",async()=>{
+    const ctx=await run("/buy",true);expect(ctx.runAction).not.toHaveBeenCalled();
+    expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("telegram:setConversation");
+    expect(vi.mocked(fetch).mock.calls.some(c=>String(c[1]?.body).includes("/buy 10 USDC ARGUS"))).toBe(true);
+  });
+  it("sends only a parsed Arc command through the authorized wallet path",async()=>{
+    const ctx=await run("/buy 10 USDC ARGUS");
+    const call=ctx.runAction.mock.calls.find(c=>getFunctionName(c[0])==="wallets:executeCommand");
+    expect(call?.[1]).toMatchObject({xUserId:"99",source:"telegram",telegramUpdateId:"42",parsedCommandJson:expect.stringContaining('"unit":"usd"')});
   });
 });

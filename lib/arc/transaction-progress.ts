@@ -10,7 +10,7 @@ export function transactionProgress(status:string,action:string){
   }
 }
 export async function readTransactionStatus(id:string):Promise<TransactionStatus>{
-  const response=await fetch(`/api/wallet/transaction?id=${encodeURIComponent(id)}`,{cache:"no-store",signal:AbortSignal.timeout(15000)});
+  const response=await fetch(`/api/wallet/transaction?id=${encodeURIComponent(id)}`,{cache:"no-store",signal:AbortSignal.timeout(45000)});
   if(!response.ok)throw new Error("Status could not refresh. Check transaction history before submitting again.");
   return response.json();
 }

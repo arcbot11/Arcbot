@@ -59,3 +59,5 @@ describe("automatic trade setup", () => {
     await expect(executeTradeFlow(quote(),calls)).rejects.toThrow("pending");expect(calls.preview).not.toHaveBeenCalled();
   });
 });
+
+it("keeps the original token quantity after approval to avoid USD repricing approval loops",async()=>{const calls=io();calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"swap",status:"completed"});calls.preview.mockResolvedValue(quote("swap"));await executeTradeFlow(quote("approve token",{amountIn:"123.456789012345678901"}),calls);expect(calls.preview).toHaveBeenCalledWith("123.456789012345678901");});

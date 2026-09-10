@@ -9,6 +9,6 @@ export function CreatorFeeReceiptRow({ receipt }: { receipt: TerminalFeeReceipt 
     <td>{token}</td>
     <td>Automatic</td><td>Confirmed</td>
     <td>{new Date(receipt.createdAt).toLocaleString()}</td>
-    <td><a href={`https://legacy-explorer.invalid/tx/${receipt.transactionHash}`} target="_blank" rel="noreferrer">View TXN </a></td>
+    <td><span title="Historical transaction">{receipt.transactionHash}</span></td>
   </tr>;
 }

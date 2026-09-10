@@ -3,7 +3,7 @@ import { v } from "convex/values";
 import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
-import { isGasResumePrompt } from "../lib/x-temporary-reply-policy";
+import { telegramResponse } from "../lib/telegram-commands";
 
 export const enqueue = internalMutation({ args: { requestId: v.string(), ownerXUserId: v.string(), telegramUserId: v.string(), telegramChatId: v.string(), telegramUpdateId: v.string() }, handler: async (ctx, a) => {
   const existing = await ctx.db.query("telegramWalletDeliveries").withIndex("by_request", q => q.eq("requestId", a.requestId)).unique();
@@ -51,9 +51,9 @@ export const deliver = internalAction({ args: { requestId: v.string() }, handler
       if (!result || !["confirmed", "rejected", "failed", "skipped"].includes(result.status)) return;
       text = result.finalMessage || result.safeError || "The request finished. Check your wallet activity for the result.";
       // Deferred results must not replace newer user conversations.
-      if (isGasResumePrompt(text)) text = text.replace(/reply\s+[“"]resume[”"]/i, "send the full request again");
 
     }
+    text = telegramResponse(text);
     if (suppressCreationReply(text)) { status = "cancelled"; return; }
     const delivered: boolean = await ctx.runAction(internal.telegram.deliverWalletMessage, { telegramUserId: row.telegramUserId, telegramChatId: row.telegramChatId,
       ownerXUserId: row.ownerXUserId, text, requestId: `telegram-result:${row.requestId}` });

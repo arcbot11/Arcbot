@@ -37,7 +37,6 @@ References show up to two source files. A name referenced by a script does not i
 | `OPENROUTER_TEXT_MODEL` | Keep / review | Nonsecret parsing configuration; not tied to the previous blockchain. Provider/model availability was not checked. | `convex/llm.ts` |
 | `OPENROUTER_STRUCTURED_OUTPUTS_ENABLED` | Keep / review | Nonsecret parsing configuration; not tied to the previous blockchain. Provider/model availability was not checked. | `convex/xWalletIntent.ts` |
 | `WALLET_FEATURE_PROMPTS_ENABLED` | Remove | No current application reader found. Do not assume these enforce transaction limits. | None in scanned application/scripts |
-| `ROBINHOOD_RPC_URL` | Remove | Old network endpoint. Referenced only by the API diagnostic; Arc uses ARC_MAINNET_RPC_URL. | `scripts/check-arc-apis.mjs` |
 | `X_CRYPTO_EXECUTION_ENABLED` | Keep false | Still controls the legacy chain 4663 executor. Enabling it does not enable Arc trading. | `convex/automatedFeeClaimInfo.ts`, `convex/wallets.ts` |
 | `WALLET_SIGNER_TOKEN` | Replace if used | Fresh Arc Bot service/idempotency secrets for the existing wallet signer and provisioning integration. Do not reuse inherited secrets. | `convex/automatedFeeEngine.ts`, `convex/wallets.ts` |
 | `WALLET_SIGNER_IDEMPOTENCY_SECRET` | Replace if used | Fresh Arc Bot service/idempotency secrets for the existing wallet signer and provisioning integration. Do not reuse inherited secrets. | `lib/wallet-signer/service.ts`, `scripts/check-wallet-signer.mjs` |

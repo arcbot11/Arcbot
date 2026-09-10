@@ -11,8 +11,17 @@ class RpcFailure extends Error {
   constructor(message: string, readonly code: number, readonly retryable: boolean, readonly data?: unknown) { super(message); }
 }
 
+const transports=new Map<string,ReturnType<typeof createArcTransport>>();
+export function clearArcTransportCache(){transports.clear();}
+export function arcTransport(config:ArcConfig){
+  const key=JSON.stringify(config,(_,value)=>typeof value==="bigint"?value.toString():value);
+  let transport=transports.get(key);
+  if(!transport){if(transports.size>=16)transports.delete(transports.keys().next().value!);transport=createArcTransport(config);transports.set(key,transport);}
+  return transport;
+}
+
 /** Validated read failover; a broadcast is attempted on exactly one provider. */
-export function arcTransport(config: ArcConfig) {
+function createArcTransport(config: ArcConfig) {
   const verifiedUntil = new Map<string, number>();
   const unavailableUntil = new Map<string, number>();
   const validating = new Map<string, Promise<void>>();

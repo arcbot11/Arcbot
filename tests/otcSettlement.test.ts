@@ -107,6 +107,19 @@ async function useSwap(){
   mocks.client.readContract=vi.fn(async({blockNumber}:{blockNumber:bigint})=>blockNumber===99n?0n:10n);
 }
 describe("Arc swap delivery",()=>{
+ it("requires buy-and-burn delivery to the dead address, not the owner",async()=>{
+   await useSwap();record.swapOutput!.recipient="0x000000000000000000000000000000000000dEaD";
+   await expect(advanceTransaction(record.id)).rejects.toThrow("Minimum swap output");
+   expect(mocks.command).not.toHaveBeenCalled();
+ });
+ it("verifies burn destination balance changes before completing",async()=>{
+   await useSwap();const dead="0x000000000000000000000000000000000000dEaD";
+   record.swapOutput!.recipient=dead;
+   receipt!.logs=[{address:seller,topics:encodeEventTopics({abi:transferAbi,eventName:"Transfer",args:{from:router,to:dead}}),data:encodeAbiParameters([{type:"uint256"}],[10n])}];
+   await advanceTransaction(record.id);
+   expect(mocks.client.readContract).toHaveBeenCalledWith(expect.objectContaining({functionName:"balanceOf",args:[dead]}));
+   expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));
+ });
  it("completes only when minimum output and real balance changes agree",async()=>{await useSwap();await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));});
  it("does not accept a successful receipt without output",async()=>{await useSwap();receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("Minimum swap output");expect(mocks.command).not.toHaveBeenCalled();});
  it("rejects output below the accepted minimum",async()=>{await useSwap();record.swapOutput!.minimum="11";await expect(advanceTransaction(record.id)).rejects.toThrow("Minimum swap output");});
@@ -139,4 +152,34 @@ describe("Base USDC settlement evidence",()=>{
  it("rejects mismatched allowance",async()=>{await useUsdc(true);mocks.client.readContract=vi.fn(async()=>1n);await expect(advanceTransaction(record.id)).rejects.toThrow("approval was not verified");});
  it("waits for approval finality",async()=>{await useUsdc(true);finalized=99n;await advanceTransaction(record.id);expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
  it("retains signed transactions when USDC reservations are missing",async()=>{await useUsdc();receipt=null;nonce=0;wallet.usdcHolds={};await expect(advanceTransaction(record.id)).rejects.toThrow("USDC reservation");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
+});
+
+describe("Arc USDC swap settlement",()=>{
+ async function usdcSwap(){
+   await useSwap();const usdc="0x3600000000000000000000000000000000000000",native="0xfffffffffffffffffffffffffffffffffffffffe";
+   record.swapOutput={token:usdc,minimum:"10"};
+   receipt={...receipt,from:account.address,gasUsed:100n,effectiveGasPrice:10n,logs:[...[[usdc,10n],[native,10n*10n**12n]].map(([address,value])=>({address,topics:encodeEventTopics({abi:transferAbi,eventName:"Transfer",args:{from:router,to:account.address}}),data:encodeAbiParameters([{type:"uint256"}],[value as bigint])}))]};
+   mocks.client.getBalance=vi.fn(async({blockNumber}:{blockNumber?:bigint})=>blockNumber===99n?10n**18n:blockNumber===100n?10n**18n+10n*10n**12n-1000n:10n**18n);
+   mocks.client.getBlock=vi.fn(async(args:{blockNumber?:bigint;blockTag?:string;includeTransactions?:boolean}={})=>({number:args.blockNumber??(args.blockTag==="finalized"?finalized:200n),hash,timestamp:BigInt(Math.floor(Date.now()/1000)),transactions:[{hash:record.hash,from:account.address}]}));
+ }
+ it("verifies native USDC output without any debug tracing",async()=>{
+   await usdcSwap();record.swapOutput={token:"0x0000000000000000000000000000000000000000",minimum:"10000000000000"};
+   await advanceTransaction(record.id,true);
+   expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));
+   expect(mocks.client.request).toBeUndefined();
+ });
+ it("settles USDC with actual gas reconciliation through receipt-only polling",async()=>{
+   await usdcSwap();await advanceTransaction(record.id,true);
+   expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));
+   expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();
+ });
+ it("retains the lock when the native balance cannot be reconciled",async()=>{
+   await usdcSwap();mocks.client.getBalance=vi.fn(async()=>10n**18n);
+   await expect(advanceTransaction(record.id,true)).rejects.toThrow("not verified");
+   expect(mocks.command).not.toHaveBeenCalled();
+ });
+ it("never rebroadcasts when a polling request cannot find the receipt",async()=>{
+   await usdcSwap();receipt=null;nonce=0;await advanceTransaction(record.id,true);
+   expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();expect(mocks.command).not.toHaveBeenCalled();
+ });
 });

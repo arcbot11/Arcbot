@@ -1,3 +1,5 @@
+import { arcPublicCommand, arcPublicSource } from "../lib/arc/public-policy";
+import { arcWalletUrl, arcCommandResponse } from "../lib/public-links";
 import { isXBotAuthor } from "../lib/x-bot-identity";
 import { retiredFeatureEnabled } from "../lib/retired-features";
 import { canIndexArcToken, CANONICAL_ARC_USDC, isArcUsdcSymbol } from "../lib/arc/token-catalog";
@@ -51,7 +53,6 @@ import {
   normalizedRpcAddress,
 } from "../lib/address-normalization";
 import { isTokenIndexExcluded } from "../lib/token-index-exclusions";
-import { parseExplorerHoldings } from "../lib/wallet-holdings";
 import { assertBuyTarget, NON_INDEXED_BUY_TARGET_MESSAGE } from "../lib/buy-target-policy";
 import { BURNED_TOKEN_CA_MESSAGE, burnedTokenMessage } from "../lib/burned-token-inquiry";
 import { AUTOMATED_FEE_PAIR_ROUTES } from "../lib/automated-fee-pair-routes";
@@ -85,9 +86,6 @@ const PREMIUM_DAILY_LIMIT = 1_000;
 const PROVISIONING_LEASE_MS = 2 * 60_000;
 const MAX_RECONCILIATION_ATTEMPTS = 20;
 const DEAD_ADDRESS = "0x000000000000000000000000000000000000dEaD";
-const LEGACY_NETWORK_EXPLORER_TX_BASE = "https://legacy-explorer.invalid/tx";
-const LEGACY_NETWORK_EXPLORER_ADDRESS_BASE =
-  "https://legacy-explorer.invalid/address";
 const CLAIM_WORKFLOW_CONTINUATION = "claim workflow continuation required";
 
 type SignerWallet = { walletRef: string; address: string };
@@ -163,16 +161,16 @@ function safeAddress(value: string) {
 }
 
 function transactionUrl(transactionHash: string) {
-  return `${LEGACY_NETWORK_EXPLORER_TX_BASE}/${transactionHash}`;
+  // Retired engine hashes must not be presented as Arc transactions.
+  return transactionHash;
 }
 
 function addressUrl(address: string) {
-  return `${LEGACY_NETWORK_EXPLORER_ADDRESS_BASE}/${address}`;
+  return `https://www.arcexplorer.org/address/${address}`;
 }
 
 function argusBotTokenUrl(address: string) {
-  const site = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/$/, "");
-  return `${site || "https://arcbot.invalid"}/launch/${address}`;
+  return `https://www.arcchainbot.io/guide?token=${encodeURIComponent(address)}`;
 }
 
 function destinationLabel(recipient: string) {
@@ -1514,34 +1512,18 @@ async function discoverHeldTokenByTicker(
 ) {
   const symbol = identifier.replace(/^\$/, "").trim().toUpperCase();
   if (!tokenPattern(/^[A-Z0-9]{1,32}$/).test(symbol)) return undefined;
-  const base = `https://legacy-explorer.invalid/api/v2/addresses/${wallet.address}/tokens`;
-  let next: Record<string, string> | undefined;
   const candidates = new Set<string>();
-  // This fallback runs only after the local wallet/index lookup misses. Keep
-  // it bounded so a token-spam wallet cannot create unbounded explorer reads.
-  for (let page = 0; page < 4; page += 1) {
-    const params = new URLSearchParams({ type: "ERC-20", ...(next || {}) });
-    const response = await fetch(`${base}?${params}`, {
-      signal: AbortSignal.timeout(8_000),
-    }).catch(() => undefined);
-    if (!response?.ok) break;
-    const payload = await response.json().catch(() => undefined) as Record<string, unknown> | undefined;
-    const parsed = parseExplorerHoldings(payload);
-    for (const holding of parsed.holdings) {
-      if (holding.symbol.toUpperCase() === symbol && holding.address
-        && !isTokenIndexExcluded(holding.address)) candidates.add(holding.address);
-    }
-    const rawNext = payload?.next_page_params;
-    if (!rawNext || typeof rawNext !== "object" || Array.isArray(rawNext)) break;
-    next = Object.fromEntries(Object.entries(rawNext as Record<string, unknown>)
-      .filter((entry): entry is [string, string | number] => typeof entry[1] === "string" || typeof entry[1] === "number")
-      .map(([key, value]) => [key, String(value)]));
-    if (!Object.keys(next).length) break;
+  const response = await fetch(`https://www.arcexplorer.org/api/v1/addresses/${wallet.address}/tokens`, { signal: AbortSignal.timeout(8000) }).catch(() => undefined);
+  const payload = response?.ok ? await response.json().catch(() => undefined) : undefined;
+  if (Array.isArray(payload?.items)) for (const item of payload.items.slice(0, 200)) {
+    if (typeof item.address === "string" && /^0x[0-9a-f]{40}$/i.test(item.address)
+      && typeof item.symbol === "string" && item.symbol.toUpperCase() === symbol
+      && !isTokenIndexExcluded(item.address) && canIndexArcToken(item.address, item.symbol)) candidates.add(item.address);
   }
   const verified: Array<{ address: string; symbol: string }> = [];
   for (const address of candidates) {
     const balance = await signerRequest<{ raw?: string; symbol?: string }>("/v1/wallets/balance", {
-      chainId: LEGACY_NETWORK_CHAIN_ID,
+      chainId: WALLET_HOME_CHAIN_ID,
       walletRef: wallet.signerWalletRef,
       expectedAddress: wallet.address,
       ownerReference: `x:${xUserId}`,
@@ -3102,7 +3084,7 @@ async function reconstructConfirmedMessage(
       const balance = await signerRequest<{ symbol?: string }>(
         "/v1/wallets/balance",
         {
-          chainId: LEGACY_NETWORK_CHAIN_ID,
+          chainId: WALLET_HOME_CHAIN_ID,
           walletRef: wallet.signerWalletRef,
           expectedAddress: wallet.address,
           ownerReference: `x:${request.ownerXUserId}`,
@@ -3218,10 +3200,9 @@ async function prepareAndPersistLaunch(
   if (
     !/^0x[a-fA-F0-9]{64}$/.test(prediction.preparedSalt) ||
     !safeAddress(prediction.predictedTokenAddress) ||
-    !safeAddress(prediction.predictedCurveAddress) ||
-    !prediction.predictedTokenAddress.toLowerCase().endsWith("b07")
+    !safeAddress(prediction.predictedCurveAddress)
   )
-    throw new Error("signer returned an invalid b07 launch prediction");
+    throw new Error("signer returned an invalid launch prediction");
   await ctx.runMutation(internal.wallets.persistLaunchPrediction, {
     requestId,
     preparedLaunchSalt: prediction.preparedSalt,
@@ -3232,10 +3213,7 @@ async function prepareAndPersistLaunch(
 }
 
 function walletPageUrl(address: string, requestId?: string) {
-  const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  return site
-    ? `${site}/wallet/${address}${requestId ? `?request=${encodeURIComponent(requestId)}` : ""}`
-    : addressUrl(address);
+  return arcWalletUrl(address, requestId);
 }
 
 function formatBufferedGasEstimate(valueWei: string) {
@@ -3458,7 +3436,7 @@ export const verifyTokenTickerContract = internalAction({
     if (!safeAddress(tokenAddress) || !tokenPattern(/^[A-Za-z][A-Za-z0-9]{0,31}$/).test(ticker))
       return { matches: false, symbol: null };
     const metadata = await signerRequest<{ symbol?: string }>("/v1/tokens/metadata", {
-      chainId: LEGACY_NETWORK_CHAIN_ID,
+      chainId: WALLET_HOME_CHAIN_ID,
       token: normalizedRpcAddress(tokenAddress),
     });
     const symbol = typeof metadata.symbol === "string" ? metadata.symbol.trim() : "";
@@ -3682,6 +3660,8 @@ export const executeCommand = internalAction({
       : null;
     let command = structured || parseWalletCommand(args.text);
     if (disabledCreationKind(command.kind)) return { ok: false, message: "Command not supported." };
+    if (!arcPublicSource(args.source)) return { ok: false, message: "Use the wallet page controls." };
+    if (!arcPublicCommand(command.kind) && command.kind !== "unknown") return { ok: false, message: "Command not supported. Use wallet, balance, buy, sell, swap, send or burn." };
     if (command.kind === "unknown")
       return { ok: false, message: command.reason };
     if ((command.kind === "reassign_fees" || command.kind === "upgrade_fees") && (args.source === "terminal" || args.source === "telegram")) {
@@ -3773,7 +3753,7 @@ export const executeCommand = internalAction({
           const identity = await ctx.runAction(internal.wallets.verifyTokenTickerContract, { ticker: command.expectedTicker, tokenAddress: token });
           if (!identity.matches) throw new Error(`TOKEN_CONTRACT_TICKER_MISMATCH:${command.expectedTicker}`);
         }
-        const result = await signerRequest<{ raw: string; decimals: number; symbol?: string; totalSupplyRaw: string; usdValue?: number }>("/v1/tokens/burned", { chainId: LEGACY_NETWORK_CHAIN_ID, token });
+        const result = await signerRequest<{ raw: string; decimals: number; symbol?: string; totalSupplyRaw: string; usdValue?: number }>("/v1/tokens/burned", { chainId: WALLET_HOME_CHAIN_ID, token });
         if (args.source === "terminal" || args.source === "telegram")
           await ctx.runMutation(internal.burnedLookups.save, { owner: args.xUserId, source: args.source, scope: args.terminalSessionId });
         return { ok: true, message: burnedTokenMessage(token, result) };
@@ -3789,6 +3769,10 @@ export const executeCommand = internalAction({
       }
     }
     if (command.kind === "create_wallet" || command.kind === "show_wallet") {
+      if (args.source === "telegram" || (args.source ?? "x") === "x") return {
+        ok: true,
+        message: `Your Arc Bot wallet\nArc mainnet (5042)\n${wallet.address}\n\n${walletPageUrl(wallet.address, args.sourcePostId)}\n\nFund with Arc USDC. Keep USDC for gas.`,
+      };
       return {
         ok: true,
         message: `Your Arc Bot wallet is ready.
@@ -3798,6 +3782,13 @@ Tap the link above to view holdings.`,
     }
     if (command.kind === "show_balance") {
       try {
+        if (args.source === "telegram" || (args.source ?? "x") === "x") {
+          const balance = await signerRequest<{ display: string }>("/v1/wallets/balance", {
+            chainId: WALLET_HOME_CHAIN_ID, walletRef: wallet.signerWalletRef, expectedAddress: wallet.address,
+            ownerReference: `x:${args.xUserId}`, ...(command.token ? { token: command.token } : {}),
+          }, 60_000);
+          return { ok: true, message: `Arc balances\n${balance.display}\n\nYour wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}` };
+        }
         await ctx.runMutation(internal.registry.ensureInitialized, {});
         const knownTokens = command.token
           ? undefined
@@ -3815,7 +3806,7 @@ Tap the link above to view holdings.`,
           display: string;
           symbol?: string;
         }>("/v1/wallets/balance", {
-          chainId: LEGACY_NETWORK_CHAIN_ID,
+          chainId: WALLET_HOME_CHAIN_ID,
           walletRef: wallet.signerWalletRef,
           expectedAddress: wallet.address,
           ownerReference: `x:${args.xUserId}`,
@@ -3877,6 +3868,11 @@ Your wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`,
         ok: false,
         message: "Failed: That action is available through terminal chat only.",
       };
+    }
+    if((source==="x"||source==="telegram")&&(command.kind==="send"||command.kind==="buy_and_send")){
+      const destination=safeAddress(command.recipient)?command.recipient:args.recipientAddress;
+      if(!destination||!safeAddress(destination))return {ok:false,message:"Recipient wallet could not be resolved. Use an X handle or wallet address."};
+      command={...command,recipient:destination};
     }
     const requestId =
       args.requestId || `x:${args.sourcePostId}:${command.kind}`;
@@ -4223,7 +4219,7 @@ Transaction: ${transactionUrl(prior.transactionHash)}`
         const tokenInfo =
           commandToken && safeAddress(commandToken)
             ? await signerRequest<{ symbol?: string }>("/v1/wallets/balance", {
-                chainId: LEGACY_NETWORK_CHAIN_ID,
+                chainId: WALLET_HOME_CHAIN_ID,
                 walletRef: wallet.signerWalletRef,
                 expectedAddress: wallet.address,
                 ownerReference: `x:${args.xUserId}`,
@@ -4580,7 +4576,7 @@ ${resultBlocks}\n\nTransactions\n\n${transactionLinks}${warning}`;
           if (upgrade.alreadyEnrolled) {
             throw new Error("this launch already uses automated fee processing");
           }
-          let program = await ctx.runQuery(
+          const program = await ctx.runQuery(
             internal.automatedFeeEngine.enrollmentProgramStatus,
             { programId: upgrade.programId },
           );
@@ -5511,7 +5507,7 @@ Burn TXN: ${transactionUrl(burned.transactionHash)}${warning}`;
               transactionHash: burned.transactionHash,
               message,
             };
-          } catch (error) {
+          } catch {
             throw new Error(
               `The buy completed, but the burn did not. Check the burn transaction status before trying again. Buy TXN: ${transactionUrl(buy.transactionHash)}${purchasedForBurn ? `
 If no burn was confirmed, submit “burn ${purchasedForBurn} ${commandToken}” to burn only the purchased amount.` : "Check your wallet activity before submitting a separate burn request."}`,
@@ -6599,6 +6595,7 @@ export const executeTerminalCommand = action({
     commandJson: v.optional(v.string()),
   },
   handler: async (ctx, args): Promise<CommandResult> => {
+    if (!retiredFeatureEnabled()) throw new Error("Use the wallet page controls.");
     if (
       !process.env.WEB_AUTH_SECRET ||
       args.secret !== process.env.WEB_AUTH_SECRET
@@ -7035,13 +7032,16 @@ export const continueArcCommand=internalAction({args:{requestId:v.string(),attem
   if(!secret)return {ok:false,message:"Arc service authentication is not configured."};
   const request=await ctx.runQuery(internal.wallets.getWalletRequest,{requestId:args.requestId});
   if(!request)return {ok:false,message:"Request not found."};
-  if(["confirmed","failed","rejected"].includes(request.status))return {ok:request.status==="confirmed",message:request.finalMessage??"Check wallet history."};
+  const walletContext = await ctx.runQuery(internal.wallets.getXUserAndWallet, { xUserId: request.ownerXUserId });
+  const responseMessage = (message: string, hash?: string) => walletContext?.wallet?.address ? arcCommandResponse(message, walletContext.wallet.address, hash) : message;
+  if(["confirmed","failed","rejected"].includes(request.status))return {ok:request.status==="confirmed",message:responseMessage(request.finalMessage??"Check wallet history.", request.transactionHash)};
   let result:{ok?:boolean;pending?:boolean;message:string;hash?:string};
   try{
     const response=await fetch("https://www.arcchainbot.io/api/arc/command",{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:args.requestId}),signal:AbortSignal.timeout(110000)});
     if(!response.ok)throw new Error("Arc command service unavailable.");
     result=await response.json();
   }catch{result={pending:true,message:"Arc request is waiting for verification. Check wallet history."};}
+  result.message = responseMessage(result.message, result.hash);
   if(result.pending){
     if((args.attempt??0)<60)await ctx.scheduler.runAfter(20_000,internal.wallets.continueArcCommand,{requestId:args.requestId,attempt:(args.attempt??0)+1});
     return {ok:false,pending:true,message:result.message,...(result.hash?{transactionHash:result.hash}:{})};
@@ -7101,7 +7101,7 @@ async function exactTokenBalance(
     raw?: string;
     decimals?: number;
   }>("/v1/wallets/balance", {
-    chainId: LEGACY_NETWORK_CHAIN_ID,
+    chainId: WALLET_HOME_CHAIN_ID,
     walletRef: wallet.signerWalletRef,
     expectedAddress: wallet.address,
     ownerReference: `x:${xUserId}`,

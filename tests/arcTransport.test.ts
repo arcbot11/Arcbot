@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { createPublicClient } from "viem";
 import { arcConfig } from "../lib/arc/config";
-import { arcTransport } from "../lib/arc/transport";
+import { arcTransport, clearArcTransportCache } from "../lib/arc/transport";
 
 const hash = `0x${"ab".repeat(32)}`;
 const primary = "https://primary.example", secondary = "https://secondary.example", readOnly = "https://read.example";
@@ -17,7 +17,7 @@ function fixture(handle: (url: string, method: string) => any) {
   const client = createPublicClient({ transport: arcTransport(config) });
   return { calls, client };
 }
-afterEach(() => { vi.unstubAllGlobals(); vi.restoreAllMocks(); });
+afterEach(() => { clearArcTransportCache(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 describe("Arc RPC failover", () => {
   it("shares provider validation across concurrent reads", async () => {
     const f = fixture(() => undefined);
@@ -90,3 +90,5 @@ describe("Arc RPC failover", () => {
     expect(f.calls.filter(c => c.method === "eth_call")).toHaveLength(1);
   });
 });
+
+it("shares validated transports across clients with identical configuration",()=>{expect(arcTransport(config)).toBe(arcTransport({...config}));});

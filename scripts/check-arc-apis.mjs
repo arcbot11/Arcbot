@@ -41,13 +41,6 @@ const jobs = [
     const r = await get("https://admin-api.alchemy.com/v1/usage/summary", { headers: { authorization: `Bearer ${required("ALCHEMY_ADMIN_API_ACCESS_KEY")}` } });
     return { ok: r.status === 200, status: r.status, arcMainnetVerified: false, note: "Account API success does not establish chain-5042 RPC access" };
   }],
-  ["Configured inherited RPC", async () => {
-    const url = process.env.LEGACY_NETWORK_RPC_URL || process.env.ROBINHOOD_RPC_URL;
-    if (!url) return { ok: false, note: "No inherited RPC configured" };
-    const r = await rpc(url, "eth_chainId");
-    const chainId = r.body?.result ? Number(BigInt(r.body.result)) : null;
-    return { ok: chainId === 5042, status: r.status, chainId, note: "Diagnostic only; never installed as an Arc fallback" };
-  }],
   ["Coinbase CDP", async () => {
     const cdp = new CdpClient({ apiKeyId: required("CDP_API_KEY_ID"), apiKeySecret: required("CDP_API_KEY_SECRET"), walletSecret: required("CDP_WALLET_SECRET") });
     const page = await cdp.evm.listAccounts({ pageSize: 1 });

@@ -229,3 +229,5 @@ button:hover:not(:disabled),.button:hover{filter:brightness(.96)}
 .wallet-transaction-details > div { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .wallet-transaction-details dt { color: var(--muted); min-width: 110px; }
 .wallet-transaction-details dd { margin: 0; overflow-wrap: anywhere; }
+
+.arc-sell-percentages button[aria-pressed="true"] { background: rgba(150, 193, 222, .24); border-color: #96c1de; }

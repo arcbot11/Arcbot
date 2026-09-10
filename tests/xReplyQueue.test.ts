@@ -136,24 +136,6 @@ describe("unverified daily reply budget", () => {
     await source(ctx, "next-day", "buy", { authorXUserId: "limited", authorVerified: false });
     expect((await invoke(queue.enqueue, ctx, { key: "next-day", postId: "next-day", kind: "reply", text: "Result" })).status).toBe("queued");
   });
-  it("allows an owned workflow to finish, but not siblings or another task after completion", async () => {
-    const ctx = fixture();
-    await ctx.db.insert("xUnverifiedReplyDays", { xUserId: "limited", day: "2026-08-31", count: 9 });
-    const first = await source(ctx, "step1", "guided_help:launch", { authorXUserId: "limited", authorVerified: false });
-    await invoke(queue.enqueue, ctx, { key: "step1", postId: "step1", kind: "guided_reply", text: "Provide a ticker." });
-    await ctx.db.patch(first, { responsePostId: "bot1" });
-    const second = await source(ctx, "step2", "guided_help:launch", { authorXUserId: "limited", authorVerified: false, parentPostId: "bot1" });
-    expect((await invoke(queue.enqueue, ctx, { key: "step2", postId: "step2", kind: "guided_reply", text: "Confirm to launch." })).status).toBe("queued");
-    await ctx.db.patch(second, { responsePostId: "bot2" });
-    await source(ctx, "sibling", "guided_help:launch", { authorXUserId: "limited", authorVerified: false, parentPostId: "bot1" });
-    expect((await invoke(queue.enqueue, ctx, { key: "sibling", postId: "sibling", kind: "guided_reply", text: "Confirm." })).status).toBe("cancelled");
-    const final = await source(ctx, "step3", "guided_help:root", { authorXUserId: "limited", authorVerified: false, parentPostId: "bot2" });
-    expect((await invoke(queue.enqueue, ctx, { key: "step3", postId: "step3", kind: "guided_execution", text: "Confirmed: Launched!\n\nAnything else?" })).status).toBe("queued");
-    await ctx.db.patch(final, { responsePostId: "bot3" });
-    await source(ctx, "new-task", "guided_help:buy", { authorXUserId: "limited", authorVerified: false, parentPostId: "bot3" });
-    expect((await invoke(queue.enqueue, ctx, { key: "new-task", postId: "new-task", kind: "guided_reply", text: "What token?" })).status).toBe("cancelled");
-    expect(ctx.rows.xUnverifiedReplyDays[0].count).toBe(12);
-  });
   it.each(["expired", "wrong-owner"])("does not extend a %s chain", async scenario => {
     const ctx = fixture();
     await ctx.db.insert("xUnverifiedReplyDays", { xUserId: "limited", day: "2026-08-31", count: 10,
@@ -221,212 +203,6 @@ describe("priority categories", () => {
     ["🟢 What would you like to buy?", "guided_help:buy", "B"],
     ["Confirmed: Bought 10 TEST!\n\nAnything else?", "guided_execution", "A"],
   ])("%s -> %s/%s", (text, kind, expected) => expect(replyQueuePriority(text, kind)).toBe(expected));
-});
-
-describe("guided help thread ownership", () => {
-  it("limits one owner's workflow to 20 continuations in 15 minutes", async () => {
-    const ctx = fixture();
-    for (let index = 0; index < 20; index += 1)
-      expect(await invoke(replies.admitWorkflowContinuation, ctx, { ownerXUserId: "101", postId: `step-${index}` }))
-        .toMatchObject({ allowed: true, notify: false });
-    expect(await invoke(replies.admitWorkflowContinuation, ctx, { ownerXUserId: "101", postId: "step-20" }))
-      .toMatchObject({ allowed: false, notify: true });
-    expect(await invoke(replies.admitWorkflowContinuation, ctx, { ownerXUserId: "101", postId: "step-21" }))
-      .toMatchObject({ allowed: false, notify: false });
-    expect(await invoke(replies.admitWorkflowContinuation, ctx, { ownerXUserId: "202", postId: "other" }))
-      .toMatchObject({ allowed: true, notify: false });
-  });
-  it("recognizes only the original author's direct reply to an insufficient-ETH notice", async () => {
-    const ctx = fixture();
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "failed-buy", authorXUserId: "101", text: "buy $20 of TEST",
-      commandKind: "buy", responsePostId: "bot-gas-reply",
-      safeError: "⛽ This wallet needs a little more ETH for gas. Top it up, then reply with the request again!",
-      status: "rejected", createdAt: Date.now(), updatedAt: Date.now(),
-    });
-    expect(await invoke(replies.insufficientEthReplyContext, ctx, { ownerXUserId: "101", parentPostId: "bot-gas-reply" })).toBe(true);
-    expect(await invoke(replies.insufficientEthReplyContext, ctx, { ownerXUserId: "202", parentPostId: "bot-gas-reply" })).toBe(false);
-    expect(await invoke(replies.insufficientEthReplyContext, ctx, { ownerXUserId: "101", parentPostId: "unrelated" })).toBe(false);
-  });
-
-  it("carries the exact failed command into an owner-bound resume reply", async () => {
-    const ctx = fixture();
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "failed-swap", authorXUserId: "101",
-      text: "no", commandKind: "guided_help",
-      responsePostId: "bot-gas-swap",
-      safeError: "⛽ You'll need to fund your wallet with ETH for gas to complete this cross-chain swap. Fund it, then reply “resume”.",
-      guidedHelpStateJson: JSON.stringify({
-        type: "gas_resume",
-        sourceText: "send $25 to 0x1111111111111111111111111111111111111111 as ETH on Base",
-        explicitMentionAuthorized: true,
-      }),
-      status: "rejected", createdAt: Date.now(), updatedAt: Date.now(),
-    });
-    expect(await invoke(replies.insufficientEthResumeContext, ctx, {
-      ownerXUserId: "101", parentPostId: "bot-gas-swap",
-    })).toMatchObject({
-      resumable: true,
-      sourceText: "send $25 to 0x1111111111111111111111111111111111111111 as ETH on Base",
-      explicitMentionAuthorized: true,
-    });
-    expect(await invoke(replies.insufficientEthResumeContext, ctx, {
-      ownerXUserId: "202", parentPostId: "bot-gas-swap",
-    })).toBeNull();
-  });
-
-  it("recognizes a simulated launch-cost prompt and reserves only the owner's resume", async () => {
-    const ctx = fixture();
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "launch-triple", authorXUserId: "101", text: "@ArcBot launch token TripleT ticker should be $TripleT",
-      responsePostId: "simulated-gas-reply",
-      safeError: "⛽ Simulated gas and Argus launch fee for this transaction is 0.00184692 ETH. Fund your wallet, then reply “resume”.",
-      status: "rejected", createdAt: Date.now(), updatedAt: Date.now(),
-    });
-    expect(await invoke(replies.insufficientEthResumeContext, ctx, { ownerXUserId: "101", parentPostId: "simulated-gas-reply" })).toMatchObject({ resumable: true });
-    expect(await invoke(replies.insufficientEthResumeContext, ctx, { ownerXUserId: "202", parentPostId: "simulated-gas-reply" })).toBeNull();
-    expect(await invoke(replies.claimInsufficientEthResume, ctx, { ownerXUserId: "101", parentPostId: "simulated-gas-reply", consumerPostId: "resume-1" })).toBe(true);
-    expect(await invoke(replies.claimInsufficientEthResume, ctx, { ownerXUserId: "101", parentPostId: "simulated-gas-reply", consumerPostId: "resume-2" })).toBe(false);
-  });
-
-  it("expires gas resumes after ten minutes", async () => {
-    const ctx = fixture();
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "old-buy", authorXUserId: "101", text: "buy $20 of TEST", commandKind: "buy",
-      responsePostId: "old-gas-reply", safeError: "⛽ You'll need to fund your wallet with ETH for gas to buy. Fund it, then reply “resume”.",
-      guidedHelpStateJson: JSON.stringify({ type: "gas_resume", sourceText: "buy $20 of TEST", explicitMentionAuthorized: true }),
-      status: "rejected", createdAt: Date.now() - 11 * 60_000, updatedAt: Date.now() - 11 * 60_000,
-    });
-    expect(await invoke(replies.insufficientEthResumeContext, ctx, {
-      ownerXUserId: "101", parentPostId: "old-gas-reply",
-    })).toBeNull();
-    expect(await invoke(replies.expiredWorkflowResumeContext, ctx, {
-      ownerXUserId: "101", parentPostId: "old-gas-reply",
-    })).toBe(true);
-    expect(await invoke(replies.expiredWorkflowResumeContext, ctx, {
-      ownerXUserId: "202", parentPostId: "old-gas-reply",
-    })).toBe(false);
-    expect(await invoke(replies.claimInsufficientEthResume, ctx, {
-      ownerXUserId: "101", parentPostId: "old-gas-reply", consumerPostId: "resume-one",
-    })).toBe(false);
-  });
-
-  it("allows one idempotent resume post and rejects sibling or foreign posts", async () => {
-    const ctx = fixture();
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "failed-buy", authorXUserId: "101", text: "buy $20 of TEST", commandKind: "buy",
-      responsePostId: "gas-reply", safeError: "⛽ You'll need to fund your wallet with ETH for gas to buy. Fund it, then reply “resume”.",
-      guidedHelpStateJson: JSON.stringify({ type: "gas_resume", sourceText: "buy $20 of TEST", explicitMentionAuthorized: true }),
-      status: "rejected", createdAt: Date.now(), updatedAt: Date.now(),
-    });
-    const first = { ownerXUserId: "101", parentPostId: "gas-reply", consumerPostId: "resume-one" };
-    expect(await invoke(replies.claimInsufficientEthResume, ctx, first)).toBe(true);
-    expect(await invoke(replies.claimInsufficientEthResume, ctx, first)).toBe(true);
-    expect(await invoke(replies.claimInsufficientEthResume, ctx, { ...first, consumerPostId: "resume-two" })).toBe(false);
-    expect(await invoke(replies.claimInsufficientEthResume, ctx, { ...first, ownerXUserId: "202", consumerPostId: "foreign" })).toBe(false);
-    expect(await invoke(replies.insufficientEthResumeContext, ctx, {
-      ownerXUserId: "101", parentPostId: "gas-reply",
-    })).toBeNull();
-  });
-
-  it("reopens guided help after a queued successful completion is published", async () => {
-    const ctx = fixture();
-    await source(ctx, "guided-success", "guided_help_pending:legacy_swap");
-    await invoke(queue.enqueue, ctx, {
-      key: "guided-final",
-      postId: "guided-success",
-      kind: "legacy_swap_final",
-      ok: true,
-      allowLong: true,
-      text: "Confirmed: Swap complete!\n\nAnything else?",
-    });
-    const picked = await take(ctx);
-    await done(ctx, picked, { responsePostId: "guided-success-reply" });
-    expect(ctx.rows.xReplyInteractions[0].commandKind).toBe("guided_help");
-    expect(await invoke(replies.guidedHelpContext, ctx, {
-      ownerXUserId: "guided-success",
-      parentPostId: "guided-success-reply",
-    })).toMatchObject({ operation: "root", allowed: true });
-  });
-
-  it("recognizes only the original author's fresh reply chain", async () => {
-    const ctx = fixture();
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "help-source", authorXUserId: "101", text: "what can you do",
-      commandKind: "guided_help:buy", responsePostId: "bot-help-reply",
-      status: "completed", createdAt: Date.now(), updatedAt: Date.now(),
-    });
-    expect(await invoke(replies.guidedHelpContext, ctx, { ownerXUserId: "101", parentPostId: "bot-help-reply" }))
-      .toEqual({ operation: "buy", owner: "101", allowed: true, sourceText: "what can you do", sourceExplicitMention: false });
-    expect(await invoke(replies.guidedHelpContext, ctx, { ownerXUserId: "202", parentPostId: "bot-help-reply" }))
-      .toEqual({ operation: "buy", owner: "101", allowed: false, sourceText: "what can you do", sourceExplicitMention: false });
-  });
-
-  it.each([
-    "@ArcBot how do I launch?",
-    "@ArcBot how do I launch",
-  ])("treats a persisted launch how-to response as an owner-bound guided entry point: %s", async text => {
-    const ctx = fixture();
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "launch-help-source", authorXUserId: "101", text,
-      parsedIntentJson: JSON.stringify({ kind: "help", topic: "launch" }),
-      responsePostId: "bot-launch-help-reply", status: "completed",
-      createdAt: Date.now(), updatedAt: Date.now(),
-    });
-    expect(await invoke(replies.guidedHelpContext, ctx, {
-      ownerXUserId: "101", parentPostId: "bot-launch-help-reply",
-    })).toMatchObject({ operation: "root", owner: "101", allowed: true, sourceExplicitMention: true });
-    expect(await invoke(replies.guidedHelpContext, ctx, {
-      ownerXUserId: "202", parentPostId: "bot-launch-help-reply",
-    })).toMatchObject({ operation: "root", owner: "101", allowed: false });
-  });
-
-  it("carries an owner-bound guided launch draft only through its published prompt", async () => {
-    const ctx = fixture();
-    const guidedHelpStateJson = JSON.stringify({ version: 1, phase: "ticker", explicitMentionAuthorized: true, draft: { name: "Green Harbor" } });
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "launch-name", authorXUserId: "101", text: "Green Harbor",
-      commandKind: "guided_help:launch", guidedHelpStateJson,
-      responsePostId: "launch-ticker-prompt", status: "completed",
-      createdAt: Date.now(), updatedAt: Date.now(),
-    });
-    expect(await invoke(replies.guidedHelpContext, ctx, { ownerXUserId: "101", parentPostId: "launch-ticker-prompt" }))
-      .toMatchObject({ operation: "launch", allowed: true, guidedHelpStateJson });
-    expect(await invoke(replies.guidedHelpContext, ctx, { ownerXUserId: "202", parentPostId: "launch-ticker-prompt" }))
-      .toMatchObject({ operation: "launch", allowed: false, guidedHelpStateJson });
-    expect(await invoke(replies.guidedHelpContext, ctx, { ownerXUserId: "101", parentPostId: "unrelated" })).toBeNull();
-  });
-
-  it("allows one idempotent owner reply per guided launch prompt", async () => {
-    const ctx = fixture();
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "launch-name", authorXUserId: "101", text: "Green Harbor",
-      commandKind: "guided_help:launch", guidedHelpStateJson: JSON.stringify({ version: 1, phase: "ticker", explicitMentionAuthorized: true, draft: { name: "Green Harbor" } }),
-      responsePostId: "launch-ticker-prompt", status: "completed",
-      createdAt: Date.now(), updatedAt: Date.now(),
-    });
-    const args = { ownerXUserId: "101", parentPostId: "launch-ticker-prompt", consumerPostId: "answer-one" };
-    expect(await invoke(replies.claimGuidedLaunchStep, ctx, args)).toBe(true);
-    expect(await invoke(replies.claimGuidedLaunchStep, ctx, args)).toBe(true);
-    expect(await invoke(replies.claimGuidedLaunchStep, ctx, { ...args, consumerPostId: "answer-two" })).toBe(false);
-    expect(await invoke(replies.claimGuidedLaunchStep, ctx, { ...args, ownerXUserId: "202", consumerPostId: "foreign" })).toBe(false);
-  });
-
-  it("does not revive expired or cancelled guidance", async () => {
-    const ctx = fixture();
-    const stale = await ctx.db.insert("xReplyInteractions", {
-      postId: "stale", authorXUserId: "101", text: "buy", commandKind: "guided_help:buy",
-      responsePostId: "stale-reply", status: "completed",
-      createdAt: Date.now() - 11 * 60_000, updatedAt: Date.now() - 11 * 60_000,
-    });
-    await ctx.db.insert("xReplyInteractions", {
-      postId: "cancelled", authorXUserId: "101", text: "cancel", commandKind: "guided_help:cancelled",
-      responsePostId: "cancelled-reply", status: "completed", createdAt: Date.now(), updatedAt: Date.now(),
-    });
-    expect(await invoke(replies.guidedHelpContext, ctx, { ownerXUserId: "101", parentPostId: "stale-reply" })).toBeNull();
-    expect(await invoke(replies.guidedHelpContext, ctx, { ownerXUserId: "101", parentPostId: "cancelled-reply" })).toBeNull();
-    expect(await ctx.db.get(stale)).toBeTruthy();
-  });
 });
 
 describe("pacing math", () => {
@@ -508,16 +284,6 @@ describe("pacing math", () => {
 });
 
 describe("durable queue", () => {
-  it("binds later guided prompts to the exempt B queue and successful confirmations to A", async () => {
-    const ctx = fixture();
-    await source(ctx, "guided-prompt", "guided_help:buy", { parentPostId: "prior-reply" });
-    await invoke(queue.enqueue, ctx, { key: "guided-prompt", postId: "guided-prompt", kind: "reply", ok: true, text: "🟢 What would you like to buy?" });
-    expect(row(ctx, "guided-prompt")).toMatchObject({ kind: "guided_reply", priority: "B" });
-    await source(ctx, "guided-success-a", "guided_help", { parentPostId: "prior-reply-2" });
-    await invoke(queue.enqueue, ctx, { key: "guided-success-a", postId: "guided-success-a", kind: "guided_execution", ok: true, text: "Confirmed: Bought 10 TEST!\n\nAnything else?" });
-    expect(row(ctx, "guided-success-a")).toMatchObject({ kind: "guided_execution", priority: "A", expiresAt: undefined });
-  });
-
   it("exempts only a same-owner reply to a prior bot response as a thread continuation", async () => {
     const ctx = fixture();
     await source(ctx, "root-request", "buy", { authorXUserId: "owner", responsePostId: "bot-response" });
@@ -534,16 +300,6 @@ describe("durable queue", () => {
       text: "Action needed: More than one indexed token uses that ticker.",
     });
     expect(row(ctx, "foreign-followup")).toMatchObject({ kind: "reply", priority: "B" });
-  });
-
-  it("silently closes a guided workflow when its B prompt expires", async () => {
-    const ctx = fixture();
-    await source(ctx, "guided-expiry", "guided_help:buy", { parentPostId: "prior-reply" });
-    await invoke(queue.enqueue, ctx, { key: "guided-expiry", postId: "guided-expiry", kind: "reply", ok: true, text: "🟢 What would you like to buy?" });
-    vi.setSystemTime(Date.now() + 15 * 60_000 + 1);
-    expect(await take(ctx)).toBeNull();
-    expect(row(ctx, "guided-expiry").status).toBe("expired");
-    expect(ctx.rows.xReplyInteractions[0]).toMatchObject({ status: "rejected", commandKind: "guided_help:cancelled" });
   });
 
   it("always selects A then B then C, FIFO within each group", async () => {
@@ -647,42 +403,18 @@ describe("durable queue", () => {
 });
 
 describe("queue-owned completion bindings", () => {
-  it("pauses only graduation posts without expiring A or blocking transactions", async () => {
+  it("keeps disabled announcements out of the transaction queue", async () => {
     const ctx = fixture(); const launchId = await ctx.db.insert("tokenLaunches", { publicPublished: true, graduationAnnouncementStatus: "posting" });
-    await invoke(replies.publishStandalonePost, ctx, { launchId, publicationKey: "grad", text: "🚀 $TEST graduated!" });
-    await add(ctx, "a", "A"); vi.stubEnv("X_GRADUATION_POSTS_ENABLED", "false");
-    expect(await take(ctx)).toBeNull(); expect(row(ctx, "grad").status).toBe("paused");
-    const trade = await take(ctx); expect(trade.row.key).toBe("a"); await done(ctx, trade);
-    vi.setSystemTime(Date.now() + 3600_000); vi.stubEnv("X_GRADUATION_POSTS_ENABLED", "true");
-    await invoke(queue.kick, ctx); expect((await take(ctx)).row.key).toBe("grad");
+    expect(await invoke(replies.publishStandalonePost, ctx, { launchId, publicationKey: "grad", text: "Token graduated" })).toMatchObject({ status: "rejected" });
+    await add(ctx, "trade", "A");
+    expect((await take(ctx)).row.key).toBe("trade");
   });
-  it("does not announce a token withdrawn from public indexing while queued", async () => {
-    const ctx = fixture(); const launchId = await ctx.db.insert("tokenLaunches", { publicPublished: true, graduationAnnouncementStatus: "posting" });
-    await invoke(replies.publishStandalonePost, ctx, { launchId, publicationKey: "grad", text: "🚀 $TEST graduated!" });
-    await ctx.db.patch(launchId, { publicPublished: false, graduationAnnouncementStatus: "ignored" });
-    expect(await take(ctx)).toBeNull(); expect(row(ctx, "grad").status).toBe("cancelled");
-    expect((await ctx.db.get(launchId)).graduationAnnouncementStatus).toBe("ignored");
-  });
-
-  it("records successful X delivery separately from an expected command rejection", async () => {
-    const ctx = fixture(); await source(ctx, "funding", "launch");
-    expect(await invoke(queue.enqueue, ctx, { key: "funding", postId: "funding", text: "Fund your wallet, then resume.", ok: false, kind: "reply" })).toMatchObject({ status: "queued" });
+  it("records successful delivery separately from a rejected command", async () => {
+    const ctx = fixture(); await source(ctx, "funding", "buy");
+    expect(await invoke(queue.enqueue, ctx, { key: "funding", postId: "funding", text: "Insufficient USDC. Fund your wallet and submit the full command again.", ok: false, kind: "reply" })).toMatchObject({ status: "queued" });
     const picked = await take(ctx); await done(ctx, picked);
-    expect(ctx.rows.xReplyInteractions[0]).toMatchObject({
-      status: "rejected",
-      publicationStatus: "published",
-      publicationQueued: false,
-      responsePostId: "reply-funding",
-    });
+    expect(ctx.rows.xReplyInteractions[0]).toMatchObject({ status: "rejected", publicationStatus: "published", publicationQueued: false, responsePostId: "reply-funding" });
   });
-  it("queues graduation and writes its actual post ID only on delivery", async () => {
-    const ctx = fixture(); const launchId = await ctx.db.insert("tokenLaunches", { publicPublished: true, graduationAnnouncementStatus: "posting" });
-    expect(await invoke(replies.publishStandalonePost, ctx, { launchId, publicationKey: `graduation:${launchId}`, text: "🚀 $TEST graduated!" })).toEqual({ status: "queued" });
-    expect((await ctx.db.get(launchId)).graduationAnnouncementStatus).toBe("posting");
-    const picked = await take(ctx); expect(picked.row).toMatchObject({ priority: "A", standalone: true }); await done(ctx, picked);
-    expect(await ctx.db.get(launchId)).toMatchObject({ graduationAnnouncementStatus: "posted", graduationAnnouncementPostId: `reply-graduation:${launchId}` });
-  });
-
 });
 
 describe("actual publisher using a mocked X transport", () => {
@@ -714,5 +446,40 @@ describe("actual publisher using a mocked X transport", () => {
     const src = readFileSync("convex/xReplies.ts", "utf8"), queueSource = readFileSync("convex/xReplyQueue.ts", "utf8");
     expect(src.match(/method: "POST"/g)).toHaveLength(1);
     expect(queueSource).not.toMatch(/internal\.(?:wallets|llm|liquidity)\./);
+  });
+});
+
+describe("command-only X rollout", () => {
+  const clarification = JSON.stringify({ type: "ambiguous_token", reason: "duplicate_ticker", intent: { kind: "command", command: { kind: "buy", amount: "10", unit: "usd", token: "DUP" } }, field: "token", explicitMentionAuthorized: true });
+  it("blocks new guided prompts and already queued prompts", async () => {
+    const ctx = fixture();
+    await source(ctx, "new", "guided_help:buy");
+    expect(await invoke(queue.enqueue, ctx, { key: "new", postId: "new", kind: "guided_reply", text: "Enter an amount." })).toMatchObject({ status: "cancelled" });
+    await add(ctx, "old", "B");
+    await ctx.db.patch(row(ctx, "old")._id, { kind: "guided_reply" });
+    expect(await take(ctx)).toBeNull();
+    expect(row(ctx, "old").status).toBe("cancelled");
+    expect(fetch).not.toHaveBeenCalled();
+  });
+  it("keeps contract replies owner-bound, expiring and single-use", async () => {
+    const ctx = fixture();
+    const id = await source(ctx, "parent", "ambiguous_token", { responsePostId: "prompt", guidedHelpStateJson: clarification });
+    expect(await invoke(replies.ambiguousTokenReplyContext, ctx, { ownerXUserId: "other", parentPostId: "prompt" })).toBeNull();
+    expect(await invoke(replies.ambiguousTokenReplyContext, ctx, { ownerXUserId: "parent", parentPostId: "prompt" })).toMatchObject({ field: "token" });
+    expect(await invoke(replies.claimAmbiguousTokenReply, ctx, { ownerXUserId: "parent", parentPostId: "prompt", consumerPostId: "first" })).toBe(true);
+    expect(await invoke(replies.claimAmbiguousTokenReply, ctx, { ownerXUserId: "parent", parentPostId: "prompt", consumerPostId: "first" })).toBe(true);
+    expect(await invoke(replies.claimAmbiguousTokenReply, ctx, { ownerXUserId: "parent", parentPostId: "prompt", consumerPostId: "sibling" })).toBe(false);
+    await ctx.db.patch(id, { updatedAt: Date.now() - 600001 });
+    expect(await invoke(replies.ambiguousTokenReplyContext, ctx, { ownerXUserId: "parent", parentPostId: "prompt", consumerPostId: "first" })).toBeNull();
+  });
+  it("rejects old non-indexed token follow-up state", async () => {
+    const ctx = fixture();
+    await source(ctx, "parent", "ambiguous_token", { responsePostId: "prompt", guidedHelpStateJson: clarification.replace(',"reason":"duplicate_ticker"', '') });
+    expect(await invoke(replies.ambiguousTokenReplyContext, ctx, { ownerXUserId: "parent", parentPostId: "prompt" })).toBeNull();
+  });
+  it("publishes duplicate contract prompts with the explicit tag requirement", async () => {
+    const ctx = fixture(); await source(ctx, "dup", "ambiguous_token", { guidedHelpStateJson: clarification });
+    expect(await invoke(queue.enqueue, ctx, { key: "dup", postId: "dup", kind: "reply", ok: false, text: "Action needed: More than one indexed token uses that ticker. Enter the contract address." })).toMatchObject({ status: "queued" });
+    expect((await take(ctx)).row.text).toContain("tag @ArcChainBot");
   });
 });

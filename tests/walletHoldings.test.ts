@@ -2,7 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { mergeWalletTokenHoldings, parseExplorerHoldings, walletBalanceTokens } from "../lib/wallet-holdings";
 const arcToken = "0x2222222222222222222222222222222222222222";
 
-const mocks = vi.hoisted(() => ({ readContract: vi.fn(), rpcFetch: vi.fn(), query: vi.fn() }));
+const mocks = vi.hoisted(() => ({ readContract: vi.fn(), rpcFetch: vi.fn(), query: vi.fn(), native: vi.fn(), tokens: vi.fn() }));
 vi.mock("server-only", () => ({}));
 vi.mock("next/cache", () => ({ unstable_cache: (fn: unknown) => fn }));
 vi.mock("convex/browser", () => ({ ConvexHttpClient: class { query = mocks.query; } }));
@@ -12,6 +12,8 @@ vi.mock("@/lib/token-market-cap", () => ({ tokenUnitPriceUsd: vi.fn().mockResolv
 vi.mock("@/lib/wallet-signer/pricing", () => ({ ethUsdPrice: vi.fn().mockResolvedValue(undefined) }));
 vi.mock("@/lib/rpc-http", () => ({ reliableHttp: vi.fn(), retryingRpcFetch: mocks.rpcFetch }));
 vi.mock("viem", async importOriginal => ({ ...await importOriginal<typeof import("viem")>(), createPublicClient: () => ({ readContract: mocks.readContract }) }));
+vi.mock("../lib/arc/wallet-balance", () => ({ arcWalletBalance: mocks.native }));
+vi.mock("../lib/arc/wallet-tokens", () => ({ arcTokenBalances: mocks.tokens }));
 import { getWalletHoldings } from "../lib/site-data";
 
 const wallet = "0x94613D7B572d03B280cdab84318c778B320acD77";
@@ -68,59 +70,30 @@ describe("wallet token discovery and reconciliation", () => {
   });
 });
 
-describe("actual wallet page loader, mocked providers only", () => {
-  const load = () => getWalletHoldings(wallet, { address: wallet, createdAt: 1, username: "MEADGod", tokens: [{address: arcToken, symbol: "TOKEN1", isArcBotLaunch: true}, {address: usdg, symbol: "TOKEN2"}] });
-  it("shows MEADGod's TOKEN1 from explicitly supplied wallet token entries", async () => {
-    const result = await load();
-    expect(result).toMatchObject({ available: true, username: "MEADGod", holdings: [{ address: arcToken, symbol: "TOKEN1", isArcBotLaunch: true }] });
-    expect(mocks.readContract).toHaveBeenCalledWith(expect.objectContaining({ address: arcToken, functionName: "balanceOf", args: [wallet] }));
-    expect(fetch).toHaveBeenCalledWith(expect.stringContaining("https://legacy-explorer.invalid/api/v2/addresses/"), expect.anything());
-    expect(fetch).not.toHaveBeenCalledWith(expect.stringContaining("caldera.xyz"), expect.anything());
+describe("Arc wallet holdings loader", () => {
+  const load = () => getWalletHoldings(wallet, { address: wallet, createdAt: 1, username: "ArcUser", tokens: [{ address: arcToken, symbol: "TOKEN1" }] });
+  beforeEach(() => {
+    mocks.native.mockResolvedValue({ balanceWei: "10500000000000000000" });
+    mocks.tokens.mockResolvedValue({ tokens: [{ name: "Arc Token", symbol: "TOKEN1", address: arcToken, balance: "12" }], partial: false });
   });
-  it("shows TOKEN1 through RPC when the explorer returns 404", async () => {
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("not found", { status: 404 })));
-    const result = await load();
-    expect(result.available).toBe(true); expect(result.holdings[0].symbol).toBe("TOKEN1");
+  it("uses native USDC and verified Arc token holdings", async () => {
+    expect(await load()).toMatchObject({ available: true, username: "ArcUser", holdings: [{ symbol: "USDC", balance: "10.5", usdValue: 10.5 }, { symbol: "TOKEN1", balance: "12" }] });
+    expect(mocks.tokens).toHaveBeenCalledWith(wallet, [arcToken]);
+    expect(fetch).not.toHaveBeenCalled();
+    expect(mocks.rpcFetch).not.toHaveBeenCalled();
   });
-  it.each(["empty", "unavailable", "stale"])("shows tracked token from liquidity returns when explorer is %s", async explorer => {
-    mocks.readContract.mockImplementation(async ({ address, functionName }) => {
-      if (functionName === "balanceOf") return address === usdg ? 37017891n : 0n;
-      if (functionName === "decimals") return 6;
-      if (functionName === "symbol") return "TOKEN2";
-      if (functionName === "name") return "Second Token";
-      throw new Error("Unexpected RPC read");
-    });
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
-      if (explorer === "unavailable") return new Response("unavailable", { status: 503 });
-      if (url.includes("/tokens?")) return Response.json(page(explorer === "stale" ? [entry(usdg, "1000000", "6")] : []));
-      return Response.json({ coin_balance: "0", assets: [] });
-    }));
-    const result = await load();
-    expect(result.available).toBe(true);
-    expect(result.holdings).toHaveLength(1);
-    expect(result.holdings[0]).toMatchObject({ address: usdg, symbol: "TOKEN2", name: "Second Token", balance: "37.017891" });
-    expect(mocks.readContract.mock.calls.filter(([call]) => call.address === usdg && call.functionName === "balanceOf")).toHaveLength(1);
+  it("preserves partial balances without claiming complete discovery", async () => {
+    mocks.tokens.mockResolvedValue({ tokens: [], partial: true });
+    expect(await load()).toMatchObject({ available: false, holdings: [{ symbol: "USDC" }] });
   });
-  it("shows externally received untracked tokens when RPC fails", async () => {
-    mocks.readContract.mockRejectedValue(new Error("RPC timeout"));
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/tokens?") ? Response.json(page([entry(other)])) : Response.json({ coin_balance: "0", assets: [] })));
-    const result = await load();
-    expect(result.available).toBe(true); expect(result.holdings[0].address).toBe(other);
-  });
-  it.each([404, 503])("does not show No holdings yet for explorer HTTP %s and zero ETH", async status => {
-    mocks.readContract.mockResolvedValue(0n);
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("unavailable", { status })));
-    expect(await load()).toMatchObject({ available: false, holdings: [] });
-    expect(mocks.readContract).toHaveBeenCalledTimes(2); // TOKEN1 + TOKEN2; no metadata reads for zero balances.
-  });
-  it("does not show an empty wallet after the token RPC fails", async () => {
-    mocks.readContract.mockRejectedValue(new Error("RPC timeout"));
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/tokens?") ? Response.json(page([])) : Response.json({ coin_balance: "0", assets: [] })));
+  it("does not turn failed RPC reads into zero balances", async () => {
+    mocks.native.mockRejectedValue(Error("RPC unavailable"));
+    mocks.tokens.mockRejectedValue(Error("RPC unavailable"));
     expect(await load()).toMatchObject({ available: false, holdings: [] });
   });
-  it("allows the empty state only after successful discovery and zero balances", async () => {
-    mocks.readContract.mockResolvedValue(0n);
-    vi.stubGlobal("fetch", vi.fn(async (url: string) => url.includes("/tokens?") ? Response.json(page([])) : Response.json({ coin_balance: "0", assets: [] })));
-    expect(await load()).toMatchObject({ available: true, holdings: [] });
+  it("shows a confirmed zero native balance", async () => {
+    mocks.native.mockResolvedValue({ balanceWei: "0" });
+    mocks.tokens.mockResolvedValue({ tokens: [], partial: false });
+    expect(await load()).toMatchObject({ available: true, holdings: [{ symbol: "USDC", balance: "0" }] });
   });
 });

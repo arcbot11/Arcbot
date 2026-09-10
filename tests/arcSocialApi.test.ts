@@ -12,6 +12,20 @@ const request=(secret="secret")=>new NextRequest("https://www.arcchainbot.io/api
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","secret");command={kind:"send",unit:"usd",amount:"10",recipient};m.auth.mockImplementation(async()=>({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()}));m.read.mockResolvedValue(null);m.prepare.mockResolvedValue({unsigned:"0x02",reserveWei:"10000000000000000100",snapshot:{balanceWei:"20000000000000000000",block:"1"}});m.command.mockImplementation(async(_kind,tx)=>({...tx,status:"prepared"}));m.advance.mockResolvedValue({status:"submitted",hash:"txhash"});});
 afterEach(()=>vi.unstubAllEnvs());
 describe("Arc social execution boundary",()=>{
+ it("prepares buy-and-send to its already resolved wallet",async()=>{
+   command={kind:"buy_and_send",unit:"usd",amount:"10",token:"0x3333333333333333333333333333333333333333",recipient,slippageBps:100};
+   m.trade.mockResolvedValue({unsigned:"0x02",leg:"swap",reserveWei:"100",swapOutput:{token:"0x3333333333333333333333333333333333333333",minimum:"25",recipient},snapshot:{balanceWei:"1000",block:"1"}});
+   expect((await(await POST(request())).json()).pending).toBe(true);
+   expect(m.trade).toHaveBeenCalledWith(wallet,expect.objectContaining({tokenIn:"native",amount:"10"}),recipient);
+   expect(m.command).toHaveBeenCalledWith("prepare",expect.objectContaining({swapOutput:expect.objectContaining({recipient})}));
+ });
+ it("prepares buy-and-burn with dead-address delivery metadata",async()=>{
+   command={kind:"buy_and_burn",unit:"usd",amount:"10",token:recipient,slippageBps:100};
+   m.trade.mockResolvedValue({unsigned:"0x02",leg:"swap",reserveWei:"100",swapOutput:{token:recipient,minimum:"25",recipient:"0x000000000000000000000000000000000000dEaD"},snapshot:{balanceWei:"1000",block:"1"}});
+   expect((await(await POST(request())).json()).pending).toBe(true);
+   expect(m.trade).toHaveBeenCalledWith(wallet,expect.objectContaining({tokenIn:"native",tokenOut:recipient,amount:"10"}),true);
+   expect(m.command).toHaveBeenCalledWith("prepare",expect.objectContaining({swapOutput:expect.objectContaining({recipient:"0x000000000000000000000000000000000000dEaD"})}));
+ });
  it("rejects unauthenticated service calls",async()=>{expect((await POST(request("wrong"))).status).toBe(401);expect(m.auth).not.toHaveBeenCalled();});
  it("rechecks stored request authority rather than trusting a supplied wallet",async()=>{m.auth.mockRejectedValue(Error("revoked"));await POST(request());expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();});
  it("sends Arc USDC through the same durable reservation store",async()=>{const r=await POST(request());expect((await r.json()).pending).toBe(true);expect(m.prepare).toHaveBeenCalledWith(5042,expect.objectContaining({from:wallet,to:recipient,value:10n*10n**18n}));expect(m.command).toHaveBeenCalledWith("prepare",expect.objectContaining({owner:"alice",chainId:5042,sourceRequestId:"x:123:send"}));});

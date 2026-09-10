@@ -104,10 +104,10 @@ function tradeToken(text: string, verb: "buy" | "sell") {
   // X replies and copied token links can naturally contain both a ticker and
   // its contract address. Treat the adjacent address as authoritative.
   const redundantAddress = text.match(tokenPattern(/\$(?!\d)[a-zA-Z][a-zA-Z0-9]{0,31}\s+(0x[a-fA-F0-9]{40})\b/i))?.[1];
-  const denominated = text.match(tokenPattern(`\\b${verb}\\s+${NUMBER_NC}\\s*(?:usd|dollars?|eth|weth)\\s+(?:worth\\s+)?(?:of\\s+)?\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"))?.[1];
+  const denominated = text.match(tokenPattern(`\\b${verb}\\s+${NUMBER_NC}\\s*(?:usdc|usd|dollars?|eth|weth)\\s+(?:worth\\s+)?(?:of\\s+)?\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"))?.[1];
   const afterOf = text.match(tokenPattern(`\\b${verb}\\b[\\s\\S]*?\\bof\\s+\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"))?.[1];
   const address = text.match(ADDRESS)?.[0];
-  const ticker = text.match(tokenPattern(`\\b${verb}\\s+(?:\\$?${NUMBER_NC}\\s*(?:usd|dollars?|eth|weth)?\\s+(?:of\\s+)?)?\\$([a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"))?.[1];
+  const ticker = text.match(tokenPattern(`\\b${verb}\\s+(?:\\$?${NUMBER_NC}\\s*(?:usdc|usd|dollars?|eth|weth)?\\s+(?:of\\s+)?)?\\$([a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"))?.[1];
   const direct = text.match(tokenPattern(`\\b${verb}\\s+${NUMBER_NC}\\s+(?:of\\s+)?\\$?([a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"))?.[1];
   return redundantAddress || denominated || afterOf || address || ticker || direct;
 }
@@ -447,6 +447,7 @@ export function oversizedLaunchTicker(text: string) {
 }
 
 export function parseWalletCommand(raw: string): WalletCommand {
+  if(/\b(?:buy|purchase)\b/i.test(raw)&&/\bsell\b/i.test(raw))return {kind:"unknown",reason:"Use separate buy and sell commands."};
   if (disabledCreationRequest(raw)) return { kind: "unknown", reason: "Command not supported." };
   const selfBurn=parseCreatorBurnCommand(raw);if(selfBurn)return selfBurn;
   const burned = parseBurnedTokenInquiry(raw);
@@ -490,11 +491,11 @@ export function parseWalletCommand(raw: string): WalletCommand {
     return { kind: "unknown", reason: "Buy and burn requires burn plus buy or purchase." };
   }
   if (/\b(?:buy|purchase)\b/i.test(text) && /\bburn\b/i.test(text)) {
-    const buyText = text.replace(/\bpurchase\b/gi, "buy");
+    const buyText = text.replace(/\bpurchase\b/gi, "buy").replace(/\bbuy\s+and\s+(?:send|burn)\b/gi, "buy");
     const token = tradeToken(buyText, "buy")
       || text.match(tokenPattern(/\bburn\s+(?:all\s+(?:of\s+)?|the\s+)?\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\b/i))?.[1]
       || text.match(tokenPattern(/\$(?![0-9])([a-zA-Z][a-zA-Z0-9]{0,31})\b/))?.[1];
-    const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usd|dollars?)\\b`, "i"));
+    const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usdc|usd|dollars?)\\b`, "i"));
     const eth = text.match(new RegExp(`${NUMBER}\\s*(?:eth|weth)\\b`, "i"));
     const pair = text.match(tokenPattern(`${NUMBER}\\s+((?!of\\b|worth\\b|usd\\b|dollars?\\b|eth\\b|weth\\b)[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:of\\s+)?\\$?(?:${token || "(?!)"})`, "i"));
     const tokenAmount = token ? text.match(new RegExp(`\\b(?:buy|purchase)\\s+${NUMBER}\\s+(?:of\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
@@ -504,10 +505,10 @@ export function parseWalletCommand(raw: string): WalletCommand {
     return { kind: "buy_and_burn", amount: cleanAmount(usd ? usd[1] || usd[2] : eth ? eth[1] : pair ? pair[1] : tokenAmount![1]), unit: usd ? "usd" : eth ? "eth" : pair ? "pair" : "token", token, ...(pair ? { pairAsset: pair[2] } : {}), slippageBps: slippage };
   }
   if (/\b(?:buy|purchase)\b/i.test(text) && /\b(?:send|transfer|give)\b/i.test(raw)) {
-    const buyText = text.replace(/\bpurchase\b/gi, "buy");
+    const buyText = text.replace(/\bpurchase\b/gi, "buy").replace(/\bbuy\s+and\s+(?:send|burn)\b/gi, "buy");
     const recipient = recipientAddress || recipientHandle;
     const token = tradeToken(buyText, "buy");
-    const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usd|dollars?)\\b`, "i"));
+    const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usdc|usd|dollars?)\\b`, "i"));
     const eth = text.match(new RegExp(`${NUMBER}\\s*(?:eth|weth)\\b`, "i"));
     const pair = token ? text.match(tokenPattern(`${NUMBER}\\s+((?!of\\b|worth\\b|usd\\b|dollars?\\b|eth\\b|weth\\b)[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:(?:worth\\s+of|of)\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
     const tokenAmount = token ? text.match(new RegExp(`\\b(?:buy|purchase)\\s+${NUMBER}\\s+(?:of\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
@@ -521,7 +522,7 @@ export function parseWalletCommand(raw: string): WalletCommand {
   }
   if (/\bbuy\b/i.test(text)) {
     const token = tradeToken(text, "buy");
-    const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usd|dollars?)\\b`, "i"));
+    const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usdc|usd|dollars?)\\b`, "i"));
     const eth = text.match(new RegExp(`${NUMBER}\\s*(?:eth|weth)\\b`, "i"));
     const pair = token ? text.match(tokenPattern(`${NUMBER}\\s+((?!of\\b|worth\\b|usd\\b|dollars?\\b|eth\\b|weth\\b)[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:(?:worth\\s+of|of)\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
     const tokenAmount = token ? text.match(new RegExp(`\\bbuy\\s+${NUMBER}\\s+(?:of\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
@@ -539,7 +540,7 @@ export function parseWalletCommand(raw: string): WalletCommand {
     const token = tradeToken(text, "sell");
     const amount = text.match(new RegExp(`\\bsell\\s+${NUMBER}`, "i"))?.[1];
     const usdAmount = text.match(new RegExp(`\\bsell\\s+\\$${NUMBER}\\s+(?:worth\\s+)?(?:of\\s+)?`, "i"))?.[1]
-      || text.match(new RegExp(`\\bsell\\s+${NUMBER}\\s*(?:usd|dollars?)\\s+(?:worth\\s+)?(?:of\\s+)?`, "i"))?.[1];
+      || text.match(new RegExp(`\\bsell\\s+${NUMBER}\\s*(?:usdc|usd|dollars?)\\s+(?:worth\\s+)?(?:of\\s+)?`, "i"))?.[1];
     const ethAmount = text.match(new RegExp(`\\bsell\\s+${NUMBER}\\s+(?:eth|weth)\\s+(?:worth\\s+)?(?:of\\s+)?`, "i"))?.[1];
     const slippage = slippageBps(text);
     if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 20%." };
@@ -570,12 +571,12 @@ export function parseWalletCommand(raw: string): WalletCommand {
     const ethToken = ethDenominatedTokenAmount(text);
     if (ethToken === null) return { kind: "unknown", reason: "An ETH-denominated token send needs a token ticker or contract." };
     if (ethToken) return { kind: "send", ...ethToken, recipient };
-    const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usd|dollars?)\\b`, "i"));
+    const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usdc|usd|dollars?)\\b`, "i"));
     const eth = text.match(new RegExp(`${NUMBER}\\s*(?:eth|weth)\\b`, "i"));
     const token = text.match(tokenPattern(`${NUMBER}\\s+(?:of\\s+)?\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"))
       || text.match(tokenPattern(`\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\s+${NUMBER}\\b`, "i"));
     const tokenAfterUsd = text.match(tokenPattern(`\\$${NUMBER}\\s+(?:worth\\s+)?(?:of\\s+)?\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"))
-      || text.match(tokenPattern(`${NUMBER}\\s*(?:usd|dollars?)\\b\\s+(?:worth\\s+)?(?:of\\s+)?\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"));
+      || text.match(tokenPattern(`${NUMBER}\\s*(?:usdc|usd|dollars?)\\b\\s+(?:worth\\s+)?(?:of\\s+)?\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"));
     if (tokenAfterUsd && !/^(?:eth|weth)$/i.test(tokenAfterUsd[2])) {
       return { kind: "send", amount: cleanAmount(tokenAfterUsd[1]), unit: "usd", token: cleanToken(tokenAfterUsd[2]), recipient };
     }
@@ -611,7 +612,7 @@ export function parseWalletCommand(raw: string): WalletCommand {
   if (ethBurn === null) return { kind: "unknown", reason: "An ETH-denominated token burn needs a token ticker or contract." };
   if (ethBurn) return { kind: "burn", ...ethBurn };
   const usdBurn = text.match(tokenPattern(`\\bburn\\s+\\$${NUMBER}\\s+(?:worth\\s+)?(?:of\\s+)?\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"))
-    || text.match(tokenPattern(`\\bburn\\s+${NUMBER}\\s*(?:usd|dollars?)\\s+(?:worth\\s+)?(?:of\\s+)?\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"));
+    || text.match(tokenPattern(`\\bburn\\s+${NUMBER}\\s*(?:usdc|usd|dollars?)\\s+(?:worth\\s+)?(?:of\\s+)?\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"));
   if (usdBurn) return { kind: "burn", amount: cleanAmount(usdBurn[1]), unit: "usd", token: usdBurn[2] };
   const burn = text.match(tokenPattern(`\\bburn\\s+${NUMBER}\\s*\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"));
   if (burn) return { kind: "burn", amount: cleanAmount(burn[1]), unit: "token", token: burn[2] };

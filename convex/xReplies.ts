@@ -2,7 +2,6 @@ import { isXBotAuthor, xBotUserId } from "../lib/x-bot-identity";
 import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
 import { retiredFeatureEnabled } from "../lib/retired-features";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
-import { tokenPattern } from "../lib/token-pattern";
 
 import { v } from "convex/values";
 import { parseContextualBuy, resolveContextualBuyToken } from "../lib/contextual-buy";
@@ -16,22 +15,19 @@ import {
   internalQuery,
 } from "./_generated/server";
 import type { ActionCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
 import { shouldSuppressXResponse } from "./xReplyPolicy";
-import { isEmptyNativeGasBalanceError, noNativeGasMessage } from "../lib/wallet-native-gas";
 import { compareXPriority, readOnlyReplyCategory } from "../lib/x-wallet-flood-policy";
 import { suppressReadOnlyReply, rejectReadOnlyReply, suppressInsufficientEthReply } from "./xFloodProtection";
 import { temporaryXReplySuppressionReason, isInsufficientEthReply } from "../lib/x-temporary-reply-policy";
 import { publicationCapacity } from "./xPublicationBudget";
 import { REPLY_QUEUE_WINDOW_MS, REPLY_QUEUE_WINDOW_LIMIT, REPLY_QUEUE_C_GAP_MS, replyQueueWaitMs } from "../lib/x-reply-queue-policy";
-import { directPostCommandText, isResumeReply } from "../lib/x-direct-post-policy";
+import { directPostCommandText } from "../lib/x-direct-post-policy";
 import { loadReplyMetadata, type ReferencePost } from "../lib/x-reference-metadata";
 import { loadAuthorProfiles } from "../lib/x-author-profiles";
 import { grokLaunchFeeRejection, GROK_EXTERNAL_LAUNCH_FEES } from "../lib/launch-recipient-policy";
 import { normalizeLaunchFeeOptions } from "./walletCommands";
 import type { WalletCommand } from "./walletCommands";
-import { buyTargetContractReply, NON_INDEXED_BUY_TARGET_MESSAGE } from "../lib/buy-target-policy";
-import { BURNED_TOKEN_CA_MESSAGE } from "../lib/burned-token-inquiry";
+import { buyTargetContractReply } from "../lib/buy-target-policy";
 import { restrictedXSearchQuery, intakeSourceTransition, walletBalanceReadsExcluded, verifiedXReadsOnly, effectiveXIntakeFilters } from "../lib/x-intake-filter";
 import { advanceXIntakeSpikeGuard, xAutoIntakeGuardEnabled } from "../lib/x-intake-spike-guard";
 
@@ -40,11 +36,9 @@ import { creatorBurnLaunchReply, creatorBurnSweepAcceptedMessage } from "../lib/
 import {
   decodePersistedXWalletIntent,
   explicitInformationalTopic,
-  isContextualGasCostFollowup,
   parseXWalletIntent,
   requestedOperations,
   straightforwardCommandOperation,
-  unknownWalletMessage,
   walletHelpMessage,
 } from "./xWalletIntent";
 import type { XWalletIntent } from "./xWalletIntent";
@@ -71,16 +65,8 @@ import {
   shouldRestrictChainReply,
 } from "../lib/x-passive-chain-policy";
 
-import { GENERAL_GUIDED_HELP_MESSAGE, X_GENERAL_GUIDED_HELP_MESSAGE, GUIDED_HELP_TTL_MS, guidedHelpCancelled, guidedHelpClaimSelection, guidedHelpCommandKind, guidedHelpCommandText, guidedHelpExplanation, guidedHelpImmediateCommand, guidedHelpQuestion, guidedHelpQuestionResponse, guidedHelpPendingCommandKind, isGuidedHelpCompletion, isGuidedHelpPendingCommandKind, guidedHelpOperationFromCommandKind, guidedHelpOperationFromHelp, guidedHelpPrompt, guidedHelpSelection, decodeGuidedReassignState, guidedReassignRecipientSelection, guidedReassignTokenSelection, GUIDED_REASSIGN_TOKEN_PROMPT, withGuidedHelpCompletion } from "../lib/guided-help-workflow";
-import { WORKFLOW_EXPIRED_MESSAGE } from "../lib/workflow-expiration";
+import { X_COMMAND_HELP, X_CONTRACT_CLARIFICATION_TTL_MS, retiredXWorkflow, xCommandReply, duplicateTickerReply } from "../lib/x-command-workflows";
 import { exceedsXReplyDepthLimit } from "../lib/x-reply-depth-policy";
-import {
-  advanceGuidedLaunch,
-  decodeGuidedLaunchState,
-  guidedLaunchPairRecoveryState,
-  guidedLaunchPrompt,
-  type GuidedLaunchAdvance,
-} from "../lib/guided-launch-workflow";
 
 // Only reuse locally recorded context. No extra X reads or wallet operations.
 export const feeQuestionParentText = internalQuery({
@@ -195,6 +181,9 @@ async function helpReply(
   _ctx: ActionCtx,
   topic: Parameters<typeof walletHelpMessage>[0],
 ) {
+  if (topic === "capabilities") return X_COMMAND_HELP;
+  if (topic === "buy_sell") return "Tag @ArcChainBot with a full command: buy 10 USDC of TICKER; sell 100 TICKER; swap 50% TOKEN for OTHER. Use a contract address for an unlisted token.";
+  if (topic === "send") return "Tag @ArcChainBot with the amount, token and recipient: send 10 USDC to @user or a full wallet address.";
   return walletHelpMessage(topic);
 }
 
@@ -432,7 +421,7 @@ async function publishReplyOnce(
   sourcePostId: string,
   publicationKey?: string,
   allowLongReply = false,
-  options?: { ok?: boolean; kind?: "reply" | "guided_reply" | "guided_execution" },
+  options?: { ok?: boolean; kind?: "reply" },
 ) {
   const queued = await ctx.runMutation(internal.xReplyQueue.enqueue, {
     key: publicationKey || sourcePostId, postId: sourcePostId, text,
@@ -801,57 +790,6 @@ export const replyDepthFromParent = internalQuery({
   },
 });
 
-export const guidedHelpContext = internalQuery({
-  args: { ownerXUserId: v.string(), parentPostId: v.optional(v.string()) },
-  handler: async (ctx, args) => {
-    if (!args.parentPostId) return null;
-    const parent = await ctx.db
-      .query("xReplyInteractions")
-      .withIndex("by_response_post_id", q => q.eq("responsePostId", args.parentPostId!))
-      .unique();
-    if (!parent || parent.updatedAt < Date.now() - GUIDED_HELP_TTL_MS) return null;
-    let operation = guidedHelpOperationFromCommandKind(parent.commandKind);
-    if (!operation) {
-    try {
-      const intent = parent.parsedIntentJson
-        ? decodePersistedXWalletIntent(parent.parsedIntentJson)
-        : null;
-      // Both the general capability menu and the dedicated launch how-to
-      // response are guided entry points. The latter previously published the
-      // right copy without persisting a guided command kind, so "get started"
-      // replies had no workflow context.
-      operation = intent?.kind === "help" && ["capabilities", "launch"].includes(intent.topic)
-        ? "root"
-        : null;
-    } catch {
-      return null;
-    }
-    }
-    // Authorization is inherited only through this owner's persisted guided
-    // chain. Looking solely at the immediately preceding reply loses the
-    // original explicit mention after one or two guided questions.
-    let sourceExplicitMention = parent.botParentAuthorized === true || hasExplicitBotMention(parent.text, undefined);
-    let ancestor = parent;
-    for (let depth = 0; !sourceExplicitMention && depth < 16; depth += 1) {
-      if (!ancestor.parentPostId) break;
-      const prior = await ctx.db.query("xReplyInteractions")
-        .withIndex("by_response_post_id", q => q.eq("responsePostId", ancestor.parentPostId!))
-        .unique();
-      if (!prior || prior.authorXUserId !== args.ownerXUserId || prior.updatedAt < Date.now() - GUIDED_HELP_TTL_MS) break;
-      sourceExplicitMention = prior.botParentAuthorized === true || hasExplicitBotMention(prior.text, undefined);
-      ancestor = prior;
-    }
-    return operation ? {
-      operation,
-      owner: parent.authorXUserId,
-      allowed: parent.authorXUserId === args.ownerXUserId,
-      sourceText: directPostCommandText(parent.text),
-      sourceExplicitMention,
-      ...(parent.guidedHelpStateJson ? { guidedHelpStateJson: parent.guidedHelpStateJson } : {}),
-    } : null;
-  },
-});
-
 export const insufficientEthReplyContext = internalQuery({
   args: { ownerXUserId: v.string(), parentPostId: v.optional(v.string()) },
   handler: async (ctx, args) => {
@@ -884,77 +822,6 @@ export const botReplyContext = internalQuery({
     return Boolean(parent);
   },
 });
-
-export const insufficientEthResumeContext = internalQuery({
-  args: { ownerXUserId: v.string(), parentPostId: v.optional(v.string()) },
-  handler: async (ctx, args) => {
-    if (!args.parentPostId) return null;
-    const parent = await ctx.db.query("xReplyInteractions")
-      .withIndex("by_response_post_id", q => q.eq("responsePostId", args.parentPostId!)).unique();
-    if (!parent || parent.authorXUserId !== args.ownerXUserId
-      || parent.updatedAt < Date.now() - GUIDED_HELP_TTL_MS
-      || parent.gasResumeConsumedByPostId || !parent.safeError
-      || !isInsufficientEthReply(parent.safeError)) return null;
-    const state = decodeGasResumeState(parent.guidedHelpStateJson);
-    return {
-      parsedIntentJson: parent.parsedIntentJson,
-      mediaUrl: parent.mediaUrl,
-      recipientAddress: parent.recipientAddress,
-      explicitMentionAuthorized: state?.explicitMentionAuthorized === true || hasExplicitBotMention(parent.text, undefined),
-      sourceText: state?.sourceText || parent.text,
-      resumable: Boolean(state?.sourceText) || /reply\s+[“\"]resume[”\"]/i.test(parent.safeError),
-    };
-  },
-});
-
-export const expiredWorkflowResumeContext = internalQuery({
-  args: { ownerXUserId: v.string(), parentPostId: v.optional(v.string()) },
-  handler: async (ctx, args) => {
-    if (!args.parentPostId) return false;
-    const parent = await ctx.db.query("xReplyInteractions")
-      .withIndex("by_response_post_id", q => q.eq("responsePostId", args.parentPostId!)).unique();
-    if (!parent || parent.authorXUserId !== args.ownerXUserId
-      || parent.updatedAt >= Date.now() - GUIDED_HELP_TTL_MS) return false;
-    if (parent.safeError && isInsufficientEthReply(parent.safeError)) return true;
-    if (guidedHelpOperationFromCommandKind(parent.commandKind)) return true;
-    try {
-      const intent = parent.parsedIntentJson ? decodePersistedXWalletIntent(parent.parsedIntentJson) : null;
-      return intent?.kind === "help" && ["capabilities", "launch"].includes(intent.topic);
-    } catch {
-      return false;
-    }
-  },
-});
-
-/** Atomically grants one X post authority to replay a funded request. A retry
- * of that same post remains idempotent; sibling replies cannot execute it. */
-export const claimInsufficientEthResume = internalMutation({
-  args: { ownerXUserId: v.string(), parentPostId: v.string(), consumerPostId: v.string() },
-  handler: async (ctx, args) => {
-    const parent = await ctx.db.query("xReplyInteractions")
-      .withIndex("by_response_post_id", q => q.eq("responsePostId", args.parentPostId)).unique();
-    if (!parent || parent.authorXUserId !== args.ownerXUserId
-      || parent.updatedAt < Date.now() - GUIDED_HELP_TTL_MS || !parent.safeError
-      || !isInsufficientEthReply(parent.safeError)) return false;
-    if (parent.gasResumeConsumedByPostId)
-      return parent.gasResumeConsumedByPostId === args.consumerPostId;
-    await ctx.db.patch(parent._id, { gasResumeConsumedByPostId: args.consumerPostId });
-    return true;
-  },
-});
-
-function decodeGasResumeState(value?: string) {
-  if (!value || value.length > 1_000) return null;
-  try {
-    const parsed = JSON.parse(value) as { type?: unknown; explicitMentionAuthorized?: unknown; sourceText?: unknown };
-    return parsed.type === "gas_resume" && typeof parsed.explicitMentionAuthorized === "boolean"
-      && typeof parsed.sourceText === "string" && parsed.sourceText.length > 0 && parsed.sourceText.length <= 800
-      ? { sourceText: parsed.sourceText, explicitMentionAuthorized: parsed.explicitMentionAuthorized }
-      : null;
-  } catch {
-    return null;
-  }
-}
 
 type AmbiguousTokenField = "token" | "fromToken" | "toToken" | "pairAsset";
 
@@ -991,8 +858,8 @@ function ambiguousTokenValue(command: WalletCommand, field: AmbiguousTokenField)
 function decodeAmbiguousTokenState(value?: string) {
   if (!value || value.length > 2_000) return null;
   try {
-    const parsed = JSON.parse(value) as { type?: unknown; intent?: unknown; field?: unknown; explicitMentionAuthorized?: unknown };
-    if (parsed.type !== "ambiguous_token" || typeof parsed.explicitMentionAuthorized !== "boolean") return null;
+    const parsed = JSON.parse(value) as { type?: unknown; reason?: unknown; intent?: unknown; field?: unknown; explicitMentionAuthorized?: unknown };
+    if (parsed.type !== "ambiguous_token" || parsed.reason !== "duplicate_ticker" || typeof parsed.explicitMentionAuthorized !== "boolean") return null;
     const intent = decodePersistedXWalletIntent(JSON.stringify(parsed.intent));
     if (intent.kind !== "command") return null;
     const field = parsed.field === "token" || parsed.field === "fromToken" || parsed.field === "toToken" || parsed.field === "pairAsset"
@@ -1011,7 +878,7 @@ export const ambiguousTokenReplyContext = internalQuery({
     const parent = await ctx.db.query("xReplyInteractions")
       .withIndex("by_response_post_id", q => q.eq("responsePostId", args.parentPostId!)).unique();
     if (!parent || parent.authorXUserId !== args.ownerXUserId
-      || parent.updatedAt < Date.now() - GUIDED_HELP_TTL_MS
+      || parent.updatedAt < Date.now() - X_CONTRACT_CLARIFICATION_TTL_MS
       || (parent.guidedHelpConsumedByPostId && parent.guidedHelpConsumedByPostId !== args.consumerPostId)) return null;
     return decodeAmbiguousTokenState(parent.guidedHelpStateJson);
   },
@@ -1023,29 +890,8 @@ export const claimAmbiguousTokenReply = internalMutation({
     const parent = await ctx.db.query("xReplyInteractions")
       .withIndex("by_response_post_id", q => q.eq("responsePostId", args.parentPostId)).unique();
     if (!parent || parent.authorXUserId !== args.ownerXUserId
-      || parent.updatedAt < Date.now() - GUIDED_HELP_TTL_MS
+      || parent.updatedAt < Date.now() - X_CONTRACT_CLARIFICATION_TTL_MS
       || !decodeAmbiguousTokenState(parent.guidedHelpStateJson)) return false;
-    if (parent.guidedHelpConsumedByPostId) return parent.guidedHelpConsumedByPostId === args.consumerPostId;
-    await ctx.db.patch(parent._id, { guidedHelpConsumedByPostId: args.consumerPostId, updatedAt: Date.now() });
-    return true;
-  },
-});
-
-function gasResumeAuthorized(value?: string) {
-  return Boolean(decodeGasResumeState(value)?.explicitMentionAuthorized);
-}
-
-/** A guided launch prompt authorizes one owner reply. Retrying that same reply
- * remains idempotent, while sibling replies cannot fork into duplicate launches. */
-
-export const claimGuidedLaunchStep = internalMutation({
-  args: { ownerXUserId: v.string(), parentPostId: v.string(), consumerPostId: v.string() },
-  handler: async (ctx, args) => {
-    const parent = await ctx.db.query("xReplyInteractions")
-      .withIndex("by_response_post_id", q => q.eq("responsePostId", args.parentPostId)).unique();
-    if (!parent || parent.authorXUserId !== args.ownerXUserId
-      || guidedHelpOperationFromCommandKind(parent.commandKind) !== "launch"
-      || !parent.guidedHelpStateJson || parent.updatedAt < Date.now() - GUIDED_HELP_TTL_MS) return false;
     if (parent.guidedHelpConsumedByPostId) return parent.guidedHelpConsumedByPostId === args.consumerPostId;
     await ctx.db.patch(parent._id, { guidedHelpConsumedByPostId: args.consumerPostId, updatedAt: Date.now() });
     return true;
@@ -1615,6 +1461,12 @@ export const retryInteraction = internalAction({
       (current.interaction.retryCount || 0) > 5
     )
       return;
+    if (retiredXWorkflow(current.interaction.commandKind, current.interaction.guidedHelpStateJson)) {
+      await ctx.runMutation(internal.xReplies.updateInteraction, {
+        postId, status: "rejected", safeError: "Interactive X workflow retired",
+      });
+      return;
+    }
     const floodGuard = await ctx.runMutation(internal.xFloodProtection.guardQueued, { postId });
     if (floodGuard.suppressed) return;
     if (
@@ -1652,20 +1504,6 @@ export const retryInteraction = internalAction({
       });
       return;
     }
-    let guidedHelpThread = await ctx.runQuery(internal.xReplies.guidedHelpContext, {
-      ownerXUserId: current.user.xUserId,
-      parentPostId: current.interaction.parentPostId,
-    });
-    if (guidedHelpThread && parseContextualBuy(directText) && current.interaction.parentPostId
-      && (await ctx.runQuery(internal.xReplies.contextualBuyParent, { postId: current.interaction.parentPostId })).token) guidedHelpThread = null;
-    if (guidedHelpThread && !guidedHelpThread.allowed) {
-      await ctx.runMutation(internal.xReplies.updateInteraction, {
-        postId, status: "rejected", commandKind: "guided_help_foreign_thread",
-        safeError: "another account cannot continue this guided-help chain",
-      });
-      return;
-    }
-    const guidedHelp = guidedHelpThread?.allowed ? guidedHelpThread : null;
     const suppliedContract = buyTargetContractReply(directText);
     const ambiguousTokenContext = suppliedContract
       ? await ctx.runQuery(internal.xReplies.ambiguousTokenReplyContext, {
@@ -1693,7 +1531,7 @@ export const retryInteraction = internalAction({
       if (!identity.matches) {
         const message = `Action needed: That contract address's onchain ticker does not match $${originalTicker}. Double-check that you've got the right contract address, then reply with it.`;
         const stateJson = JSON.stringify({
-          type: "ambiguous_token",
+          type: "ambiguous_token", reason: "duplicate_ticker",
           intent: ambiguousTokenContext.intent,
           field: ambiguousTokenContext.field,
           explicitMentionAuthorized: ambiguousTokenContext.explicitMentionAuthorized,
@@ -1714,17 +1552,6 @@ export const retryInteraction = internalAction({
         suppliedContract,
       );
     }
-    const guidedClaimChoice = guidedHelp?.operation === "claim"
-      ? guidedHelpClaimSelection(directText)
-      : null;
-
-    if (disabledCreationKind(guidedHelp?.operation)) {
-      await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "rejected", safeError: "Unsupported operation" });
-      return;
-    }
-    const guidedLaunchContinuation = guidedHelp?.operation === "launch";
-    // command. Legacy quote replies must never revive an old pending quote.
-
     if (
       isPassiveBotChainReply(
         current.interaction.text,
@@ -1738,7 +1565,7 @@ export const retryInteraction = internalAction({
             ]
           : undefined,
       ) &&
-      !shouldHandlePassiveChainText(directText) && !guidedHelp && !ambiguousTokenIntent
+      !shouldHandlePassiveChainText(directText) && !ambiguousTokenIntent
     ) {
       await ctx.runMutation(internal.xReplies.updateInteraction, {
         postId,
@@ -1759,7 +1586,7 @@ export const retryInteraction = internalAction({
     await ctx.runMutation(internal.xReplies.updateInteraction, {
       postId,
       status: "processing",
-      commandKind: guidedHelp ? guidedHelpCommandKind("root") : current.interaction.commandKind,
+      commandKind: current.interaction.commandKind,
     });
     try {
       // Read-only questions must precede claim and transaction parsing.
@@ -1786,158 +1613,8 @@ export const retryInteraction = internalAction({
         await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", responsePostId });
         return;
       }
-      let guidedLaunchExecution: Extract<GuidedLaunchAdvance, { kind: "execute" }> | null = null;
-
-      if (guidedHelp && !guidedLaunchContinuation && guidedHelpCancelled(directText)) {
-        await ctx.runMutation(internal.xReplies.updateInteraction, {
-          postId, status: "processing", commandKind: "guided_help:cancelled",
-        });
-        const message = "Guided help cancelled.";
-        const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: true, kind: "reply" });
-        await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", responsePostId });
-        return;
-      }
-
-      if (guidedHelp?.operation === "claim" && guidedClaimChoice === "creator") {
-        await ctx.runMutation(internal.xReplies.updateInteraction, {
-          postId, status: "processing", commandKind: guidedHelpCommandKind("claim_fees"),
-        });
-        const message = guidedHelpPrompt("claim_fees");
-        const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: true, kind: "reply" });
-        await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", responsePostId });
-        return;
-      }
-      if (guidedLaunchContinuation) {
-        const state = decodeGuidedLaunchState(guidedHelp.guidedHelpStateJson);
-        if (!state) {
-          const message = WORKFLOW_EXPIRED_MESSAGE;
-          const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: false, kind: "reply" });
-          await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "rejected", commandKind: guidedHelpCommandKind("root"), responsePostId, safeError: message });
-          return;
-        }
-        const claimedStep = current.interaction.parentPostId && await ctx.runMutation(internal.xReplies.claimGuidedLaunchStep, {
-          ownerXUserId: current.user.xUserId, parentPostId: current.interaction.parentPostId, consumerPostId: postId,
-        });
-        if (!claimedStep) {
-          const message = "Action needed: That guided launch step was already answered. Continue from the newest Arc Bot prompt.";
-          const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: false, kind: "reply" });
-          await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "rejected", commandKind: "guided_help:stale", responsePostId, safeError: message });
-          return;
-        }
-        let launchMediaUrl = current.interaction.mediaUrl;
-        if (state.phase === "artwork" && !launchMediaUrl && requestsReferencedLaunchImage(directText)) {
-          const prepared = await prepareReferencedLaunchImage(ctx, {
-            postId, text: directText, isLaunch: true,
-            mediaUrl: current.interaction.mediaUrl,
-            referencedPostId: current.interaction.referencedPostId,
-            referencedPostType: current.interaction.referencedPostType,
-          });
-          if (prepared.lookupFailed) {
-            const message = `${REFERENCED_IMAGE_FAILURE}\n\n${guidedLaunchPrompt("artwork")}`;
-            await ctx.runMutation(internal.xReplies.updateInteraction, {
-              postId, status: "processing", commandKind: guidedHelpCommandKind("launch"), guidedHelpStateJson: JSON.stringify(state),
-            });
-            const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: false, kind: "reply" });
-            await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", responsePostId, guidedHelpStateJson: JSON.stringify(state) });
-            return;
-          }
-          launchMediaUrl = prepared.mediaUrl;
-        }
-        const advanced = advanceGuidedLaunch(state, directText, launchMediaUrl);
-        if (advanced.kind === "cancelled") {
-          const responsePostId = await publishReplyOnce(ctx, advanced.message, postId, undefined, false, { ok: true, kind: "reply" });
-          await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", commandKind: "guided_help:cancelled", responsePostId });
-          return;
-        }
-        if (advanced.kind === "prompt") {
-          const stateJson = JSON.stringify(advanced.state);
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId, status: "processing", commandKind: guidedHelpCommandKind("launch"), guidedHelpStateJson: stateJson,
-          });
-          const responsePostId = await publishReplyOnce(ctx, advanced.message, postId, undefined, advanced.allowLong === true || xWeightedLength(advanced.message) > 280, { ok: true, kind: "reply" });
-          await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", responsePostId, guidedHelpStateJson: stateJson });
-          return;
-        }
-        guidedLaunchExecution = advanced;
-      }
-      const guidedSelection = guidedHelp && !guidedLaunchExecution ? guidedHelpSelection(directText) : null;
-      const immediateGuidedCommand = guidedHelpImmediateCommand(guidedSelection);
-      if (guidedSelection && !immediateGuidedCommand) {
-        const reassignState = guidedSelection === "reassign_fees"
-          ? JSON.stringify({ version: 1, type: "reassign_fees" })
-          : undefined;
-        await ctx.runMutation(internal.xReplies.updateInteraction, {
-          postId, status: "processing", commandKind: guidedHelpCommandKind(guidedSelection),
-          ...(reassignState ? { guidedHelpStateJson: reassignState } : {}),
-        });
-        const message = guidedSelection === "reassign_fees"
-          ? GUIDED_REASSIGN_TOKEN_PROMPT
-          : guidedHelpPrompt(guidedSelection);
-        const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: true, kind: "reply" });
-        await ctx.runMutation(internal.xReplies.updateInteraction, {
-          postId, status: "completed", responsePostId,
-          ...(reassignState ? { guidedHelpStateJson: reassignState } : {}),
-        });
-        return;
-      }
-      let guidedReassignCommand: string | null = null;
-      if (guidedHelp?.operation === "reassign_fees") {
-        const state = decodeGuidedReassignState(guidedHelp.guidedHelpStateJson);
-        if (!state?.token) {
-          if (guidedHelpQuestion(directText)) {
-            const message = `${guidedHelpExplanation("reassign_fees")}\n\n${GUIDED_REASSIGN_TOKEN_PROMPT}`;
-            const stateJson = JSON.stringify(state || { version: 1, type: "reassign_fees" });
-            const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: true, kind: "reply" });
-            await ctx.runMutation(internal.xReplies.updateInteraction, {
-              postId, status: "completed", commandKind: guidedHelpCommandKind("reassign_fees"),
-              guidedHelpStateJson: stateJson, responsePostId,
-            });
-            return;
-          }
-          const token = guidedReassignTokenSelection(directText);
-          if (!token) {
-            const stateJson = JSON.stringify(state || { version: 1, type: "reassign_fees" });
-            const responsePostId = await publishReplyOnce(ctx, GUIDED_REASSIGN_TOKEN_PROMPT, postId, undefined, false, { ok: true, kind: "reply" });
-            await ctx.runMutation(internal.xReplies.updateInteraction, {
-              postId, status: "completed", commandKind: guidedHelpCommandKind("reassign_fees"),
-              guidedHelpStateJson: stateJson, responsePostId,
-            });
-            return;
-          }
-          const stateJson = JSON.stringify({ version: 1, type: "reassign_fees", token });
-          const responsePostId = await publishReplyOnce(ctx, guidedHelpPrompt("reassign_fees"), postId, undefined, false, { ok: true, kind: "reply" });
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId, status: "completed", commandKind: guidedHelpCommandKind("reassign_fees"),
-            guidedHelpStateJson: stateJson, responsePostId,
-          });
-          return;
-        }
-        if (guidedHelpQuestion(directText)) {
-          const message = guidedHelpQuestionResponse("reassign_fees");
-          const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, xWeightedLength(message) > 280, { ok: true, kind: "reply" });
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId, status: "completed", commandKind: guidedHelpCommandKind("reassign_fees"),
-            guidedHelpStateJson: JSON.stringify(state), responsePostId,
-          });
-          return;
-        }
-        const recipient = guidedReassignRecipientSelection(directText);
-        if (!recipient) {
-          const responsePostId = await publishReplyOnce(ctx, guidedHelpPrompt("reassign_fees"), postId, undefined, false, { ok: true, kind: "reply" });
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId, status: "completed", commandKind: guidedHelpCommandKind("reassign_fees"),
-            guidedHelpStateJson: JSON.stringify(state), responsePostId,
-          });
-          return;
-        }
-        guidedReassignCommand = `reassign ${state.token} fees to ${recipient}`;
-      }
-      const gasResumeState = decodeGasResumeState(current.interaction.guidedHelpStateJson);
-      let workflowText = gasResumeState?.sourceText || guidedLaunchExecution?.commandText || immediateGuidedCommand || (guidedHelp
-        ? guidedReassignCommand || guidedHelpCommandText(directText, guidedHelp.operation)
-        : directText);
-      const contextualBuy = !gasResumeState && !guidedLaunchExecution && !current.interaction.parsedIntentJson
-        ? parseContextualBuy(directText) : undefined;
+      let workflowText = directText;
+      const contextualBuy = !current.interaction.parsedIntentJson ? parseContextualBuy(directText) : undefined;
       let contextualBuyIntent: XWalletIntent | undefined;
       if (contextualBuy) {
         try {
@@ -1980,8 +1657,7 @@ export const retryInteraction = internalAction({
       let intent: XWalletIntent;
       if (ambiguousTokenIntent) {
         intent = ambiguousTokenIntent;
-      } else if (guidedLaunchExecution) {
-        intent = { kind: "command", command: guidedLaunchExecution.command };
+
       } else if (current.interaction.parsedIntentJson) {
         intent = decodePersistedXWalletIntent(
           current.interaction.parsedIntentJson,
@@ -2016,7 +1692,7 @@ export const retryInteraction = internalAction({
           return;
         }
       }
-      // Keep resume prompts bound to the already resolved token on retries.
+      // Keep the executed command text bound to its resolved token.
       if (parseContextualBuy(directText) && intent.kind === "command" && intent.command.kind === "buy") {
         const buy = intent.command;
         workflowText = `buy ${buy.unit === "usd" ? "$" : ""}${buy.amount}${buy.unit === "eth" ? " ETH" : ""} of ${buy.token}`;
@@ -2037,8 +1713,6 @@ export const retryInteraction = internalAction({
       }
       let reply: string;
       let ok = true;
-      let guidedLaunchRecoveryStateJson: string | undefined;
-      let guidedContinuationOperation: Exclude<NonNullable<typeof guidedHelp>["operation"], "root"> | null = null;
       if (
         intent.kind === "command" &&
         intent.command.kind === "launch" &&
@@ -2054,9 +1728,7 @@ export const retryInteraction = internalAction({
               ]
             : undefined,
           current.interaction.botParentAuthorized === true,
-        ) &&
-        !guidedLaunchExecution?.state.explicitMentionAuthorized &&
-        !gasResumeAuthorized(current.interaction.guidedHelpStateJson)
+        )
       ) {
         // Reject silently. This is a safety boundary, not a prompt for another
         // automated reply inside a conversation that did not invoke the bot.
@@ -2064,11 +1736,11 @@ export const retryInteraction = internalAction({
           postId,
           status: "rejected",
           commandKind: "launch_missing_direct_mention",
-          safeError: "launch post did not explicitly mention @ArcBot",
+          safeError: "launch post did not explicitly mention @ArcChainBot",
         });
         return;
       }
-      if (current.interaction.nestedReply && !hasExplicitBotMention(current.interaction.text, current.interaction.parentPostId ? [{ type: "replied_to", id: current.interaction.parentPostId }] : undefined) && intent.kind !== "command" && !guidedHelp) {
+      if (current.interaction.nestedReply && !hasExplicitBotMention(current.interaction.text, current.interaction.parentPostId ? [{ type: "replied_to", id: current.interaction.parentPostId }] : undefined) && intent.kind !== "command") {
         await ctx.runMutation(internal.xReplies.updateInteraction, {
           postId,
           status: "rejected",
@@ -2079,77 +1751,18 @@ export const retryInteraction = internalAction({
         return;
       }
       if (intent.kind === "irrelevant") {
-        if (!guidedHelp) {
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId,
-            status: "rejected",
-            commandKind: "irrelevant_suppressed",
-            safeError:
-              "irrelevant conversational response intentionally not published",
-          });
-          return;
-        }
-        if (guidedHelp.operation !== "root" && guidedHelpQuestion(directText)) {
-          guidedContinuationOperation = guidedHelp.operation;
-          reply = guidedHelpQuestionResponse(guidedHelp.operation);
-        } else reply = X_GENERAL_GUIDED_HELP_MESSAGE;
+        await ctx.runMutation(internal.xReplies.updateInteraction, {
+          postId, status: "rejected", commandKind: "irrelevant_suppressed",
+          safeError: "irrelevant conversational response intentionally not published",
+        });
+        return;
       } else if (intent.kind === "help") {
-        const guidedOperation = guidedHelp
-          ? guidedHelpOperationFromHelp(directText, intent.topic)
-          : null;
-        if (guidedHelp && guidedHelp.operation !== "root" && intent.topic !== "capabilities") {
-          guidedContinuationOperation = guidedHelp.operation;
-          reply = guidedHelpQuestionResponse(
-            guidedHelp.operation,
-            await helpReply(ctx, intent.topic),
-          );
-        } else if (intent.topic === "capabilities") {
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId, status: "processing", commandKind: guidedHelpCommandKind("root"),
-          });
-          reply = X_GENERAL_GUIDED_HELP_MESSAGE;
-        } else if (intent.topic === "launch") {
-          // A launch-help response is also the parent prompt for the guided
-          // launch flow. Persist the owner-bound root marker before queuing the
-          // response so an affirmative reply can safely start at the name step.
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId, status: "processing", commandKind: guidedHelpCommandKind("root"),
-          });
-          reply = await helpReply(ctx, intent.topic);
-        } else if (guidedOperation) {
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId, status: "processing", commandKind: guidedHelpCommandKind(guidedOperation),
-          });
-          reply = guidedHelpPrompt(guidedOperation);
-        } else reply = await helpReply(ctx, intent.topic);
-      }
-      else if (intent.kind === "unknown_wallet") {
-        if (guidedHelp?.operation && guidedHelp.operation !== "root") {
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId, status: "processing", commandKind: guidedHelpCommandKind(guidedHelp.operation),
-          });
-          guidedContinuationOperation = guidedHelp.operation;
-          reply = guidedHelpQuestion(directText)
-            ? guidedHelpQuestionResponse(guidedHelp.operation)
-            : guidedHelpPrompt(guidedHelp.operation);
-        } else {
-        if (standaloneMentionsEnabled()) {
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId,
-            status: "rejected",
-            commandKind: "ambiguous_suppressed",
-            safeError:
-              "generic ambiguity response suppressed in standalone-mention mode",
-          });
-          return;
-        }
-        reply = unknownWalletMessage();
+        reply = await helpReply(ctx, intent.topic);
+      } else if (intent.kind === "unknown_wallet") {
+        reply = "Include the full command, token, amount and recipient where required. See https://www.arcchainbot.io/guide";
         ok = false;
-        }
       } else {
-        const preparedMedia = guidedLaunchExecution
-          ? { mediaUrl: guidedLaunchExecution.imageUrl, lookupFailed: false }
-          : await prepareReferencedLaunchImage(ctx, {
+        const preparedMedia = await prepareReferencedLaunchImage(ctx, {
               postId,
               text: directText,
               isLaunch: intent.command.kind === "launch",
@@ -2170,7 +1783,7 @@ export const retryInteraction = internalAction({
           await ctx.runMutation(internal.xReplies.updateInteraction, {
             postId,
             status: "rejected",
-            commandKind: guidedHelpCommandKind("root"),
+            commandKind: "help",
             responsePostId,
             safeError: "referenced image could not be prepared",
           });
@@ -2260,17 +1873,6 @@ export const retryInteraction = internalAction({
         }
         reply = result.message;
         ok = result.ok;
-        if (!result.ok && intent.command.kind === "launch"
-          && result.message === "Action needed: Argus doesn’t currently support that pairing asset. Reply with a different pairing asset to continue your launch.") {
-          const recovery = guidedLaunchExecution
-            ? { ...guidedLaunchExecution.state, phase: "pair" as const }
-            : guidedLaunchPairRecoveryState(
-                intent.command,
-                current.interaction.botParentAuthorized === true || hasExplicitBotMention(current.interaction.text, undefined),
-                preparedMedia.mediaUrl,
-              );
-          guidedLaunchRecoveryStateJson = JSON.stringify(recovery);
-        }
       }
       // Specific failures from genuine commands are useful and safe to return.
       // Restricted reply chains still suppress chatter, help, ambiguity, and
@@ -2279,72 +1881,39 @@ export const retryInteraction = internalAction({
       // Multi-vault receipts and the requested V2 reminder must not be silently
       // clipped to 280 characters. These are templated financial results, not
       // unbounded model output; use the existing long-response queue support.
-      const guidedCommandCompleted = Boolean(
-        guidedHelp && ok && intent.kind === "command",
-      );
-      const failedCommandContinuation = Boolean(guidedHelp && !ok && intent.kind === "command");
-      if (guidedCommandCompleted) reply = withGuidedHelpCompletion(reply);
       // Top-five results intentionally contain five independently readable
       // result blocks and token links. They are eligible for X long-post
       // publishing instead of being compressed into a 280-character reply.
       const longCommandResult = intent.kind === "command" &&
         (intent.command.kind === "claim_fees" || intent.command.kind === "buy_top_five" || (intent.command.kind === "reassign_fees" && intent.command.selfBurnBps!==undefined));
       const longHelpResult = intent.kind === "help" && intent.topic === "pairs";
-      const outcomeCommandKind = guidedCommandCompleted || failedCommandContinuation
-          ? guidedHelpCommandKind("root")
-          : guidedContinuationOperation
-            ? guidedHelpCommandKind(guidedContinuationOperation)
-            : undefined;
-      const effectiveOutcomeCommandKind = guidedLaunchRecoveryStateJson
-        ? guidedHelpCommandKind("launch")
-        : outcomeCommandKind;
-      const gasResumeStateJson = isInsufficientEthReply(reply) && intent.kind === "command"
-        ? JSON.stringify({
-            type: "gas_resume", sourceText: workflowText.slice(0, 800),
-            explicitMentionAuthorized: current.interaction.botParentAuthorized === true || hasExplicitBotMention(current.interaction.text, undefined) || Boolean(guidedHelp?.sourceExplicitMention),
-          })
-        : undefined;
-      const mismatchedTicker = reply.match(tokenPattern(/^(?:⚠️ |Action needed: )That contract address's onchain ticker does not match \$([A-Z0-9]{1,32})\./))?.[1];
-      const ambiguousField = intent.kind === "command" ? ambiguousTokenField(intent.command, mismatchedTicker) : null;
+      const ambiguousField = intent.kind === "command" ? ambiguousTokenField(intent.command) : null;
       const ambiguousTokenStateJson = !ok && intent.kind === "command" && ambiguousField
-        && (reply === "Action needed: More than one indexed token uses that ticker. Enter the contract address."
-          || reply === "Action needed: More than one token in your wallet uses that ticker. Enter the contract address."
-          || reply === NON_INDEXED_BUY_TARGET_MESSAGE || reply === BURNED_TOKEN_CA_MESSAGE || mismatchedTicker)
+        && duplicateTickerReply(reply)
         ? JSON.stringify({
-            type: "ambiguous_token",
-            intent: mismatchedTicker
-              ? replaceAmbiguousToken(intent, ambiguousField, mismatchedTicker)
-              : intent,
+            type: "ambiguous_token", reason: "duplicate_ticker",
+            intent,
             field: ambiguousField,
             explicitMentionAuthorized: current.interaction.botParentAuthorized === true
-              || hasExplicitBotMention(current.interaction.text, undefined)
-              || Boolean(guidedHelp?.sourceExplicitMention),
+              || hasExplicitBotMention(current.interaction.text, undefined),
           })
         : undefined;
-      if (effectiveOutcomeCommandKind || gasResumeStateJson || guidedLaunchRecoveryStateJson || ambiguousTokenStateJson) await ctx.runMutation(internal.xReplies.updateInteraction, {
-        postId, status: "processing", ...(effectiveOutcomeCommandKind ? { commandKind: effectiveOutcomeCommandKind } : {}),
-        ...(guidedLaunchRecoveryStateJson ? { guidedHelpStateJson: guidedLaunchRecoveryStateJson }
-          : gasResumeStateJson ? { guidedHelpStateJson: gasResumeStateJson }
-            : ambiguousTokenStateJson ? { guidedHelpStateJson: ambiguousTokenStateJson, commandKind: "ambiguous_token" } : {}),
+      if (ambiguousTokenStateJson) await ctx.runMutation(internal.xReplies.updateInteraction, {
+        postId, status: "processing", commandKind: "ambiguous_token", guidedHelpStateJson: ambiguousTokenStateJson,
         ...(!ok ? { safeError: reply } : {}),
       });
-      // Preserve complete balance lists, templated command results, and guided
-      // explanations. Short replies retain their existing formatting and limits.
+      reply = xCommandReply(reply, Boolean(ambiguousTokenStateJson));
+      // Preserve complete balances and transaction results.
       const needsLongResponse = xWeightedLength(reply) > 280;
-      const responsePostId = await publishReplyOnce(ctx, reply, postId, undefined, longCommandResult || longHelpResult || guidedCommandCompleted || needsLongResponse, {
+      const responsePostId = await publishReplyOnce(ctx, reply, postId, undefined, longCommandResult || longHelpResult || needsLongResponse, {
         ok,
-        // A completed on-chain action must outrank prompts even though it was
-        // initiated inside a B-tier guided conversation.
-        kind: guidedCommandCompleted ? "guided_execution" : "reply",
+        kind: "reply",
       });
       await ctx.runMutation(internal.xReplies.updateInteraction, {
         postId,
         status: ok ? "completed" : "rejected",
         responsePostId,
-        ...(effectiveOutcomeCommandKind ? { commandKind: effectiveOutcomeCommandKind } : {}),
-        ...(guidedLaunchRecoveryStateJson ? { guidedHelpStateJson: guidedLaunchRecoveryStateJson }
-          : gasResumeStateJson ? { guidedHelpStateJson: gasResumeStateJson }
-            : ambiguousTokenStateJson ? { guidedHelpStateJson: ambiguousTokenStateJson, commandKind: "ambiguous_token" } : {}),
+        ...(ambiguousTokenStateJson ? { guidedHelpStateJson: ambiguousTokenStateJson, commandKind: "ambiguous_token" } : {}),
         ...(!ok ? { safeError: reply } : {}),
       });
     } catch (error) {
@@ -2965,14 +2534,11 @@ export const pollMentions = internalAction({
       );
       const admitted: Array<{
         mention: Mention; directText: string; restrictedReply: boolean; directedHelp: boolean;
-        contextualGasHelp: boolean; parentPostId?: string; replyDepth: number;
+        parentPostId?: string; replyDepth: number;
         botParentAuthorized: boolean;
-        gasResume?: { parsedIntentJson?: string; mediaUrl?: string; recipientAddress?: string; explicitMentionAuthorized: boolean; resumable: boolean; sourceText?: string };
-        expiredWorkflowResume?: boolean;
         workflowCooldownNotice?: boolean;
       }> = [];
 
-      const mentionsById = new Map(mentions.map(m => [m.id, m]));
 
       for (const { mention } of prioritized) {
         if (!/^\d+$/.test(mention.author_id) || isXBotAuthor(mention.author_id)) continue;
@@ -3010,40 +2576,12 @@ export const pollMentions = internalAction({
         // Hard stop before persistence, rate limiting, AI, wallet work, or X
         // publication. This prevents automated accounts from sustaining loops.
 
-        let guidedHelpContinuation = await ctx.runQuery(internal.xReplies.guidedHelpContext, {
-          ownerXUserId: mention.author_id || "",
-          parentPostId,
-        });
-        if (guidedHelpContinuation && parseContextualBuy(directText) && parentPostId
-          && (await ctx.runQuery(internal.xReplies.contextualBuyParent, { postId: parentPostId })).token) guidedHelpContinuation = null;
-
-        if (guidedHelpContinuation && !guidedHelpContinuation.allowed) continue;
         const ambiguousTokenContinuation = parentPostId
           ? await ctx.runQuery(internal.xReplies.ambiguousTokenReplyContext, {
               ownerXUserId: mention.author_id || "",
               parentPostId,
             })
           : null;
-        const insufficientContext = parentPostId
-          ? await ctx.runQuery(internal.xReplies.insufficientEthResumeContext, {
-              ownerXUserId: mention.author_id || "",
-              parentPostId,
-            })
-          : null;
-        const gasResume = isResumeReply(directText) && insufficientContext?.resumable
-          ? insufficientContext
-          : undefined;
-        const expiredWorkflowResume = !gasResume && isResumeReply(directText) && parentPostId
-          ? await ctx.runQuery(internal.xReplies.expiredWorkflowResumeContext, {
-              ownerXUserId: mention.author_id || "", parentPostId,
-            })
-          : false;
-        const contextualGasHelp = Boolean(
-          parentPostId &&
-          isContextualGasCostFollowup(directText) &&
-          insufficientContext,
-        );
-
         const ownedBotReply = await ctx.runQuery(internal.xReplies.ownedBotReplyContext, {
           ownerXUserId: mention.author_id || "",
           parentPostId,
@@ -3052,7 +2590,7 @@ export const pollMentions = internalAction({
           parentPostId,
         });
         // A clear launch may be issued as a direct reply to a bot-authored
-        // post. Persist this proof so processing retries and guided follow-ups
+        // post. Persist this proof so processing retries
         // do not depend on X returning the parent a second time. A persisted
         // responsePostId proves a bot reply; author_id covers original bot
         // posts that were not created by this interaction table.
@@ -3063,8 +2601,7 @@ export const pollMentions = internalAction({
         // A same-owner reply to one of our own responses may ask for their
         // wallet instead of following the response's suggested continuation.
         // Treat that as an independent read-only command, even in an old/deep
-        // conversation; never replay the prior transaction unless they use a
-        // recognized resume response.
+        // conversation; this never replays the prior transaction.
         const ownedBotSelfWalletRequest = ownedBotReply === true
           && (directOperation === "show_wallet" || directOperation === "show_balance");
         const directedInformationalHelp = shouldHandleDirectedChainHelp(
@@ -3076,7 +2613,7 @@ export const pollMentions = internalAction({
           directText,
           mention.referenced_tweets,
         );
-        const workflowAdmission = guidedHelpContinuation?.allowed || ambiguousTokenContinuation || ownedBotReply || expiredWorkflowResume
+        const workflowAdmission = ambiguousTokenContinuation
           ? await ctx.runMutation(internal.xReplies.admitWorkflowContinuation, {
               ownerXUserId: mention.author_id || "", postId: mention.id,
             })
@@ -3087,13 +2624,8 @@ export const pollMentions = internalAction({
         if (exceedsXReplyDepthLimit({
           replyDepth,
           maximumDepth: MAX_X_REPLY_DEPTH,
-          guidedWorkflow: Boolean(guidedHelpContinuation?.allowed || ambiguousTokenContinuation || expiredWorkflowResume),
-          contextualGasHelp,
-          // The parent prompt is explicitly waiting for a response. Do not
-          // apply the generic conversation-depth cutoff merely because the
-          // owner answered with a question or another valid command instead
-          // of the suggested word "resume".
-          expectedGasResumeReply: insufficientContext?.resumable === true,
+          guidedWorkflow: Boolean(ambiguousTokenContinuation),
+          contextualGasHelp: false, expectedGasResumeReply: false,
           ownedBotSelfWalletRequest,
           directedInformationalHelp,
           explicitBotMention,
@@ -3105,18 +2637,17 @@ export const pollMentions = internalAction({
         // publication. Transactions and self-wallet requests remain eligible.
         const directedHelp =
           restrictedReply &&
-          (contextualGasHelp || Boolean(gasResume) || expiredWorkflowResume || directedInformationalHelp);
+          directedInformationalHelp;
         if (
           restrictedReply &&
           !directedHelp &&
-          !guidedHelpContinuation?.allowed && !ambiguousTokenContinuation && !gasResume &&
-          !expiredWorkflowResume && !shouldHandlePassiveChainText(directText)
+          !ambiguousTokenContinuation && !shouldHandlePassiveChainText(directText)
         )
           continue;
         if (!workflowCooldownNotice && !await ctx.runMutation(internal.xFloodProtection.admitBeforeProfile, {
           postId: mention.id, authorXUserId: mention.author_id, text: directText, parentPostId,
         })) continue;
-        admitted.push({ mention, directText, restrictedReply, directedHelp, contextualGasHelp, gasResume, expiredWorkflowResume, workflowCooldownNotice, parentPostId, replyDepth, botParentAuthorized });
+        admitted.push({ mention, directText, restrictedReply, directedHelp, workflowCooldownNotice, parentPostId, replyDepth, botParentAuthorized });
       }
       // No profiles for ignored thread chatter, duplicate posts or flood-limited
       // lookups. Transport failures throw before executable interactions exist,
@@ -3131,7 +2662,7 @@ export const pollMentions = internalAction({
         { id: a.mention.id, text: a.directText, verified: users.get(a.mention.author_id)?.verified === true, operation: straightforwardCommandOperation(directPostCommandText(a.directText)) ?? undefined },
         { id: b.mention.id, text: b.directText, verified: users.get(b.mention.author_id)?.verified === true, operation: straightforwardCommandOperation(directPostCommandText(b.directText)) ?? undefined },
       ));
-      for (const { mention, directText, restrictedReply, directedHelp, contextualGasHelp, gasResume, expiredWorkflowResume, workflowCooldownNotice, parentPostId, replyDepth, botParentAuthorized } of admitted) {
+      for (const { mention, directText, restrictedReply, directedHelp, workflowCooldownNotice, parentPostId, replyDepth, botParentAuthorized } of admitted) {
         const user = users.get(mention.author_id);
         if (!user || isXBotAuthor(user.id,user.username)) continue;
         // During emergency intake, confirm Premium/PremiumPlus from the profile;
@@ -3154,14 +2685,6 @@ export const pollMentions = internalAction({
             text: directText,
             ...(restrictedReply && !directedHelp ? { nestedReply: true } : {}),
             ...(botParentAuthorized ? { botParentAuthorized: true } : {}),
-            ...(contextualGasHelp ? { parsedIntentJson: JSON.stringify({ kind: "help", topic: "gas" }) } : {}),
-            ...(gasResume?.parsedIntentJson ? { parsedIntentJson: gasResume.parsedIntentJson } : {}),
-            ...(gasResume?.mediaUrl ? { mediaUrl: gasResume.mediaUrl, mediaSource: "direct" as const } : {}),
-            ...(gasResume?.recipientAddress ? { recipientAddress: gasResume.recipientAddress } : {}),
-            ...(gasResume ? { guidedHelpStateJson: JSON.stringify({
-              type: "gas_resume", sourceText: gasResume.sourceText || directText,
-              explicitMentionAuthorized: gasResume.explicitMentionAuthorized,
-            }) } : {}),
             ...(parentPostId ? { parentPostId, replyDepth } : {}),
             ...(firstMedia?.url
               ? { mediaUrl: firstMedia.url, mediaSource: "direct" as const }
@@ -3177,13 +2700,13 @@ export const pollMentions = internalAction({
         if (!reserved) continue;
         if (workflowCooldownNotice) {
           await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId: mention.id, status: "processing", commandKind: "guided_help:cooldown",
-            safeError: "guided workflow reached 20 replies in 15 minutes",
+            postId: mention.id, status: "processing", commandKind: "contract_clarification_cooldown",
+            safeError: "contract clarification rate limit reached",
           });
           await ctx.runMutation(internal.xReplyQueue.enqueue, {
             key: mention.id, postId: mention.id,
-            text: "Pending: You've reached 20 workflow replies in 15 minutes. Wait 15 minutes, then start again.",
-            ok: false, kind: "guided_reply", allowLong: false,
+            text: "Too many contract replies. Wait 15 minutes and submit a full command.",
+            ok: false, kind: "reply", allowLong: false,
           });
           processed += 1;
           continue;
@@ -3240,28 +2763,6 @@ export const pollMentions = internalAction({
             ? { subscriptionType: user.subscription_type }
             : {}),
         });
-        if (expiredWorkflowResume) {
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId: mention.id, status: "processing", commandKind: "workflow_expired",
-            safeError: WORKFLOW_EXPIRED_MESSAGE,
-          });
-          await ctx.runMutation(internal.xReplyQueue.enqueue, {
-            key: mention.id, postId: mention.id, text: WORKFLOW_EXPIRED_MESSAGE,
-            ok: false, kind: "guided_execution", allowLong: false,
-          });
-          processed += 1;
-          continue;
-        }
-        if (gasResume && parentPostId && !await ctx.runMutation(internal.xReplies.claimInsufficientEthResume, {
-          ownerXUserId: user.id, parentPostId, consumerPostId: mention.id,
-        })) {
-          await ctx.runMutation(internal.xReplies.updateInteraction, {
-            postId: mention.id, status: "rejected", commandKind: "gas_resume_expired_or_consumed",
-            safeError: "gas resume expired or was already consumed",
-          });
-          processed += 1;
-          continue;
-        }
         // Keep polling cheap and bounded. Each interaction runs independently,
         // while the per-wallet execution lease still serializes transactions.
         const dispatchDelay = xInteractionDispatchDelay(

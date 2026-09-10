@@ -1,3 +1,4 @@
+import { arcWalletUrl } from "./public-links";
 import { createPublicClient, http, isAddress, type Address } from "viem";
 
 export const NO_NATIVE_GAS_MESSAGE = "You'll need to fund your wallet with ETH for gas to complete this transaction. Fund it, then reply “resume”.";
@@ -14,12 +15,11 @@ export function isEmptyNativeGasBalanceError(error: unknown) {
 }
 
 export function noNativeGasMessage(address: string, action = "complete this transaction") {
-  const site = (process.env.NEXT_PUBLIC_SITE_URL || "https://arcbot.invalid").replace(/\/$/, "");
   const message = action === "complete this transaction"
     ? NO_NATIVE_GAS_MESSAGE
     : `You'll need to fund your wallet with ETH for gas to ${action}. Fund it, then reply “resume”.`;
   return `${message}
-Your wallet: ${site}/wallet/${address}`;
+Your wallet: ${arcWalletUrl(address)}`;
 }
 
 /** One balance read, never a gas/price estimate. Fail closed on RPC failure,

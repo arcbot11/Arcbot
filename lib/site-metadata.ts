@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ARC_BOT_SITE_URL } from "./project-config";
 
-export const siteUrl = new URL(process.env.NEXT_PUBLIC_SITE_URL || ARC_BOT_SITE_URL).origin;
+export const siteUrl = ARC_BOT_SITE_URL;
 export const siteTitle = "Arc Bot - Your Gateway to Arc Chain";
 export const siteDescription = "Your Arc Chain Wallet. Buy, sell, swap, and send Arc tokens with Arc Bot.";
 const banner = { url: "/brand/arc-bot-social-banner.png", width: 2172, height: 724, alt: siteTitle };

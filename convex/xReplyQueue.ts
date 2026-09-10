@@ -1,3 +1,4 @@
+import { retiredXPrompt, xCommandReply } from "../lib/x-command-workflows";
 import { isXBotAuthor } from "../lib/x-bot-identity";
 import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
 import { disabledCreationKind, suppressCreationReply } from "../lib/disabled-creation";
@@ -11,11 +12,6 @@ import { replyQueueExpiresAt, replyQueuePriority, replyQueueWaitMs } from "../li
 import { temporaryXReplySuppressionReason } from "../lib/x-temporary-reply-policy";
 import { xCashtagSafeText } from "../lib/x-cashtag-policy";
 import { reserveUnverifiedReply, UNVERIFIED_REPLY_WARNING } from "./lib/xUnverifiedReplyLimit";
-import {
-  guidedHelpCommandKind,
-  guidedHelpOperationFromCommandKind,
-  isGuidedHelpCompletion,
-} from "../lib/guided-help-workflow";
 
 type QueueRow = Doc<"xReplyQueue">;
 type QueueState = Doc<"xReplyQueueState">;
@@ -46,7 +42,7 @@ async function settleBindings(ctx: MutationCtx, row: QueueRow, status: "publishe
   const now = Date.now();
 
   if (row.postId) {
-    const interaction = await ctx.db.query("xReplyInteractions").withIndex("by_post_id", q => q.eq("postId", row.postId!)).unique();
+    const interaction = await ctx.db.query("xReplyInteractions").withIndex("by_post_id", q => q.eq("postId", row!.postId!)).unique();
     if (interaction && interaction.commandKind !== "operator_cancelled") {
       await ctx.db.patch(interaction._id, {
         status: status === "published" ? (row.ok ? "completed" : "rejected") : status === "expired" || status === "cancelled" ? "rejected" : "failed",
@@ -55,9 +51,6 @@ async function settleBindings(ctx: MutationCtx, row: QueueRow, status: "publishe
         publicationQueued: status === "blocked" || status === "uncertain", publicationAttempted: status === "published" || status === "uncertain",
         publicationStatus: status === "published" ? "published" : status === "blocked" ? "blocked" : status === "uncertain" ? "uncertain" : "failed",
         nextRetryAt: undefined, ...(responsePostId ? { responsePostId } : {}),
-        ...(status === "published" && row.ok && isGuidedHelpCompletion(row.text)
-          ? { commandKind: guidedHelpCommandKind("root") }
-          : {}),
         // If a B-tier guided prompt expires, close its workflow silently. A
         // later reply must never revive a step the user never received.
         ...(status === "expired" && row.kind === "guided_reply"
@@ -87,6 +80,7 @@ export const enqueue = internalMutation({
     if (existing) return { status: existing.status, ...(existing.responsePostId ? { responsePostId: existing.responsePostId } : {}) };
 
     const interaction = args.postId ? await ctx.db.query("xReplyInteractions").withIndex("by_post_id", q => q.eq("postId", args.postId!)).unique() : null;
+    if (retiredXPrompt(args.kind, interaction?.commandKind, interaction?.guidedHelpStateJson)) return { status: "cancelled" };
     if (isXBotAuthor(interaction?.authorXUserId) || disabledCreationKind(interaction?.commandKind)) return { status: "cancelled" };
     if (args.postId && (!interaction || !explicitReplyRequest(interaction.text,interaction.parentPostId) || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) return { status: "cancelled" };
     const prior = await ctx.db.query("xPublicationEvents").withIndex("by_post_id", q => q.eq("postId", args.key)).order("desc").first();
@@ -96,7 +90,7 @@ export const enqueue = internalMutation({
     if (prior && prior.status !== "rejected") return { status: "uncertain" };
     if (!prior && interaction?.publicationAttempted && args.key === args.postId) return { status: "uncertain" };
     if (interaction && args.key === args.postId && ["completed", "rejected"].includes(interaction.status)) return { status: "cancelled" };
-    let safeText = xCashtagSafeText(args.text);
+    let safeText = xCashtagSafeText(xCommandReply(args.text, interaction?.commandKind === "ambiguous_token"));
     const suppressedReason = temporaryXReplySuppressionReason(safeText);
     if (suppressedReason) {
       if (interaction) await ctx.db.patch(interaction._id, { status: "rejected", publicationStatus: "suppressed", replySuppressedReason: suppressedReason,
@@ -109,18 +103,15 @@ export const enqueue = internalMutation({
     }
 
     let commandKind = interaction?.commandKind;
-    if (!guidedHelpOperationFromCommandKind(commandKind) && commandKind !== "guided_help:cancelled") {
+    if (!commandKind?.startsWith("guided_help")) {
       try { const intent = JSON.parse(interaction?.parsedIntentJson || "null"); commandKind = intent?.kind === "help" ? "help" : intent?.command?.kind || commandKind; } catch { /* No model output is interpreted as queue authority. */ }
     }
     let effectiveKind = args.kind;
     if (args.kind === "reply" && interaction?.parentPostId) {
-      if (commandKind?.startsWith("guided_help")) {
-        effectiveKind = "guided_reply";
-      } else {
+
         const parent = await ctx.db.query("xReplyInteractions")
           .withIndex("by_response_post_id", q => q.eq("responsePostId", interaction.parentPostId!)).unique();
         if (parent?.authorXUserId === interaction.authorXUserId) effectiveKind = "thread_continuation";
-      }
     }
     const priorityAuthority = ["reply", "thread_continuation"].includes(effectiveKind) ? commandKind : effectiveKind;
     const priority = replyQueuePriority(safeText, priorityAuthority, args.ok);
@@ -214,8 +205,8 @@ export const takeNext = internalMutation({
     let wait = waitFor(row);
     if (wait > 0 && !["guided_reply", "guided_execution", "thread_continuation"].includes(row.kind)) {
       // An older ordinary reply waiting on its short window must not block
-      // an active guided workflow. Keep normal A/B/C ordering whenever the head is due,
-      // and FIFO among guided replies. Shared quotas/provider blocks still apply.
+      // a contract clarification or transaction receipt. Legacy prompt rows are
+      // selected only so the retirement check can cancel them. Shared limits apply.
       const exemptCandidates = await Promise.all(
         (["guided_reply", "guided_execution", "thread_continuation"] as const).map(kind =>
           ctx.db.query("xReplyQueue").withIndex("by_status_kind_ready", q => q.eq("status", "queued").eq("kind", kind)).first()),
@@ -225,11 +216,11 @@ export const takeNext = internalMutation({
       if (exempt && waitFor(exempt) < wait) { row = exempt; wait = waitFor(exempt); }
     }
 
-    const interaction = row.postId ? await ctx.db.query("xReplyInteractions").withIndex("by_post_id", q => q.eq("postId", row.postId!)).unique() : null;
+    const interaction = row.postId ? await ctx.db.query("xReplyInteractions").withIndex("by_post_id", q => q.eq("postId", row!.postId!)).unique() : null;
     if (row.postId && (!interaction || !explicitReplyRequest(interaction.text,interaction.parentPostId) || isXBotAuthor(interaction.authorXUserId,row.username) || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) {
       await ctx.db.patch(row._id, { status: "cancelled", updatedAt: now }); await settleBindings(ctx, row, "cancelled"); await wake(ctx, state); return null;
     }
-    if (disabledCreationKind(interaction?.commandKind)) {
+    if (retiredXPrompt(row.kind, interaction?.commandKind, interaction?.guidedHelpStateJson) || disabledCreationKind(interaction?.commandKind)) {
       await ctx.db.patch(row._id, { status: "cancelled", updatedAt: now }); await settleBindings(ctx, row, "cancelled"); await wake(ctx, state); return null;
     }
     if (row.launchId) {
@@ -242,6 +233,8 @@ export const takeNext = internalMutation({
     if (row.kind === "graduation" && process.env.X_GRADUATION_POSTS_ENABLED === "false") {
       await ctx.db.patch(row._id, { status: "paused", updatedAt: now }); await wake(ctx, state); return null;
     }
+    const commandText = xCommandReply(row.text, interaction?.commandKind === "ambiguous_token");
+    if (commandText !== row.text) { await ctx.db.patch(row._id, { text: commandText }); row = { ...row, text: commandText }; }
     if (wait > 0) { await wake(ctx, state, now + wait); return null; }
     const leaseToken = crypto.randomUUID();
     const eventId = await ctx.db.insert("xPublicationEvents", { postId: row.key, replyCategory: row.priority === "C" ? "information" : "other", status: "reserved", createdAt: now, updatedAt: now });

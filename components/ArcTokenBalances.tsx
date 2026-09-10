@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
+import { formatTokenUsd } from "@/lib/arc/token-value";
 import type { ArcTokenBalance } from "@/lib/arc/wallet-tokens";
 
 function HoldingCard({token,onError}:{token:ArcTokenBalance;onError:(message:string)=>void}){
@@ -9,7 +10,7 @@ function HoldingCard({token,onError}:{token:ArcTokenBalance;onError:(message:str
   const balance=whole==="0"&&!displayedFraction&&/[1-9]/.test(fraction)?"<0.000001":whole.replace(/\B(?=(\d{3})+(?!\d))/g,",")+(displayedFraction?`.${displayedFraction}`:"");
   return <article className="arc-holding-card">
     <div className="arc-holding-top"><div className="arc-holding-mark" aria-hidden="true">{token.symbol.slice(0,2).toUpperCase()}</div><div><h3>{token.symbol}</h3><p>{token.name}</p></div><span className="arc-holding-chain">ARC</span></div>
-    <div className="arc-holding-amount"><span>Balance</span><strong title={`${token.balance} ${token.symbol}`}>{balance}</strong><small>{token.symbol}</small></div>
+    <div className="arc-holding-amount"><span>Balance</span><strong title={`${token.balance} ${token.symbol}`}>{balance}</strong><small>{token.symbol} · <span title={token.pricedAt?`Explorer price as of ${token.pricedAt}`:undefined}>{formatTokenUsd(token.usdValue)}</span></small></div>
     <div className="arc-holding-contract"><span>Contract address</span><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(token.address);setCopied(true);}catch{onError("Could not copy the contract address. Select and copy it below.");}}} aria-label={`Copy ${token.symbol} contract address`}>{copied?"Copied":"Copy CA"}</button><code>{token.address}</code></div>
     <a className="arc-text-link" href={`https://www.arcexplorer.org/token/${token.address}`} target="_blank" rel="noreferrer">View on explorer ↗</a>
   </article>;

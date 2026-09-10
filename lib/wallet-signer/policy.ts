@@ -84,11 +84,11 @@ export const signerOperationSchema = z.union([
 ]);
 
 export const walletRequestSchema = z.object({
-  idempotencyKey: z.string().min(4).max(180), ownerReference, chainId: z.literal(LEGACY_NETWORK_CHAIN_ID),
+  idempotencyKey: z.string().min(4).max(180), ownerReference, chainId: z.literal(5042),
 }).strict();
 
 export const balanceRequestSchema = z.object({
-  chainId: z.literal(LEGACY_NETWORK_CHAIN_ID), walletRef: address, expectedAddress: address, ownerReference,
+  chainId: z.literal(5042), walletRef: address, expectedAddress: address, ownerReference,
   token: z.string().min(1).max(50).optional(), knownTokens: z.array(address).max(100).optional(),
 }).strict();
 
@@ -103,7 +103,7 @@ export const executionRequestSchema = z.object({
 }).strict();
 
 export const tokenMetadataRequestSchema = z.object({
-  chainId: z.literal(LEGACY_NETWORK_CHAIN_ID), token: address,
+  chainId: z.literal(5042), token: address,
 }).strict();
 
 export const freeLaunchSponsorshipRequestSchema = z.object({

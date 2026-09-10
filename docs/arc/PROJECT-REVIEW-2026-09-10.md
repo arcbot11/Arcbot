@@ -28,7 +28,7 @@ The inspected Convex environment has OAuth website-login credentials, but lacks 
 
 ### P2 — Deployment access and credential isolation need cleanup
 
-The available Vercel token, both default scope and the configured team, lists only the old ponsbot project. It does not establish which account owns the currently working arcchainbot.io deployment. The CDP credential can see old-project accounts as well as the new wallets. Convex also contains administrative deployment, Vercel and provider-management credentials copied from local configuration. Review runtime references and remove unnecessary management credentials from application runtime environments; use project-scoped access for the new deployment. Do not delete old accounts or rotate credentials blindly while existing wallets depend on them.
+The available Vercel token, both default scope and the configured team, lists only the previous project. It does not establish which account owns the currently working arcchainbot.io deployment. The CDP credential can see old-project accounts as well as the new wallets. Convex also contains administrative deployment, Vercel and provider-management credentials copied from local configuration. Review runtime references and remove unnecessary management credentials from application runtime environments; use project-scoped access for the new deployment. Do not delete old accounts or rotate credentials blindly while existing wallets depend on them.
 
 ### P2 — Full regression suite does not pass
 

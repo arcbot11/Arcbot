@@ -66,7 +66,7 @@ npm run automated-fees:prepare-test-launch
 ```
 
 This command is read-only. It verifies the dedicated CDP launcher, predicts a
-deterministic fee vault, mines and persists no `b07` salt, predicts the Argus
+deterministic fee vault, uses a salt without a token-address suffix requirement, predicts the Argus
 token and curve, checks address collisions and balances, and simulates the
 exact ETH-paired launch with no developer buy. It does not invoke the Arc Bot
 launch pipeline, write Convex records, sign a transaction, or broadcast.

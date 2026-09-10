@@ -54,7 +54,7 @@ export async function GET(request:NextRequest) {
       const orders=await Promise.all(records.filter(r=>r.kind==="order").map(async r=>{
         const o=r as Order; return {listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.xUserId?"buy":"sell"};
       }));
-      const transactions=records.filter((r):r is Transaction=>r.kind==="transaction").map(transactionHistory);
+      const transactions=records.filter((r):r is Transaction=>r.kind==="transaction"&&r.leg!=="allowance"&&r.leg!=="approval").map(transactionHistory);
       const baseSnapshot = snapshots[1];
       let baseUsdc = {balance: null as string|null, locked: "0", available: null as string|null};
       const baseWallet = records.find(r => r.kind === "wallet" && r.id === walletId(8453, session.walletAddress)) as Wallet|undefined;

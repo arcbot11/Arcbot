@@ -1,7 +1,7 @@
 import { decodeFunctionResult, encodeFunctionData, parseAbi, zeroAddress, type Address } from "viem";
 import type { ArcConfig } from "./config.ts";
 import { checkArcRpc, type ArcRpc } from "./rpc.ts";
-import { minimumOutput, poolId, routeCurrencies, v3Path, type Route } from "./routing.ts";
+import { minimumOutput, mixedRouteSupported, poolId, routeCurrencies, v3Path, v4Path, type Route } from "./routing.ts";
 
 export const V3_FACTORY = "0xf0db7b58379503491d857db50ac9ece64c653918" as const;
 export const V3_QUOTER = "0x7dfd4f31be6814d2906bde155c3e1b146eac1468" as const;
@@ -15,6 +15,7 @@ export const quoteAbi = parseAbi([
   "function quoteExactInput(bytes,uint256) returns (uint256,uint160[],uint32[],uint256)",
   "function quoteExactInputSingle(((address currency0,address currency1,uint24 fee,int24 tickSpacing,address hooks) poolKey,bool zeroForOne,uint128 exactAmount,bytes hookData) params) returns (uint256 amountOut,uint256 gasEstimate)",
 ]);
+export const v4MultiQuoteAbi=parseAbi(["function quoteExactInput((address exactCurrency,(address intermediateCurrency,uint24 fee,int24 tickSpacing,address hooks,bytes hookData)[] path,uint128 exactAmount) params) returns(uint256 amountOut,uint256 gasEstimate)"]);
 export type RouteQuote = { route: Route; amountIn: bigint; amountOut: bigint; amountOutMinimum: bigint; gasEstimate: bigint;
   snapshot: { number: bigint; hash: string }; expiresAt: number; executionBlocker?: string };
 
@@ -41,10 +42,15 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
     if (!pending) { pending = rpc.code(address, head.number).then(code => { if (!code || code === "0x") throw new Error("Contract code missing"); }); codeCache.set(key, pending); }
     return pending;
   };
-  const evaluate = async (route: Route, index: number) => {
-    try {
+  const quotePath = async (route: Route, amountIn: bigint): Promise<{amountOut: bigint; gasEstimate: bigint}> => {
       const currencies = routeCurrencies(route);
-      if (route.pools.some(p => p.protocol !== route.pools[0].protocol)) throw new Error("Mixed-protocol quotes are unsupported");
+      if (route.pools.some(p => p.protocol !== route.pools[0].protocol)) {
+        if (!mixedRouteSupported(route)) throw Error("Mixed routes require ERC-20 USDC");
+        const first = await quotePath({ tokenIn: currencies[0], tokenOut: currencies[1], pools: [route.pools[0]] }, amountIn);
+        if (first.amountOut <= 0n) throw Error("No intermediate output");
+        const second = await quotePath({ tokenIn: currencies[1], tokenOut: currencies[2], pools: [route.pools[1]] }, first.amountOut);
+        return { amountOut: second.amountOut, gasEstimate: first.gasEstimate + second.gasEstimate };
+      }
       let amountOut: bigint; let gasEstimate: bigint;
       if (route.pools[0].protocol === "v3") {
         await requireCode(V3_QUOTER);
@@ -58,17 +64,25 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
         const result = await call(V3_QUOTER, "quoteExactInput", [v3Path(route), amountIn]) as readonly [bigint, readonly bigint[], readonly number[], bigint];
         amountOut = result[0]; gasEstimate = result[3];
       } else {
-        if (route.pools.length !== 1) throw new Error("V4 multihop quotes are unsupported");
         if (amountIn >= 2n ** 128n) throw new Error("V4 input exceeds uint128");
-        const pool = route.pools[0];
-        if (pool.protocol !== "v4") throw new Error("Invalid V4 route");
         await requireCode(V4_QUOTER); await requireCode(V4_STATE_VIEW);
-        const id = poolId(pool);
-        const slot = await call(V4_STATE_VIEW, "getSlot0", [id]) as readonly [bigint, number, number, number];
-        if (!slot[0] || await call(V4_STATE_VIEW, "getLiquidity", [id]) === 0n) throw new Error("V4 pool is uninitialized or has no active liquidity");
-        const result = await call(V4_QUOTER, "quoteExactInputSingle", [{ poolKey: pool, zeroForOne: currencies[0].toLowerCase() === pool.currency0.toLowerCase(), exactAmount: amountIn, hookData: "0x" }]) as readonly [bigint, bigint];
+        for(const pool of route.pools){
+          if(pool.protocol!=="v4")throw new Error("Invalid V4 route");
+          const id=poolId(pool);
+          const slot=await call(V4_STATE_VIEW,"getSlot0",[id]) as readonly [bigint,number,number,number];
+          if(!slot[0]||await call(V4_STATE_VIEW,"getLiquidity",[id])===0n)throw new Error("V4 pool is uninitialized or has no active liquidity");
+        }
+        const pool=route.pools[0];
+        const result=route.pools.length===1
+          ? await call(V4_QUOTER,"quoteExactInputSingle",[{poolKey:pool,zeroForOne:currencies[0].toLowerCase()===pool.currency0.toLowerCase(),exactAmount:amountIn,hookData:"0x"}]) as readonly [bigint,bigint]
+          : decodeFunctionResult({abi:v4MultiQuoteAbi,functionName:"quoteExactInput",data:await rpc.call({from:sender,to:V4_QUOTER,value:0n,data:encodeFunctionData({abi:v4MultiQuoteAbi,functionName:"quoteExactInput",args:[{exactCurrency:route.tokenIn,path:v4Path(route),exactAmount:amountIn}]})},head.number)});
         [amountOut, gasEstimate] = result;
       }
+      return { amountOut, gasEstimate };
+  };
+  const evaluate = async (route: Route, index: number) => {
+    try {
+      const { amountOut, gasEstimate } = await quotePath(route, amountIn);
       quotes.push({ route, amountIn, amountOut, amountOutMinimum: minimumOutput(amountOut, slippageBps), gasEstimate,
         snapshot: { number: head.number, hash: head.hash }, expiresAt: now + 30_000,
         ...(route.pools.some(p => p.protocol === "v4" && p.hooks.toLowerCase() !== zeroAddress) ? { executionBlocker: "Hook requires a reviewed adapter and sender-specific simulation" } : {}),

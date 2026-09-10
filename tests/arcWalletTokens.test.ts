@@ -2,7 +2,8 @@ import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 const m=vi.hoisted(()=>({balance:vi.fn(),decimals:vi.fn(),block:vi.fn(),fetch:vi.fn()}));
 vi.mock("../lib/arc/wallet-balance",()=>({arcDisplayConfig:()=>({})}));
 vi.mock("../lib/arc/transport",()=>({arcTransport:()=>()=>({})}));
-vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>({tokenBalance:m.balance,decimals:m.decimals,block:m.block}),checkArcRpc:async()=>({number:100n,hash:"canonical"})}));
+vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>({code:async()=>"0x",tokenBalance:m.balance,decimals:m.decimals,block:m.block}),checkArcRpc:async()=>({number:100n,hash:"canonical"})}));
+vi.mock("../lib/arc/token-value",()=>({tokenUsdEstimate:async()=>({usdValue:24.69,pricedAt:null})}));
 import { arcTokenBalances, arcSelectedTokenBalance } from "../lib/arc/wallet-tokens";
 const token="0xece5ca8bf9220718e5727754026757512212cb3c";
 let counter=1;
@@ -25,7 +26,7 @@ describe("Arc token balance display",()=>{
   });
   it("uses RPC balances instead of stale explorer amounts and coalesces refreshes",async()=>{
     const address=owner();const [a,b]=await Promise.all([arcTokenBalances(address),arcTokenBalances(address)]);
-    expect(a.tokens[0]).toMatchObject({symbol:"ARGUS",balance:"12.345"});expect(a.partial).toBe(false);expect(a).toEqual(b);expect(m.fetch).toHaveBeenCalledTimes(1);
+    expect(a.tokens[0]).toMatchObject({symbol:"ARGUS",balance:"12.345",usdValue:24.69});expect(a.partial).toBe(false);expect(a).toEqual(b);expect(m.fetch).toHaveBeenCalledTimes(1);
   });
   it("includes a traded token before the explorer indexes the transfer",async()=>{
     m.fetch.mockResolvedValue({ok:true,json:async()=>({items:[]})});const result=await arcTokenBalances(owner(),[token]);expect(result.tokens[0].symbol).toBe("ARGUS");

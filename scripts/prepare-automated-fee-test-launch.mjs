@@ -141,23 +141,11 @@ const predictionBase = {
   socials,
 };
 const saltSeed = keccak256(stringToHex(`arcbot-private-automated-fee-test-launch:${launcher}:${upgradeTest ? launcher : predictedVault}:${NAME}:${SYMBOL}:${testVersion}`));
-let selected;
-const batchSize = 24;
-for (let offset = 0; offset < 100_000 && !selected; offset += batchSize) {
-  const candidates = Array.from({ length: Math.min(batchSize, 100_000 - offset) }, (_, index) => {
-    const salt = keccak256(encodeAbiParameters([{ type: "bytes32" }, { type: "uint256" }], [saltSeed, BigInt(offset + index)]));
-    return { salt, contract: { address: launchDeployer, abi: deployerAbi, functionName: "predictLaunchAddresses", args: [{ ...predictionBase, salt }] } };
-  });
-  const results = await client.multicall({ contracts: candidates.map((candidate) => candidate.contract), allowFailure: true, multicallAddress: MULTICALL });
-  for (let index = 0; index < results.length; index += 1) {
-    if (results[index].status === "success" && results[index].result[0].toLowerCase().endsWith("b07")) {
-      selected = { salt: candidates[index].salt, token: results[index].result[0], curve: results[index].result[1], attempt: offset + index + 1 };
-      break;
-    }
-  }
-}
-if (!selected) throw new Error("could not find a b07 test-token address in 100,000 candidates");
-
+const [predictedToken, predictedCurve] = await client.readContract({
+  address: launchDeployer, abi: deployerAbi, functionName: "predictLaunchAddresses",
+  args: [{ ...predictionBase, salt: saltSeed }],
+});
+const selected = { salt: saltSeed, token: predictedToken, curve: predictedCurve, attempt: 1 };
 const [persistedPrediction, tokenCode, curveCode, priorLaunch, priorVault] = await Promise.all([
   client.readContract({ address: launchDeployer, abi: deployerAbi, functionName: "predictLaunchAddresses", args: [{ ...predictionBase, salt: selected.salt }] }),
   client.getCode({ address: selected.token }),

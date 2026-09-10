@@ -9,7 +9,7 @@ Arc Bot is a trading and wallet project for Arc mainnet, with Argus market disco
 - Buy and sell tokens against USDC.
 - Swap tokens through validated v3/v4 routes and additional supported venues.
 - Send native USDC and ERC-20 tokens independently of market liquidity.
-- Integrate Argus token creation later.
+- X commands and Telegram buttons and slash commands. Token creation is disabled.
 
 ## Status
 
@@ -19,16 +19,16 @@ Do not enable inherited workers or deploy contract changes as an Arc service unt
 
 ## Website OTC
 
-The new `/otc` market supports Arc USDC listings priced in Base ETH, partial fills, gas reservations, and a 1% buyer fee after the premium. `/wallet` uses Buy, Sell, and Send forms with order history; `/terminal` redirects there. Base actions are website-only. This implementation is not deployed or enabled for real trades. See [OTC setup, settlement, and recovery limits](docs/otc/IMPLEMENTATION.md).
+The `/otc` market supports Arc USDC listings priced in Base ETH or Base USDC, partial fills, dedicated CDP position escrow, and a 1.5% buyer fee after the premium. Buyers and sellers pay their gas. `/wallet` provides Buy, Sell, Swap, and Send controls with transaction history. Base actions are website-only. See [OTC setup and settlement](docs/otc/IMPLEMENTATION.md).
 
 ## Local development
 
-Arc-native USDC and ERC-20 send infrastructure now lives in `lib/arc`, with read-only `npm run arc:preflight` and an explicit operator execution command. See [transaction setup and remaining acceptance gates](docs/arc/TRANSACTIONS.md). This path is independent of the inherited application engine; buy/sell/swap routing and UI integration remain in progress.
+Arc-native USDC and ERC-20 send infrastructure now lives in `lib/arc`, with read-only `npm run arc:preflight` and an explicit operator execution command. See [transaction setup and remaining acceptance gates](docs/arc/TRANSACTIONS.md). This path is independent of the inherited application engine; buy/sell/swap use the Arc route and settlement modules.
 
-Arc ERC-20 [dead-address burns](docs/arc/BURNING.md) share the transfer engine. The [API compatibility audit](docs/arc/API-COMPATIBILITY.md) records which providers actually support chain 5042. [Quotes and bounded explorer discovery](docs/arc/ROUTING.md) use RPC validation; they do not enable full swap execution.
+Arc ERC-20 [dead-address burns](docs/arc/BURNING.md) share the transfer engine. The [API compatibility audit](docs/arc/API-COMPATIBILITY.md) records which providers actually support chain 5042. [Quotes and bounded explorer discovery](docs/arc/ROUTING.md) use RPC validation; execution uses the Arc trading and transaction modules.
 
 Install dependencies with npm install, then use npm run dev. Run npm run typecheck, npm test, and npm run build for validation.
 
-Configure an independent Arc Bot environment using .env.example. Set NEXT_PUBLIC_SITE_URL to the actual published site. Optional NEXT_PUBLIC_ARCBOT_X_URL and NEXT_PUBLIC_ARCBOT_TELEGRAM_URL control social links; empty values hide them. Placeholder .invalid hosts are intentionally non-production defaults.
+Configure an independent Arc Bot environment using .env.example. NEXT_PUBLIC_SITE_URL is the OAuth and webhook origin. Public website and X links use the Arc Bot identity in lib/project-config.ts. Telegram links and the default command username use the verified TheArcChainBot identity in lib/project-config.ts. Legacy .invalid endpoints remain in retained modules; they are not Arc RPC fallbacks. See docs/arc/BRANDING-LINK-REVIEW-2026-09-10.md.
 
-The Arc Bot logo and social banner are generated from the vector mark in public/arcbot.svg. Regenerate the PNGs and app icons with node scripts/generate-brand-icons.mjs.
+The supplied Arc Bot logo and social banner are stored in public/brand. Browser icons are stored in public and app. Preserve the supplied assets; the older vector-generation script is not the source of the current branding.

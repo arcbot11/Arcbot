@@ -54,7 +54,7 @@ export type Wallet = { kind: "wallet"; id: string; owner: string; address: strin
   holds: Record<string, string>; usdcHolds?: Record<string, string>; activeTx?: string; lastSettledBlock?: string; updatedAt: number };
 export type Transaction = { kind: "transaction"; id: string; owner: string; wallet: string; chainId: Chain;
   escrowRef?: {listingId:string;orderId?:string;step:string;sourceHold?:string;reserveWei?:string}; sourceRequestId?: string;
-  swapOutput?: {token:string;minimum:string};
+  swapOutput?: {token:string;minimum:string;recipient?:string};
   orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted";
   unsigned: string; raw?: string; hash?: string; blockNumber?: string; note?: string; createdAt: number; updatedAt: number };
 export type RecordValue = Listing | Order | Wallet | Transaction;

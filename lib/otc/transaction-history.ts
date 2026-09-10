@@ -16,7 +16,13 @@ const labels:Record<string,string>={send:"Send",swap:"Swap",allowance:"Token app
 /** Display-only projection. Never expose signed bytes or treat a quote as a receipt. */
 export function transactionHistory(record:Transaction){
   const details:Array<{label:string;value:string}>=[];
-  const result={id:record.id,chainId:record.chainId,leg:record.leg,escrowStep:record.escrowRef?.step,title:labels[record.escrowRef?.step??record.leg]??`OTC ${record.escrowRef?.step?.replaceAll("_"," ")??record.leg}`,status:record.status,hash:record.hash,note:record.note,createdAt:record.createdAt,blockNumber:record.blockNumber,details};
+  const note=["completed","reverted"].includes(record.status)?undefined:record.leg==="swap"?record.note?.replace(/Reserved funds remain locked\./gi,"").trim():record.note;
+  const result={id:record.id,chainId:record.chainId,leg:record.leg,escrowStep:record.escrowRef?.step,title:labels[record.escrowRef?.step??record.leg]??`OTC ${record.escrowRef?.step?.replaceAll("_"," ")??record.leg}`,status:record.status,hash:record.hash,note,createdAt:record.createdAt,blockNumber:record.blockNumber,details};
+  if(record.swapOutput?.recipient?.toLowerCase()==="0x000000000000000000000000000000000000dead"){
+    result.title="Buy and burn";details.push({label:"Burn destination",value:record.swapOutput.recipient});
+  }else if(record.swapOutput?.recipient){
+    result.title="Buy and send";details.push({label:"To",value:record.swapOutput.recipient});
+  }
   try{
     const tx=parseTransaction(record.unsigned as Hex);
     if(!tx.to)return result;
@@ -38,10 +44,10 @@ export function transactionHistory(record:Transaction){
           details.push({label:"Input",value:amount(record.chainId,path.slice(0,42),input)},{label:"Minimum output",value:amount(record.chainId,`0x${path.slice(-40)}`,minimum)},{label:"Route",value:"V3"});
         }else if(commands==="0x10"){
           const [actions,params]=decodeAbiParameters(parseAbiParameters("bytes,bytes[]"),inputs[0]);
-          if(actions==="0x060c0f"){
+          if(actions==="0x060c0f"||actions==="0x070c0f"){
             const [tokenIn,input]=decodeAbiParameters(parseAbiParameters("address,uint256"),params[1]);
             const [tokenOut,minimum]=decodeAbiParameters(parseAbiParameters("address,uint256"),params[2]);
-            details.push({label:"Input",value:amount(record.chainId,tokenIn,input)},{label:"Minimum output",value:amount(record.chainId,tokenOut,minimum)},{label:"Route",value:"V4"});
+            details.push({label:"Input",value:amount(record.chainId,tokenIn,input)},{label:"Minimum output",value:amount(record.chainId,tokenOut,minimum)},{label:"Route",value:actions==="0x070c0f"?"V4 · 2 pools":"V4"});
           }
         }
       }

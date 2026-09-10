@@ -1,3 +1,4 @@
+import { ARC_NATIVE_TRANSFER, verifyArcUsdcDelivery } from "../arc/usdc-delivery";
 import { otcWorkerUrl } from "../project-config";
 import { nativeSpend } from "./native-spend";
 import { ARC_ROUTER, ARC_ROUTER_CODE_HASH } from "../arc/routing";
@@ -7,7 +8,7 @@ import { tokenTransfer, transferAbi, verifyTransferReturn, verifyTransferDeliver
 import { CdpClient } from "@coinbase/cdp-sdk";
 import { createHash } from "node:crypto";
 import { createPublicClient, http, getAddress, keccak256, parseTransaction, recoverTransactionAddress, serializeTransaction, parseEventLogs, decodeFunctionData, parseAbi, type Address, type Hex } from "viem";
-import { arcConfigFromEnv } from "../arc/config";
+import { arcConfigFromEnv, ARC_USDC } from "../arc/config";
 import { createArcRpc, checkArcRpc } from "../arc/rpc";
 import { arcTransport } from "../arc/transport";
 import { baseConfigFromEnv } from "../base/config";
@@ -110,9 +111,10 @@ function signingId(id: string) {
   return `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-a${h.slice(17,20)}-${h.slice(20,32)}`;
 }
 /** Persisted unsigned bytes and a wallet lease precede signing; persisted signed bytes precede every broadcast. */
-export async function advanceTransaction(id: string) {
+export async function advanceTransaction(id: string, receiptOnly = false) {
   const repo=repository(); let record=await repo.read<Transaction>({id});
   if (!record || ["completed","reverted"].includes(record.status)) return record;
+  if(receiptOnly&&(!record.raw||!record.hash||record.status!=="submitted"))return record;
   walletTransferConfiguration(record.chainId);
   if (["approval", "payment"].includes(record.leg) && !record.raw) {
     const config=await verifyRouter(false),order=await repo.read<Order>({id:record.orderId!});
@@ -191,23 +193,44 @@ export async function advanceTransaction(id: string) {
     if(receipt.status==="success"&&record.leg==="swap"){
       const output=record.swapOutput;
       if(!output)throw new Error("Swap delivery terms missing.");
-      if(/^0x0{40}$/i.test(output.token)){
-        const trace=await client.request({method:"debug_traceTransaction",params:[record.hash,{tracer:"prestateTracer",tracerConfig:{diffMode:true}}]} as never) as unknown as {pre:Record<string,{balance?:string}>;post:Record<string,{balance?:string}>};
-        const key=record.wallet.toLowerCase(),before=trace.pre?.[key]?.balance,after=trace.post?.[key]?.balance;
-        if(before===undefined||after===undefined||BigInt(after)-BigInt(before)+receipt.gasUsed*receipt.effectiveGasPrice<BigInt(output.minimum))throw new Error("Native swap output is not verified.");
-      }else{
-        const token=getAddress(output.token);
+      const outputRecipient=getAddress(output.recipient??record.wallet);
+      if(output.recipient&&BigInt(outputRecipient)<=2n)throw new Error("Unsupported swap recipient.");
+      if(output.recipient&&/^0x0{40}$/i.test(output.token))throw new Error("Native output must go to the wallet.");
+      {
+        const nativeOutput=/^0x0{40}$/i.test(output.token);
+        if(nativeOutput&&record.chainId!==5042)throw new Error("Unsupported native swap chain.");
+        const token=nativeOutput?ARC_NATIVE_TRANSFER:getAddress(output.token);
         const transfers=parseEventLogs({abi:transferAbi,logs:receipt.logs.filter(l=>l.address.toLowerCase()===token.toLowerCase()),eventName:"Transfer",strict:true});
-        const incoming=transfers.filter(e=>e.args.to.toLowerCase()===record.wallet.toLowerCase());
+        const incoming=transfers.filter(e=>e.args.to.toLowerCase()===outputRecipient.toLowerCase());
         const received=incoming.reduce((sum,e)=>sum+e.args.value,0n);
         if(received<BigInt(output.minimum))throw new Error("Minimum swap output was not delivered.");
-        const [before,after]=await Promise.all([receipt.blockNumber-1n,receipt.blockNumber].map(blockNumber=>client.readContract({address:token,abi:transferAbi,functionName:"balanceOf",args:[getAddress(record.wallet)],blockNumber})));
+        if(record.chainId===5042&&(nativeOutput||token.toLowerCase()===ARC_USDC.toLowerCase())){
+          const [before,after,block,blockLogs]=await Promise.all([
+            client.getBalance({address:outputRecipient,blockNumber:receipt.blockNumber-1n}),
+            client.getBalance({address:outputRecipient,blockNumber:receipt.blockNumber}),
+            client.getBlock({blockNumber:receipt.blockNumber,includeTransactions:true}),
+            client.getLogs({address:ARC_NATIVE_TRANSFER,fromBlock:receipt.blockNumber,toBlock:receipt.blockNumber}),
+          ]);
+          if(block.hash!==receipt.blockHash)throw new Error("Arc delivery block changed.");
+          const payments=block.transactions.filter(t=>t.from.toLowerCase()===outputRecipient.toLowerCase());
+          const gasReceipts=await Promise.all(payments.map(t=>t.hash===record.hash?Promise.resolve(receipt):client.getTransactionReceipt({hash:t.hash})));
+          let gasPaid=0n;
+          for(let i=0;i<gasReceipts.length;i++){
+            const evidence=gasReceipts[i];
+            if(evidence.transactionHash!==payments[i].hash||evidence.blockHash!==receipt.blockHash||evidence.blockNumber!==receipt.blockNumber||evidence.from.toLowerCase()!==outputRecipient.toLowerCase())throw new Error("Arc gas receipt mismatch.");
+            gasPaid+=evidence.gasUsed*evidence.effectiveGasPrice;
+          }
+          if(outputRecipient.toLowerCase()===record.wallet.toLowerCase()&&!payments.some(t=>t.hash===record.hash))throw new Error("Arc gas transaction missing.");
+          verifyArcUsdcDelivery({recipient:outputRecipient,received,decimals:nativeOutput?18:6,before,after,gasPaid,logs:receipt.logs,blockLogs});
+        }else{
+        const [before,after]=await Promise.all([receipt.blockNumber-1n,receipt.blockNumber].map(blockNumber=>client.readContract({address:token,abi:transferAbi,functionName:"balanceOf",args:[outputRecipient],blockNumber})));
         const blockLogs=await client.getLogs({address:token,fromBlock:receipt.blockNumber,toBlock:receipt.blockNumber});
         for(const sender of new Set(incoming.map(e=>e.args.from.toLowerCase()))){
           const amount=incoming.filter(e=>e.args.from.toLowerCase()===sender).reduce((sum,e)=>sum+e.args.value,0n);
-          verifyTransferDelivery({token,sender,recipient:record.wallet,amount,before,after,logs:receipt.logs,blockLogs});
+          verifyTransferDelivery({token,sender,recipient:outputRecipient,amount,before,after,logs:receipt.logs,blockLogs});
         }
       }
+    }
     }
     if(receipt.status==="success"&&record.leg==="allowance"){
       if(!tx.data||!tx.to)throw new Error("Approval terms missing.");
@@ -238,6 +261,7 @@ export async function advanceTransaction(id: string) {
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt changed during verification.");
     return repo.command<Transaction>("settled",{id,block:receipt.blockNumber.toString(),success:receipt.status==="success"});
   }
+  if(receiptOnly)return record;
   if (snapshot.nonce>(tx.nonce??0)) throw new Error("Nonce consumed without a verified receipt. Funds remain reserved.");
   const reserved=await repo.read<Wallet>({id:walletId(record.chainId,record.wallet)});
   if(!reserved || reserved.activeTx!==record.id || BigInt(snapshot.balanceWei)<locked(reserved)) throw new Error("Signed request is no longer covered by wallet reservations.");
@@ -317,7 +341,7 @@ export async function drainWork() {
     try { if(record.kind==="order") await advanceOrder(record.id); else if(record.kind==="listing")await (await import("./escrow-runtime")).advanceEscrowPosition(record.id);else await advanceTransaction(record.id); await repo.command("touch",{id:record.id}); processed++; }
     catch(error) {
       console.error("otc_worker",record.id,error instanceof Error?error.message:"Settlement failed");
-      await repo.command("note",{id:record.id,note:"Settlement is waiting for verification or recovery. Reserved funds remain locked."});
+      await repo.command("note",{id:record.id,note:record.kind==="transaction"&&record.leg==="swap"?"Settlement is waiting for verification or recovery.":"Settlement is waiting for verification or recovery. Reserved funds remain locked."});
     }
   }
   return {processed};

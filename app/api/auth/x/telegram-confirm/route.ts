@@ -1,3 +1,4 @@
+import { ARC_BOT_TELEGRAM_URL } from "@/lib/project-config";
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { api } from "@/convex/_generated/api";
@@ -42,8 +43,7 @@ export async function POST(request: NextRequest) {
       return problem("We couldn't verify the linking result. Check Telegram first. If it isn't linked, reload this page or start linking again from Telegram.", 503);
     }
   } else if (form.get("decision") !== "cancel") return new NextResponse("Invalid choice", { status: 400 });
-  const username = process.env.TELEGRAM_BOT_USERNAME?.trim().replace(/^@/, "") || "ArcBot";
-  const response = NextResponse.redirect(`https://t.me/${/^[a-zA-Z0-9_]{5,32}$/.test(username) ? username : "ArcBot"}`, 303);
+  const response = NextResponse.redirect(ARC_BOT_TELEGRAM_URL, 303);
   response.cookies.set(TELEGRAM_CONSENT_COOKIE, "", { httpOnly: true, path: TELEGRAM_CONSENT_PATH, maxAge: 0 });
   return response;
 }
