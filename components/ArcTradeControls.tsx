@@ -9,7 +9,7 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{}}:{side:"bu
   const active=useRef(true),inFlight=useRef(false);
   useEffect(()=>{active.current=true;return()=>{active.current=false;};},[]);
   const [progress,setProgress]=useState("");
-  const [estimate,setEstimate]=useState<{minimumOut:string;expiresAt:number}|null>(null);
+  const [estimate,setEstimate]=useState<{minimumOut:string;outputSymbol?:string|null;outputAddress?:string;expiresAt:number}|null>(null);
   const [estimateStatus,setEstimateStatus]=useState("");
   const authenticated=session?.authenticated,csrfToken=session?.csrfToken,walletAddress=session?.walletAddress;
   useEffect(()=>{
@@ -47,7 +47,7 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{}}:{side:"bu
     {side==="sell"&&<p className="otc-fine">Receive Arc USDC.</p>}
     <label>{side==="buy"?"USDC to spend":"Tokens to spend"}<input inputMode="decimal" value={amount} onChange={e=>{setAmount(e.target.value);}} placeholder="0.00"/></label>
     <label>Slippage %<input inputMode="decimal" value={slippage} onChange={e=>{setSlippage(e.target.value);}}/></label>
-    <div className="arc-trade-estimate" aria-live="polite">{estimate?<><p>You will receive at least <strong>{estimate.minimumOut} {side==="sell"?"USDC":"tokens"}</strong>.</p><small>Estimate includes slippage. Rechecked when you submit.</small></>:<p>{estimateStatus}</p>}</div>
+    <div className="arc-trade-estimate" aria-live="polite">{estimate?<><p>You will receive at least <strong>{estimate.minimumOut} {estimate.outputSymbol?`$${estimate.outputSymbol}`:side==="sell"?"$USDC":estimate.outputAddress??(side==="buy"?token:output)}</strong>.</p><small>Estimate includes slippage.</small></>:<p>{estimateStatus}</p>}</div>
     <button type="button" className="arc-button" onClick={()=>void execute()} disabled={disabled||busy||!session?.authenticated||!token||(side==="swap"&&!/^0x[0-9a-fA-F]{40}$/.test(output))}>{busy?progress:side==="buy"?"Buy":side==="sell"?"Sell":"Swap"}</button>
   </fieldset>;
 }

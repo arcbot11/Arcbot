@@ -1,3 +1,4 @@
+import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
 import { otcWorkerUrl } from "../lib/project-config";
 import { mutation, query, action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
@@ -31,6 +32,14 @@ export const command = mutation({
       },
     };
     switch(args.command) {
+      case "escrow_bind": return bindEscrow(store,input.id,input.address,now);
+      case "escrow_prepare": return prepareEscrowStep(store,input,now);
+      case "escrow_advance": return advanceEscrowState(store,input.listingId,input.orderId,now,input.baseBalanceWei,input.baseBlock,input.arcBalanceWei,input.arcBlock);
+      case "escrow_retry": return retryEscrow(store,input.listingId,input.orderId,input.owner,now);
+      case "escrow_listing": {
+        if (!input.escrow?.accountName || !input.escrow?.feeRecipient || input.amountIncludesGas !== true) throw new Error("Escrow listing configuration missing.");
+        return createListing(store,input,now);
+      }
       case "listing": return createListing(store,input,now);
       case "quote": {
         const open = await ctx.db.query("otcRecords").withIndex("by_owner",q=>q.eq("owner",input.owner).eq("kind","order")).filter(q=>q.eq(q.field("status"),"quoted")).collect();
@@ -59,9 +68,9 @@ export const command = mutation({
         if(record){record.updatedAt=now;await store.put(record);} return null;
       }
       case "note": {
-        const record = await store.get<Order>(input.id);
-        if (!record || !["order","transaction"].includes(record.kind)) throw new Error("Record missing.");
-        record.note = String(input.note).slice(0,240); record.updatedAt = now; await store.put(record); return null;
+        const record = await store.get<RecordValue>(input.id);
+        if (!record || !["order","transaction","listing"].includes(record.kind)) throw new Error("Record missing.");
+        if(record.kind==="listing"&&record.escrow)record.escrow.note=String(input.note).slice(0,240);else if(record.kind==="order"||record.kind==="transaction")record.note = String(input.note).slice(0,240); record.updatedAt = now; await store.put(record); return null;
       }
       default: throw new Error("Unknown OTC command.");
     }
@@ -87,7 +96,8 @@ export const read = query({
       const statuses = ["quoted","payment_pending","payment_submitted","payment_finalized","payout_submitted"];
       const rows = (await Promise.all(statuses.map(status=>ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","order").eq("status",status)).order("asc").take(50)))).flat();
       const txs = (await Promise.all(["prepared","signed","submitted"].map(status=>ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","transaction").eq("status",status)).take(50)))).flat();
-      return [...rows,...txs].map(r=>JSON.parse(r.json));
+      const positions=(await Promise.all(["funding","closing"].map(status=>ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","listing").eq("status",status)).take(50)))).flat();
+      return [...rows,...txs,...positions].map(r=>JSON.parse(r.json));
     }
     const rows = await ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","listing").eq("status","active")).collect();
     const listings = rows.map(r=>JSON.parse(r.json) as Listing).filter(l=>BigInt(l.available)>=10_000_000n).sort((a,b)=>a.premiumBps-b.premiumBps || a.createdAt-b.createdAt);

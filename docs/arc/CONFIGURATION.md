@@ -24,12 +24,12 @@ Public configuration lives in `lib/project-config.ts`. The eight legacy executio
 | `BASE_MAX_TOTAL_FEE_WEI` | Removed. Fixed at 1,000,000,000,000,000 wei (0.001 ETH) per transaction. |
 | `OTC_SERVICE_SECRET` | Environment only; shared private service secret. |
 | `OTC_WORKER_URL` | Removed. Fixed production site plus `/api/otc/worker`: `https://www.arcchainbot.io/api/otc/worker`. Website-origin/old worker environment values cannot redirect it. |
-| `OTC_BASE_PAYMENT_ROUTER` | Environment; verified Arc Bot Base contract deployment not configured. |
-| `OTC_BASE_ROUTER_CODE_HASH` | Environment; must match the deployed contract runtime bytecode. |
-| `OTC_FEE_WALLET` | Environment; dedicated fee recipient not supplied/configured. |
+| `OTC_BASE_PAYMENT_ROUTER` | Legacy positions only; deployed Base payment contract address. New CDP escrow positions do not use it. |
+| `OTC_BASE_ROUTER_CODE_HASH` | Legacy positions only; must match their payment contract runtime bytecode. |
+| `OTC_FEE_WALLET` | Dedicated fee recipient, fixed into each new escrow position. |
 
 The production worker URL is shared by website transfer validation and Convex scheduler calls. Change the public configuration for an isolated staging deployment; it no longer has an environment override. `NEXT_PUBLIC_SITE_URL` remains the website/OAuth/CSRF origin setting and should match the actual deployed website.
 
-Gas limits are the previous code defaults, now pinned in the production environment loaders. Explicit low-level configuration objects remain available for tests and simulations. Environment overrides no longer change these limits. For USDC OTC, two Base legs reserve up to 0.002 ETH total, releasing the approval budget after finalized approval.
+Gas limits are the previous code defaults, now pinned in the production environment loaders. Explicit low-level configuration objects remain available for tests and simulations. Environment overrides no longer change these limits. New escrow purchases reserve five Base transaction gas allowances: two in the buyer wallet and three deposited into escrow. Spendable excess returns to the buyer; residual gas credits remain attributed to their owner. See ../otc/IMPLEMENTATION.md.
 
 Launches remain blocked. Ordinary Arc burns and ETH/USDC OTC settlement retain their verification and reservation behavior. No backend settings were deployed or credentials revoked.

@@ -14,7 +14,7 @@ import { baseConfigFromEnv } from "../base/config";
 import { createBaseRpc, checkBaseRpc } from "../base/rpc";
 import type { BaseTransaction } from "../base/transfers";
 import { exactAmount } from "../arc/amounts";
-import { type Chain, type Order, type Transaction, type Wallet, locked, lockedBaseUsdc, paymentAsset, walletId, QUOTE_MS } from "./model";
+import { type Chain, type Listing, type Order, type Transaction, type Wallet, locked, lockedBaseUsdc, paymentAsset, walletId, QUOTE_MS } from "./model";
 import { PAYMENT_ABI, orderHash, paymentCall, approvalCall, payoutCall } from "./transactions";
 import { repository } from "./repository";
 
@@ -137,7 +137,8 @@ export async function advanceTransaction(id: string) {
       if(!code||keccak256(code)!==ARC_ROUTER_CODE_HASH)throw new Error("Arc router code changed.");
       await chainClient(5042).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value});
     }
-    if(!await repo.identity(record.owner,record.wallet))throw new Error("Wallet ownership or active status changed before signing.");
+    if(record.escrowRef)await (await import("./escrow-runtime")).assertEscrowTransaction(record);
+    if(!record.escrowRef&&!await repo.identity(record.owner,record.wallet))throw new Error("Wallet ownership or active status changed before signing.");
     if (snapshot.nonce !== tx.nonce || snapshot.pendingNonce !== snapshot.nonce) throw new Error("Wallet nonce changed before signing. Recovery required.");
     const w=await repo.read<Wallet>({id:walletId(record.chainId,record.wallet)});
     if (!w || w.activeTx !== id || BigInt(snapshot.balanceWei)<locked(w)) throw new Error("Wallet reservation is not covered.");
@@ -277,6 +278,7 @@ export async function advanceOrder(id: string) {
     if (Date.now()>=order.expiresAt) await repo.command("expire",{id});
     return;
   }
+  if(order.escrow)return (await import("./escrow-runtime")).advanceEscrowOrder(order);
   const payment=["payment_pending","payment_submitted"].includes(order.status);
   const payout=["payment_finalized","payout_submitted"].includes(order.status);
   if (!payment && !payout) return;
@@ -299,20 +301,20 @@ export async function advanceOrder(id: string) {
   }
   await advanceTransaction(record.id);
 }
-export function selectSettlementWork(records:Array<Order|Transaction>,now=Date.now()) {
+export function selectSettlementWork(records:Array<Order|Transaction|Listing>,now=Date.now()) {
   const orders=new Set(records.filter(r=>r.kind==="order").map(r=>r.id));
-  return records.filter(r=>r.kind==="order" ? r.status!=="quoted" || r.expiresAt<=now : !r.orderId || !orders.has(r.orderId))
+  return records.filter(r=>r.kind==="order" ? r.status!=="quoted" || r.expiresAt<=now : r.kind==="listing" || !(r.orderId??r.escrowRef?.orderId) || !orders.has((r.orderId??r.escrowRef?.orderId)!))
     .sort((a,b)=>a.updatedAt-b.updatedAt).slice(0,12);
 }
 export async function drainWork() {
   const repo=repository();
-  const records=await repo.read<Array<Order|Transaction>>({work:true});
+  const records=await repo.read<Array<Order|Transaction|Listing>>({work:true});
   let processed=0;
   // Bounded batches. Repeated scheduler calls resume immutable jobs.
   const deadline=Date.now()+240_000;
   for (const record of selectSettlementWork(records)) {
     if(Date.now()>=deadline)break;
-    try { if(record.kind==="order") await advanceOrder(record.id); else await advanceTransaction(record.id); await repo.command("touch",{id:record.id}); processed++; }
+    try { if(record.kind==="order") await advanceOrder(record.id); else if(record.kind==="listing")await (await import("./escrow-runtime")).advanceEscrowPosition(record.id);else await advanceTransaction(record.id); await repo.command("touch",{id:record.id}); processed++; }
     catch(error) {
       console.error("otc_worker",record.id,error instanceof Error?error.message:"Settlement failed");
       await repo.command("note",{id:record.id,note:"Settlement is waiting for verification or recovery. Reserved funds remain locked."});

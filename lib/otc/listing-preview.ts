@@ -17,7 +17,7 @@ export async function listingPreview(address:string,amount:string,premiumPercent
   const perFill=gas*rate;
   const w=await repository().read<Wallet|null>({id:walletId(5042,from)});
   if(w?.activeTx)throw new Error("Wallet has a pending transaction.");
-  const {amount:listingUnits,gasReserve,requiredWei}=listingBudget(units,perFill),available=BigInt(snapshot.balanceWei)-(w?locked(w):0n);
+  const {amount:listingUnits,gasReserve,requiredWei}=listingBudget(units,perFill,2n*perFill),available=BigInt(snapshot.balanceWei)-(w?locked(w):0n);
   if(requiredWei>available)throw new Error("Not enough available USDC for this listing budget.");
   return {snapshot,gasPerFillWei:perFill.toString(),gasReserveWei:gasReserve.toString(),requiredWei:requiredWei.toString(),availableWei:available.toString(),amount,listingAmount:formatUnits(listingUnits,6)};
 }

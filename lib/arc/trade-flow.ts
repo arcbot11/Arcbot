@@ -1,6 +1,7 @@
-export type TradeFlowQuote = { quote: string; stage: string; amountOut: string; minimumOut: string; protocol: string; gasWei: string; expiresAt: number };
+export type TradeFlowQuote = { quote: string; stage: string; amountOut: string; minimumOut: string; protocol: string; gasWei: string; tradeGasBudgetWei?: string; expiresAt: number };
 type Result = { id: string; status: string; leg: string };
-export const tradeGasBudget = (quote: TradeFlowQuote) => BigInt(quote.gasWei) * (quote.stage === "swap" ? 1n : 4n);
+export const tradeGasBudget = (quote: TradeFlowQuote) => quote.tradeGasBudgetWei ? BigInt(quote.tradeGasBudgetWei) : BigInt(quote.gasWei) * (quote.stage === "swap" ? 1n : 4n);
+export const ARC_TRADE_GAS_BUDGET_WEI = "10000000000000000"; // 0.01 native USDC, including approvals.
 const decimal = (value: string) => {
   const [whole, fraction = ""] = value.split(".");
   if (!/^\d+$/.test(whole) || !/^\d{0,36}$/.test(fraction)) throw new Error("Invalid trade amount.");
@@ -20,8 +21,10 @@ export async function executeTradeFlow(initial: TradeFlowQuote, io: {
   for (let step = 0; step < 4; step++) {
     if (!io.active()) throw new Error("Trade paused. Check transaction history before continuing.");
     if (Date.now() >= current.expiresAt) throw new Error("Quote expired. Submit the trade again.");
-    if (spent + BigInt(current.gasWei) > budget || decimal(current.minimumOut) < minimum)
-      return { quote: current, message: "Trade paused because price or gas changed. Check transaction history before submitting again." };
+    if (spent + BigInt(current.gasWei) > budget)
+      return { quote: current, message: "Gas exceeded the trade allowance. No swap was submitted. Submit again for a fresh gas estimate." };
+    if (decimal(current.minimumOut) < minimum)
+      return { quote: current, message: "Price moved below the original minimum. No swap was submitted. Submit again for a fresh quote." };
     io.progress(current.stage === "swap" ? "Preparing trade…" : current.stage === "reset token approval" ? "Preparing approval reset…" : current.stage === "approve router" ? "Preparing router approval…" : "Preparing token approval…");
     let result = await io.confirm(current.quote);
     if (result.leg !== (current.stage === "swap" ? "swap" : "allowance")) throw new Error("Unexpected transaction. Check transaction history.");

@@ -27,7 +27,7 @@ export async function POST(request:NextRequest){
       if(w?.activeTx||BigInt(p.snapshot.balanceWei)-(w?locked(w):0n)<BigInt(p.reserveWei))throw new WebError("Not enough available funds or a wallet transaction is pending.");
       const quote={id:`trade:${randomUUID()}`,owner:session.xUserId,wallet:session.walletAddress,chainId:5042,leg:p.leg,swapOutput:p.swapOutput,unsigned:p.unsigned,reserveWei:p.reserveWei,expiresAt:p.expiresAt};
       const payload=Buffer.from(JSON.stringify(quote)).toString("base64url");
-      return json({quote:`${payload}.${mac(payload)}`,stage:p.stage,amountIn:p.amountIn,amountOut:p.amountOut,minimumOut:p.minimumOut,protocol:p.protocol,gasWei:p.gasWei,expiresAt:p.expiresAt});
+      return json({quote:`${payload}.${mac(payload)}`,stage:p.stage,amountIn:p.amountIn,amountOut:p.amountOut,minimumOut:p.minimumOut,protocol:p.protocol,gasWei:p.gasWei,tradeGasBudgetWei:p.tradeGasBudgetWei,expiresAt:p.expiresAt});
     }
     const [payload,signature,extra]=input.quote.split(".");
     if(!payload||!signature||extra||!sameSecret(signature,mac(payload)))throw new WebError("Invalid trade quote.");

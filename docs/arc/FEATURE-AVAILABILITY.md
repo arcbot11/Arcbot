@@ -1,6 +1,6 @@
 # Feature availability
 
-Website OTC has no rollout enable flag. It requires configured RPCs, signing credentials, storage, worker, and a verified Base payment contract. Arc sends and Base withdrawals do not require OTC payment configuration.
+Website OTC has no rollout enable flag. It requires configured RPCs, signing credentials, storage, worker, and a fee recipient. New positions use dedicated CDP escrow wallets; legacy positions still require their verified Base payment contract. Arc sends and Base withdrawals do not require OTC payment configuration.
 
 Authentication, gas limits, quote expiry, balance reservations, simulations, and finalized receipt verification remain enforced. Pending settlement funds remain reserved.
 

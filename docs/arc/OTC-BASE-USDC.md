@@ -1,5 +1,7 @@
 # OTC Base payment assets
 
+The contract-based flow below applies to legacy positions. New CDP escrow positions accept direct Base ETH or native Base USDC transfers without router approval. See [current escrow implementation](../otc/IMPLEMENTATION.md).
+
 Current configuration changes supersede the environment recommendations below: see [CONFIGURATION.md](./CONFIGURATION.md). Retired flags are permanently disabled in code; public identity, gas limits, and the production worker URL no longer require environment variables.
 
 Buyers choose Base ETH or Circle native Base USDC. Sellers receive the selected asset; the 1% service fee is paid in that same asset. Arc payout remains the exact quoted native Arc USDC amount. Listings remain open to either payment asset.

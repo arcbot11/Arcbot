@@ -6,6 +6,8 @@ import { discoverArgusPool } from "./argus-discovery";
 import { V3_FACTORY, quoteAbi, quoteRoutes, type RouteQuote } from "./quotes";
 import { ARC_ROUTER, ARC_ROUTER_CODE_HASH, encodeArcSwap, findRoutes, type V3Pool, type Route } from "./routing";
 import { exactAmount } from "./amounts";
+import { ARC_TOKEN_CATALOG } from "./token-catalog";
+import { ARC_TRADE_GAS_BUDGET_WEI } from "./trade-flow";
 import { prepareCall, type Call } from "../otc/runtime";
 
 export const PERMIT2=getAddress("0x000000000022D473030F116dDEE9F6B43aC78BA3");
@@ -54,10 +56,12 @@ async function quoteArcTrade(wallet:Address,input:TradeInput){
 }
 
 export async function estimateArcTrade(wallet:Address,input:TradeInput){
-  const {q,rpc,head}=await quoteArcTrade(wallet,input);
+  const {q,rpc,client,head}=await quoteArcTrade(wallet,input);
   const decimals=q.route.tokenOut===zeroAddress?18:await rpc.decimals(q.route.tokenOut,head.number);
+  const indexed=ARC_TOKEN_CATALOG.find(token=>token.address.toLowerCase()===q.route.tokenOut.toLowerCase());
+  const symbol=native(q.route.tokenOut)?"USDC":indexed?.symbol??await client.readContract({address:q.route.tokenOut,abi:parseAbi(["function symbol() view returns (string)"]),functionName:"symbol",blockNumber:head.number}).catch(()=>null);
   if(q.expiresAt<=Date.now())throw new Error("Quote expired. Try again.");
-  return {minimumOut:formatUnits(q.amountOutMinimum,decimals),amountOut:formatUnits(q.amountOut,decimals),expiresAt:q.expiresAt};
+  return {minimumOut:formatUnits(q.amountOutMinimum,decimals),amountOut:formatUnits(q.amountOut,decimals),outputSymbol:symbol?.trim().replace(/^\$+/,"")||null,outputAddress:q.route.tokenOut,expiresAt:q.expiresAt};
 }
 
 export async function previewArcTrade(wallet:Address,input:TradeInput){
@@ -81,6 +85,7 @@ export async function previewArcTrade(wallet:Address,input:TradeInput){
     }else call={from:wallet,...encodeArcSwap(q.route,q.amountIn,q.amountOutMinimum,BigInt(Math.floor(Date.now()/1000)+120),discovered?.poolId)};
   }else call={from:wallet,...encodeArcSwap(q.route,q.amountIn,q.amountOutMinimum,BigInt(Math.floor(Date.now()/1000)+120),discovered?.poolId)};
   const prepared=await prepareCall(5042,call);
+  const tradeGasBudgetWei=ARC_TRADE_GAS_BUDGET_WEI;
   if(leg==="swap"&&q.route.tokenOut===zeroAddress){
     // Native output has no ERC-20 receipt event. Require transaction-local
     // balance tracing before accepting a swap whose delivery needs that proof.
@@ -88,7 +93,7 @@ export async function previewArcTrade(wallet:Address,input:TradeInput){
   }
   const usdcInput=leg==="swap"&&token.toLowerCase()===ARC_USDC.toLowerCase()?q.amountIn*10n**12n:0n;
   const outDecimals=q.route.tokenOut===zeroAddress?18:await rpc.decimals(q.route.tokenOut,head.number);
-  return {...prepared,reserveWei:(BigInt(prepared.reserveWei)+usdcInput).toString(),leg,stage,swapOutput:leg==="swap"?{token:q.route.tokenOut,minimum:q.amountOutMinimum.toString()}:undefined,
+  return {...prepared,tradeGasBudgetWei,reserveWei:(BigInt(prepared.reserveWei)+usdcInput).toString(),leg,stage,swapOutput:leg==="swap"?{token:q.route.tokenOut,minimum:q.amountOutMinimum.toString()}:undefined,
     amountIn:input.amount,amountOut:formatUnits(q.amountOut,outDecimals),minimumOut:formatUnits(q.amountOutMinimum,outDecimals),
     tokenIn:input.tokenIn,tokenOut:input.tokenOut,protocol:q.route.pools[0].protocol,expiresAt:q.expiresAt};
 }
