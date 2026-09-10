@@ -176,6 +176,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     if (error?.name === "TransactionReceiptNotFoundError") return null; throw error;
   });
   if (receipt) {
+    const arrivedBaseEscrow=record.chainId===8453&&record.leg==="send"&&!!record.escrowRef&&receipt.status==="success"&&(!tx.data||tx.data==="0x")&&(tx.value??0n)>0n;
     const settlement:Transaction["settlement"]=record.chainId===5042&&record.leg==="swap"?{gasWei:(receipt.gasUsed*receipt.effectiveGasPrice).toString()}:undefined;
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt is not canonical.");
     const chainTx=await client.getTransaction({hash:record.hash as Hex});
@@ -264,7 +265,14 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
         || event.args.arcBuyer.toLowerCase()!==order.buyer.toLowerCase() || event.args.arcUsdcUnits!==BigInt(order.amount) || event.args.sellerWei!==BigInt(order.sellerWei) || event.args.feeWei!==BigInt(order.feeWei)) throw new Error("Base split payment was not verified.");
       if (paymentAsset(order) === "USDC") await verifyUsdcPaymentDelivery(order, receipt.blockNumber, receipt.logs);
     }
+    if(arrivedBaseEscrow){
+      if(!tx.to||receipt.blockNumber<=0n)throw new Error("Base delivery evidence unavailable.");
+      const [before,after]=await Promise.all([receipt.blockNumber-1n,receipt.blockNumber].map(blockNumber=>client.getBalance({address:tx.to!,blockNumber})));
+      if(after-before<(tx.value??0n))throw new Error("Base recipient balance increase was not verified.");
+    }
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt changed during verification.");
+    // ETH escrow legs progress on verified arrival. Arc, legacy token payments, and failed receipts retain finality checks.
+    if(arrivedBaseEscrow)return repo.command<Transaction>("settled",{id,block:receipt.blockNumber.toString(),success:true});
     const finalized=await client.getBlock({blockTag:"finalized"});
     if(typeof finalized.number!=="bigint"||finalized.number<receipt.blockNumber){
       return record.chainId===8453&&record.leg==="send"&&!record.escrowRef

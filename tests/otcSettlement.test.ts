@@ -59,6 +59,34 @@ async function setupSend(chainId:5042|8453=8453,data:Hex="0x") {
   (mocks.client.getChainId as ReturnType<typeof vi.fn>).mockResolvedValue(chainId);
   (mocks.client.getTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({from:account.address,to:seller,value:tx.value,input:data});
 }
+describe("Base ETH escrow arrival verification",()=>{
+  async function escrowSend(){
+    await setupSend();finalized=99n;record.escrowRef={listingId:"listing:test",orderId:order.id,step:"seller"};
+    (mocks.client.getBalance as ReturnType<typeof vi.fn>).mockImplementation(async({address,blockNumber}:{address:string;blockNumber:bigint})=>address.toLowerCase()===seller.toLowerCase()?(blockNumber===99n?100n:110n):10n**18n);
+  }
+  it.each(["gas","deposit","seller","fee","return_gas"])("completes %s on canonical success and balance delivery before finality",async step=>{
+    await escrowSend();record.escrowRef!.step=step;
+    await advanceTransaction(record.id,true);
+    expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});
+    expect(mocks.client.getBlock).not.toHaveBeenCalledWith({blockTag:"finalized"});
+  });
+  it("keeps funds locked without the recipient balance increase",async()=>{
+    await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);
+    await expect(advanceTransaction(record.id,true)).rejects.toThrow("balance increase");expect(mocks.command).not.toHaveBeenCalled();
+  });
+  it("keeps funds locked when historical balances are unavailable",async()=>{
+    await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("archive unavailable"));
+    await expect(advanceTransaction(record.id,true)).rejects.toThrow();expect(mocks.command).not.toHaveBeenCalled();
+  });
+  it("rejects a changed receipt block",async()=>{
+    await escrowSend();receipt!.blockHash=otherHash;
+    await expect(advanceTransaction(record.id,true)).rejects.toThrow("not canonical");expect(mocks.command).not.toHaveBeenCalled();
+  });
+  it("does not release a reverted escrow transaction before finality",async()=>{
+    await escrowSend();receipt!.status="reverted";
+    await advanceTransaction(record.id,true);expect(mocks.command).not.toHaveBeenCalled();
+  });
+});
 describe("independent wallet transfers and retained verification locks",()=>{
   it("reports Base inclusion while retaining the wallet lock until finality",async()=>{
     await setupSend();finalized=99n;

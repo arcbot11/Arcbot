@@ -21,7 +21,7 @@ One quote or settlement occupies a position at a time. Other positions can settl
 5. Escrow sends the 1.5% Base service fee to the position's fixed fee recipient.
 6. Escrow returns spendable excess Base gas to the buyer and records any remaining gas credit.
 
-Each step waits for the preceding transfer's canonical, finalized receipt. ERC-20 transfers also require successful simulation return data, exact Transfer evidence, and recipient balance evidence. Transaction amounts, recipients, chain and position bindings are derived from durable records, never supplied as arbitrary payout instructions.
+Successful Base ETH escrow steps proceed after a canonical successful receipt, matching transaction terms, and a recipient balance increase covering the payment. They do not wait for Ethereum finality. Arc transfers, legacy token paths, and reverted transactions retain their finality checks. ERC-20 transfers also require successful simulation return data, exact Transfer evidence, and recipient balance evidence. Transaction amounts, recipients, chain and position bindings are derived from durable records, never supplied as arbitrary payout instructions.
 
 All gas is participant-funded. Seller gas comes from the listing budget. New purchases use one Base ETH deposit containing the seller payment, 1.5% fee, and settlement gas. Settlement gas uses current Base fee estimates with a 2x buffer for seller payment, service fee, and unused-gas return; the policy maximum is only a ceiling. Base USDC purchases and wallet withdrawal controls are disabled. Existing accepted orders retain their recorded asset and transaction sequence for recovery. No platform-funded gas wallet is used.
 
