@@ -564,7 +564,7 @@ async function provisionSignerWallet(xUserId: string): Promise<SignerWallet> {
   const wallet = await signerRequest<SignerWallet>("/v1/wallets", {
     idempotencyKey: `x:${xUserId}:legacyNetwork`,
     ownerReference: `x:${xUserId}`,
-    chainId: LEGACY_NETWORK_CHAIN_ID,
+    chainId: WALLET_HOME_CHAIN_ID,
   });
   if (!wallet.walletRef || !safeAddress(wallet.address))
     throw new Error("signer returned an invalid wallet");
