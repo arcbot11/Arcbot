@@ -5,7 +5,7 @@ const crons = cronJobs();
 crons.interval("recover interrupted Telegram intake", { minutes: 1 }, internal.telegram.recoverUpdates);
 
 // X jobs exit before contacting X unless replies are explicitly enabled.
-crons.interval("poll direct X mentions", { minutes: 1 }, internal.xReplies.pollMentions);
+crons.interval("poll direct X mentions", { seconds: 30 }, internal.xReplies.pollMentions);
 crons.interval("recover queued X publications", { minutes: 1 }, internal.xReplyQueue.kick);
 crons.interval("recover interrupted X interactions", { minutes: 5 }, internal.xReplies.recoverStaleInteractions);
 crons.interval("recover Telegram wallet result delivery", { minutes: 1 }, internal.telegramDeliveries.recover);
