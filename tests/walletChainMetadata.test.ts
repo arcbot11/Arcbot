@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { ensureWallet, finishWalletProvisioning } from "../convex/wallets";
+import { walletRequestSchema } from "../lib/wallet-signer/policy";
 
 const address = "0x1111111111111111111111111111111111111111";
 const invoke = (fn: any, ctx: any, args: any) => fn._handler(ctx, args);
@@ -12,6 +13,24 @@ function fixture(chainId = 4663) {
 const args = { xUserId: "owner", address, signerWalletRef: address };
 
 describe("Arc wallet chain metadata", () => {
+  it("provisions a new X wallet with a request accepted by the Arc signer", async () => {
+    vi.stubEnv("WALLET_SIGNER_URL", "https://www.argosbot.io/api/wallet-signer");
+    vi.stubEnv("WALLET_SIGNER_TOKEN", "test-only");
+    const fetchMock = vi.fn(async (_url, options) => {
+      const request = walletRequestSchema.parse(JSON.parse(options.body));
+      expect(request.ownerReference).toBe("x:943071746");
+      return new Response(JSON.stringify({ address, walletRef: address }));
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const wallet = { address, signerWalletRef: address, chainId: 5042 };
+    const runQuery = vi.fn().mockResolvedValueOnce({ wallet: null }).mockResolvedValueOnce({ wallet });
+    const runMutation = vi.fn().mockResolvedValueOnce({ needed: true }).mockResolvedValueOnce("wallet");
+    try {
+      expect(await invoke(ensureWallet, { runQuery, runMutation }, { xUserId: "943071746" })).toBe(wallet);
+      expect(fetchMock).toHaveBeenCalledTimes(1);
+      expect(runMutation).toHaveBeenCalledTimes(2);
+    } finally { vi.unstubAllGlobals(); vi.unstubAllEnvs(); }
+  });
   it("migrates metadata without replacing ownership or signer, and is idempotent", async () => {
     const f = fixture();
     await invoke(finishWalletProvisioning, f.ctx, args);
