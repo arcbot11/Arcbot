@@ -14,7 +14,7 @@ function amount(chain:number,address:string,raw:bigint,verifiedDecimals?:number,
   const exact=formatUnits(raw,decimals);
   return `${gas||native&&chain===8453?exact:displayAmount(exact,symbol==="USDC"?2:0)} ${symbol??address}`;
 }
-const labels:Record<string,string>={send:"Send",swap:"Swap",allowance:"Token approval",approval:"Payment approval",payment:"OTC payment",payout:"OTC payout",fund:"Fund OTC position",return_arc:"Return remaining USDC",gas:"Deposit settlement gas",deposit:"Deposit OTC payment",arc:"Deliver Arc USDC",seller:"Pay seller",fee:"Service fee",return_gas:"Return unused gas"};
+const labels:Record<string,string>={topup:"Base gas recovery",arc_topup:"Arc gas recovery",send:"Send",swap:"Swap",allowance:"Token approval",approval:"Payment approval",payment:"OTC payment",payout:"OTC payout",fund:"Fund OTC position",return_arc:"Return remaining USDC",gas:"Deposit settlement gas",deposit:"Deposit OTC payment",arc:"Deliver Arc USDC",seller:"Pay seller",fee:"Service fee",return_gas:"Return unused gas"};
 
 /** Display-only projection. Never expose signed bytes or treat a quote as a receipt. */
 export function transactionHistory(record:Transaction){
@@ -66,7 +66,7 @@ export function transactionHistory(record:Transaction){
     if(minimum>=0)details.splice(minimum,1,received);else details.push(received);
   }
   if(record.settlement&&record.chainId===5042)details.push({label:"Gas paid",value:amount(5042,zeroAddress,BigInt(record.settlement.gasWei),18,true)});
-  if(record.escrowRef&&["fund","gas","deposit"].includes(record.escrowRef.step)){
+  if(record.escrowRef&&["fund","gas","deposit","topup","arc_topup"].includes(record.escrowRef.step)){
     const destination=details.findIndex(detail=>detail.label==="To");
     if(destination>=0)details.splice(destination,1);
   }

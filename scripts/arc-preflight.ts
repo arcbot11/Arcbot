@@ -5,6 +5,7 @@ import { prepareSend } from "../lib/arc/transfers.ts";
 
 // Read-only: this command has no signer and never calls a broadcast method.
 async function main() {
+  if(process.argv.includes("--help")){console.log("Usage: npm run arc:preflight -- [--send intent.json]");return;}
   const args = process.argv.slice(2);
   if (args.length && (args.length !== 2 || args[0] !== "--send")) throw new Error("Usage: npm run arc:preflight -- [--send intent.json]");
   const config = arcConfigFromEnv();

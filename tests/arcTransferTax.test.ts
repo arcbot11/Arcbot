@@ -33,3 +33,9 @@ describe("tax-inclusive sell budgets",()=>{
     expect(call).not.toHaveBeenCalled();
   });
 });
+
+it("recognizes the reviewed implementation when deployed directly",async()=>{
+ const rpc=taxRpc(100);vi.mocked(rpc.code).mockReset().mockResolvedValue(runtime.implementation as Hex);
+ expect(await inputTransferTax(rpc,"0x1111111111111111111111111111111111111111","0x2222222222222222222222222222222222222222",100n)).toBe(100);
+ expect(rpc.code).toHaveBeenCalledTimes(1);
+});

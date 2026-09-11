@@ -6,6 +6,7 @@ import { parseBaseManageArgs } from "../lib/base/manage-args.ts";
 import { createBaseRpc } from "../lib/base/rpc.ts";
 
 async function main() {
+  if(process.argv.includes("--help")){console.log("Usage: npm run base:status -- --wallet ADDRESS --request REQUEST_ID (or base:cancel-unsigned)");return;}
   const { mode, wallet, requestId } = parseBaseManageArgs(process.argv.slice(2));
   const directory = process.env.BASE_JOURNAL_DIRECTORY;
   if (!directory || !isAbsolute(directory)) throw new Error("Set a private absolute BASE_JOURNAL_DIRECTORY");

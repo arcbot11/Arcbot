@@ -1,3 +1,4 @@
+vi.mock("../lib/arc/discovery",()=>({discoverArcV3Pools:vi.fn(async()=>({pools:[]}))}));
 import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
 import {decodeFunctionData,parseAbi,zeroAddress,keccak256} from "viem";
 vi.mock("viem",async original=>({...await original<typeof import("viem")>(),createPublicClient:()=>({readContract:m.read})}));

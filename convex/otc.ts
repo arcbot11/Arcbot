@@ -1,3 +1,5 @@
+import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement} from "../lib/otc/gas-recovery";
+import {beginSigning,cancelUnsignedTrade} from "../lib/otc/unsigned-recovery";
 import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
 import { publicMarket } from "../lib/otc/public-market";
 import { otcWorkerUrl } from "../lib/project-config";
@@ -33,6 +35,13 @@ export const command = mutation({
       },
     };
     switch(args.command) {
+      case "escrow_arc_dust": return retainArcDust(store,input.listingId,input.balanceWei,input.block,now);
+      case "escrow_funding_gas": return repriceFunding(store,input.listingId,input.gasWei,now);
+      case "escrow_claim": return claimSettlement(store,input.listingId,input.orderId,now);
+      case "escrow_dust": return retainGasDust(store,input.listingId,input.orderId,input.balanceWei,input.block,now);
+      case "escrow_topup": return requestGasTopup(store,input.listingId,input.orderId,input.amount,now,input.arc===true);
+      case "begin_signing": return beginSigning(store,input.id,now);
+      case "cancel_unsigned_trade": return cancelUnsignedTrade(store,input.id,now);
       case "escrow_bind": return bindEscrow(store,input.id,input.address,now,input.accountName);
       case "escrow_prepare": return prepareEscrowStep(store,input,now);
       case "escrow_advance": return advanceEscrowState(store,input.listingId,input.orderId,now,input.baseBalanceWei,input.baseBlock,input.arcBalanceWei,input.arcBlock);
@@ -129,5 +138,7 @@ export const tick = internalAction({args:{},handler:async()=>{
   const url=otcWorkerUrl();
   if(!secret||!url||!url.startsWith("https://"))throw new Error("Wallet worker configuration missing.");
   const response=await fetch(url,{method:"POST",headers:{authorization:`Bearer ${secret}`}});
-  if(!response.ok)throw new Error("OTC worker failed.");
+  if(!response.ok)throw new Error("OTC worker failed. Inspect pending jobs and worker logs.");
+  const result=await response.json();
+  if(result.failed>0)throw new Error(`OTC worker: ${result.failed} failed jobs; ${result.processed} processed.`);
 }});

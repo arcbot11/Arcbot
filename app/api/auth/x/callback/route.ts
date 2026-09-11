@@ -2,7 +2,8 @@ import { ConvexHttpClient } from "convex/browser";
 import { walletReturnPath } from "@/lib/wallet-return-path";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
-import { createTelegramConsent, TELEGRAM_CONSENT_COOKIE, TELEGRAM_CONSENT_PATH } from "@/lib/telegram-link-consent";
+import { randomBytes } from "node:crypto";
+import { ARC_BOT_TELEGRAM_URL } from "@/lib/project-config";
 import { createWebWalletSession, readWebWalletSession, WEB_WALLET_SESSION_COOKIE, WEB_WALLET_SESSION_SECONDS } from "@/lib/web-wallet-session";
 
 export const runtime = "nodejs";
@@ -15,9 +16,9 @@ function errorRedirect(request: NextRequest, reason: string) {
   const target = new URL("/wallet/sign-in-error", request.url);
   target.searchParams.set("reason", reason);
   const response = NextResponse.redirect(target);
-  response.cookies.delete("argus_x_oauth_state");
-  response.cookies.delete("argus_x_oauth_verifier");
-  response.cookies.delete("argus_telegram_link");
+  response.cookies.set("argus_x_oauth_state", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
+  response.cookies.set("argus_x_oauth_verifier", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
+  response.cookies.set("argus_telegram_link", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
   return response;
 }
 
@@ -74,14 +75,14 @@ export async function GET(request: NextRequest) {
     });
     const telegramLink = request.cookies.get("argus_telegram_link")?.value;
     if (telegramLink && /^[a-f0-9]{64}$/.test(telegramLink)) {
-      const response = NextResponse.redirect(new URL(TELEGRAM_CONSENT_PATH, siteUrl));
-      response.cookies.set(TELEGRAM_CONSENT_COOKIE, createTelegramConsent(telegramLink, identity.id, identity.username, webSecret), {
-        httpOnly: true, secure: siteUrl.startsWith("https://"), sameSite: "lax", path: TELEGRAM_CONSENT_PATH, maxAge: 600,
-      });
-      response.cookies.delete("argus_x_oauth_state");
-      response.cookies.delete("argus_x_oauth_verifier");
-      response.cookies.delete("argus_x_oauth_return");
-      response.cookies.delete("argus_telegram_link");
+      const returnToken=randomBytes(16).toString("hex");
+      await new ConvexHttpClient(convexUrl).action(api.telegram.stageXLink,{secret:webSecret,nonce:telegramLink,ownerXUserId:identity.id,returnToken});
+      const target=new URL(ARC_BOT_TELEGRAM_URL);target.searchParams.set("start","link_"+returnToken);
+      const response = NextResponse.redirect(target);
+      response.cookies.set("argus_x_oauth_state", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
+      response.cookies.set("argus_x_oauth_verifier", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
+      response.cookies.set("argus_x_oauth_return", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
+      response.cookies.set("argus_telegram_link", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
       // Telegram linking authorizes access inside Telegram; it must not leave
       // an unrelated website wallet session behind in the OAuth browser.
       response.cookies.set(WEB_WALLET_SESSION_COOKIE, "", {
@@ -98,10 +99,10 @@ export async function GET(request: NextRequest) {
       secret: webSecret, sessionId: session.sessionId, ownerXUserId: session.xUserId, expiresAt: session.expiresAt,
     });
     const response = NextResponse.redirect(new URL(returnTo, siteUrl));
-    response.cookies.delete("argus_x_oauth_state");
-    response.cookies.delete("argus_x_oauth_verifier");
-    response.cookies.delete("argus_x_oauth_return");
-    response.cookies.delete("argus_telegram_link");
+    response.cookies.set("argus_x_oauth_state", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
+    response.cookies.set("argus_x_oauth_verifier", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
+    response.cookies.set("argus_x_oauth_return", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
+    response.cookies.set("argus_telegram_link", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
     response.cookies.set(WEB_WALLET_SESSION_COOKIE, sessionCookie, {
       httpOnly: true,
       secure: siteUrl.startsWith("https://"),

@@ -681,6 +681,8 @@ export default defineSchema({
     .index("by_owner_x_user", ["ownerXUserId"]),
 
   telegramLinkNonces: defineTable({
+    returnHash: v.optional(v.string()),
+    pendingOwnerXUserId: v.optional(v.string()),
     nonceHash: v.string(),
     telegramUserId: v.string(),
     telegramChatId: v.string(),
@@ -688,13 +690,14 @@ export default defineSchema({
     expiresAt: v.number(),
     consumedAt: v.optional(v.number()),
     createdAt: v.number(),
-  }).index("by_nonce_hash", ["nonceHash"]),
+  }).index("by_nonce_hash", ["nonceHash"]).index("by_return_hash", ["returnHash"]),
 
   telegramUpdates: defineTable({
     linkBindingVersion: v.optional(v.number()),
     boundLinkId: v.optional(v.id("telegramAccountLinks")),
     boundOwnerXUserId: v.optional(v.string()),
     updateId: v.string(),
+    updateJson: v.optional(v.string()),
     telegramUserId: v.optional(v.string()),
     telegramChatId: v.optional(v.string()),
     status: v.union(
@@ -707,7 +710,7 @@ export default defineSchema({
     safeError: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
-  }).index("by_update_id", ["updateId"]),
+  }).index("by_update_id", ["updateId"]).index("by_status_updated", ["status","updatedAt"]),
 
   telegramMessages: defineTable({
     telegramUserId: v.string(),

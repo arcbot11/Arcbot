@@ -33,7 +33,7 @@ export function validatePool(pool: ArcPool) {
 
 export function routeCurrencies(route: Route): Address[] {
   getAddress(route.tokenIn); getAddress(route.tokenOut);
-  if (same(route.tokenIn, route.tokenOut) || route.pools.length < 1 || route.pools.length > 2) throw new Error("Route must have one or two hops between distinct currencies");
+  if (same(route.tokenIn, route.tokenOut) || route.pools.length < 1 || route.pools.length > 3) throw new Error("Route must have one to three hops between distinct currencies");
   const currencies: Address[] = [route.tokenIn];
   const seen = new Set<string>();
   for (const pool of route.pools) {
@@ -62,7 +62,22 @@ export function findRoutes(tokenIn: Address, tokenOut: Address, pools: ArcPool[]
     const id = path.map(p => p.protocol + poolId(p)).join(":");
     if (!ids.has(id)) { ids.add(id); routes.push(route); }
   };
-  for (const a of pools) { add([a]); for (const b of pools) add([a, b]); }
+  // Bounded breadth-first discovery keeps short routes ahead of longer paths.
+  let paths:ArcPool[][]=[[]];
+  for(let depth=0;depth<3;depth++){
+    const next:ArcPool[][]=[];
+    for(const path of paths){
+      let current=tokenIn;
+      for(const p of path)current=same(current,p.currency0)?p.currency1:p.currency0;
+      for(const p of pools){
+        if(!same(current,p.currency0)&&!same(current,p.currency1))continue;
+        const candidate=[...path,p],out=same(current,p.currency0)?p.currency1:p.currency0;
+        try{routeCurrencies({tokenIn,tokenOut:out,pools:candidate});}catch{continue;}
+        if(same(out,tokenOut))add(candidate);else if(next.length<512)next.push(candidate);
+      }
+    }
+    paths=next;
+  }
   return routes;
 }
 
@@ -124,28 +139,27 @@ export function encodeArcSwap(route: Route, amountIn: bigint, amountOutMinimum: 
 const ROUTER_SELF = "0x0000000000000000000000000000000000000002" as const;
 const MSG_SENDER = "0x0000000000000000000000000000000000000001" as const;
 const CONTRACT_BALANCE = 1n << 255n;
-const ERC20_USDC = "0x3600000000000000000000000000000000000000";
 export function mixedRouteSupported(route: Route) {
   const currencies = routeCurrencies(route);
-  return route.pools.length === 2 && route.pools[0].protocol !== route.pools[1].protocol
-    && same(currencies[1], ERC20_USDC) && currencies.every(c => !same(c, zeroAddress));
+  return route.pools.length >= 2 && route.pools.length <= 3 && route.pools.some(p=>p.protocol!==route.pools[0].protocol)
+    && currencies.every(c => !same(c, zeroAddress));
 }
 function encodeMixedSwap(route: Route, amountIn: bigint, minimum: bigint, deadline: bigint, verified?: string | readonly string[], recipient?: Address) {
-  if (!mixedRouteSupported(route)) throw Error("Mixed routes require an ERC-20 USDC intermediate and ERC-20 endpoints");
+  if (!mixedRouteSupported(route)) throw Error("Mixed routes require two or three pools and ERC-20 currencies");
   if (amountIn >= 2n ** 128n || minimum >= 2n ** 128n) throw Error("V4 amount exceeds uint128");
   const currencies = routeCurrencies(route), verifiedIds = typeof verified === "string" ? [verified] : verified ?? [];
   for (const pool of route.pools) if (pool.protocol === "v4" && !same(pool.hooks, zeroAddress) && !verifiedIds.includes(poolId(pool))) throw Error("Hook execution requires a reviewed adapter");
   const inputs: Hex[] = [];
   let commands: Hex = "0x";
-  for (let i = 0; i < 2; i++) {
-    const pool = route.pools[i], first = i === 0, destination = first ? ROUTER_SELF : recipient ?? MSG_SENDER;
+  for (let i = 0; i < route.pools.length; i++) {
+    const pool = route.pools[i], first = i === 0, last=i===route.pools.length-1, destination = last ? recipient ?? MSG_SENDER : ROUTER_SELF;
     if (pool.protocol === "v3") {
       commands += "00";
-      inputs.push(encodeAbiParameters(parseAbiParameters("address,uint256,uint256,bytes,bool,uint256[]"), [destination, first ? amountIn : CONTRACT_BALANCE, first ? 1n : minimum,
+      inputs.push(encodeAbiParameters(parseAbiParameters("address,uint256,uint256,bytes,bool,uint256[]"), [destination, first ? amountIn : CONTRACT_BALANCE, last ? minimum : 1n,
         v3Path({ tokenIn: currencies[i], tokenOut: currencies[i + 1], pools: [pool] }), first, [0n]]));
     } else {
       commands += "10";
-      const swap = encodeAbiParameters(v4SingleParameters, [{ poolKey: pool, zeroForOne: same(currencies[i], pool.currency0), amountIn: first ? amountIn : 0n, amountOutMinimum: first ? 1n : minimum, minHopPriceX36: 0n, hookData: "0x" }]);
+      const swap = encodeAbiParameters(v4SingleParameters, [{ poolKey: pool, zeroForOne: same(currencies[i], pool.currency0), amountIn: first ? amountIn : 0n, amountOutMinimum: last ? minimum : 1n, minHopPriceX36: 0n, hookData: "0x" }]);
       const take = encodeAbiParameters(parseAbiParameters("address,address,uint256"), [currencies[i + 1], destination, 0n]);
       // V3 -> V4: settle the router's actual USDC balance first, then swap the
       // resulting open credit. V4 -> V3: take USDC into the router, not the user.
@@ -155,8 +169,10 @@ function encodeMixedSwap(route: Route, amountIn: bigint, minimum: bigint, deadli
     }
   }
   // A price-limit partial fill must not strand intermediate USDC in the router.
-  commands = `${commands}04`;
-  inputs.push(encodeAbiParameters(parseAbiParameters("address,address,uint256"), [currencies[1], MSG_SENDER, 0n]));
+  for(const currency of currencies.slice(1,-1)){
+    commands = `${commands}04`;
+    inputs.push(encodeAbiParameters(parseAbiParameters("address,address,uint256"), [currency, MSG_SENDER, 0n]));
+  }
   return { to: ARC_ROUTER, value: 0n, data: encodeFunctionData({ abi: routerAbi, functionName: "execute", args: [commands, inputs, deadline] }) };
 }
 

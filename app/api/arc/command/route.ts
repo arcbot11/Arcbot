@@ -42,6 +42,7 @@ export async function POST(request:NextRequest){
       let tx=await repo.read<Transaction|null>({id});
       if(tx){
         if(!["completed","reverted"].includes(tx.status))tx=await advanceTransaction(id);
+        if(tx.status==="cancelled")return json({ok:false,message:"Trade expired before signing. Funds released. Submit a new command."});
         if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
         if(tx.status!=="completed")return json({pending:true,message:"Arc transaction pending. Check wallet history.",hash:tx.hash});
         if(tx.leg!=="allowance")return json({ok:true,message:completedMessage(command,tx),hash:tx.hash});
@@ -66,7 +67,8 @@ export async function POST(request:NextRequest){
       }else throw new Error("Command not supported. Use buy, sell, send, or burn with explicit amounts.");
       const record=await repo.command<Transaction>("prepare",{id,owner:auth.owner,wallet,chainId:5042,leg:prepared.leg,...(prepared.swapOutput?{swapOutput:prepared.swapOutput}:{}),sourceRequestId:requestId,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
       try{tx=await advanceTransaction(record.id);}catch{return json({pending:true,message:"Arc request recorded. Funds remain reserved for verification."});}
-      if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
+      if(tx.status==="cancelled")return json({ok:false,message:"Trade expired before signing. Funds released. Submit a new command."});
+        if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
       if(tx.status==="completed"&&tx.leg!=="allowance")return json({ok:true,message:completedMessage(command,tx),hash:tx.hash});
       return json({pending:true,message:"Arc request recorded. Check wallet history.",hash:tx.hash});
     }

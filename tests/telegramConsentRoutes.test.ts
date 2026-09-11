@@ -22,11 +22,11 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 describe("Telegram browser consent", () => {
-  it("GET displays identity but never grants access", async () => {
-    const response = await GET(request()); const html = await response.text();
-    expect(html).toContain("456"); expect(html).toContain("&lt;unsafe&gt;");
-    expect(response.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
-    expect(action.mock.calls.every(([ref]) => getFunctionName(ref) === "telegram:previewLink")).toBe(true);
+  it("old confirmation links return directly to Telegram without granting access", async () => {
+    const response = await GET(request());
+    expect(response.headers.get("location")).toMatch(/^https:\/\/t.me\/The_ArgosBot\?start=link_[a-f0-9]{32}$/);
+    expect(action.mock.calls.some(([ref]) => getFunctionName(ref) === "telegram:stageXLink")).toBe(true);
+    expect(action.mock.calls.some(([ref]) => getFunctionName(ref) === "telegram:completeXLink")).toBe(false);
   });
   it.each([{ origin: "https://evil.test" }, { csrf: "wrong" }, { cookie: "tampered" }])("rejects forged confirmation %j", async options => {
     expect((await POST(request("POST", options))).status).toBe(403); expect(action).not.toHaveBeenCalled();

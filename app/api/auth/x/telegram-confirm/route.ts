@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { ARC_BOT_TELEGRAM_URL } from "@/lib/project-config";
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
@@ -6,7 +7,6 @@ import { readTelegramConsent, TELEGRAM_CONSENT_COOKIE, TELEGRAM_CONSENT_PATH } f
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
-const escape = (text: string) => text.replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]!));
 function problem(text: string, status: number) {
   return new NextResponse(text, { status, headers: { "cache-control": "no-store", "content-type": "text/plain; charset=utf-8" } });
 }
@@ -23,7 +23,13 @@ export async function GET(request: NextRequest) {
   try { target = await ctx.client.action(api.telegram.previewLink, { secret: ctx.secret, nonce: ctx.consent.nonce }); }
   catch { return problem("Unable to check the link right now. Reload this page to retry. No wallet access was granted by this page.", 503); }
   if (!target) return problem("This link expired or was already used. Return to Telegram to check your link or start again.", 410);
-  return new NextResponse(`<!doctype html><html><head><title>Confirm Telegram wallet access</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main><h1>Confirm Telegram wallet access</h1><p>You signed in as X @${escape(ctx.consent.username)}.</p><p>Telegram account: ${target.telegramUsername ? `@${escape(target.telegramUsername)}` : "No username"}<br>Telegram user ID: ${escape(target.telegramUserId)}</p><p>This Telegram account will be able to send and trade funds from your Argos Bot wallet. Confirm only if this is your Telegram account and you started linking from the bot. Do not approve a link someone sent you.</p><form method="post"><input type="hidden" name="csrf" value="${escape(ctx.consent.csrf)}"><button name="decision" value="confirm">Confirm wallet access</button><button name="decision" value="cancel">Cancel</button></form></main></body></html>`, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store", "content-security-policy": "default-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'", "referrer-policy": "no-referrer" } });
+  const returnToken=randomBytes(16).toString("hex");
+  try{await ctx.client.action(api.telegram.stageXLink,{secret:ctx.secret,nonce:ctx.consent.nonce,ownerXUserId:ctx.consent.ownerXUserId,returnToken});}
+  catch{return problem("Link could not be checked. Start again in Telegram.",503);}
+  const targetUrl=new URL(ARC_BOT_TELEGRAM_URL);targetUrl.searchParams.set("start","link_"+returnToken);
+  const response=NextResponse.redirect(targetUrl,303);
+  response.cookies.set(TELEGRAM_CONSENT_COOKIE,"",{httpOnly:true,path:TELEGRAM_CONSENT_PATH,maxAge:0});
+  return response;
 }
 export async function POST(request: NextRequest) {
   const ctx = context(request);

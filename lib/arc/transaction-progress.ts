@@ -5,6 +5,7 @@ export function transactionProgress(status:string,action:string){
     case "signed":return `Submitting ${action}…`;
     case "submitted":return `Confirming ${action}…`;
     case "completed":return `${action[0].toUpperCase()+action.slice(1)} completed.`;
+    case "cancelled":return "Trade expired before signing. Funds released. Submit again.";
     case "reverted":return `${action[0].toUpperCase()+action.slice(1)} reverted. Check transaction history.`;
     default:throw new Error("Transaction status unavailable. Check transaction history before submitting again.");
   }
@@ -23,7 +24,7 @@ export async function waitForTransaction(initial:TransactionStatus,action:string
       ?result.confirmation.status==="success"?`${action[0].toUpperCase()+action.slice(1)} received on Base. Verifying delivery…`:`${action[0].toUpperCase()+action.slice(1)} reverted on Base. Verifying receipt…`
       :transactionProgress(result.status,action));
     if(result.status==="completed")return result;
-    if(result.status==="reverted")throw new Error(transactionProgress(result.status,action));
+    if(result.status==="reverted"||result.status==="cancelled")throw new Error(transactionProgress(result.status,action));
     await io.wait();
     if(!io.active())throw new Error("Tracking stopped. Check transaction history before submitting again.");
     try{result=await io.read(initial.id);}catch{

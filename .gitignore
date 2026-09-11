@@ -15,7 +15,14 @@ test-results/
 /.tools/
 /contracts/out/
 /contracts/cache/
-/.deployment-private/
+# Local wallet manifests, signed transaction records, and deployment state.
+.deployment-private/
+.wallet-private/
+wallet-exports/
+# Operator-specific actions and transaction audit notes stay on this machine.
+/scripts/personal[1-8]-*.ts
+/docs/arc/operator-launch-plan.md
+/docs/otc/*-AUDIT-*.md
 /.convex/
 /broadcast/
 /.openzeppelin/
@@ -25,4 +32,9 @@ test-results/
 *.p12
 *.pfx
 *.keystore
+*.key
+*.p8
+*.jks
+*.keystore.json
+.envrc
 /.next-preview/

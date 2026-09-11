@@ -74,7 +74,7 @@ export async function prepareTransaction(store: Store, input: { id: string; owne
     }
   }
   w.activeTx = input.id; w.updatedAt = now;
-  const tx: Transaction = { kind: "transaction", id: input.id, owner: input.owner, wallet: input.wallet, chainId: input.chainId, leg: input.leg, ...(input.orderId ? { orderId: input.orderId } : {}), holdId, ...(input.swapOutput ? {swapOutput:input.swapOutput} : {}), ...(input.sourceRequestId ? {sourceRequestId:input.sourceRequestId} : {}), unsigned: input.unsigned, status: "prepared", createdAt: now, updatedAt: now };
+  const tx: Transaction = { kind: "transaction", id: input.id, owner: input.owner, wallet: input.wallet, chainId: input.chainId, leg: input.leg, ...(input.orderId ? { orderId: input.orderId } : {}), holdId, ...(input.swapOutput ? {swapOutput:input.swapOutput} : {}), ...(input.sourceRequestId ? {sourceRequestId:input.sourceRequestId} : {}), unsigned: input.unsigned, recoveryVersion:1, status: "prepared", createdAt: now, updatedAt: now };
   await store.put(w); await store.put(tx); return tx;
 }
 export async function signTransactionRecord(store: Store, id: string, raw: string, hash: string, now: number) {

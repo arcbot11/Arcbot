@@ -71,9 +71,9 @@ describe("Base ETH escrow arrival verification",()=>{
     expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});
     expect(mocks.client.getBlock).not.toHaveBeenCalledWith({blockTag:"finalized"});
   });
-  it("keeps funds locked without the recipient balance increase",async()=>{
+  it("verifies a credited Base payment despite unrelated recipient spending",async()=>{
     await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);
-    await expect(advanceTransaction(record.id,true)).rejects.toThrow("balance increase");expect(mocks.command).not.toHaveBeenCalled();
+    await advanceTransaction(record.id,true);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});
   });
   it("keeps funds locked when historical balances are unavailable",async()=>{
     await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("archive unavailable"));
@@ -106,7 +106,7 @@ describe("independent wallet transfers and retained verification locks",()=>{
   });
   it("retains Arc reservations until finality is verified",async()=>{await setupSend(5042);finalized=99n;await advanceTransaction(record.id);expect(mocks.command).not.toHaveBeenCalled();});
   it("does not query Base finality even if that RPC method is unavailable",async()=>{await setupSend();(mocks.client.getBlock as ReturnType<typeof vi.fn>).mockImplementation(async(args:{blockTag?:string;blockNumber?:bigint})=>{if(args.blockTag==="finalized")throw Error("unavailable");return {number:args.blockNumber??200n,hash,timestamp:BigInt(Math.floor(Date.now()/1000))};});await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
-  it("does not complete a Base withdrawal without recipient balance evidence",async()=>{await setupSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);await expect(advanceTransaction(record.id)).rejects.toThrow("balance increase");expect(mocks.command).not.toHaveBeenCalled();});
+  it("completes a Base withdrawal using exact canonical transfer evidence",async()=>{await setupSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
 });
 describe("ERC20 settlement locks",()=>{
   async function tokenSend(){

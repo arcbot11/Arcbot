@@ -33,8 +33,8 @@ export function usdcPrice(amount: bigint, premiumBps: number, feeBps=100) {
   const feeWei = ceil(sellerWei*BigInt(feeBps), 10_000n);
   return {sellerWei: sellerWei.toString(), feeWei: feeWei.toString(), totalWei: (sellerWei + feeWei).toString()};
 }
-export type EscrowPosition = {version:1;accountName:string;address?:string;fundingWei:string;feeRecipient:string;fundingGasWei:string;closeGasWei:string;closeReason?:"cancelled"|"filled";returnedWei?:string;gasRemainderWei?:string;attempts?:Record<string,number>;note?:string};
-export type EscrowOrder = {version:1|2;address:string;gasBudgetWei:string;gasRemainderWei?:string;attempts?:Record<string,number>};
+export type EscrowPosition = {settlementOrderId?:string;fundingExtraWei?:string;version:1;accountName:string;address?:string;fundingWei:string;feeRecipient:string;fundingGasWei:string;closeGasWei:string;closeReason?:"cancelled"|"filled";returnedWei?:string;gasRemainderWei?:string;attempts?:Record<string,number>;note?:string};
+export type EscrowOrder = {refundSkipped?:boolean;topupWei?:string;arcTopupWei?:string;version:1|2;address:string;gasBudgetWei:string;gasRemainderWei?:string;attempts?:Record<string,number>};
 export type Listing = {
   kind: "listing"; id: string; owner: string; seller: string; premiumBps: number;
   originalAmount?: string; originalBudget?: string; available: string; held: string; pendingFills: number; gasPerFillWei: string;
@@ -58,7 +58,8 @@ export type Transaction = { kind: "transaction"; id: string; owner: string; wall
   settlement?: {gasWei:string;output?:{raw:string;decimals?:number}};
   /** Read-only observation; not a settled transaction or permission to release holds. */
   confirmation?: {status:"success"|"reverted";blockNumber:string};
-  orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted";
+  orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted" | "cancelled";
+  recoveryVersion?:1; signingStartedAt?:number;
   unsigned: string; raw?: string; hash?: string; blockNumber?: string; note?: string; createdAt: number; updatedAt: number };
 export type RecordValue = Listing | Order | Wallet | Transaction;
 export interface Store {
@@ -197,6 +198,7 @@ export async function finishOrder(store: Store, order: Order, outcome: "complete
   if (outcome === "expired" && (order.status !== "quoted" || now < order.expiresAt)) throw new Error("Only unsigned expired quotes can be released.");
   const listing = await store.get<Listing>(order.listingId);
   if (!listing) throw new Error("Listing record missing.");
+  if(listing.escrow?.settlementOrderId===order.id)delete listing.escrow.settlementOrderId;
   listing.held = (BigInt(listing.held) - BigInt(order.amount)).toString(); listing.pendingFills--;
   if (outcome !== "completed" && listing.status === "active") listing.available = (BigInt(listing.available) + BigInt(order.amount)).toString();
   if (listing.pendingFills < 0 || BigInt(listing.held) < 0n) throw new Error("Reservation mismatch.");

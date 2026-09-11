@@ -6,6 +6,7 @@ import { parseArcManageArgs } from "../lib/arc/manage-args.ts";
 import { createArcRpc } from "../lib/arc/rpc.ts";
 
 async function main() {
+  if(process.argv.includes("--help")){console.log("Usage: npm run arc:status -- --wallet ADDRESS --request REQUEST_ID (or arc:cancel-unsigned)");return;}
   const { mode, wallet, requestId } = parseArcManageArgs(process.argv.slice(2));
   const directory = process.env.ARC_JOURNAL_DIRECTORY;
   if (!directory || !isAbsolute(directory)) throw new Error("Set a private absolute ARC_JOURNAL_DIRECTORY");

@@ -7,6 +7,7 @@ import { localBaseSigner } from "../lib/base/local-signer.ts";
 import { createBaseRpc } from "../lib/base/rpc.ts";
 
 async function main() {
+  if(process.argv.includes("--help")){console.log("Usage: npm run base:send -- --execute --intent intent.json");return;}
   const args = process.argv.slice(2);
   if (args.length !== 3 || args[0] !== "--execute" || args[1] !== "--intent") {
     throw new Error("Usage: npm run base:send -- --execute --intent intent.json. This command signs and broadcasts; use base:preflight for read-only preparation.");

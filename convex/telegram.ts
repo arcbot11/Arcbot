@@ -88,7 +88,7 @@ export function telegramRecipientAllowed(command: WalletCommand) {
 }
 
 export const reserveUpdate = internalMutation({
-  args: { updateId: v.string(), telegramUserId: v.optional(v.string()), telegramChatId: v.optional(v.string()) },
+  args: { updateId: v.string(), telegramUserId: v.optional(v.string()), telegramChatId: v.optional(v.string()), updateJson: v.optional(v.string()) },
   handler: async (ctx, args) => {
     const existing = await ctx.db.query("telegramUpdates").withIndex("by_update_id", q => q.eq("updateId", args.updateId)).unique();
     if (existing) return false;
@@ -96,6 +96,7 @@ export const reserveUpdate = internalMutation({
     const links = args.telegramUserId ? await ctx.db.query("telegramAccountLinks").withIndex("by_telegram_user", q => q.eq("telegramUserId", args.telegramUserId!)).collect() : [];
     const link = links.find(row => !row.revokedAt && row.telegramChatId === args.telegramChatId);
     await ctx.db.insert("telegramUpdates", { ...args, linkBindingVersion: 1, ...(link ? { boundLinkId: link._id, boundOwnerXUserId: link.ownerXUserId } : {}), status: "received", createdAt: now, updatedAt: now });
+    if (args.updateJson) await ctx.scheduler.runAfter(0, internal.telegram.processUpdate, { updateId: args.updateId, updateJson: args.updateJson });
     return true;
   },
 });
@@ -271,14 +272,39 @@ export const linkStatus = action({
   },
 });
 
+export const stageXLink = action({
+  args:{secret:v.string(),nonce:v.string(),ownerXUserId:v.string(),returnToken:v.string()},
+  handler:async(ctx,args):Promise<void>=>{
+    if(!process.env.WEB_AUTH_SECRET||args.secret!==process.env.WEB_AUTH_SECRET)throw Error("Unauthorized");
+    if(!/^[a-f0-9]{64}$/.test(args.nonce)||!/^[a-f0-9]{32}$/.test(args.returnToken)||!/^\d{1,30}$/.test(args.ownerXUserId))throw Error("Invalid link");
+    await ctx.runMutation(internal.telegram.stageLinkReturn,{nonceHash:await sha256(args.nonce),returnHash:await sha256(args.returnToken),ownerXUserId:args.ownerXUserId});
+  }
+});
+export const stageLinkReturn = internalMutation({
+  args:{nonceHash:v.string(),returnHash:v.string(),ownerXUserId:v.string()},
+  handler:async(ctx,args)=>{
+    const row=await ctx.db.query("telegramLinkNonces").withIndex("by_nonce_hash",q=>q.eq("nonceHash",args.nonceHash)).unique();
+    if(!row||row.consumedAt||row.expiresAt<=Date.now())throw Error("Link expired. Start again in Telegram.");
+    if(row.pendingOwnerXUserId&&row.pendingOwnerXUserId!==args.ownerXUserId)throw Error("Link identity changed. Start again in Telegram.");
+    await ctx.db.patch(row._id,{returnHash:args.returnHash,pendingOwnerXUserId:args.ownerXUserId});
+  }
+});
+
 export const consumeLinkNonce = internalMutation({
-  args: { nonceHash: v.string(), ownerXUserId: v.string() },
+  args: { nonceHash: v.optional(v.string()), ownerXUserId: v.optional(v.string()), returnHash: v.optional(v.string()), telegramUserId: v.optional(v.string()), telegramChatId: v.optional(v.string()) },
   handler: async (ctx, args): Promise<TelegramLinkOutcome> => {
-    const nonce = await ctx.db.query("telegramLinkNonces").withIndex("by_nonce_hash", q => q.eq("nonceHash", args.nonceHash)).unique();
+    const nonce = args.returnHash
+      ? await ctx.db.query("telegramLinkNonces").withIndex("by_return_hash", q => q.eq("returnHash", args.returnHash!)).unique()
+      : args.nonceHash ? await ctx.db.query("telegramLinkNonces").withIndex("by_nonce_hash", q => q.eq("nonceHash", args.nonceHash!)).unique() : null;
     const now = Date.now();
     if (!nonce || nonce.consumedAt || nonce.expiresAt <= now) return { status: "expired" as const };
+    // The return token is held only by the OAuth browser, and must arrive from
+    // the original Telegram account. A forwarded sign-in URL alone cannot link.
+    if(args.returnHash&&(!nonce.pendingOwnerXUserId||nonce.telegramUserId!==args.telegramUserId||nonce.telegramChatId!==args.telegramChatId))return {status:"expired"};
+    const ownerXUserId=args.returnHash?nonce.pendingOwnerXUserId:args.ownerXUserId;
+    if(!ownerXUserId)return {status:"expired"};
     const telegramLinks = await ctx.db.query("telegramAccountLinks").withIndex("by_telegram_user", q => q.eq("telegramUserId", nonce.telegramUserId)).collect();
-    const xLinks = await ctx.db.query("telegramAccountLinks").withIndex("by_owner_x_user", q => q.eq("ownerXUserId", args.ownerXUserId)).collect();
+    const xLinks = await ctx.db.query("telegramAccountLinks").withIndex("by_owner_x_user", q => q.eq("ownerXUserId", ownerXUserId)).collect();
     const activeTelegramLink = telegramLinks.find(row => !row.revokedAt);
     const activeXLink = xLinks.find(row => !row.revokedAt);
     // Active links are one-to-one, but revoked identities are reusable. Keep
@@ -288,7 +314,7 @@ export const consumeLinkNonce = internalMutation({
       await ctx.db.patch(nonce._id, { consumedAt: now });
       return { status: "wallet_already_linked" as const, telegramUserId: nonce.telegramUserId, telegramChatId: nonce.telegramChatId };
     }
-    if (activeTelegramLink && activeTelegramLink.ownerXUserId !== args.ownerXUserId) {
+    if (activeTelegramLink && activeTelegramLink.ownerXUserId !== ownerXUserId) {
       await ctx.db.patch(nonce._id, { consumedAt: now });
       return { status: "telegram_already_linked" as const, telegramUserId: nonce.telegramUserId, telegramChatId: nonce.telegramChatId };
     }
@@ -302,7 +328,7 @@ export const consumeLinkNonce = internalMutation({
       telegramUserId: nonce.telegramUserId,
       telegramChatId: nonce.telegramChatId,
       telegramUsername: nonce.telegramUsername,
-      ownerXUserId: args.ownerXUserId,
+      ownerXUserId: ownerXUserId,
       linkedAt: now,
       lastAuthenticatedAt: now,
       createdAt: now,
@@ -350,12 +376,11 @@ export const acceptUpdate = action({
     // Telegram update numbers are unique per bot, not across replacement bots.
     const updateId = `${ARC_BOT_TELEGRAM_USER_ID}_${update.update_id}`;
     const reserved = await ctx.runMutation(internal.telegram.reserveUpdate, {
-      updateId,
+      updateId, updateJson: args.updateJson,
       ...(Number.isSafeInteger(userId) ? { telegramUserId: String(userId) } : {}),
       ...(Number.isSafeInteger(chatId) ? { telegramChatId: String(chatId) } : {}),
     });
     if (!reserved) return true;
-    await ctx.scheduler.runAfter(0, internal.telegram.processUpdate, { updateId, updateJson: args.updateJson });
     return true;
   },
 });
@@ -387,6 +412,12 @@ export const processUpdate = internalAction({
         await sendMessage(chatId, "Use the buttons or a /command. Open /help for formats.", TELEGRAM_MENU);
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "ignored" });
         return;
+      }
+      if(!callback&&input.name==="start"&&/^link_[a-f0-9]{32}$/.test(input.args)){
+        const result=await ctx.runMutation(internal.telegram.consumeLinkNonce,{returnHash:await sha256(input.args.slice(5)),telegramUserId,telegramChatId:chatId});
+        const reply=result.status==="linked"?"X linked. Your wallet is ready.":result.status==="wallet_already_linked"?"This X wallet is linked to another Telegram account. Unlink it first.":result.status==="telegram_already_linked"?"This Telegram account already has a different X wallet. Use /unlink first.":"Link expired or belongs to another Telegram account. Use /link to start again.";
+        await sendMessage(chatId,reply,TELEGRAM_MENU);
+        await ctx.runMutation(internal.telegram.updateStatus,{updateId:args.updateId,status:"completed"});return;
       }
       const command = "/" + input.name;
       if (["start", "help", "link", "unlink", "wallet"].includes(input.name) && input.args) {
@@ -508,3 +539,15 @@ export const deliverWalletMessage = internalAction({
     return true;
   },
 });
+
+/** Keep the original payload/binding and stable financial request ID when recovering. */
+export const recoverUpdates = internalMutation({args:{},handler:async(ctx)=>{
+  for(const status of ["received","processing"] as const){
+    const rows=await ctx.db.query("telegramUpdates").withIndex("by_status_updated",q=>q.eq("status",status).lt("updatedAt",Date.now()-10*60_000)).take(20);
+    for(const row of rows){
+      if(!row.updateJson){await ctx.db.patch(row._id,{updatedAt:Date.now()});continue;}
+      await ctx.db.patch(row._id,{updatedAt:Date.now()});
+      await ctx.scheduler.runAfter(0,internal.telegram.processUpdate,{updateId:row.updateId,updateJson:row.updateJson});
+    }
+  }
+}});

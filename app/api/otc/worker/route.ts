@@ -7,5 +7,5 @@ export const maxDuration=300;
 export async function POST(request:NextRequest){
   const secret=process.env.OTC_SERVICE_SECRET;
   if(!secret||!sameSecret(request.headers.get("authorization")??"",`Bearer ${secret}`))return json({error:"Unauthorized."},401);
-  try{return json(await drainWork());}catch{return json({error:"Settlement worker unavailable."},503);}
+  try{const result=await drainWork();return json(result,result.failed>0?503:200);}catch{return json({error:"Settlement worker unavailable."},503);}
 }

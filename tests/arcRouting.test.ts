@@ -31,9 +31,9 @@ describe("Arc routing", () => {
   it("includes hook identity in pool IDs", () => {
     expect(poolId(q)).not.toBe(poolId({ ...q, hooks: a }));
   });
-  it("rejects unreviewed hooks and mixed execution", () => {
+  it("rejects unreviewed hooks while allowing ERC-20 mixed execution", () => {
     expect(() => encodeArcSwap({ tokenIn: b, tokenOut: c, pools: [{ ...q, hooks: a }] }, 1n, 1n, 1n)).toThrow(/Hook/);
-    expect(() => encodeArcSwap({ tokenIn: a, tokenOut: c, pools: [p, q] }, 1n, 1n, 1n)).toThrow(/Mixed/);
+    expect(() => encodeArcSwap({ tokenIn: a, tokenOut: c, pools: [p, q] }, 1n, 1n, 1n)).not.toThrow();
   });
   it("bounds slippage and refuses zero output", () => {
     expect(minimumOutput(101n, 100)).toBe(99n);

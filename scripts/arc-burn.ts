@@ -6,6 +6,7 @@ import { FileArcJournal } from "../lib/arc/journal.ts";
 import { localArcSigner } from "../lib/arc/local-signer.ts";
 import { createArcRpc } from "../lib/arc/rpc.ts";
 import { burnTransfer, prepareSend } from "../lib/arc/transfers.ts";
+if(process.argv.includes("--help")){console.log("Usage: npm run arc:burn -- --preflight|--execute --intent intent.json");process.exit(0);}
 try {
   const [mode, flag, file, ...extra] = process.argv.slice(2);
   if (!["--preflight", "--execute"].includes(mode) || flag !== "--intent" || !file || extra.length) throw new Error("Invalid arguments");

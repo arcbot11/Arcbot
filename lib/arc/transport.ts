@@ -8,7 +8,8 @@ const isBlock = (value: unknown): value is { number: string; hash: string; times
 
 const reads = new Set(["eth_chainId", "eth_blockNumber", "eth_getBlockByNumber", "eth_getBlockByHash", "eth_getBalance", "eth_getCode", "eth_getTransactionCount", "eth_call", "eth_estimateGas", "eth_gasPrice", "eth_maxPriorityFeePerGas", "eth_feeHistory", "eth_getLogs", "eth_getTransactionReceipt", "eth_getTransactionByHash", "debug_traceCall", "debug_traceTransaction"]);
 class RpcFailure extends Error {
-  constructor(message: string, readonly code: number, readonly retryable: boolean, readonly data?: unknown) { super(message); }
+  readonly code:number;readonly retryable:boolean;readonly data?:unknown;
+  constructor(message:string,code:number,retryable:boolean,data?:unknown){super(message);this.code=code;this.retryable=retryable;this.data=data;}
 }
 
 const transports=new Map<string,ReturnType<typeof createArcTransport>>();

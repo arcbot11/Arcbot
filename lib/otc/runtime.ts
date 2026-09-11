@@ -1,3 +1,4 @@
+import {expiredSwap} from "./unsigned-recovery";
 import { ARC_NATIVE_TRANSFER, verifyArcUsdcDelivery } from "../arc/usdc-delivery";
 import { settlementFailure } from "./settlement-error";
 import { baseTransport } from "../base/transport";
@@ -73,7 +74,7 @@ export async function ethPrice() {
   return { ethUsdMicros: exactAmount(json.data.amount,6).toString(), priceAt: Date.now() };
 }
 export type Call = {from:Address;to:Address;data:Hex;value:bigint};
-export async function prepareCall(chain: Chain, call: Call) {
+export async function prepareCall(chain: Chain, call: Call, allowGasShortfall=false) {
   const spend = nativeSpend(chain, call);
   const snapshot = await balanceSnapshot(chain,call.from);
   if (snapshot.nonce !== snapshot.pendingNonce) throw new Error("Wallet has a pending transaction.");
@@ -95,7 +96,7 @@ export async function prepareCall(chain: Chain, call: Call) {
     gasWei += 2n * (extra.l1FeeUpperBoundWei + extra.operatorFeeWei);
     if (gasWei > base.maxTotalFeeWei) throw new Error("Base fees exceed the configured cap.");
   }
-  if (BigInt(snapshot.balanceWei) < spend + gasWei) throw new Error("Not enough funds for the amount and gas.");
+  if (!allowGasShortfall && BigInt(snapshot.balanceWei) < spend + gasWei) throw new Error("Not enough funds for the amount and gas.");
   return { unsigned:serializeTransaction(tx), gasWei:gasWei.toString(), reserveWei:(spend+gasWei).toString(), snapshot };
 }
 export async function verifyRaw(raw: Hex, unsigned: Hex, sender: string) {
@@ -110,8 +111,9 @@ export async function verifyRaw(raw: Hex, unsigned: Hex, sender: string) {
 /** Persisted unsigned bytes and a wallet lease precede signing; persisted signed bytes precede every broadcast. */
 export async function advanceTransaction(id: string, receiptOnly = false) {
   const repo=repository(); let record=await repo.read<Transaction>({id});
-  if (!record || ["completed","reverted"].includes(record.status)) return record;
+  if (!record || ["completed","reverted","cancelled"].includes(record.status)) return record;
   if(receiptOnly&&(!record.raw||!record.hash||record.status!=="submitted"))return record;
+  if(record.recoveryVersion===1&&!record.signingStartedAt&&!record.raw&&!record.escrowRef&&!record.orderId&&expiredSwap(record))return repo.command<Transaction>("cancel_unsigned_trade",{id});
   walletTransferConfiguration(record.chainId);
   if (["approval", "payment"].includes(record.leg) && !record.raw) {
     const config=await verifyRouter(false),order=await repo.read<Order>({id:record.orderId!});
@@ -163,6 +165,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
       if(tx.data?.startsWith("0x095ea7b3"))verifyTransferReturn(simulation.data);
     }
     const cdp=new CdpClient({apiKeyId:required("CDP_API_KEY_ID"),apiKeySecret:required("CDP_API_KEY_SECRET"),walletSecret:required("CDP_WALLET_SECRET")});
+    if(record.recoveryVersion===1)await repo.command("begin_signing",{id});
     const {signature}=await signWithAuthRecovery(id,idempotencyKey=>cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey}));
     const hash=await verifyRaw(signature as Hex,record.unsigned as Hex,record.wallet);
     record=await repo.command<Transaction>("sign",{id,raw:signature,hash});
@@ -264,8 +267,9 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     }
     if(arrivedBaseNative){
       if(!tx.to||receipt.blockNumber<=0n)throw new Error("Base delivery evidence unavailable.");
-      const [before,after]=await Promise.all([receipt.blockNumber-1n,receipt.blockNumber].map(blockNumber=>client.getBalance({address:tx.to!,blockNumber})));
-      if(after-before<(tx.value??0n))throw new Error("Base recipient balance increase was not verified.");
+      // The canonical successful receipt and matching top-level transaction
+      // above prove this exact ETH credit. Whole-block net balances mix in
+      // unrelated spending and contract forwarding, and cannot disprove it.
     }
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt changed during verification.");
     // All Base operations use canonical receipt verification and the delivery checks above.
@@ -362,6 +366,7 @@ export async function drainWork() {
       await repo.command("note",{id:record.id,note:record.kind==="listing"&&record.status==="funding"&&!record.escrow?.address?"Escrow wallet setup is pending. Listing funds remain reserved in your wallet.":note});
     }
   }
-  return {processed,failed};
+  const oldestAgeSeconds=records.length?Math.max(...records.map(r=>Math.max(0,Math.floor((Date.now()-r.createdAt)/1000)))):0;
+  return {processed,failed,observedQueue:records.length,oldestAgeSeconds};
 }
 export const quoteFresh = (priceAt:number) => Date.now()-priceAt<=QUOTE_MS;

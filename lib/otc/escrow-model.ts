@@ -1,3 +1,4 @@
+import {BASE_RECOVERY_WEI} from "./gas-recovery";
 import { encodeFunctionData, getAddress, parseAbi, parseTransaction, type Hex } from "viem";
 import { BASE_USDC } from "../base/usdc";
 import { type Store, type Listing, type Order, type Transaction, wallet, locked, updateListingHold, finishOrder, paymentAsset } from "./model";
@@ -7,7 +8,7 @@ import {escrowAccountName,legacyEscrowAccountName} from "./escrow-name";
 
 const transferAbi=parseAbi(["function transfer(address,uint256) returns(bool)"]);
 export const ARC_RETURN_GAS_FLEX_WEI=10n**16n; // At most 0.01 USDC from unsold funds for return gas.
-export type EscrowStep="fund"|"gas"|"deposit"|"arc"|"seller"|"fee"|"return_arc"|"return_gas";
+export type EscrowStep="arc_topup"|"topup"|"fund"|"gas"|"deposit"|"arc"|"seller"|"fee"|"return_arc"|"return_gas";
 export const orderSteps:EscrowStep[]=["gas","deposit","arc","seller","fee","return_gas"];
 export const settlementSteps=(order:Order):EscrowStep[]=>order.escrow?.version===2?["deposit","arc","seller","fee","return_gas"]:orderSteps;
 export function escrowTxId(listing:Listing,step:EscrowStep,order?:Order){
@@ -29,11 +30,14 @@ export async function escrowCall(store:Store,listing:Listing,step:EscrowStep,ord
   const escrow=listing.escrow;
   if(!escrow?.address)throw new Error("Escrow wallet is not provisioned.");
   if(order){
+    if(listing.escrow!.settlementOrderId&&listing.escrow!.settlementOrderId!==order.id)throw Error("Another order is settling for this listing.");
     if(order.escrow?.version===2&&paymentAsset(order)!=="ETH")throw new Error("Combined escrow deposits require Base ETH.");
     if(["quoted","expired","payment_failed","completed"].includes(order.status))throw new Error("Order is not settling.");
     const steps=settlementSteps(order),index=steps.indexOf(step);
-    if(index<0)throw new Error("Invalid escrow step.");
-    for(const prior of steps.slice(0,index))if(!await completedStep(store,listing,prior,order))throw new Error("Escrow deposit or preceding payout is not verified.");
+    if(step==="topup"||step==="arc_topup"){
+      if(!(step==="arc_topup"?order.escrow!.arcTopupWei:order.escrow!.topupWei)||!await completedStep(store,listing,"deposit",order))throw Error("Gas recovery is not authorized.");
+    }else if(index<0)throw new Error("Invalid escrow step.");
+    for(const prior of (step==="topup"||step==="arc_topup")?[]:steps.slice(0,index))if(!await completedStep(store,listing,prior,order))throw new Error("Escrow deposit or preceding payout is not verified.");
     if(!await completedStep(store,listing,"fund"))throw new Error("Arc escrow deposit is not verified.");
   }else if(step==="fund"){
     if(listing.status!=="funding")throw new Error("Position is not funding.");
@@ -41,11 +45,11 @@ export async function escrowCall(store:Store,listing:Listing,step:EscrowStep,ord
     if(step!=="return_arc"||listing.status!=="closing"||listing.pendingFills||BigInt(listing.held)>0n)throw new Error("Position cannot return funds during settlement.");
     if(returnWei===undefined||returnWei<=0n||returnWei+ARC_RETURN_GAS_FLEX_WEI<BigInt(listing.available)*10n**12n)throw new Error("Escrow return does not cover remaining principal within the gas allowance.");
   }
-  const chainId=step==="fund"||step==="arc"||step==="return_arc"?5042 as const:8453 as const;
-  const from=step==="fund"?listing.seller:(step==="gas"||step==="deposit")?order!.buyer:escrow.address;
-  const owner=(step==="gas"||step==="deposit")?order!.owner:listing.owner;
-  const recipient=step==="fund"||step==="gas"||step==="deposit"?escrow.address:step==="arc"?order!.buyer:step==="fee"?order!.feeRecipient:step==="return_gas"?order!.buyer:listing.seller;
-  const amount=step==="fund"?BigInt(escrow.fundingWei):step==="gas"?BigInt(order!.escrow!.gasBudgetWei):step==="deposit"?BigInt(order!.totalWei)+(order!.escrow!.version===2?BigInt(order!.escrow!.gasBudgetWei):0n):step==="arc"?BigInt(order!.amount)*10n**12n:step==="seller"?BigInt(order!.sellerWei):step==="fee"?BigInt(order!.feeWei):returnWei!;
+  const chainId=step==="fund"||step==="arc_topup"||step==="arc"||step==="return_arc"?5042 as const:8453 as const;
+  const from=step==="fund"||step==="arc_topup"?listing.seller:(step==="gas"||step==="deposit"||step==="topup")?order!.buyer:escrow.address;
+  const owner=(step==="gas"||step==="deposit"||step==="topup")?order!.owner:listing.owner;
+  const recipient=step==="fund"||step==="gas"||step==="deposit"||step==="topup"||step==="arc_topup"?escrow.address:step==="arc"?order!.buyer:step==="fee"?order!.feeRecipient:step==="return_gas"?order!.buyer:listing.seller;
+  const amount=step==="arc_topup"?BigInt(order!.escrow!.arcTopupWei!):step==="topup"?BigInt(order!.escrow!.topupWei!):step==="fund"?BigInt(escrow.fundingWei):step==="gas"?BigInt(order!.escrow!.gasBudgetWei):step==="deposit"?BigInt(order!.totalWei)+(order!.escrow!.version===2?BigInt(order!.escrow!.gasBudgetWei):0n):step==="arc"?BigInt(order!.amount)*10n**12n:step==="seller"?BigInt(order!.sellerWei):step==="fee"?BigInt(order!.feeWei):returnWei!;
   const token=!!order&&["deposit","seller","fee"].includes(step)&&paymentAsset(order)==="USDC";
   return {chainId,owner,from:getAddress(from),to:token?BASE_USDC:getAddress(recipient),value:token?0n:amount,data:token?encodeFunctionData({abi:transferAbi,functionName:"transfer",args:[getAddress(recipient),amount]}):"0x" as Hex};
 }
@@ -57,14 +61,24 @@ export async function prepareEscrowStep(store:Store,input:EscrowPrepare,now:numb
   const tx=parseTransaction(input.unsigned),call=await escrowCall(store,listing,input.step,order,tx.value??0n);
   if(tx.chainId!==call.chainId||tx.to?.toLowerCase()!==call.to.toLowerCase()||(tx.value??0n)!==call.value||(tx.data??"0x")!==call.data)throw new Error("Escrow transaction does not match its step.");
   if(BigInt(input.gasWei)<=0n||BigInt(input.reserveWei)!==call.value+BigInt(input.gasWei))throw new Error("Invalid escrow reservation.");
-  const gasLimit=input.step==="fund"?listing.escrow!.fundingGasWei:input.step==="arc"?order!.arcGasWei:input.step==="return_arc"?listing.escrow!.closeGasWei:order?.baseGasWei;
-  const allowedGas=gasLimit?BigInt(gasLimit)+(input.step==="return_arc"?ARC_RETURN_GAS_FLEX_WEI:input.step==="return_gas"?BigInt(gasLimit):0n):undefined;
+  const gasLimit=input.step==="fund"||input.step==="arc_topup"?listing.escrow!.fundingGasWei:input.step==="arc"?order!.arcGasWei:input.step==="return_arc"?listing.escrow!.closeGasWei:order?.baseGasWei;
+  const allowedGas=gasLimit?BigInt(gasLimit)+(call.chainId===5042?ARC_RETURN_GAS_FLEX_WEI:BASE_RECOVERY_WEI):undefined;
   if(allowedGas!==undefined&&BigInt(input.gasWei)>allowedGas)throw new Error("Gas exceeds the escrow allowance.");
   if(input.step==="return_arc"&&call.value+BigInt(input.gasWei)<BigInt(listing.available)*10n**12n)throw new Error("Only return gas may reduce unsold funds.");
+  const excess=gasLimit&&BigInt(input.gasWei)>BigInt(gasLimit)?BigInt(input.gasWei)-BigInt(gasLimit):0n;
   const w=await wallet(store,call.chainId,call.from,call.owner,now);
+  // A verified seller top-up supplies increased Arc gas without reducing delivery.
+  if(input.step==="arc"&&excess>0n){
+    if(BigInt(input.balanceWei)-locked(w)<excess)throw Error("Seller must add Arc USDC for payout gas.");
+    w.holds[listing.id]=(BigInt(w.holds[listing.id]??"0")+excess).toString();
+  }
   if(w.activeTx)throw new Error("A wallet transaction is pending.");
   const holdId=input.step==="fund"||input.step==="arc"||input.step==="return_arc"?listing.id:(input.step==="deposit"||input.step==="gas")?order!.id:null;
   if(holdId){
+    if((input.step==="fund"||input.step==="deposit"||input.step==="gas")&&excess>0n){
+      if(BigInt(input.balanceWei)-locked(w)<excess)throw Error("Add funds for the updated network gas allowance.");
+      w.holds[holdId]=(BigInt(w.holds[holdId]??"0")+excess).toString();
+    }
     const held=BigInt(w.holds[holdId]??"0");
     if(!["return_arc"].includes(input.step)&&held<BigInt(input.reserveWei))throw new Error("Escrow funds are not reserved.");
     if(input.step==="fund"||input.step==="return_arc")delete w.holds[holdId];
@@ -110,19 +124,20 @@ export async function advanceEscrowState(store:Store,listingId:string,orderId:st
   if(fee)order.serviceFeeHash=fee.hash;
   order.updatedAt=now;await store.put(order);
   const refund=await completedStep(store,listing,"return_gas",order);
-  if(deposit&&arc&&seller&&fee&&refund){
+  if(deposit&&arc&&seller&&fee&&(refund||order.escrow!.refundSkipped)){
     if(!baseBalanceWei||!baseBlock)throw new Error("Final escrow balance is not verified.");
     const w=await wallet(store,8453,order.escrow!.address,listing.owner,now);
     if(w.activeTx||(w.lastSettledBlock&&BigInt(baseBlock)<BigInt(w.lastSettledBlock)))throw new Error("Escrow gas balance is pending verification.");
     if(order.escrow!.gasRemainderWei===undefined){const remainder=BigInt(baseBalanceWei)-locked(w);if(remainder<0n)throw new Error("Escrow gas credits are not covered.");order.escrow!.gasRemainderWei=remainder.toString();w.holds[`gas-credit:${order.id}`]=remainder.toString();await store.put(w);}
-    order.gasRefundHash=refund.hash;await finishOrder(store,order,"completed",now);
+    if(refund)order.gasRefundHash=refund.hash;await finishOrder(store,order,"completed",now);
   }
   return order;
 }
 export async function retryEscrow(store:Store,listingId:string,orderId:string|undefined,owner:string,now:number){
   const {listing,order}=await escrowRecords(store,listingId,orderId);
   if(owner!==listing.owner&&owner!==order?.owner)throw new Error("Escrow owner mismatch.");
-  for(const step of order?settlementSteps(order):listing.status==="funding"?["fund" as const]:["return_arc" as const]){
+  const retrySteps:EscrowStep[]=order?settlementSteps(order).flatMap(step=>[...(step==="arc"&&order.escrow?.arcTopupWei?["arc_topup" as const]:[]),...(step==="seller"&&order.escrow?.topupWei?["topup" as const]:[]),step]):[];
+  for(const step of order?retrySteps:listing.status==="funding"?["fund" as const]:["return_arc" as const]){
     const tx=await store.get<Transaction>(escrowTxId(listing,step,order));
     if(tx?.status==="reverted"&&tx.hash&&tx.blockNumber){if(tx.escrowRef?.sourceHold&&tx.escrowRef.reserveWei){const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);w.holds[tx.escrowRef.sourceHold]=(BigInt(w.holds[tx.escrowRef.sourceHold]??"0")+BigInt(tx.escrowRef.reserveWei)).toString();await store.put(w);}const record=order??listing,e=record.escrow!;e.attempts={...e.attempts,[step]:(e.attempts?.[step]??0)+1};record.updatedAt=now;await store.put(record);return record;}
     if(!tx||tx.status!=="completed")break;

@@ -61,3 +61,18 @@ describe("Telegram account linking", () => {
     expect(f.inserted).toHaveLength(0);
   });
 });
+
+describe("Telegram OAuth return",()=>{
+ it.each(["tg-new","other"])("requires the originating Telegram user: %s",async user=>{
+  const f=fixture([]);Object.assign(f.rows.telegramLinkNonces[0],{returnHash:"return",pendingOwnerXUserId:"x-new"});
+  const result=await handler(f.ctx,{returnHash:"return",telegramUserId:user,telegramChatId:"chat",ownerXUserId:"forged-owner"});
+  expect(result).toMatchObject({status:user==="tg-new"?"linked":"expired"});
+  if(user==="tg-new")expect(f.inserted[0].ownerXUserId).toBe("x-new");else expect(f.inserted).toHaveLength(0);
+ });
+ it("rejects a return from a different chat or an unverified X link",async()=>{
+  const f=fixture([]);Object.assign(f.rows.telegramLinkNonces[0],{returnHash:"return",pendingOwnerXUserId:"x-new"});
+  expect(await handler(f.ctx,{returnHash:"return",telegramUserId:"tg-new",telegramChatId:"other"})).toMatchObject({status:"expired"});
+  delete f.rows.telegramLinkNonces[0].pendingOwnerXUserId;
+  expect(await handler(f.ctx,{returnHash:"return",telegramUserId:"tg-new",telegramChatId:"chat"})).toMatchObject({status:"expired"});expect(f.inserted).toHaveLength(0);
+ });
+});

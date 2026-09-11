@@ -49,11 +49,14 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
   const quotePath = async (route: Route, amountIn: bigint): Promise<{amountOut: bigint; gasEstimate: bigint}> => {
       const currencies = routeCurrencies(route);
       if (route.pools.some(p => p.protocol !== route.pools[0].protocol)) {
-        if (!mixedRouteSupported(route)) throw Error("Mixed routes require ERC-20 USDC");
-        const first = await quotePath({ tokenIn: currencies[0], tokenOut: currencies[1], pools: [route.pools[0]] }, amountIn);
-        if (first.amountOut <= 0n) throw Error("No intermediate output");
-        const second = await quotePath({ tokenIn: currencies[1], tokenOut: currencies[2], pools: [route.pools[1]] }, first.amountOut);
-        return { amountOut: second.amountOut, gasEstimate: first.gasEstimate + second.gasEstimate };
+        if (!mixedRouteSupported(route)) throw Error("Mixed routes require ERC-20 currencies");
+        let output=amountIn,gasEstimate=0n;
+        for(let i=0;i<route.pools.length;i++){
+          const result=await quotePath({tokenIn:currencies[i],tokenOut:currencies[i+1],pools:[route.pools[i]]},output);
+          if(result.amountOut<=0n)throw Error("No intermediate output");
+          output=result.amountOut;gasEstimate+=result.gasEstimate;
+        }
+        return {amountOut:output,gasEstimate};
       }
       let amountOut: bigint; let gasEstimate: bigint;
       if (route.pools[0].protocol === "v3") {

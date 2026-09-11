@@ -1,3 +1,4 @@
+import {discoverArcV3Pools} from "./discovery";
 import {createRouteHint,readRouteHint} from "./route-hint";
 import { createPublicClient, encodeFunctionData, getAddress, zeroAddress, parseAbi, keccak256, formatUnits, type Address } from "viem";
 import { arcTransport } from "./transport";
@@ -17,8 +18,9 @@ const allowanceAbi=parseAbi(["function allowance(address,address) view returns (
 const permitAbi=parseAbi(["function allowance(address,address,address) view returns (uint160,uint48,uint48)","function approve(address,address,uint160,uint48)"]);
 const discoveryCache=new Map<string,{expires:number;block:bigint;hash:string;result:Awaited<ReturnType<typeof discoverArgusPool>>}>();
 const v3Candidates=new Map<string,{expires:number;address:Address}>();
+const explorerCandidates=new Map<string,{expires:number;request:Promise<V3Pool[]>}>();
 const routeCache=new Map<string,{expires:number;cacheExpires:number;route:Route;verifiedHookPoolIds:string[];block:bigint;hash:string}>();
-export function clearTradeDiscoveryCache(){discoveryCache.clear();v3Candidates.clear();routeCache.clear();}
+export function clearTradeDiscoveryCache(){discoveryCache.clear();v3Candidates.clear();routeCache.clear();explorerCandidates.clear();}
 export type TradeInput={tokenIn:string;tokenOut:string;amount:string;slippageBps:number;routeHint?:string};
 const native=(a:string)=>a==="native"||a.toLowerCase()===ARC_USDC.toLowerCase()||a===zeroAddress;
 
@@ -74,7 +76,14 @@ async function quoteArcTrade(wallet:Address,input:TradeInput){
     if(protocol==="v3"){
       const pairs:[[Address,Address],...[Address,Address][]]=[[tokenIn,tokenOut]];
       if(tokenIn.toLowerCase()!==ARC_USDC.toLowerCase()&&tokenOut.toLowerCase()!==ARC_USDC.toLowerCase())pairs.push([tokenIn,getAddress(ARC_USDC)],[getAddress(ARC_USDC),tokenOut]);
-      const pools:V3Pool[]=[];
+      const candidateKey=scope+[tokenIn,tokenOut].sort().join();
+      let extra=explorerCandidates.get(candidateKey);
+      if(!extra||extra.expires<Date.now()){
+        if(explorerCandidates.size>=100)explorerCandidates.delete(explorerCandidates.keys().next().value!);
+        extra={expires:Date.now()+60000,request:discoverArcV3Pools(tokenIn,tokenOut).then(r=>r.pools.slice(0,40)).catch(()=>[])};
+        explorerCandidates.set(candidateKey,extra);
+      }
+      const pools:V3Pool[]=[...await extra.request];
       for(const [a,b]of pairs)await Promise.all([100,500,3000,10000].map(async fee=>{
         const key=scope+[a,b].sort().join()+fee,cached=v3Candidates.get(key);
         const address=cached&&cached.expires>Date.now()?cached.address:await client.readContract({address:V3_FACTORY,abi:quoteAbi,functionName:"getPool",args:[a,b,fee],blockNumber:head.number});

@@ -16,6 +16,7 @@ const request = z.object({ sender: address, tokenIn: address, tokenOut: address,
     z.object({ ...common, protocol: z.literal("v4"), hooks: address, tickSpacing: z.number().int() }).strict(),
   ])).min(1).max(100).optional(),
 }).strict();
+if(process.argv.includes("--help")){console.log("Usage: npm run arc:quote -- --request request.json");process.exit(0);}
 try {
   const args = process.argv.slice(2);
   if (args.length !== 2 || args[0] !== "--request") throw new Error("Usage");
@@ -23,7 +24,7 @@ try {
   const config = arcConfigFromEnv();
   const discovery = input.pools ? undefined : await discoverArcV3Pools(input.tokenIn, input.tokenOut);
   const routes = findRoutes(input.tokenIn, input.tokenOut, input.pools ?? discovery!.pools);
-  const result = await quoteRoutes(routes, input.amountIn, input.slippageBps, input.sender, createArcRpc(config), config);
+  const result = await quoteRoutes(routes.slice(0,32), input.amountIn, input.slippageBps, input.sender, createArcRpc(config), config);
   console.log(JSON.stringify({ ...result, discovery, executionReady: false }, (_, value) => typeof value === "bigint" ? value.toString() : value, 2));
   if (!result.quotes.length) process.exitCode = 2;
 } catch {

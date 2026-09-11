@@ -2,6 +2,7 @@ import { readFile } from "node:fs/promises";
 import { baseConfigFromEnv } from "../lib/base/config.ts";
 import { checkBaseRpc, createBaseRpc } from "../lib/base/rpc.ts";
 import { prepareSend } from "../lib/base/transfers.ts";
+if(process.argv.includes("--help")){console.log("Usage: npm run base:preflight [-- --send intent.json]");process.exit(0);}
 try {
   const args = process.argv.slice(2);
   if (args.length !== 0 && (args.length !== 2 || args[0] !== "--send")) throw new Error("Usage: base:preflight [--send intent.json]");

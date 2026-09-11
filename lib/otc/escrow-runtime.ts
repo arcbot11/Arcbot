@@ -1,3 +1,4 @@
+import {BASE_DUST_WEI,BASE_RECOVERY_WEI} from "./gas-recovery";
 import { CdpClient } from "@coinbase/cdp-sdk";
 import { OTC_FEE_RECIPIENT } from "../project-config";
 import { getAddress, parseTransaction, type Hex } from "viem";
@@ -32,9 +33,30 @@ export async function provisionEscrow(listing:Listing){
   return repository().command<Listing>("escrow_bind",{id:listing.id,address:account.address,...(repair?{accountName}:{})});
 }
 async function runStep(listing:Listing,step:EscrowStep,order?:Order){
-  const repo=repository(),id=escrowTxId(listing,step,order);let record=await repo.read<Transaction|null>({id});
+  const repo=repository();
+  if(order)order=await repo.read<Order>({id:order.id});
+  const id=escrowTxId(listing,step,order);let record=await repo.read<Transaction|null>({id});
   if(record?.status==="reverted")throw new Error("Escrow transaction reverted. Retry settlement after checking balances.");
   if(!record){
+    if(step==="return_arc"&&BigInt(listing.available)<=10_000n){
+      const balance=await balanceSnapshot(5042,listing.escrow!.address!);
+      const w=await repo.read<Wallet|null>({id:walletId(5042,listing.escrow!.address!)});
+      const dust=BigInt(balance.balanceWei)-(w?locked(w)-BigInt(w.holds[listing.id]??"0"):0n);
+      if(dust>=0n&&dust<=10n**16n){await repo.command("escrow_arc_dust",{listingId:listing.id,balanceWei:balance.balanceWei,block:balance.block});return false;}
+    }
+    if(step==="return_gas"&&order){
+      if(order.escrow?.refundSkipped)return true;
+      const balance=await balanceSnapshot(8453,listing.escrow!.address!);
+      const w=await repo.read<Wallet|null>({id:walletId(8453,listing.escrow!.address!)});
+      const dust=BigInt(balance.balanceWei)-(w?locked(w):0n);
+      if(dust>=0n&&dust<=BASE_DUST_WEI){
+        await repo.command("escrow_dust",{listingId:listing.id,orderId:order.id,balanceWei:balance.balanceWei,block:balance.block});return true;
+      }
+    }
+    if(order&&["arc","seller","fee"].includes(step)){
+      const recovery=step==="arc"?"arc_topup":"topup";
+      if((recovery==="arc_topup"?order.escrow!.arcTopupWei:order.escrow!.topupWei)&&!await runStep(listing,recovery,order))return false;
+    }
     // Do not collect the buyer's payment unless the funded position still covers all Arc reservations.
     if(order&&(step==="gas"||step==="deposit")){
       const arc=await balanceSnapshot(5042,listing.escrow!.address!),w=await repo.read<Wallet>({id:walletId(5042,listing.escrow!.address!)});
@@ -43,7 +65,29 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
     const returning=step==="return_arc"||step==="return_gas";
     // Probe the cost first; a return sends only balance above other users' gas credits.
     const probe=returning?{chainId:step==="return_arc"?5042 as const:8453 as const,owner:listing.owner,from:getAddress(listing.escrow!.address!),to:getAddress(step==="return_arc"?listing.seller:order!.buyer),value:0n,data:"0x" as Hex}:await escrowCall(readStore(),listing,step,order);
-    let prepared=await prepareCall(probe.chainId,probe);
+    let prepared=await prepareCall(probe.chainId,probe,step==="fund"||!!order&&["arc","seller","fee"].includes(step));
+    if(step==="fund"&&BigInt(prepared.gasWei)>BigInt(listing.escrow!.fundingGasWei)){
+      listing=await repo.command<Listing>("escrow_funding_gas",{listingId:listing.id,gasWei:prepared.gasWei});
+      if(listing.status!=="funding")return false;
+      prepared=await prepareCall(5042,await escrowCall(readStore(),listing,"fund"));
+    }
+    if(order&&["arc","seller","fee"].includes(step)){
+      const w=await repo.read<Wallet|null>({id:walletId(probe.chainId,probe.from)});
+      const free=BigInt(prepared.snapshot.balanceWei)-(w?locked(w):0n);
+      const gas=BigInt(prepared.gasWei);
+      const needed=step==="arc"?(gas>BigInt(order.arcGasWei)?gas-BigInt(order.arcGasWei):0n)
+        :BigInt(step==="seller"?order.sellerWei:"0")+BigInt(order.feeWei)+gas*(step==="seller"?2n:1n);
+      const shortfall=needed>free?needed-free:0n;
+      if(shortfall>0n){
+        const arc=step==="arc",already=arc?order.escrow!.arcTopupWei:order.escrow!.topupWei;
+        if(already)throw Error("Add funds for settlement gas. The recovery allowance is already used.");
+        const limit=arc?10n**16n:BASE_RECOVERY_WEI;
+        if(shortfall>limit)throw Error("Settlement gas exceeds the small recovery allowance.");
+        order=await repo.command<Order>("escrow_topup",{listingId:listing.id,orderId:order.id,amount:shortfall.toString(),arc});
+        if(!await runStep(listing,arc?"arc_topup":"topup",order))return false;
+        prepared=await prepareCall(probe.chainId,probe);
+      }
+    }
     if(returning){
       const w=await repo.read<Wallet|null>({id:walletId(probe.chainId,probe.from)});
       const others=w?locked(w)-BigInt(w.holds[listing.id]??"0"):0n;
@@ -88,7 +132,9 @@ export async function advanceEscrowPosition(id:string){
 }
 export async function advanceEscrowOrder(order:Order){
   if(!order.escrow||["quoted","completed","expired","payment_failed"].includes(order.status))return;
-  const repo=repository(),listing=await repo.read<Listing>({id:order.listingId});
+  const repo=repository();
+  if(!await repo.command<boolean>("escrow_claim",{listingId:order.listingId,orderId:order.id}))return;
+  const listing=await repo.read<Listing>({id:order.listingId});
   for(const step of settlementSteps(order)){
     let complete=false;
     for(let attempt=0;attempt<3;attempt++){

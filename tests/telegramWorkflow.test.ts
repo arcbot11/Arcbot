@@ -56,7 +56,7 @@ describe("Telegram update execution boundary", () => {
   afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
   async function run(text:string,callback=false) {
     const ctx={
-      runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegram:consumeRateLimit"?true:null),
+      runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegram:consumeRateLimit"?true:getFunctionName(ref)==="telegram:consumeLinkNonce"?{status:"linked"}:null),
       runQuery:vi.fn(async()=>({valid:true,link:{_id:"link1",ownerXUserId:"99"}})),
       runAction:vi.fn(async(_ref:Parameters<typeof getFunctionName>[0],_args:Record<string,unknown>)=>({ok:true,message:"Arc transaction confirmed."})),
     };
@@ -66,6 +66,12 @@ describe("Telegram update execution boundary", () => {
   }
   it.each(["buy 10 USDC ARGUS","resume","guide:buy","0x1111111111111111111111111111111111111111"])("never executes free text %s",async text=>{
     const ctx=await run(text);expect(ctx.runAction).not.toHaveBeenCalled();expect(ctx.runQuery).not.toHaveBeenCalled();
+  });
+  it("finishes an OAuth return in Telegram without running a wallet command",async()=>{
+    const ctx=await run("/start link_"+"a".repeat(32));
+    expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).toContain("telegram:consumeLinkNonce");
+    expect(ctx.runAction).not.toHaveBeenCalled();
+    expect(vi.mocked(fetch).mock.calls.some(c=>String(c[1]?.body).includes("Your wallet is ready"))).toBe(true);
   });
   it("buttons show formats without executing or creating conversation state",async()=>{
     const ctx=await run("/buy",true);expect(ctx.runAction).not.toHaveBeenCalled();
@@ -85,6 +91,7 @@ it("namespaces incoming updates for the replacement bot",async()=>{
  const ctx={runMutation:vi.fn(async()=>true),scheduler:{runAfter:vi.fn()}};
  await (acceptUpdate as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<boolean>})._handler(ctx,{secret:"secret",updateJson:JSON.stringify({update_id:42})});
  expect(ctx.runMutation).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({updateId:"8280311402_42"}));
- expect(ctx.scheduler.runAfter).toHaveBeenCalledWith(0,expect.anything(),expect.objectContaining({updateId:"8280311402_42"}));
+ expect(ctx.runMutation).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({updateJson:JSON.stringify({update_id:42})}));
+ expect(ctx.scheduler.runAfter).not.toHaveBeenCalled();
  }finally{vi.unstubAllEnvs();}
 });

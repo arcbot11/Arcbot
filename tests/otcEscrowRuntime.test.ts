@@ -85,13 +85,14 @@ it.each([1,2] as const)('finalizes a resumed v%s order with balance evidence aft
   }
   m.balance.mockResolvedValue({balanceWei:'500',block:'101'});
   m.command.mockImplementation(async(action:string,input:{baseBalanceWei?:string;baseBlock?:string})=>{
+    if(action==='escrow_claim')return true;
     expect(action).toBe('escrow_advance');
     if(!input.baseBalanceWei||!input.baseBlock)throw new Error('Final escrow balance is not verified.');
     return {...order,status:'completed'};
   });
   await advanceEscrowOrder(order);
   expect(m.prepare).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
-  expect(m.command).toHaveBeenCalledExactlyOnceWith('escrow_advance',{listingId:listing.id,orderId:order.id,baseBalanceWei:'500',baseBlock:'101'});
+  expect(m.command).toHaveBeenCalledWith('escrow_advance',{listingId:listing.id,orderId:order.id,baseBalanceWei:'500',baseBlock:'101'});
 });
 
 it('keeps the order pending and updates progress when a payout still needs verification',async()=>{
@@ -100,7 +101,7 @@ it('keeps the order pending and updates progress when a payout still needs verif
   await advanceEscrowOrder(order);
   expect(m.advance).toHaveBeenCalledWith(tx.id);
   expect(m.prepare).not.toHaveBeenCalled();
-  expect(m.command).toHaveBeenCalledExactlyOnceWith('escrow_advance',{listingId:listing.id,orderId:order.id});
+  expect(m.command).toHaveBeenCalledWith('escrow_advance',{listingId:listing.id,orderId:order.id});
   expect(m.balance).not.toHaveBeenCalled();
 });
 
@@ -115,17 +116,29 @@ it('verifies a newly mined refund and finalizes in the same worker pass',async()
   await advanceEscrowOrder(order);
   expect(m.receipt).toHaveBeenCalledWith({hash:'refund-hash',timeout:8000,pollingInterval:1000});
   expect(m.advance).toHaveBeenCalledWith(id,true);
-  expect(m.command).toHaveBeenCalledExactlyOnceWith('escrow_advance',{listingId:listing.id,orderId:order.id,baseBalanceWei:'500',baseBlock:'101'});
+  expect(m.command).toHaveBeenCalledWith('escrow_advance',{listingId:listing.id,orderId:order.id,baseBalanceWei:'500',baseBlock:'101'});
 });
 
 it('reserves refund gas headroom without spending another buyer gas credit',async()=>{
  for(const step of ['fund','gas','deposit','arc','seller','fee'] as const){const id=escrowTxId(listing,step,step==='fund'?undefined:order);records.set(id,{...arcPayout(),id,status:'completed',hash:'receipt-hash',blockNumber:'100'});}
  const key=`wallet:8453:${escrow.toLowerCase()}`;const read=m.read.getMockImplementation()!;
  m.read.mockImplementation(async(arg:{id:string})=>arg.id===key?{holds:{'gas-credit:other':'100'}}:read(arg));
- m.prepare.mockResolvedValue({unsigned:'0x',gasWei:'1000',reserveWei:'1000',snapshot:{balanceWei:'10000',block:'100'}});
+ m.balance.mockResolvedValue({balanceWei:'2000000000100',block:'100'});
+ m.prepare.mockResolvedValue({unsigned:'0x',gasWei:'1000',reserveWei:'1000',snapshot:{balanceWei:'2000000000100',block:'100'}});
  m.command.mockImplementation(async(action:string,args:{gasWei?:string;reserveWei?:string})=>{
-  if(action==='escrow_prepare'){expect(args.gasWei).toBe('2000');expect(args.reserveWei).toBe('9900');const tx={...arcPayout(),id:escrowTxId(listing,'return_gas',order),chainId:8453 as const,status:'submitted' as const};records.set(tx.id,tx);return tx;}
+  if(action==='escrow_prepare'){expect(args.gasWei).toBe('2000');expect(args.reserveWei).toBe('2000000000000');const tx={...arcPayout(),id:escrowTxId(listing,'return_gas',order),chainId:8453 as const,status:'submitted' as const};records.set(tx.id,tx);return tx;}
   return order;
  });
- await advanceEscrowOrder(order);expect(m.prepare.mock.calls[1][1].value).toBe(7900n);
+ await advanceEscrowOrder(order);expect(m.prepare.mock.calls[1][1].value).toBe(1999999998000n);
+});
+
+it("completes a paid order without preparing a tiny gas refund",async()=>{
+ order.escrow!.version=2;verifyDeposits();
+ for(const step of ["arc","seller","fee"] as const){const id=escrowTxId(listing,step,order);records.set(id,{...arcPayout(),id,status:"completed",hash:"verified",blockNumber:"100"});}
+ m.balance.mockResolvedValue({balanceWei:"123",block:"101"});
+ m.command.mockImplementation(async(action:string)=>{if(action==="escrow_claim")return true;if(action==="escrow_dust"){order.escrow!.refundSkipped=true;return order;}if(action==="escrow_advance")return order;throw Error("Unexpected action "+action);});
+ await advanceEscrowOrder(order);
+ expect(m.prepare).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+ expect(m.command).toHaveBeenCalledWith("escrow_dust",{listingId:listing.id,orderId:order.id,balanceWei:"123",block:"101"});
+ expect(m.command).toHaveBeenCalledWith("escrow_advance",{listingId:listing.id,orderId:order.id,baseBalanceWei:"123",baseBlock:"101"});
 });

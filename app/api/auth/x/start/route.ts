@@ -19,6 +19,10 @@ export async function GET(request: NextRequest) {
   const webSecret = process.env.WEB_AUTH_SECRET;
   if (!clientId || !siteUrl || !convexUrl || !webSecret) return NextResponse.json({ error: "X wallet sign-in is not configured" }, { status: 503 });
 
+  // Set host-only OAuth cookies on the same origin as the registered callback.
+  if(request.nextUrl.origin!==new URL(siteUrl).origin){
+    return NextResponse.redirect(new URL(request.nextUrl.pathname+request.nextUrl.search,siteUrl));
+  }
   const session = readWebWalletSession(request.cookies.get(WEB_WALLET_SESSION_COOKIE)?.value, webSecret);
   const requestedReturn = request.nextUrl.searchParams.get("returnTo");
   const telegramLink = request.nextUrl.searchParams.get("telegramLink");

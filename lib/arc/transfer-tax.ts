@@ -16,8 +16,7 @@ export async function inputTransferTax(rpc:ArcRpc,token:Address,owner:Address,bl
   if(token===zeroAddress||token.toLowerCase()==="0x3600000000000000000000000000000000000000")return 0;
   const code=await rpc.code(token,block);
   const clone=/^0x363d3d373d3d3d363d73([0-9a-f]{40})5af43d82803e903d91602b57fd5bf3$/i.exec(code??"");
-  if(!clone)return 0;
-  const implementation=await rpc.code(getAddress(`0x${clone[1]}`),block);
+  const implementation=clone?await rpc.code(getAddress(`0x${clone[1]}`),block):code;
   if(!implementation||keccak256(implementation)!==LEGACY_IMPLEMENTATION_HASH)return 0;
   const read=async(functionName:"currentTaxes"|"isExempt",args:readonly Address[]=[])=>decodeFunctionResult({abi,functionName,data:await rpc.call({from:owner,to:token,value:0n,data:encodeFunctionData({abi,functionName,args} as never)},block)});
   const [rates,exempt,toExempt]=await Promise.all([read("currentTaxes"),read("isExempt",[owner]),recipient?read("isExempt",[recipient]):false]);
