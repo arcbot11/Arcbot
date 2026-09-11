@@ -1,0 +1,150 @@
+{
+  "checkedAt": "2026-09-11T16:03:13.205Z",
+  "chainId": 5042,
+  "head": 20334581,
+  "portal": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+  "count": "3",
+  "wallet": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+  "walletUSDC": "447.1059108925",
+  "words": 11,
+  "launches": [
+    {
+      "token": "0x859586b1D4c5df3F029c84d82999C8d2e5242990",
+      "logAddress": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+      "logTopics": [
+        "0x1d8917231579f8ce39407f0d616f36f357b07329b0ce5164d0754ac15145ce0a",
+        "0x000000000000000000000000859586b1d4c5df3f029c84d82999c8d2e5242990",
+        "0x0000000000000000000000009418657d2d66e8c6df3c54d164a27e1f1df6944c"
+      ],
+      "transactionTo": "0x9418657d2d66e8c6df3c54d164a27e1f1df6944c",
+      "hash": "0x24fd21dfeea130420ee1541db7a6d86e9d07333060986d974cb93d9b7a638273",
+      "block": 20288239,
+      "from": "0xd082ac990d8a704e760a11c8ecaee0fc930116e3",
+      "value": "0x0",
+      "status": "0x1",
+      "gasUSDC": "0.06326332",
+      "record": [
+        "0x9418657d2d66E8C6dF3c54D164a27E1f1dF6944c",
+        405400,
+        false,
+        "0xAa871B937b72300B29078D695A9aB3d68dBbFB6b",
+        "0xa368005AD249FbEbcd5bAa7396C9e3b3e44E6044",
+        "0x964F3f3b633710915f6Ff5963525Dea567C273D1",
+        400,
+        400,
+        "270",
+        375400,
+        "0x3600000000000000000000000000000000000000"
+      ],
+      "gasUsed": 2942480
+    },
+    {
+      "token": "0xe4894eC09505aB0FCF357005dF4866F1D90Ae489",
+      "logAddress": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+      "logTopics": [
+        "0x1d8917231579f8ce39407f0d616f36f357b07329b0ce5164d0754ac15145ce0a",
+        "0x000000000000000000000000e4894ec09505ab0fcf357005df4866f1d90ae489",
+        "0x000000000000000000000000854758f27011ece0df1e50d22735ec93e4387dd3"
+      ],
+      "transactionTo": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+      "hash": "0xf2929528d2ea676d5702ab726059a838e7fb3daec15cef6fbb1dec7b86cb0e6c",
+      "block": 20258488,
+      "from": "0x854758f27011ece0df1e50d22735ec93e4387dd3",
+      "value": "0x0",
+      "status": "0x1",
+      "gasUSDC": "0.170450592",
+      "params": {
+        "name": "Baby Argus",
+        "symbol": "BABYARGUS",
+        "totalSupply": "1000000000000000000000000000",
+        "startFdvUsdc6": "5367086851972130411603761",
+        "bondFdvUsdc6": "96607563335498347825873235",
+        "buyTaxBps": 100,
+        "sellTaxBps": 100,
+        "creatorBps": 0,
+        "burnBps": 0,
+        "dividendBps": 10000,
+        "liquidityBps": 0,
+        "devBuyQuote": "2000000000000000000",
+        "quoteAsset": "0xeCe5cA8bf9220718E5727754026757512212cb3c"
+      },
+      "metadata": {
+        "imageURI": "ipfs://QmNtJZ4vr3GKuHpyS5t9opXAV3gzFBmMgh326udmGD5a5a",
+        "website": "https://arguspad.io/",
+        "twitter": "",
+        "telegram": "",
+        "description": ""
+      },
+      "salt": "0x512198dc76110ed3f3b781e175b6d54eb34f2f78f32a506716925614688ead4a",
+      "hookSalt": "0x7213750b5c3bb0aba8946868c109368e386afe04f8a9fcd66c36de9918a11344",
+      "record": [
+        "0x854758f27011ece0Df1e50d22735EC93E4387dd3",
+        -52200,
+        true,
+        "0xC5420EA1a0F0F5E0daF9Bc60e9E8E67F952Ea5D6",
+        "0x1B3399f62A01506143e7317AdFe2250633aEe044",
+        "0xDA419D518f16Fb2482212156f55277F9EfA891b6",
+        100,
+        100,
+        "262",
+        -23400,
+        "0xeCe5cA8bf9220718E5727754026757512212cb3c"
+      ],
+      "gasUsed": 3551054
+    },
+    {
+      "token": "0x96D1C72Da08AB3bd54b469CF3BEDbfBAe87a28aD",
+      "logAddress": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+      "logTopics": [
+        "0x1d8917231579f8ce39407f0d616f36f357b07329b0ce5164d0754ac15145ce0a",
+        "0x00000000000000000000000096d1c72da08ab3bd54b469cf3bedbfbae87a28ad",
+        "0x0000000000000000000000000c7b389021b1b75f028b596146d876ebbb9c70bb"
+      ],
+      "transactionTo": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+      "hash": "0xe6e97d8bcdef52e049ad4d2f9be30bb180abb1f636442d6dcf9b99dd70414c5a",
+      "block": 20244889,
+      "from": "0x0c7b389021b1b75f028b596146d876ebbb9c70bb",
+      "value": "0x0",
+      "status": "0x1",
+      "gasUSDC": "0.137347276",
+      "params": {
+        "name": "ARCBAE",
+        "symbol": "BAE",
+        "totalSupply": "1000000000000000000000000000",
+        "startFdvUsdc6": "2500000000",
+        "bondFdvUsdc6": "45000000000",
+        "buyTaxBps": 100,
+        "sellTaxBps": 100,
+        "creatorBps": 5000,
+        "burnBps": 2500,
+        "dividendBps": 0,
+        "liquidityBps": 2500,
+        "devBuyQuote": "15000000",
+        "quoteAsset": "0x3600000000000000000000000000000000000000"
+      },
+      "metadata": {
+        "imageURI": "ipfs://QmWemm5a7P3LrMzfsz4VLTEppez9TuBP7NF3RuRVyQGTGW",
+        "website": "",
+        "twitter": "",
+        "telegram": "",
+        "description": "ARC BAE. Moon it."
+      },
+      "salt": "0x2328559993f103525f9fb977936e1d87d54e7dfd4b7593d8c1d2c5fba4b5a865",
+      "hookSalt": "0x1a801cf528eae92610311e7899a9767b9f0647dc62b0736341d00893f870bb0f",
+      "record": [
+        "0x0C7b389021B1b75F028B596146D876ebBB9C70BB",
+        405400,
+        false,
+        "0x994A7D5F914BB4a4B3E35f39b6eF504232228871",
+        "0x519F55DEe9726e50E6687226fd4082AeD21dA044",
+        "0x57a43A63d9697B9543723cEB7525cc57BdB62883",
+        100,
+        100,
+        "255",
+        376400,
+        "0x3600000000000000000000000000000000000000"
+      ],
+      "gasUsed": 3121529
+    }
+  ]
+}

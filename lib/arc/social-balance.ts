@@ -26,7 +26,7 @@ export async function arcSocialBalance(wallet: `0x${string}`, identifier?: strin
   const raw = await rpc.balance(wallet, head.number);
   if ((await rpc.block(head.number)).hash !== head.hash) throw Error("Arc balance block changed. Retry the balance command.");
   const usdcAmount = formatUnits(raw, 18);
-  const usdc = balanceWithUsd(`${displayUsdc(usdcAmount)} USDC`, Number(usdcAmount));
+  const usdc = `${displayUsdc(usdcAmount)} USDC`;
   if (name) return { display: usdc, symbol: "USDC", raw: raw.toString(), decimals: 18 };
   const [holdings, base] = await Promise.all([arcTokenBalances(wallet), (async()=>{
     try {

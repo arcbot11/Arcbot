@@ -1,0 +1,33 @@
+{
+  "status": "draft-only-do-not-launch",
+  "executionAuthorized": false,
+  "chainId": 5042,
+  "creatorWallet": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+  "portal": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+  "name": "Argos Bot",
+  "symbol": "ARGOS",
+  "imageURI": "https://pbs.twimg.com/profile_images/2098226697560625155/V-fOj5yJ_400x400.jpg",
+  "website": "https://www.argosbot.io",
+  "twitter": "https://x.com/TheArgosBot",
+  "telegram": "https://t.me/The_ArgosBot",
+  "description": "Your gateway to Arc chain.",
+  "quoteAsset": "0x3600000000000000000000000000000000000000",
+  "devBuyUSDC": "300",
+  "devBuyQuoteAtomic": "300000000",
+  "buyTaxBps": null,
+  "sellTaxBps": null,
+  "creatorBps": 10000,
+  "burnBps": 0,
+  "dividendBps": 0,
+  "liquidityBps": 0,
+  "tokenSalt": null,
+  "hookSalt": null,
+  "simulation": null,
+  "notes": [
+    "Buy and sell tax rates remain unspecified. Creator allocation is not a tax rate.",
+    "Image URI is owner-supplied; availability has not been verified.",
+    "300 USDC is the requested developer-buy input; token output requires simulation. Gas is additional.",
+    "Creator allocation is 100% of the distributable stream after Argus protocol share.",
+    "No approval, signing or submission is authorized. This is not an executable transaction payload."
+  ]
+}

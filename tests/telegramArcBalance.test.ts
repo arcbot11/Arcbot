@@ -26,7 +26,7 @@ it("accepts Arc balance reads and rejects unrelated chain IDs", () => {
   expect(balanceRequestSchema.safeParse({ ...request, chainId: 8453 }).success).toBe(false);
 });
 it("labels Arc native balance as USDC with 18 decimals", async () => {
-  expect(await arcSocialBalance(owner, "USDC")).toMatchObject({ display: "10.50 USDC ($10.50)", symbol: "USDC", decimals: 18 });
+  expect(await arcSocialBalance(owner, "USDC")).toMatchObject({ display: "10.50 USDC", symbol: "USDC", decimals: 18 });
   expect(mocks.balance).toHaveBeenCalledWith(owner, 12n);
   expect(mocks.tokens).not.toHaveBeenCalled();
 });
@@ -63,7 +63,7 @@ it("keeps tiny ETH balances visible and does not require a price",async()=>{
  expect((await arcSocialBalance(owner)).display).toContain("0.000000000000000001 Base ETH");
 });
 it("does not lose Arc balances when Base is unavailable",async()=>{
- mocks.base.mockRejectedValue(Error("offline"));const result=await arcSocialBalance(owner);expect(result.display).toContain("10.50 USDC ($10.50)");expect(result.display).toContain("Base balance unavailable.");
+ mocks.base.mockRejectedValue(Error("offline"));const result=await arcSocialBalance(owner);expect(result.display).toContain("10.50 USDC");expect(result.display).toContain("Base balance unavailable.");
 });
 it("does not fetch Base for a specific Arc token query",async()=>{
  await arcSocialBalance(owner,"USDC");expect(mocks.base).not.toHaveBeenCalled();

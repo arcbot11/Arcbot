@@ -1,7 +1,7 @@
 "use client";
 import {startEstimateRefresh} from "@/lib/arc/estimate-refresh";
 import {completedTrade} from "@/lib/arc/trade-result";
-import {displayTokenAmount} from "@/lib/amount-display";
+import {displayTokenAmount,isUsdcAsset} from "@/lib/amount-display";
 import { ArcTokenPicker } from "./ArcTokenPicker";
 import {useState,useEffect,useRef,type ReactNode} from "react";
 import {formatTokenUsd} from "@/lib/arc/token-value";
@@ -67,7 +67,7 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{},onBusyChan
   return <fieldset disabled={disabled||busy} className={`otc-form-panel arc-trade-controls${disabled?" wallet-preview-disabled":""}`}>
     <legend>{side==="buy"?"Buy":side==="sell"?"Sell":"Swap"}</legend>
     <ArcTokenPicker label={side==="swap"?"From token":"Token"} value={token} disabled={disabled||busy} onChange={address=>{setToken(address);}}/>
-    {token&&authenticated&&<p className="otc-fine" aria-live="polite">{selectedBalance?(side==="buy"?`${displayTokenAmount(selectedBalance.balance,token)} ${selectedBalance.symbol||"tokens"}${Number.isFinite(selectedBalance.usdValue)&&(selectedBalance.usdValue??0)>0?` · ${formatTokenUsd(selectedBalance.usdValue)}`:""}`:`Balance: ${displayTokenAmount(selectedBalance.balance,token)} · ${formatTokenUsd(selectedBalance.usdValue)}`):balanceFailed?"Balance unavailable.":"Loading balance…"}</p>}
+    {token&&authenticated&&<p className="otc-fine" aria-live="polite">{selectedBalance?(side==="buy"?`${displayTokenAmount(selectedBalance.balance,token)} ${selectedBalance.symbol||"tokens"}${!isUsdcAsset(token)&&Number.isFinite(selectedBalance.usdValue)&&(selectedBalance.usdValue??0)>0?` · ${formatTokenUsd(selectedBalance.usdValue)}`:""}`:`Balance: ${displayTokenAmount(selectedBalance.balance,token)}${isUsdcAsset(token)?" USDC":` · ${formatTokenUsd(selectedBalance.usdValue)}`}`):balanceFailed?"Balance unavailable.":"Loading balance…"}</p>}
     {side==="swap"&&<ArcTokenPicker label="To token" value={output==="native"?"":output} disabled={disabled||busy} onChange={address=>{setOutput(address);}}/>}
     {side==="sell"&&<p className="otc-fine">Receive Arc USDC.</p>}
     {side!=="buy"&&<div className="arc-sell-percentages" role="group" aria-label="Trade amount unit">{(["tokens","usd"] as const).map(unit=><button type="button" key={unit} aria-pressed={amountUnit===unit} onClick={()=>{if(unit!==amountUnit){setAmountUnit(unit);setAmount("");}}}>{unit==="tokens"?"Tokens":"$ USD"}</button>)}</div>}
