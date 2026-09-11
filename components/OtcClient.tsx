@@ -26,7 +26,7 @@ export async function webPost(path:string,body:unknown,session:OtcSession|null,s
   const result=await response.json();if(!response.ok)throw new Error(result.error??"Request failed.");return result;
 }
 function listingNotice(message:string){
-  const phrase="view your OTC listings in your wallet",index=message.indexOf(phrase);
+  const phrase=message.includes("Follow it on your wallet page.")?"Follow it on your wallet page.":"view your OTC listings in your wallet",index=message.indexOf(phrase);
   return index<0?message:<>{message.slice(0,index)}<Link href="/wallet">{phrase}</Link>{message.slice(index+phrase.length)}</>;
 }
 export function OtcClient(){
@@ -48,12 +48,12 @@ export function OtcClient(){
   const [balanceFailed,setBalanceFailed]=useState(false),[balanceRevision,setBalanceRevision]=useState(0);
   useEffect(()=>{
     setListingBalance(null);setBalanceFailed(false);
-    if(!formOpen||tab!=="sell"||!session?.authenticated||!session.walletAddress)return;
+    if(!formOpen||!session?.authenticated||!session.walletAddress)return;
     const wallet=session.walletAddress,controller=new AbortController();let pending=false;
     const load=async()=>{
       if(pending)return;pending=true;
       try{
-        const response=await fetch("/api/wallet/balance",{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])});
+        const response=await fetch(`/api/wallet/balance?chain=${tab==="buy"?8453:5042}`,{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])});
         const next=await response.json();
         if(!response.ok||next.walletAddress?.toLowerCase()!==wallet.toLowerCase()||typeof next.availableWei!=="string"||!/^\d+$/.test(next.availableWei))throw Error("Balance unavailable");
         if(!controller.signal.aborted){setListingBalance(next);setBalanceFailed(false);}
@@ -101,6 +101,16 @@ export function OtcClient(){
     if(availableWei==null)balanceError=balanceFailed?"Available balance could not load. Try again.":"Checking available Arc USDC…";
     else if(!inputError&&validateAmount(amount)*10n**12n>BigInt(availableWei))balanceError=`Not enough Arc USDC. You have ${usdcUnits(availableWei)} USDC available.`;
   }
+  const selectedListing=market?.listings.find(l=>l.id===selected);
+  let purchaseError="";
+  if(tab==="buy"&&!inputError&&selectedListing&&validateAmount(amount)>BigInt(selectedListing.available))purchaseError=`This listing has ${units(selectedListing.available)} USDC available. Enter a smaller amount.`;
+  useEffect(()=>{
+    if(!formOpen||tab!=="buy"||!session?.authenticated||inputError)return;
+    if(purchaseError){setNotice(purchaseError);return;}
+    const controller=new AbortController();
+    const timer=setTimeout(()=>{void webPost("/api/otc",{action:"quote_preview",listingId:selected,amount},session,controller.signal).catch(error=>{if(!controller.signal.aborted)setNotice(error instanceof Error?error.message:"Purchase estimate unavailable.");});},500);
+    return()=>{clearTimeout(timer);controller.abort();};
+  },[formOpen,tab,session,selected,amount,inputError,purchaseError,setNotice]);
   const ready=Boolean(session?.authenticated&&!inputError&&!balanceError);
   return <div className="otc-workspace">
     {!formOpen&&<PersistentNotices notices={notices} dismiss={dismiss} renderMessage={listingNotice}/>}
@@ -125,14 +135,14 @@ export function OtcClient(){
       <dialog ref={dialog} className="otc-modal" aria-labelledby="otc-form-title" onCancel={e=>{if(busy)e.preventDefault();}} onClose={()=>setFormOpen(false)}>
       {formOpen&&<section className="otc-form-panel" id="otc-order-form">
         <div className="otc-panel-title"><span>{tab==="sell"?"New listing":"Buy from listing"}</span><button className="otc-inline-button" type="button" disabled={busy} onClick={()=>setFormOpen(false)} aria-label="Close form">Close ×</button></div>
-        <h2 id="otc-form-title">{tab==="buy"?`Base ${paymentAsset} → Arc USDC`:"List your Arc USDC"}</h2>
+        <h2 id="otc-form-title">{tab==="buy"?`Base ${paymentAsset} → Arc USDC`:"List your Arc USDC"}</h2>{tab==="buy"&&<p className="otc-listing-available">Available Base ETH <strong>{availableWei!=null?<>{units(availableWei,18)} ETH <EthUsdValue wei={availableWei}/></>:balanceFailed?"Balance unavailable":"—"}</strong></p>}
         {tab==="sell"&&<p className="otc-listing-available">Available Arc USDC <strong>{availableWei!=null?usdcUnits(availableWei):"—"}</strong></p>}
         <PersistentNotices notices={notices} dismiss={dismiss} renderMessage={listingNotice}/>
         {!session?.authenticated&&<p className="otc-notice"><a href="/api/auth/x/start?returnTo=/otc">Connect your account ↗</a> to create a listing or trade. Base actions are website only.</p>}
         {tab==="sell"&&pendingListing&&<p className="otc-notice">Creating OTC USDC listing</p>}
-        <form onSubmit={async e=>{e.preventDefault();if(inFlight.current||(!ready&&!pendingListing))return;if(tab==="buy"){const result=await run({action:"quote",listingId:selected,amount,paymentAsset});if(result)setQuote(result);}else{if(!pendingListing&&!listingPreview){const preview=await run({action:"list_preview",amount,premium});if(preview)setListingPreview(preview);return;}const submission=pendingListing??listingSubmission(crypto.randomUUID(),amount,premium,listingPreview!.gasReserveWei);try{if(!storageKey)throw new Error();sessionStorage.setItem(storageKey,JSON.stringify(submission));}catch{setNotice("Could not save the request for safe retry. No listing was submitted.");return;}setPendingListing(submission);const result=await run(submission);if(result){sessionStorage.removeItem(storageKey!);setPendingListing(null);setBalanceRevision(value=>value+1);setNotice("Position created. Its escrow deposit is being verified. You can view your OTC listings in your wallet.");setListingPreview(null);}}}}>
+        <form onSubmit={async e=>{e.preventDefault();if(inFlight.current||(!ready&&!pendingListing))return;if(tab==="buy"){if(purchaseError){setNotice(purchaseError);return;}const result=await run({action:"quote",listingId:selected,amount,paymentAsset});if(result)setQuote(result);}else{if(!pendingListing&&!listingPreview){const preview=await run({action:"list_preview",amount,premium});if(preview)setListingPreview(preview);return;}const submission=pendingListing??listingSubmission(crypto.randomUUID(),amount,premium,listingPreview!.gasReserveWei);try{if(!storageKey)throw new Error();sessionStorage.setItem(storageKey,JSON.stringify(submission));}catch{setNotice("Could not save the request for safe retry. No listing was submitted.");return;}setPendingListing(submission);const result=await run(submission);if(result){sessionStorage.removeItem(storageKey!);setPendingListing(null);setBalanceRevision(value=>value+1);setNotice("Position created. Its escrow deposit is being verified. You can view your OTC listings in your wallet.");setListingPreview(null);}}}}>
           {tab==="buy"&&<p className="otc-fine">Selected listing: {market?.listings.find(l=>l.id===selected)?`${units(market.listings.find(l=>l.id===selected)!.available)} USDC available · ${pct(market.listings.find(l=>l.id===selected)!.premiumBps)} premium`:"Listing unavailable"}</p>}
-          <>{tab==="buy"&&<p className="otc-fine">Pay with Base ETH. Payment and settlement gas use one escrow deposit.</p>}</>
+          <>{tab==="buy"&&<p className="otc-fine">Pay with Base ETH.</p>}</>
           <label>{tab==="buy"?"Arc USDC to receive":"Total Arc USDC listing"}<div className="otc-input-unit"><input required inputMode="decimal" disabled={busy||(tab==="sell"&&!!pendingListing)} value={amount} onChange={e=>{setAmount(e.target.value);setQuote(null);setListingPreview(null);}} pattern="[0-9]+(\.[0-9]{1,6})?"/><span>USDC</span></div>{tab==="sell"&&<button type="button" className="otc-inline-button otc-listing-max" disabled={busy||!!pendingListing||availableWei==null} onClick={()=>{if(availableWei==null)return;setAmount(formatUnits(BigInt(availableWei)/10n**12n,6));setListingPreview(null);}}>Max</button>}{tab==="buy"&&<small>Minimum 10 USDC. Base gas is additional.</small>}</label>
           
           {tab==="sell"&&balanceError&&<p className="otc-fine" role="status">{balanceError}{balanceFailed&&<button type="button" className="otc-inline-button" onClick={()=>setBalanceRevision(value=>value+1)}>Retry</button>}</p>}
@@ -141,7 +151,7 @@ export function OtcClient(){
           {inputError&&<p className="otc-fine" role="status">{inputError}</p>}
           <button className="arc-button" disabled={busy||!(ready||(tab==="sell"&&pendingListing&&session?.authenticated))} type="submit">{busy?(tab==="buy"?"Preparing quote…":"Preparing listing…"):tab==="buy"?"Get exact quote":pendingListing?"Retry original listing":listingPreview?"Confirm listing":"Review Listing"}</button>
         </form>
-        {quote&&<div className="otc-quote"><div className="otc-panel-title"><h3>Your quote</h3><span>{Math.max(0,Math.ceil((quote.expiresAt-now)/1000))}s left</span></div><dl><dt>You receive</dt><dd>{units(quote.amount)} Arc USDC</dd><dt>Premium</dt><dd>{pct(quote.premiumBps)}</dd><dt>Seller receives</dt><dd>{units(quote.sellerWei,quote.paymentAsset==="USDC"?6:18)} {quote.paymentAsset??"ETH"}{quote.paymentAsset!=="USDC"&&<EthUsdValue wei={quote.sellerWei}/>}</dd><dt>Service fee · {(quote.serviceFeeBps??100)/100}%</dt><dd>{units(quote.feeWei,quote.paymentAsset==="USDC"?6:18)} {quote.paymentAsset??"ETH"}{quote.paymentAsset!=="USDC"&&<EthUsdValue wei={quote.feeWei}/>}</dd>{quote.escrowVersion===2&&<><dt>Single escrow deposit</dt><dd>{units((BigInt(quote.totalWei)+BigInt(quote.escrowGasBudgetWei??"0")).toString(),18)} ETH <EthUsdValue wei={(BigInt(quote.totalWei)+BigInt(quote.escrowGasBudgetWei??"0")).toString()}/></dd></>}<dt>Total gas allowance</dt><dd>{units(quoteGas(quote).toString(),18)} ETH <EthUsdValue wei={quoteGas(quote).toString()}/></dd><dt>Reserved for this purchase</dt><dd>{quote.paymentAsset==="USDC"?`${units(quote.totalWei)} USDC + ${units(quoteGas(quote).toString(),18)} ETH gas`:`${units((BigInt(quote.totalWei)+quoteGas(quote)).toString(),18)} ETH`}<EthUsdValue wei={(quoteGas(quote)+(quote.paymentAsset==="USDC"?0n:BigInt(quote.totalWei))).toString()}/></dd></dl><p className="otc-fine">Your Base ETH payment and settlement gas go to the position escrow wallet in one transfer. After deposits are verified, you receive the exact Arc USDC quoted; the seller and fee wallet receive the Base payment. Remaining spendable gas returns to you. Any gas remainder stays credited to your order.</p><label className="otc-premium-ack"><input type="checkbox" checked={premiumAccepted?.quoteId===quote.id&&premiumAccepted.premiumBps===quote.premiumBps} disabled={busy||now>=quote.expiresAt} onChange={e=>setPremiumAccepted(e.target.checked?{quoteId:quote.id,premiumBps:quote.premiumBps}:null)}/><span>I understand I’m paying a {pct(quote.premiumBps)} premium.</span></label><button className="arc-button" disabled={busy||now>=quote.expiresAt||quote.status!=="quoted"||premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps} onClick={async()=>{if(premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps)return;const result=await run({action:"accept",orderId:quote.id});if(result){setQuote(null);setNotice(`Order recorded: ${result.status.replaceAll("_"," ")}. Follow it on your wallet page.`);}}}>Confirm purchase</button></div>}
+        {quote&&<div className="otc-quote"><div className="otc-panel-title"><h3>Your quote</h3><span>{Math.max(0,Math.ceil((quote.expiresAt-now)/1000))}s left</span></div><dl><dt>You receive</dt><dd>{units(quote.amount)} Arc USDC</dd><dt>Premium</dt><dd>{pct(quote.premiumBps)}</dd><dt>Fee</dt><dd>{(quote.serviceFeeBps??SERVICE_FEE_BPS)/100}%</dd><dt>Total cost</dt><dd>{units((BigInt(quote.totalWei)+quoteGas(quote)).toString(),18)} ETH <EthUsdValue wei={(BigInt(quote.totalWei)+quoteGas(quote)).toString()}/></dd></dl><p className="otc-fine">Your Base ETH payment goes to an escrow wallet. Once confirmed, you receive the exact Arc USDC quoted.</p><label className="otc-premium-ack"><input type="checkbox" checked={premiumAccepted?.quoteId===quote.id&&premiumAccepted.premiumBps===quote.premiumBps} disabled={busy||now>=quote.expiresAt} onChange={e=>setPremiumAccepted(e.target.checked?{quoteId:quote.id,premiumBps:quote.premiumBps}:null)}/><span>I understand I’m paying a {pct(quote.premiumBps)} premium.</span></label><button className="arc-button" disabled={busy||now>=quote.expiresAt||quote.status!=="quoted"||premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps} onClick={async()=>{if(premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps)return;const result=await run({action:"accept",orderId:quote.id});if(result){setQuote(null);setNotice(`Order recorded: ${result.status.replaceAll("_"," ")}. Follow it on your wallet page.`);}}}>Confirm purchase</button></div>}
         
       </section>}
       </dialog>

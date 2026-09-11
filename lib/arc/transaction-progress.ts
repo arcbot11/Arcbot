@@ -20,7 +20,7 @@ export async function waitForTransaction(initial:TransactionStatus,action:string
     if(!io.active())throw new Error("Tracking stopped. Check transaction history before submitting again.");
     if(result.id!==initial.id||result.leg!==initial.leg)throw new Error("Unexpected transaction status. Check transaction history.");
     io.progress(result.status==="submitted"&&result.confirmation
-      ?result.confirmation.status==="success"?`${action[0].toUpperCase()+action.slice(1)} received on Base. Waiting for final confirmation…`:`${action[0].toUpperCase()+action.slice(1)} reverted on Base. Waiting for final confirmation…`
+      ?result.confirmation.status==="success"?`${action[0].toUpperCase()+action.slice(1)} received on Base. Verifying delivery…`:`${action[0].toUpperCase()+action.slice(1)} reverted on Base. Verifying receipt…`
       :transactionProgress(result.status,action));
     if(result.status==="completed")return result;
     if(result.status==="reverted")throw new Error(transactionProgress(result.status,action));

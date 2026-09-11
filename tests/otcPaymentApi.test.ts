@@ -9,8 +9,21 @@ vi.mock("../lib/otc/http",async original=>({...await original<typeof import("../
 vi.mock("../lib/otc/runtime",()=>({otcConfiguration:vi.fn(),verifyRouter:vi.fn(async()=>({router:"0x3333333333333333333333333333333333333333",feeRecipient:"0x4444444444444444444444444444444444444444",base:{maxTotalFeeWei:1000n}})),ethPrice:m.rate,prepareCall:m.prepare,balanceSnapshot:m.balance,baseUsdcBalance:m.usdc,verifyUsdcRouter:m.verify,advanceOrder:m.advance,chainClient:()=>({getCode:m.code})}));
 import {POST} from "../app/api/otc/route";
 const request=(body:unknown)=>new NextRequest("https://arc.invalid/api/otc",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
-beforeEach(()=>{vi.clearAllMocks();m.read.mockResolvedValue({id:"listing:test",kind:"listing",seller,premiumBps:1000,escrow:{version:1,address:router,feeRecipient:fees}});m.code.mockResolvedValue("0x");m.command.mockImplementation(async(_command,input)=>({...input,status:"quoted"}));m.rate.mockResolvedValue({ethUsdMicros:"2000000000",priceAt:Date.now()});m.prepare.mockResolvedValue({gasWei:"100",snapshot:{balanceWei:"1000000000000000000",block:"100",nonce:0,pendingNonce:0}});m.usdc.mockResolvedValue("100000000");});
+beforeEach(()=>{vi.clearAllMocks();m.read.mockImplementation(async({id})=>id.startsWith("wallet:")?null:{id:"listing:test",kind:"listing",status:"active",available:"100000000",seller,premiumBps:1000,escrow:{version:1,address:router,feeRecipient:fees}});m.code.mockResolvedValue("0x");m.command.mockImplementation(async(_command,input)=>({...input,status:"quoted"}));m.rate.mockResolvedValue({ethUsdMicros:"2000000000",priceAt:Date.now()});m.prepare.mockResolvedValue({gasWei:"100",snapshot:{balanceWei:"1000000000000000000",block:"100",nonce:0,pendingNonce:0}});m.usdc.mockResolvedValue("100000000");});
 describe("OTC ETH-only payment API",()=>{
+ it("previews the full cost without creating an order",async()=>{
+  const r=await POST(request({action:"quote_preview",listingId:"listing:test",amount:"10"}));
+  expect(r.status).toBe(200);expect(await r.json()).toEqual({totalCostWei:"5582500000000800"});expect(m.command).not.toHaveBeenCalled();
+ });
+ it.each(["quote","quote_preview"])("rejects %s above live inventory before RPC work",async action=>{
+  const r=await POST(request({action,listingId:"listing:test",amount:"101"}));
+  expect(r.status).toBe(400);expect((await r.json()).error).toContain("smaller amount");expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
+ });
+ it.each(["quote","quote_preview"])("includes premium, fee and all gas in %s balance validation",async action=>{
+  m.prepare.mockResolvedValue({gasWei:"100",snapshot:{balanceWei:"5582500000000799",block:"100"}});
+  const r=await POST(request({action,listingId:"listing:test",amount:"10"}));
+  expect(r.status).toBe(400);expect((await r.json()).error).toContain("premium, 1.5% fee, and gas");expect(m.command).not.toHaveBeenCalled();
+ });
  it("quotes one combined deposit using measured fees",async()=>{
   const r=await POST(request({action:"quote",listingId:"listing:test",amount:"10"}));expect(r.status).toBe(200);
   expect(m.command).toHaveBeenCalledWith("quote",expect.objectContaining({paymentAsset:"ETH",baseGasWei:"200",escrowGasBudgetWei:"600"}));

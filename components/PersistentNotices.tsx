@@ -4,7 +4,7 @@ import { useCallback, useState, type ReactNode } from "react";
 export function usePersistentNotices() {
   const [notices, setNotices] = useState<string[]>([]);
   const notify = useCallback((message: string) => {
-    if (message) setNotices(previous => previous.includes(message) ? previous : [...previous, message]);
+    if (message) setNotices(previous => previous.length === 1 && previous[0] === message ? previous : [message]);
   }, []);
   const dismiss = (message: string) => setNotices(previous => previous.filter(item => item !== message));
   return { notices, notify, dismiss };

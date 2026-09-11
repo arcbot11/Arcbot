@@ -32,7 +32,7 @@ it("recovers failed status reads but rejects a different transaction",async()=>{
 it("shows a received Base transfer while retaining finality tracking",async()=>{
   const calls=io();calls.read.mockResolvedValue(tx("completed"));
   await waitForTransaction({...tx("submitted"),confirmation:{status:"success",blockNumber:"100"}},"withdrawal",calls);
-  expect(calls.progress.mock.calls.flat()).toEqual(["Withdrawal received on Base. Waiting for final confirmation…","Withdrawal completed."]);
+  expect(calls.progress.mock.calls.flat()).toEqual(["Withdrawal received on Base. Verifying delivery…","Withdrawal completed."]);
 });
 it("stops retries after leaving the page during a network failure",async()=>{
   const calls=io();let active=true;calls.active=()=>active;calls.read.mockImplementation(async()=>{active=false;throw Error("offline");});

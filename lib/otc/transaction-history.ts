@@ -66,6 +66,10 @@ export function transactionHistory(record:Transaction){
     if(minimum>=0)details.splice(minimum,1,received);else details.push(received);
   }
   if(record.settlement&&record.chainId===5042)details.push({label:"Gas paid",value:amount(5042,zeroAddress,BigInt(record.settlement.gasWei),18,true)});
+  if(record.escrowRef&&["fund","gas","deposit"].includes(record.escrowRef.step)){
+    const destination=details.findIndex(detail=>detail.label==="To");
+    if(destination>=0)details.splice(destination,1);
+  }
   return result;
 }
 export function transactionStatus(record:Transaction){
