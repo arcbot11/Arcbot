@@ -15,13 +15,16 @@ export async function arcSelectedTokenBalance(ownerAddress:string,tokenAddress:s
   const owner=getAddress(ownerAddress),token=getAddress(tokenAddress);
   const config=arcDisplayConfig(),transport=arcTransport(config),rpc=createArcRpc(config,transport);
   const head=await checkArcRpc(rpc,config);
-  const [raw,decimals]=await Promise.all([rpc.tokenBalance(token,owner,head.number),rpc.decimals(token,head.number)]);
+  const indexed=ARC_TOKEN_CATALOG.find(item=>item.address.toLowerCase()===token.toLowerCase());
+  const client=createPublicClient({transport});
+  const [raw,decimals,symbol]=await Promise.all([rpc.tokenBalance(token,owner,head.number),rpc.decimals(token,head.number),
+    indexed?Promise.resolve(indexed.symbol):client.readContract({address:token,abi:metadataAbi,functionName:"symbol",blockNumber:head.number}).catch(()=>"tokens")]);
   if((await rpc.block(head.number)).hash!==head.hash)throw Error("Token balance block changed");
   const sellTaxBps=await inputTransferTax(rpc,token,owner,head.number);
   if((await rpc.block(head.number)).hash!==head.hash)throw Error("Token balance block changed");
   const maxSellRaw=maximumSell(raw,sellTaxBps).toString();
   const balance=formatUnits(raw,decimals);
-  return {address:token,balance,raw:raw.toString(),decimals,maxSellRaw,sellTaxBps,...await tokenUsdEstimate(token,balance)};
+  return {address:token,symbol:symbol.trim().replace(/^\$+/,""),balance,raw:raw.toString(),decimals,maxSellRaw,sellTaxBps,...await tokenUsdEstimate(token,balance)};
 }
 
 export function arcTokenBalances(address:string,known:string[]=[],fresh=false):Promise<Result>{
