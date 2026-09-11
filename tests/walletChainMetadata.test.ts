@@ -13,6 +13,18 @@ function fixture(chainId = 4663) {
 const args = { xUserId: "owner", address, signerWalletRef: address };
 
 describe("Arc wallet chain metadata", () => {
+  it("waits for concurrent creation instead of failing after 500ms",async()=>{
+    vi.useFakeTimers();
+    const wallet={ownerXUserId:"owner",address,signerWalletRef:address,chainId:5042};
+    const pending={user:{walletStatus:"provisioning"},wallet:null};
+    const runQuery=vi.fn().mockResolvedValueOnce(pending).mockResolvedValueOnce(pending).mockResolvedValueOnce(pending).mockResolvedValueOnce({wallet});
+    const runMutation=vi.fn().mockResolvedValue({needed:false});
+    try{
+      const result=invoke(ensureWallet,{runQuery,runMutation},{xUserId:"owner"});
+      await vi.advanceTimersByTimeAsync(1600);
+      expect(await result).toBe(wallet);expect(runMutation).toHaveBeenCalledTimes(1);
+    }finally{vi.useRealTimers();}
+  });
   it("provisions a new X wallet with a request accepted by the Arc signer", async () => {
     vi.stubEnv("WALLET_SIGNER_URL", "https://www.argosbot.io/api/wallet-signer");
     vi.stubEnv("WALLET_SIGNER_TOKEN", "test-only");

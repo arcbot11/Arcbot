@@ -3606,11 +3606,18 @@ export const ensureWallet = internalAction({
     );
     if (!reservation.needed) {
       // A concurrent delivery may be provisioning the same idempotent wallet.
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      return (
-        (await ctx.runQuery(internal.wallets.getXUserAndWallet, { xUserId }))
-          ?.wallet || null
-      );
+      // CDP creation can outlast 500 ms. Observe the original creation instead
+      // of failing another browser callback or creating a second wallet.
+      for(let attempt=0;attempt<40;attempt++){
+        await new Promise((resolve) => setTimeout(resolve, 500));
+        const pending=await ctx.runQuery(internal.wallets.getXUserAndWallet,{xUserId});
+        if(pending?.wallet){
+          if(pending.wallet.ownerXUserId!==xUserId||!isWalletHomeChain(pending.wallet.chainId))throw new Error("canonical X wallet binding mismatch");
+          return pending.wallet;
+        }
+        if(pending?.user.walletStatus!=="provisioning")break;
+      }
+      return null;
     }
     try {
       const wallet = await provisionSignerWallet(xUserId);

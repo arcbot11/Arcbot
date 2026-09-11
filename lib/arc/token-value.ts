@@ -1,7 +1,7 @@
 /** Display estimates only. Execution always uses a fresh trading quote. */
 import { formatBalanceUsd } from "../balance-display";
 export function formatTokenUsd(value?:number|null){
-  if(value==null||!Number.isFinite(value)||value<0)return "USD estimate unavailable";
+  if(value==null||!Number.isFinite(value)||value<0)return "";
   return `${formatBalanceUsd(value)} USD`;
 }
 

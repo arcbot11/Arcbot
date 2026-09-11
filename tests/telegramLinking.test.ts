@@ -63,6 +63,16 @@ describe("Telegram account linking", () => {
 });
 
 describe("Telegram OAuth return",()=>{
+ it("acknowledges a repeated successful return without creating or renewing a link",async()=>{
+  const f=fixture([]);Object.assign(f.rows.telegramLinkNonces[0],{returnHash:"return",pendingOwnerXUserId:"x-new"});
+  const args={returnHash:"return",telegramUserId:"tg-new",telegramChatId:"chat"};
+  expect(await handler(f.ctx,args)).toMatchObject({status:"linked"});
+  const authenticated=f.rows.telegramAccountLinks[0].lastAuthenticatedAt;
+  expect(await handler(f.ctx,args)).toMatchObject({status:"linked"});expect(f.inserted).toHaveLength(1);
+  expect(f.rows.telegramAccountLinks[0].lastAuthenticatedAt).toBe(authenticated);
+  f.rows.telegramAccountLinks[0].revokedAt=Date.now();
+  expect(await handler(f.ctx,args)).toMatchObject({status:"expired"});expect(f.inserted).toHaveLength(1);
+ });
  it.each(["tg-new","other"])("requires the originating Telegram user: %s",async user=>{
   const f=fixture([]);Object.assign(f.rows.telegramLinkNonces[0],{returnHash:"return",pendingOwnerXUserId:"x-new"});
   const result=await handler(f.ctx,{returnHash:"return",telegramUserId:user,telegramChatId:"chat",ownerXUserId:"forged-owner"});

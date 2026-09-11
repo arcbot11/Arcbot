@@ -13,7 +13,7 @@ it.each([null,0,-1,"2",Infinity])("does not present invalid price %s as a valuat
   expect((await tokenUsdEstimate(token,"1")).usdValue).toBeNull();
 });
 it("keeps missing prices separate from zero and formats tiny holdings",()=>{
-  expect(formatTokenUsd(null)).toBe("USD estimate unavailable");
+  expect(formatTokenUsd(null)).toBe("");
   expect(formatTokenUsd(0)).toBe("$0.00 USD");
   expect(formatTokenUsd(0.001)).toBe("$0.001 USD");
 });

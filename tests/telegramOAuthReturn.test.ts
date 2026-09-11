@@ -5,6 +5,7 @@ const m=vi.hoisted(()=>({action:vi.fn()}));
 vi.mock("convex/browser",()=>({ConvexHttpClient:class{action=m.action;}}));
 import {GET as callback} from "../app/api/auth/x/callback/route";
 import {GET as start} from "../app/api/auth/x/start/route";
+import {oauthCookieName,readTelegramRetry,telegramReturnToken} from "../lib/x-oauth-attempt";
 beforeEach(()=>{
  for(const [k,v]of Object.entries({X_OAUTH_CLIENT_ID:"client",X_OAUTH_CLIENT_SECRET:"secret",WEB_AUTH_SECRET:"test-secret",NEXT_PUBLIC_SITE_URL:"https://www.argosbot.io",NEXT_PUBLIC_CONVEX_URL:"https://example.convex.cloud"}))vi.stubEnv(k,v);
  m.action.mockReset().mockResolvedValue({address:"0x1111111111111111111111111111111111111111"});
@@ -26,4 +27,39 @@ it("moves to the callback host before setting sign-in cookies",async()=>{
 it("rejects a callback without its browser state",async()=>{
  const r=await callback(new NextRequest("https://www.argosbot.io/api/auth/x/callback?code=test&state=bad"));
  expect(r.headers.get("location")).toContain("invalid_state");expect(m.action).not.toHaveBeenCalled();
+});
+async function begin(nonce="a".repeat(64)){
+ const r=await start(new NextRequest("https://www.argosbot.io/api/auth/x/start?telegramLink="+nonce));
+ const state=new URL(r.headers.get("location")!).searchParams.get("state")!;
+ const cookie=r.cookies.get(oauthCookieName(state)!)!;
+ return {state,cookie:`${cookie.name}=${cookie.value}`};
+}
+it("keeps two concurrent sign-ins independent and completes the older one",async()=>{
+ const first=await begin(),second=await begin("b".repeat(64));
+ expect(first.state).not.toBe(second.state);
+ const r=await callback(new NextRequest(`https://www.argosbot.io/api/auth/x/callback?code=first&state=${first.state}`,{headers:{cookie:`${first.cookie}; ${second.cookie}`}}));
+ expect(r.headers.get("location")).toContain("https://t.me/The_ArgosBot?start=link_");
+ expect(m.action.mock.calls.find(([ref])=>getFunctionName(ref)==="telegram:stageXLink")![1].nonce).toBe("a".repeat(64));
+ expect(r.cookies.get(oauthCookieName(second.state)!)).toBeUndefined();
+});
+it("keeps Telegram context on a failed exchange and its retry",async()=>{
+ const first=await begin();vi.mocked(fetch).mockReset().mockResolvedValue(new Response("",{status:503}));
+ const r=await callback(new NextRequest(`https://www.argosbot.io/api/auth/x/callback?code=first&state=${first.state}`,{headers:{cookie:first.cookie}}));
+ const target=new URL(r.headers.get("location")!);expect(target.searchParams.get("reason")).toBe("token_exchange");
+ const retry=target.searchParams.get("retry")!;expect(readTelegramRetry(retry,"test-secret")).toBe("a".repeat(64));
+ const resumed=await start(new NextRequest(`https://www.argosbot.io/api/auth/x/start?retry=${encodeURIComponent(retry)}`));
+ expect(resumed.headers.get("location")).toMatch(/^https:\/\/x.com\/i\/oauth2\/authorize/);
+});
+it("rejects a tampered attempt before token exchange or wallet creation",async()=>{
+ const first=await begin();vi.mocked(fetch).mockClear();m.action.mockClear();
+ const r=await callback(new NextRequest(`https://www.argosbot.io/api/auth/x/callback?code=first&state=${first.state}`,{headers:{cookie:first.cookie+"x"}}));
+ expect(r.headers.get("location")).toContain("invalid_state");expect(fetch).not.toHaveBeenCalled();expect(m.action).not.toHaveBeenCalled();
+});
+it("rejects expired Telegram links before redirecting to X",async()=>{
+ m.action.mockResolvedValue(null);const r=await start(new NextRequest("https://www.argosbot.io/api/auth/x/start?telegramLink="+"a".repeat(64)));
+ expect(r.headers.get("location")).toContain("telegram_expired");
+});
+it("uses the same return token for repeated staging without mixing identities",()=>{
+ expect(telegramReturnToken("a","123","secret")).toBe(telegramReturnToken("a","123","secret"));
+ expect(telegramReturnToken("a","123","secret")).not.toBe(telegramReturnToken("a","456","secret"));
 });

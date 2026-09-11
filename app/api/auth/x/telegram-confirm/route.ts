@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import {telegramReturnToken} from "@/lib/x-oauth-attempt";
 import { ARC_BOT_TELEGRAM_URL } from "@/lib/project-config";
 import { NextRequest, NextResponse } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
   try { target = await ctx.client.action(api.telegram.previewLink, { secret: ctx.secret, nonce: ctx.consent.nonce }); }
   catch { return problem("Unable to check the link right now. Reload this page to retry. No wallet access was granted by this page.", 503); }
   if (!target) return problem("This link expired or was already used. Return to Telegram to check your link or start again.", 410);
-  const returnToken=randomBytes(16).toString("hex");
+  const returnToken=telegramReturnToken(ctx.consent.nonce,ctx.consent.ownerXUserId,ctx.secret);
   try{await ctx.client.action(api.telegram.stageXLink,{secret:ctx.secret,nonce:ctx.consent.nonce,ownerXUserId:ctx.consent.ownerXUserId,returnToken});}
   catch{return problem("Link could not be checked. Start again in Telegram.",503);}
   const targetUrl=new URL(ARC_BOT_TELEGRAM_URL);targetUrl.searchParams.set("start","link_"+returnToken);

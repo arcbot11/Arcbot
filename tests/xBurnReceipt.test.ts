@@ -13,5 +13,5 @@ it("prices the full verified burn, retaining whole-token display",async()=>{
 });
 it("does not invent a dollar value or fail a confirmed burn when pricing is unavailable",async()=>{
   price.mockRejectedValue(Error("offline"));
-  expect(await xBurnReceipt(tx,"1,000 ARGOS")).toBe("Burned 1,000 ARGOS (USD estimate unavailable)");
+  expect(await xBurnReceipt(tx,"1,000 ARGOS")).toBe("Burned 1,000 ARGOS");
 });

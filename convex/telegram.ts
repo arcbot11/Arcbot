@@ -300,7 +300,7 @@ export const consumeLinkNonce = internalMutation({
       ? await ctx.db.query("telegramLinkNonces").withIndex("by_return_hash", q => q.eq("returnHash", args.returnHash!)).unique()
       : args.nonceHash ? await ctx.db.query("telegramLinkNonces").withIndex("by_nonce_hash", q => q.eq("nonceHash", args.nonceHash!)).unique() : null;
     const now = Date.now();
-    if (!nonce || nonce.consumedAt || nonce.expiresAt <= now) return { status: "expired" as const };
+    if (!nonce || nonce.expiresAt <= now) return { status: "expired" as const };
     // The return token is held only by the OAuth browser, and must arrive from
     // the original Telegram account. A forwarded sign-in URL alone cannot link.
     if(args.returnHash&&(!nonce.pendingOwnerXUserId||nonce.telegramUserId!==args.telegramUserId||nonce.telegramChatId!==args.telegramChatId))return {status:"expired"};
@@ -310,6 +310,13 @@ export const consumeLinkNonce = internalMutation({
     const xLinks = await ctx.db.query("telegramAccountLinks").withIndex("by_owner_x_user", q => q.eq("ownerXUserId", ownerXUserId)).collect();
     const activeTelegramLink = telegramLinks.find(row => !row.revokedAt);
     const activeXLink = xLinks.find(row => !row.revokedAt);
+    if(nonce.consumedAt){
+      // Reopening the same Telegram return link may acknowledge its completed
+      // binding, but must never recreate a revoked/replaced link or renew auth.
+      if(args.returnHash&&activeTelegramLink&&activeXLink&&activeTelegramLink._id===activeXLink._id&&activeTelegramLink.ownerXUserId===ownerXUserId&&activeTelegramLink.telegramChatId===nonce.telegramChatId&&activeTelegramLink.linkedAt<=nonce.consumedAt&&activeTelegramLink.lastAuthenticatedAt>=nonce.consumedAt)
+        return {status:"linked" as const,telegramUserId:nonce.telegramUserId,telegramChatId:nonce.telegramChatId};
+      return {status:"expired" as const};
+    }
     // Active links are one-to-one, but revoked identities are reusable. Keep
     // collision checks and insertion in this mutation so simultaneous OAuth
     // callbacks cannot bind either identity twice.

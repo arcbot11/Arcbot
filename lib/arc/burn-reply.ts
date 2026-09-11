@@ -14,5 +14,5 @@ export async function xBurnReceipt(tx: Transaction, amountLabel: string) {
       if (value.usdValue !== null) usd = formatBalanceUsd(value.usdValue);
     }
   } catch { /* A price lookup must not change a confirmed burn into a failed command. */ }
-  return `Burned ${amountLabel} (${usd ?? "USD estimate unavailable"})`;
+  return `Burned ${amountLabel}${usd ? ` (${usd})` : ""}`;
 }

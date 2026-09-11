@@ -1,4 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
+import {oauthCookieName,sealOAuthAttempt,readTelegramRetry} from "@/lib/x-oauth-attempt";
 import { walletReturnPath } from "@/lib/wallet-return-path";
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
@@ -25,7 +26,10 @@ export async function GET(request: NextRequest) {
   }
   const session = readWebWalletSession(request.cookies.get(WEB_WALLET_SESSION_COOKIE)?.value, webSecret);
   const requestedReturn = request.nextUrl.searchParams.get("returnTo");
-  const telegramLink = request.nextUrl.searchParams.get("telegramLink");
+  if(request.nextUrl.searchParams.has("retry")&&!readTelegramRetry(request.nextUrl.searchParams.get("retry")??undefined,webSecret)){
+    return NextResponse.redirect(new URL("/wallet/sign-in-error?reason=telegram_expired&telegram=1",siteUrl));
+  }
+  const telegramLink = readTelegramRetry(request.nextUrl.searchParams.get("retry")??undefined,webSecret) || request.nextUrl.searchParams.get("telegramLink");
   const validTelegramLink = telegramLink && /^[a-f0-9]{64}$/.test(telegramLink) ? telegramLink : null;
   const returnTo = walletReturnPath(requestedReturn);
   // Telegram account linking must always pass through X authorization. Reusing
@@ -40,7 +44,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const state = base64url(randomBytes(32));
+  if(validTelegramLink){
+    const valid=await new ConvexHttpClient(convexUrl).action(api.telegram.previewLink,{secret:webSecret,nonce:validTelegramLink}).catch(()=>undefined);
+    if(!valid){const target=new URL("/wallet/sign-in-error",siteUrl);target.searchParams.set("reason",valid===undefined?"link_check":"telegram_expired");target.searchParams.set("telegram","1");return NextResponse.redirect(target);}
+  }
+  const state = "v2_"+base64url(randomBytes(32));
   const verifier = base64url(randomBytes(48));
   const challenge = base64url(createHash("sha256").update(verifier).digest());
   const callback = `${siteUrl.replace(/\/$/, "")}/api/auth/x/callback`;
@@ -58,11 +66,8 @@ export async function GET(request: NextRequest) {
   const response = NextResponse.redirect(authorize);
   const secure = callback.startsWith("https://");
   const cookie = { httpOnly: true, secure, sameSite: "lax" as const, path: "/api/auth/x", maxAge: 10 * 60 };
-  response.cookies.set("argus_x_oauth_state", state, cookie);
-  response.cookies.set("argus_x_oauth_verifier", verifier, cookie);
-  response.cookies.set("argus_x_oauth_return", returnTo, cookie);
-  if (validTelegramLink) response.cookies.set("argus_telegram_link", validTelegramLink, cookie);
-  else response.cookies.set("argus_telegram_link", "", { ...cookie, maxAge: 0 });
+  response.cookies.set(oauthCookieName(state)!,sealOAuthAttempt({verifier,returnTo,...(validTelegramLink?{telegramLink:validTelegramLink}:{}),expiresAt:Date.now()+600_000},webSecret),cookie);
+  response.headers.set("Cache-Control","no-store");
   // A cryptographically valid cookie may refer to a revoked or missing Convex
   // session. Remove it before starting OAuth so it cannot cause a redirect loop.
   if (session) response.cookies.set(WEB_WALLET_SESSION_COOKIE, "", {
