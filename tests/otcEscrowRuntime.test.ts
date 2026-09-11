@@ -142,3 +142,15 @@ it("completes a paid order without preparing a tiny gas refund",async()=>{
  expect(m.command).toHaveBeenCalledWith("escrow_dust",{listingId:listing.id,orderId:order.id,balanceWei:"123",block:"101"});
  expect(m.command).toHaveBeenCalledWith("escrow_advance",{listingId:listing.id,orderId:order.id,baseBalanceWei:"123",baseBlock:"101"});
 });
+
+it("retains a paid order's uneconomic refund above the fixed dust threshold",async()=>{
+ order.escrow!.version=2;verifyDeposits();
+ for(const step of ["arc","seller","fee"] as const){const id=escrowTxId(listing,step,order);records.set(id,{...arcPayout(),id,status:"completed",hash:"verified",blockNumber:"100"});}
+ m.balance.mockResolvedValue({balanceWei:"1500000000000",block:"101"});
+ m.prepare.mockResolvedValue({unsigned:"0x",gasWei:"1000000000000",snapshot:{balanceWei:"1500000000000",block:"101"}});
+ m.command.mockImplementation(async(action:string)=>{if(action==="escrow_claim")return true;if(action==="escrow_dust"){order.escrow!.refundSkipped=true;return order;}if(action==="escrow_advance")return order;throw Error("Unexpected action "+action);});
+ await advanceEscrowOrder(order);
+ expect(m.command).toHaveBeenCalledWith("escrow_dust",{listingId:listing.id,orderId:order.id,balanceWei:"1500000000000",block:"101",refundGasWei:"1000000000000"});
+ expect(m.advance).not.toHaveBeenCalled();
+ expect(m.command).toHaveBeenCalledWith("escrow_advance",expect.objectContaining({orderId:order.id}));
+});

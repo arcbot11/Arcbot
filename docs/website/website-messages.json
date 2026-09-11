@@ -317,98 +317,98 @@
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 5,
+    "line": 6,
     "kind": "Text / template",
     "text": "Buy Arc USDC with Base ETH. Review listings, premiums, and fees."
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "ARGOS BOT / OTC MARKET"
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "Get Arc USDC Early"
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "Buy Arc USDC with Base ETH."
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "Set your amount. Check the premium. Trade."
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "01"
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "Fund your wallet"
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "Arc USDC to sell. Base ETH to buy. Keep Base ETH for gas."
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "02"
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "Agree on the amount"
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "Buy part or all of a listing. Premium and 1.5% service fee are included in the quote."
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "03"
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "Track both transfers"
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/otc/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Visible text",
     "text": "USDC and Base assets are securely escrowed and settled upon successful payment."
   },
@@ -1045,14 +1045,14 @@
   {
     "area": "Pages and shared metadata",
     "file": "app/wallet/page.tsx",
-    "line": 6,
+    "line": 7,
     "kind": "Text / template",
     "text": "Buy, sell, swap, and send Arc tokens. Track your funds and transactions."
   },
   {
     "area": "Pages and shared metadata",
     "file": "app/wallet/page.tsx",
-    "line": 7,
+    "line": 8,
     "kind": "Visible text",
     "text": "Your Wallet."
   },
@@ -4153,266 +4153,399 @@
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 19,
+    "line": 23,
     "kind": "Text / template",
-    "text": "function decimals() view returns (uint8)"
+    "text": "Unsupported Argus pool configuration."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 19,
+    "line": 24,
     "kind": "Text / template",
-    "text": "function balanceOf(address) view returns (uint256)"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/arc/command/route.ts",
-    "line": 19,
-    "kind": "Text / template",
-    "text": "function transfer(address,uint256) returns (bool)"
+    "text": "Unexpected Argus token record length."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
     "line": 25,
+    "kind": "Text / template",
+    "text": "Unexpected Argus Portal format."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 26,
+    "kind": "Text / template",
+    "text": "Argus token contract code missing."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 27,
+    "kind": "Text / template",
+    "text": "Argus hook identity mismatch."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 28,
+    "kind": "Text / template",
+    "text": "Argus launch quote asset mismatch."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 29,
+    "kind": "Text / template",
+    "text": "Argus pool ID mismatch."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 30,
+    "kind": "Text / template",
+    "text": "Arc router code does not match the reviewed deployment."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 31,
+    "kind": "Text / template",
+    "text": "Hook execution requires a reviewed adapter"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 32,
+    "kind": "Text / template",
+    "text": "Mixed routes require two or three pools and ERC-20 currencies"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 33,
+    "kind": "Text / template",
+    "text": "Minimum output rounds to zero"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 34,
+    "kind": "Text / template",
+    "text": "Invalid output or slippage (maximum 10%)"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 35,
+    "kind": "Text / template",
+    "text": "V4 amount exceeds uint128"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 42,
     "kind": "Error",
     "text": "Use the Arc token contract address."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 30,
+    "line": 46,
+    "kind": "Text / template",
+    "text": "Input"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 46,
+    "kind": "Text / template",
+    "text": "Received"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 46,
+    "kind": "Text / template",
+    "text": "Amount"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 46,
+    "kind": "Text / template",
+    "text": "To"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 46,
+    "kind": "Text / template",
+    "text": "Burn destination"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 46,
+    "kind": "Text / template",
+    "text": "Gas paid"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 46,
+    "kind": "Text / template",
+    "text": "Route"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 47,
+    "kind": "Text / template",
+    "text": "Base withdrawal"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 47,
+    "kind": "Text / template",
+    "text": "Buy and burn"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 47,
+    "kind": "Text / template",
+    "text": "Buy and send"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 47,
+    "kind": "Text / template",
+    "text": "Swap"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 48,
+    "kind": "Text / template",
+    "text": "confirmed."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 52,
     "kind": "Dynamic Text / template",
     "text": "Bearer {secret}"
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 30,
+    "line": 52,
     "kind": "Text / template",
     "text": "Unauthorized."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 41,
+    "line": 60,
+    "kind": "Status / notice",
+    "text": "Command not supported."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 68,
+    "kind": "Status / notice",
+    "text": "Command not supported. Stored transaction chain mismatch."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 70,
+    "kind": "Text / template",
+    "text": "Trade expired before signing. Funds released. Submit a new command."
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/arc/command/route.ts",
+    "line": 71,
     "kind": "Text / template",
     "text": "Arc transaction reverted. Check wallet history."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 42,
+    "line": 72,
     "kind": "Text / template",
     "text": "Arc transaction pending. Check wallet history."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 43,
-    "kind": "Text / template",
-    "text": "Buy and burn confirmed. Purchased tokens were delivered to the dead address."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/arc/command/route.ts",
-    "line": 43,
-    "kind": "Dynamic Text / template",
-    "text": "Buy and send confirmed. Purchased tokens were delivered to {command.recipient}."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/arc/command/route.ts",
-    "line": 43,
-    "kind": "Text / template",
-    "text": "Sell confirmed. Token quantity was based on the requested USDC value; proceeds reflect the executed price and fees."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/arc/command/route.ts",
-    "line": 43,
-    "kind": "Text / template",
-    "text": "Arc transaction confirmed."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/arc/command/route.ts",
-    "line": 46,
+    "line": 77,
     "kind": "Error",
     "text": "Request expired before the next transaction was prepared. Check wallet history before sending a new command."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 50,
+    "line": 83,
     "kind": "Error",
     "text": "Specify the USDC amount to spend, for example buy 10 USDC of TOKEN or buy $10 of TOKEN."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 51,
+    "line": 84,
     "kind": "Error",
     "text": "Specify a USDC value, token amount, or percentage to sell."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 52,
+    "line": 85,
     "kind": "Error",
-    "text": "Specify the percentage of input tokens to swap."
+    "text": "Specify a token amount, USDC value, or percentage to swap."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 58,
-    "kind": "Error",
-    "text": "Specify a percentage up to 100."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/arc/command/route.ts",
-    "line": 65,
+    "line": 89,
     "kind": "Error",
     "text": "Use a valid recipient wallet."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 68,
+    "line": 93,
     "kind": "Error",
-    "text": "Use an explicit Arc USDC or token amount. Base actions are website only."
+    "text": "Use /withdraw to send Base ETH."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 70,
+    "line": 93,
     "kind": "Error",
-    "text": "Specify the token amount to send."
+    "text": "Use Telegram or the website to withdraw Base ETH."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 72,
-    "kind": "Error",
-    "text": "Use a different nonzero recipient."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/arc/command/route.ts",
-    "line": 77,
+    "line": 95,
     "kind": "Error",
     "text": "Command not supported. Use buy, sell, send, or burn with explicit amounts."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 79,
+    "line": 100,
     "kind": "Text / template",
     "text": "Arc request recorded. Funds remain reserved for verification."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 80,
+    "line": 104,
     "kind": "Text / template",
     "text": "Arc request recorded. Check wallet history."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 82,
-    "kind": "Error",
+    "line": 106,
+    "kind": "Text / template",
     "text": "Approval steps exceeded the request limit. Check wallet history."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 84,
+    "line": 108,
     "kind": "Text / template",
     "text": "Arc command failed."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 87,
+    "line": 111,
     "kind": "Text / template",
     "text": "Wallet authorization changed. Reconnect before sending a new command."
   },
   {
     "area": "Website API responses",
     "file": "app/api/arc/command/route.ts",
-    "line": 89,
+    "line": 113,
     "kind": "Text / template",
     "text": "Arc request is waiting for verification."
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 30,
+    "line": 31,
     "kind": "Status / notice",
     "text": "configuration"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 36,
+    "line": 37,
     "kind": "Status / notice",
     "text": "invalid_state"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 39,
+    "line": 40,
     "kind": "Dynamic Text / template",
     "text": "{siteUrl.replace(/\\/$/, \"\")}/api/auth/x/callback"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 41,
+    "line": 42,
     "kind": "Text / template",
     "text": "POST"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 43,
+    "line": 44,
     "kind": "Dynamic Text / template",
     "text": "Basic {Buffer.from(`${clientId}:${clientSecret}`).toString(\"base64\")}"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 55,
+    "line": 56,
     "kind": "Status / notice",
     "text": "token_exchange"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 60,
+    "line": 61,
     "kind": "Dynamic Text / template",
     "text": "Bearer {token.access_token}"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 64,
+    "line": 65,
     "kind": "Status / notice",
     "text": "identity"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 96,
+    "line": 97,
     "kind": "Status / notice",
     "text": "session"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/callback/route.ts",
-    "line": 115,
+    "line": 116,
     "kind": "Status / notice",
     "text": "wallet"
   },
@@ -4447,14 +4580,14 @@
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/start/route.ts",
-    "line": 42,
+    "line": 46,
     "kind": "Dynamic Text / template",
     "text": "{siteUrl.replace(/\\/$/, \"\")}/api/auth/x/callback"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/start/route.ts",
-    "line": 48,
+    "line": 52,
     "kind": "Text / template",
     "text": "users.read tweet.read"
   },
@@ -4489,56 +4622,35 @@
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/telegram-confirm/route.ts",
-    "line": 26,
-    "kind": "Dynamic Text / template",
-    "text": "<!doctype html><html><head><title>Confirm Telegram wallet access</title><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"></head><body><main><h1>Confirm Telegram wallet access</h1><p>You signed in as X @{escape(ctx.consent.username)}.</p><p>Telegram account: {target.telegramUsername ? `@${escape(target.telegramUsername)}` : \"No username\"}<br>Telegram user ID: {escape(target.telegramUserId)}</p><p>This Telegram account will be able to send and trade funds from your Argos Bot wallet. Confirm only if this is your Telegram account and you started linking from the bot. Do not approve a link someone sent you.</p><form method=\"post\"><input type=\"hidden\" name=\"csrf\" value=\"{escape(ctx.consent.csrf)}\"><button name=\"decision\" value=\"confirm\">Confirm wallet access</button><button name=\"decision\" value=\"cancel\">Cancel</button></form></main></body></html>"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/auth/x/telegram-confirm/route.ts",
-    "line": 26,
+    "line": 28,
     "kind": "Text / template",
-    "text": "No username"
+    "text": "Link could not be checked. Start again in Telegram."
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/telegram-confirm/route.ts",
-    "line": 26,
-    "kind": "Text / template",
-    "text": "text/html; charset=utf-8"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/auth/x/telegram-confirm/route.ts",
-    "line": 26,
-    "kind": "Text / template",
-    "text": "default-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/auth/x/telegram-confirm/route.ts",
-    "line": 31,
+    "line": 37,
     "kind": "Text / template",
     "text": "Unauthorized"
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/telegram-confirm/route.ts",
-    "line": 33,
+    "line": 39,
     "kind": "Text / template",
     "text": "Invalid confirmation. Reload this page and try again."
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/telegram-confirm/route.ts",
-    "line": 43,
+    "line": 49,
     "kind": "Text / template",
     "text": "We couldn't verify the linking result. Check Telegram first. If it isn't linked, reload this page or start linking again from Telegram."
   },
   {
     "area": "Website API responses",
     "file": "app/api/auth/x/telegram-confirm/route.ts",
-    "line": 45,
+    "line": 51,
     "kind": "Text / template",
     "text": "Invalid choice"
   },
@@ -4748,77 +4860,84 @@
   {
     "area": "Website API responses",
     "file": "app/api/token-image/route.ts",
-    "line": 34,
+    "line": 35,
     "kind": "Error",
     "text": "image URL is too long"
   },
   {
     "area": "Website API responses",
     "file": "app/api/token-image/route.ts",
-    "line": 36,
+    "line": 37,
     "kind": "Error",
     "text": "image URL is not allowed"
   },
   {
     "area": "Website API responses",
     "file": "app/api/token-image/route.ts",
-    "line": 38,
+    "line": 39,
     "kind": "Error",
     "text": "image host is not allowed"
   },
   {
     "area": "Website API responses",
     "file": "app/api/token-image/route.ts",
-    "line": 40,
+    "line": 41,
     "kind": "Error",
     "text": "image host is not public"
   },
   {
     "area": "Website API responses",
     "file": "app/api/token-image/route.ts",
-    "line": 53,
-    "kind": "Error",
-    "text": "too many image redirects"
+    "line": 62,
+    "kind": "Status / notice",
+    "text": "image response is not allowed"
   },
   {
     "area": "Website API responses",
     "file": "app/api/token-image/route.ts",
-    "line": 57,
-    "kind": "Error",
-    "text": "image request failed"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/token-image/route.ts",
-    "line": 59,
-    "kind": "Error",
-    "text": "unsupported image type"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/token-image/route.ts",
-    "line": 61,
-    "kind": "Error",
+    "line": 66,
+    "kind": "Status / notice",
     "text": "image is too large"
   },
   {
     "area": "Website API responses",
     "file": "app/api/token-image/route.ts",
-    "line": 80,
+    "line": 70,
+    "kind": "Status / notice",
+    "text": "image response interrupted"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/token-image/route.ts",
+    "line": 82,
+    "kind": "Status / notice",
+    "text": "too many image redirects"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/token-image/route.ts",
+    "line": 86,
+    "kind": "Status / notice",
+    "text": "image request failed"
+  },
+  {
+    "area": "Website API responses",
+    "file": "app/api/token-image/route.ts",
+    "line": 94,
     "kind": "Text / template",
     "text": "Image URL is required"
   },
   {
     "area": "Website API responses",
     "file": "app/api/token-image/route.ts",
-    "line": 85,
+    "line": 99,
     "kind": "Text / template",
     "text": "public, max-age=86400, stale-while-revalidate=604800"
   },
   {
     "area": "Website API responses",
     "file": "app/api/token-image/route.ts",
-    "line": 89,
+    "line": 103,
     "kind": "Text / template",
     "text": "public, max-age=300"
   },
@@ -4902,14 +5021,14 @@
   {
     "area": "Website API responses",
     "file": "app/api/wallet-signer/[...path]/route.ts",
-    "line": 328,
+    "line": 324,
     "kind": "Text / template",
     "text": "not found"
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet-signer/[...path]/route.ts",
-    "line": 331,
+    "line": 327,
     "kind": "Status / notice",
     "text": "/"
   },
@@ -4930,147 +5049,63 @@
   {
     "area": "Website API responses",
     "file": "app/api/wallet/send/route.ts",
-    "line": 22,
-    "kind": "Text / template",
-    "text": "function decimals() view returns (uint8)"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 22,
-    "kind": "Text / template",
-    "text": "function balanceOf(address) view returns (uint256)"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 22,
-    "kind": "Text / template",
-    "text": "function transfer(address,uint256) returns (bool)"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 31,
+    "line": 28,
     "kind": "Error",
     "text": "Use a different, nonzero recipient."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/send/route.ts",
-    "line": 33,
+    "line": 35,
     "kind": "Error",
     "text": "Base withdrawals support ETH only."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/send/route.ts",
-    "line": 34,
+    "line": 36,
     "kind": "Error",
     "text": "Enter an amount for Base withdrawals."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/send/route.ts",
-    "line": 35,
-    "kind": "Error",
-    "text": "Choose a percentage or a USD value."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 39,
-    "kind": "Error",
-    "text": "ETH price unavailable. Try again."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 46,
-    "kind": "Error",
-    "text": "Wallet has a pending transaction."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 48,
-    "kind": "Error",
-    "text": "Not enough available USDC after gas."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 61,
-    "kind": "Error",
-    "text": "Token precision is not supported."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 63,
-    "kind": "Error",
-    "text": "Not enough tokens."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 69,
-    "kind": "Error",
-    "text": "Not enough available Base USDC."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 70,
-    "kind": "Error",
-    "text": "Not enough available funds. OTC listings and gas are reserved."
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 73,
-    "kind": "Text / template",
-    "text": "USDC"
-  },
-  {
-    "area": "Website API responses",
-    "file": "app/api/wallet/send/route.ts",
-    "line": 73,
+    "line": 40,
     "kind": "Text / template",
     "text": "ETH"
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/send/route.ts",
-    "line": 76,
+    "line": 43,
     "kind": "Error",
     "text": "Invalid send quote."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/send/route.ts",
-    "line": 78,
+    "line": 45,
     "kind": "Error",
     "text": "Quote owner mismatch."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/send/route.ts",
-    "line": 81,
+    "line": 48,
     "kind": "Error",
     "text": "Quote expired. Check the amount again."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/send/route.ts",
-    "line": 84,
+    "line": 51,
     "kind": "Error",
     "text": "Base withdrawals support ETH only. Request a new quote."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/send/route.ts",
-    "line": 85,
+    "line": 52,
     "kind": "Error",
     "text": "Wallet nonce changed. Request a new quote."
   },
@@ -5084,35 +5119,35 @@
   {
     "area": "Website API responses",
     "file": "app/api/wallet/trade/route.ts",
-    "line": 32,
+    "line": 33,
     "kind": "Error",
     "text": "Not enough available funds or a wallet transaction is pending."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/trade/route.ts",
-    "line": 38,
+    "line": 39,
     "kind": "Error",
     "text": "Invalid trade quote."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/trade/route.ts",
-    "line": 40,
+    "line": 41,
     "kind": "Error",
     "text": "Quote owner mismatch."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/trade/route.ts",
-    "line": 43,
+    "line": 44,
     "kind": "Error",
     "text": "Quote expired. Review the trade again."
   },
   {
     "area": "Website API responses",
     "file": "app/api/wallet/trade/route.ts",
-    "line": 45,
+    "line": 46,
     "kind": "Error",
     "text": "Wallet nonce changed. Review the trade again."
   },
@@ -5133,149 +5168,156 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 10,
+    "line": 12,
     "kind": "Error",
     "text": "OTC service authorization failed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 21,
+    "line": 23,
     "kind": "Error",
     "text": "OTC request too large."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 41,
+    "line": 50,
     "kind": "Error",
     "text": "Escrow listing configuration missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 46,
+    "line": 55,
     "kind": "Status / notice",
     "text": "by_owner"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 46,
+    "line": 55,
     "kind": "Status / notice",
     "text": "quoted"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 50,
+    "line": 59,
     "kind": "Error",
     "text": "You already have a quote. Confirm it or wait for it to expire."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 59,
+    "line": 68,
     "kind": "Error",
     "text": "Order missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 73,
+    "line": 82,
     "kind": "Error",
     "text": "Record missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 76,
+    "line": 85,
     "kind": "Error",
     "text": "Unknown OTC command."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 98,
+    "line": 107,
     "kind": "Status / notice",
     "text": "otcRecords"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 98,
+    "line": 107,
     "kind": "Status / notice",
     "text": "by_kind_status"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 98,
+    "line": 107,
     "kind": "Status / notice",
     "text": "status"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 98,
+    "line": 107,
     "kind": "Status / notice",
     "text": "asc"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 103,
+    "line": 112,
     "kind": "Status / notice",
     "text": "active"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 119,
+    "line": 128,
     "kind": "Error",
     "text": "OTC worker URL is not configured."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 120,
+    "line": 129,
     "kind": "Text / template",
     "text": "POST"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 120,
+    "line": 129,
     "kind": "Dynamic Text / template",
     "text": "Bearer {args.secret}"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 121,
+    "line": 130,
     "kind": "Error",
     "text": "OTC settlement worker failed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 130,
+    "line": 139,
     "kind": "Error",
     "text": "Wallet worker configuration missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 131,
+    "line": 140,
     "kind": "Dynamic Text / template",
     "text": "Bearer {secret}"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "convex/otc.ts",
-    "line": 132,
+    "line": 141,
     "kind": "Error",
-    "text": "OTC worker failed."
+    "text": "OTC worker failed. Inspect pending jobs and worker logs."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "convex/otc.ts",
+    "line": 143,
+    "kind": "Dynamic Error",
+    "text": "OTC worker: {result.failed} failed jobs; {result.processed} processed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
@@ -5336,119 +5378,133 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 13,
+    "line": 14,
     "kind": "Text / template",
     "text": "function LAUNCH_STRUCT_WORDS() view returns(uint8)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 14,
+    "line": 15,
     "kind": "Text / template",
     "text": "function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256,int24)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 15,
+    "line": 16,
     "kind": "Text / template",
     "text": "function poolId() view returns(bytes32)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 15,
+    "line": 16,
     "kind": "Text / template",
     "text": "function token() view returns(address)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 16,
+    "line": 17,
     "kind": "Text / template",
     "text": "function portal() view returns(address)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 16,
+    "line": 17,
     "kind": "Text / template",
     "text": "function splitter() view returns(address)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 17,
+    "line": 18,
     "kind": "Text / template",
     "text": "function poolManager() view returns(address)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 17,
+    "line": 18,
     "kind": "Text / template",
     "text": "function quoteAsset() view returns(address)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 18,
+    "line": 19,
     "kind": "Text / template",
     "text": "function poolFee() view returns(uint24)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 18,
+    "line": 19,
     "kind": "Text / template",
     "text": "function tickSpacing() view returns(int24)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 20,
+    "line": 21,
+    "kind": "Text / template",
+    "text": "function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256,int24,address)"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/argus-discovery.ts",
+    "line": 22,
     "kind": "Text / template",
     "text": "function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 28,
+    "line": 30,
     "kind": "Error",
     "text": "Unexpected Argus token record length."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 31,
+    "line": 33,
     "kind": "Error",
     "text": "Unexpected Argus Portal format."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 33,
+    "line": 35,
     "kind": "Error",
     "text": "Argus token contract code missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 35,
+    "line": 37,
     "kind": "Error",
     "text": "Argus hook identity mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 37,
+    "line": 38,
+    "kind": "Error",
+    "text": "Argus launch quote asset mismatch."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/argus-discovery.ts",
+    "line": 40,
     "kind": "Error",
     "text": "Unsupported Argus pool configuration."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/argus-discovery.ts",
-    "line": 40,
+    "line": 43,
     "kind": "Error",
     "text": "Argus pool ID mismatch."
   },
@@ -5486,6 +5542,27 @@
     "line": 45,
     "kind": "Text / template",
     "text": "USDC"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/discovery.ts",
+    "line": 20,
+    "kind": "Error",
+    "text": "Arc explorer unavailable"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/discovery.ts",
+    "line": 23,
+    "kind": "Error",
+    "text": "Arc explorer market index is stale"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/discovery.ts",
+    "line": 36,
+    "kind": "Error",
+    "text": "Explorer returned conflicting pool identities"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
@@ -5604,131 +5681,131 @@
     "file": "lib/arc/quotes.ts",
     "line": 52,
     "kind": "Status / notice",
-    "text": "Mixed routes require ERC-20 USDC"
+    "text": "Mixed routes require ERC-20 currencies"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 54,
+    "line": 56,
     "kind": "Status / notice",
     "text": "No intermediate output"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 62,
+    "line": 65,
     "kind": "Error",
     "text": "Invalid V3 route"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 64,
+    "line": 67,
     "kind": "Error",
     "text": "V3 factory pool mismatch"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 66,
+    "line": 69,
     "kind": "Error",
     "text": "No active liquidity"
-  },
-  {
-    "area": "Supporting messages (may be translated or masked)",
-    "file": "lib/arc/quotes.ts",
-    "line": 71,
-    "kind": "Error",
-    "text": "V4 input exceeds uint128"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
     "line": 74,
     "kind": "Error",
-    "text": "Invalid V4 route"
+    "text": "V4 input exceeds uint128"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
     "line": 77,
     "kind": "Error",
+    "text": "Invalid V4 route"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/quotes.ts",
+    "line": 80,
+    "kind": "Error",
     "text": "V4 pool is uninitialized or has no active liquidity"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 92,
+    "line": 95,
     "kind": "Text / template",
     "text": "Hook requires a reviewed adapter and sender-specific simulation"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 97,
+    "line": 100,
     "kind": "Text / template",
     "text": "Mixed-protocol quotes are unsupported"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 97,
+    "line": 100,
     "kind": "Text / template",
     "text": "V3 factory pool mismatch"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 97,
+    "line": 100,
     "kind": "Text / template",
     "text": "No active liquidity"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 97,
+    "line": 100,
     "kind": "Text / template",
     "text": "V4 multihop quotes are unsupported"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 97,
+    "line": 100,
     "kind": "Text / template",
     "text": "V4 input exceeds uint128"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 97,
+    "line": 100,
     "kind": "Text / template",
     "text": "V4 pool is uninitialized or has no active liquidity"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 97,
+    "line": 100,
     "kind": "Text / template",
     "text": "Contract code missing"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 98,
+    "line": 101,
     "kind": "Text / template",
     "text": "Route validation or quote failed"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 105,
+    "line": 108,
     "kind": "Error",
     "text": "Quote snapshot changed"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/quotes.ts",
-    "line": 107,
+    "line": 110,
     "kind": "Error",
     "text": "Quote candidates must share input and output currencies"
   },
@@ -5800,7 +5877,7 @@
     "file": "lib/arc/routing.ts",
     "line": 36,
     "kind": "Error",
-    "text": "Route must have one or two hops between distinct currencies"
+    "text": "Route must have one to three hops between distinct currencies"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
@@ -5833,98 +5910,98 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 71,
+    "line": 86,
     "kind": "Error",
     "text": "V3 path requires V3 pools"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 73,
+    "line": 88,
     "kind": "Dynamic Text / template",
     "text": "{path}{encodePacked([\"uint24\", \"address\"], [pool.fee, currencies[i + 1]]).slice(2)}"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 80,
+    "line": 95,
     "kind": "Error",
     "text": "V4 path requires V4 pools"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 86,
+    "line": 101,
     "kind": "Error",
     "text": "Invalid output or slippage (maximum 10%)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 88,
+    "line": 103,
     "kind": "Error",
     "text": "Minimum output rounds to zero"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 96,
+    "line": 111,
     "kind": "Error",
     "text": "Use a valid recipient wallet."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 98,
+    "line": 113,
     "kind": "Error",
     "text": "Swap limits must be positive"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 108,
+    "line": 123,
     "kind": "Error",
     "text": "V4 amount exceeds uint128"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 109,
+    "line": 124,
     "kind": "Error",
     "text": "Hook execution requires a reviewed adapter"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 134,
+    "line": 148,
     "kind": "Status / notice",
-    "text": "Mixed routes require an ERC-20 USDC intermediate and ERC-20 endpoints"
+    "text": "Mixed routes require two or three pools and ERC-20 currencies"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 135,
+    "line": 149,
     "kind": "Status / notice",
     "text": "V4 amount exceeds uint128"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 137,
+    "line": 151,
     "kind": "Status / notice",
     "text": "Hook execution requires a reviewed adapter"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 165,
+    "line": 181,
     "kind": "Status / notice",
     "text": "Invalid swap router"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/routing.ts",
-    "line": 171,
+    "line": 187,
     "kind": "Status / notice",
     "text": "Invalid token balance guard"
   },
@@ -5980,42 +6057,77 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/social-balance.ts",
-    "line": 13,
+    "line": 18,
     "kind": "Status / notice",
     "text": "Use the Arc token contract address in the balance command."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/social-balance.ts",
-    "line": 20,
+    "line": 23,
+    "kind": "Dynamic Text / template",
+    "text": "{displayAmount(amount, 0)} {balance.symbol}"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/social-balance.ts",
+    "line": 27,
     "kind": "Status / notice",
     "text": "Arc balance block changed. Retry the balance command."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/social-balance.ts",
-    "line": 21,
+    "line": 29,
     "kind": "Dynamic Text / template",
-    "text": "{formatUnits(raw, 18)} USDC"
+    "text": "{displayUsdc(usdcAmount)} USDC"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/social-balance.ts",
-    "line": 22,
+    "line": 30,
     "kind": "Text / template",
     "text": "USDC"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/social-balance.ts",
-    "line": 24,
+    "line": 37,
     "kind": "Dynamic Text / template",
-    "text": "{t.balance} {t.symbol} {t.address}"
+    "text": "{formatUnits(BigInt(snapshot.balanceWei),18)} Base ETH{usd?` (${usd})`:\"\"}"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/social-balance.ts",
-    "line": 24,
+    "line": 37,
+    "kind": "Dynamic Text / template",
+    "text": "({usd})"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/social-balance.ts",
+    "line": 38,
+    "kind": "Text / template",
+    "text": "Base balance unavailable."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/social-balance.ts",
+    "line": 40,
+    "kind": "Dynamic Text / template",
+    "text": "{balanceWithUsd(`${displayAmount(t.balance, 0)} ${t.symbol}`, t.usdValue ?? undefined)} {t.address}"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/social-balance.ts",
+    "line": 40,
+    "kind": "Dynamic Text / template",
+    "text": "{displayAmount(t.balance, 0)} {t.symbol}"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/social-balance.ts",
+    "line": 40,
     "kind": "Text / template",
     "text": "Some token balances are unavailable. Check the balance using a contract address."
   },
@@ -6267,154 +6379,154 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 16,
+    "line": 17,
     "kind": "Text / template",
     "text": "function allowance(address,address) view returns (uint256)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 16,
+    "line": 17,
     "kind": "Text / template",
     "text": "function approve(address,uint256) returns (bool)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 17,
+    "line": 18,
     "kind": "Text / template",
     "text": "function allowance(address,address,address) view returns (uint160,uint48,uint48)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 17,
+    "line": 18,
     "kind": "Text / template",
     "text": "function approve(address,address,uint160,uint48)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 30,
+    "line": 32,
     "kind": "Error",
     "text": "Arc router code does not match the reviewed deployment."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 31,
+    "line": 33,
     "kind": "Error",
     "text": "Choose different assets."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 59,
+    "line": 61,
     "kind": "Error",
     "text": "Discovery block changed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 115,
+    "line": 124,
     "kind": "Error",
     "text": "No supported liquid Arc route found."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 132,
+    "line": 141,
     "kind": "Text / template",
     "text": "USDC"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 132,
+    "line": 141,
     "kind": "Text / template",
     "text": "function symbol() view returns (string)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 133,
+    "line": 142,
     "kind": "Error",
     "text": "Quote expired. Try again."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 146,
+    "line": 155,
     "kind": "Error",
     "text": "Not enough tokens."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 152,
+    "line": 161,
     "kind": "Error",
     "text": "Use a larger sell amount."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 154,
+    "line": 163,
     "kind": "Error",
     "text": "Not enough tokens for that USDC value."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 160,
+    "line": 169,
     "kind": "Error",
     "text": "Use a valid recipient wallet."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 161,
+    "line": 170,
     "kind": "Error",
     "text": "Buy and burn requires USDC input and a different token output."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 165,
+    "line": 174,
     "kind": "Error",
     "text": "Not enough tokens for the amount plus token tax. Use a smaller amount or 100%."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 169,
+    "line": 178,
     "kind": "Error",
     "text": "Amount exceeds Permit2 limits."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 176,
+    "line": 185,
     "kind": "Text / template",
     "text": "reset token approval"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 176,
+    "line": 185,
     "kind": "Text / template",
     "text": "approve token"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 179,
+    "line": 188,
     "kind": "Text / template",
     "text": "approve router"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/trading.ts",
-    "line": 194,
+    "line": 203,
     "kind": "Status / notice",
     "text": "Swap balance snapshot changed."
   },
@@ -6450,55 +6562,62 @@
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transaction-progress.ts",
     "line": 8,
+    "kind": "Text / template",
+    "text": "Trade expired before signing. Funds released. Submit again."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/transaction-progress.ts",
+    "line": 9,
     "kind": "Dynamic Text / template",
     "text": "{action[0].toUpperCase()+action.slice(1)} reverted. Check transaction history."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transaction-progress.ts",
-    "line": 9,
+    "line": 10,
     "kind": "Error",
     "text": "Transaction status unavailable. Check transaction history before submitting again."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transaction-progress.ts",
-    "line": 14,
+    "line": 15,
     "kind": "Error",
     "text": "Status could not refresh. Check transaction history before submitting again."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transaction-progress.ts",
-    "line": 20,
+    "line": 21,
     "kind": "Error",
     "text": "Tracking stopped. Check transaction history before submitting again."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transaction-progress.ts",
-    "line": 21,
+    "line": 22,
     "kind": "Error",
     "text": "Unexpected transaction status. Check transaction history."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transaction-progress.ts",
-    "line": 23,
+    "line": 24,
     "kind": "Dynamic Status / notice",
     "text": "{action[0].toUpperCase()+action.slice(1)} received on Base. Verifying delivery…"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transaction-progress.ts",
-    "line": 23,
+    "line": 24,
     "kind": "Dynamic Status / notice",
     "text": "{action[0].toUpperCase()+action.slice(1)} reverted on Base. Verifying receipt…"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transaction-progress.ts",
-    "line": 30,
+    "line": 31,
     "kind": "Dynamic Status / notice",
     "text": "Reconnecting to check {action} confirmation…"
   },
@@ -6526,112 +6645,112 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transfer-tax.ts",
-    "line": 26,
+    "line": 25,
     "kind": "Error",
     "text": "Invalid on-chain token tax."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 32,
+    "line": 33,
     "kind": "Text / template",
     "text": "POST"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 34,
+    "line": 35,
     "kind": "Error",
     "text": "Arc RPC connection unavailable"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 35,
+    "line": 36,
     "kind": "Dynamic Error",
     "text": "Arc RPC HTTP {response.status}"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 37,
+    "line": 38,
     "kind": "Error",
     "text": "Invalid Arc RPC response"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 40,
+    "line": 41,
     "kind": "Error",
     "text": "Invalid Arc RPC error"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 41,
+    "line": 42,
     "kind": "Text / template",
     "text": "RPC error"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 44,
+    "line": 45,
     "kind": "Error",
     "text": "Arc RPC capacity or method unavailable"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 44,
+    "line": 45,
     "kind": "Error",
     "text": "Arc RPC rejected request"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 46,
+    "line": 47,
     "kind": "Error",
     "text": "Missing Arc RPC result"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 51,
+    "line": 52,
     "kind": "Error",
     "text": "Arc RPC chain mismatch"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 53,
+    "line": 54,
     "kind": "Error",
     "text": "Arc RPC checkpoint mismatch"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 56,
+    "line": 57,
     "kind": "Error",
     "text": "Arc RPC head is stale"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 60,
+    "line": 61,
     "kind": "Error",
     "text": "Arc RPC cooling down"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 74,
+    "line": 75,
     "kind": "Error",
     "text": "Arc RPC method not authorized"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/arc/transport.ts",
-    "line": 92,
+    "line": 93,
     "kind": "Error",
     "text": "No healthy Arc RPC supports this request"
   },
@@ -6655,6 +6774,90 @@
     "line": 19,
     "kind": "Error",
     "text": "Arc USDC transfer evidence does not match."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 11,
+    "kind": "Text / template",
+    "text": "function decimals() view returns (uint8)"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 11,
+    "kind": "Text / template",
+    "text": "function balanceOf(address) view returns (uint256)"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 11,
+    "kind": "Text / template",
+    "text": "function transfer(address,uint256) returns (bool)"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 18,
+    "kind": "Error",
+    "text": "Use a percentage up to 100."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 28,
+    "kind": "Error",
+    "text": "Wallet has a pending transaction."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 30,
+    "kind": "Error",
+    "text": "Not enough available funds. OTC listings and gas are reserved."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 36,
+    "kind": "Error",
+    "text": "Use a different, nonzero recipient."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 37,
+    "kind": "Error",
+    "text": "Choose a percentage or a USD value."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 46,
+    "kind": "Error",
+    "text": "Not enough available USDC after gas."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 54,
+    "kind": "Error",
+    "text": "Token precision is not supported."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 56,
+    "kind": "Error",
+    "text": "Not enough tokens."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/arc/wallet-actions.ts",
+    "line": 60,
+    "kind": "Text / template",
+    "text": "USDC"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
@@ -6914,6 +7117,48 @@
     "line": 10,
     "kind": "Text / template",
     "text": "event Transfer(address indexed from,address indexed to,uint256 value)"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/base/wallet-actions.ts",
+    "line": 11,
+    "kind": "Error",
+    "text": "Use a different, nonzero recipient."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/base/wallet-actions.ts",
+    "line": 15,
+    "kind": "Error",
+    "text": "ETH price unavailable. Try again."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/base/wallet-actions.ts",
+    "line": 19,
+    "kind": "Error",
+    "text": "Use a positive ETH amount."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/base/wallet-actions.ts",
+    "line": 22,
+    "kind": "Error",
+    "text": "Wallet has a pending transaction."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/base/wallet-actions.ts",
+    "line": 23,
+    "kind": "Error",
+    "text": "Not enough available funds. OTC listings and gas are reserved."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/base/wallet-actions.ts",
+    "line": 24,
+    "kind": "Text / template",
+    "text": "ETH"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
@@ -7373,275 +7618,394 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 8,
+    "line": 9,
     "kind": "Text / template",
     "text": "function transfer(address,uint256) returns(bool)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 19,
+    "line": 20,
     "kind": "Error",
     "text": "Escrow position missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 20,
+    "line": 21,
     "kind": "Error",
     "text": "Escrow order mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 30,
+    "line": 31,
     "kind": "Error",
     "text": "Escrow wallet is not provisioned."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 32,
+    "line": 33,
+    "kind": "Status / notice",
+    "text": "Another order is settling for this listing."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/escrow-model.ts",
+    "line": 34,
     "kind": "Error",
     "text": "Combined escrow deposits require Base ETH."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 33,
+    "line": 35,
     "kind": "Error",
     "text": "Order is not settling."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 35,
-    "kind": "Error",
-    "text": "Invalid escrow step."
-  },
-  {
-    "area": "Supporting messages (may be translated or masked)",
-    "file": "lib/otc/escrow-model.ts",
-    "line": 36,
-    "kind": "Error",
-    "text": "Escrow deposit or preceding payout is not verified."
-  },
-  {
-    "area": "Supporting messages (may be translated or masked)",
-    "file": "lib/otc/escrow-model.ts",
-    "line": 37,
-    "kind": "Error",
-    "text": "Arc escrow deposit is not verified."
+    "line": 38,
+    "kind": "Status / notice",
+    "text": "Gas recovery is not authorized."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
     "line": 39,
     "kind": "Error",
-    "text": "Position is not funding."
+    "text": "Invalid escrow step."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/escrow-model.ts",
+    "line": 40,
+    "kind": "Error",
+    "text": "Escrow deposit or preceding payout is not verified."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
     "line": 41,
+    "kind": "Error",
+    "text": "Arc escrow deposit is not verified."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/escrow-model.ts",
+    "line": 43,
+    "kind": "Error",
+    "text": "Position is not funding."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/escrow-model.ts",
+    "line": 45,
     "kind": "Error",
     "text": "Position cannot return funds during settlement."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 42,
+    "line": 46,
     "kind": "Error",
     "text": "Escrow return does not cover remaining principal within the gas allowance."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 58,
+    "line": 62,
     "kind": "Error",
     "text": "Escrow transaction does not match its step."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 59,
+    "line": 63,
     "kind": "Error",
     "text": "Invalid escrow reservation."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 62,
+    "line": 66,
     "kind": "Error",
     "text": "Gas exceeds the escrow allowance."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 63,
+    "line": 67,
     "kind": "Error",
     "text": "Only return gas may reduce unsold funds."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 65,
+    "line": 72,
+    "kind": "Status / notice",
+    "text": "Seller must add Arc USDC for payout gas."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/escrow-model.ts",
+    "line": 75,
     "kind": "Error",
     "text": "A wallet transaction is pending."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 69,
+    "line": 79,
+    "kind": "Status / notice",
+    "text": "Add funds for the updated network gas allowance."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/escrow-model.ts",
+    "line": 83,
     "kind": "Error",
     "text": "Escrow funds are not reserved."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 79,
+    "line": 93,
     "kind": "Error",
     "text": "Escrow must be a separate wallet."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 80,
+    "line": 94,
     "kind": "Error",
     "text": "Escrow wallet binding is immutable."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 82,
+    "line": 96,
     "kind": "Error",
     "text": "Escrow name cannot change after provisioning."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 95,
+    "line": 109,
     "kind": "Error",
     "text": "Final Arc escrow balance is not verified."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 97,
+    "line": 111,
     "kind": "Error",
     "text": "Arc escrow gas balance is pending verification."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 99,
+    "line": 113,
     "kind": "Error",
     "text": "Arc escrow gas credits are not covered."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 114,
+    "line": 128,
     "kind": "Error",
     "text": "Final escrow balance is not verified."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 116,
+    "line": 130,
     "kind": "Error",
     "text": "Escrow gas balance is pending verification."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 117,
+    "line": 131,
     "kind": "Error",
     "text": "Escrow gas credits are not covered."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 124,
+    "line": 138,
     "kind": "Error",
     "text": "Escrow owner mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-model.ts",
-    "line": 130,
+    "line": 145,
     "kind": "Error",
     "text": "No verified reverted escrow transaction to retry."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 17,
+    "line": 18,
     "kind": "Status / notice",
     "text": "Read only"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 19,
+    "line": 20,
     "kind": "Error",
     "text": "Escrow transaction context missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 21,
+    "line": 22,
     "kind": "Error",
     "text": "Escrow attempt changed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 23,
+    "line": 24,
     "kind": "Error",
     "text": "Escrow signing authorization mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 24,
+    "line": 25,
     "kind": "Error",
     "text": "Escrow participant wallet is not active."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 29,
+    "line": 30,
     "kind": "Error",
     "text": "Escrow account name mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 36,
+    "line": 39,
     "kind": "Error",
     "text": "Escrow transaction reverted. Retry settlement after checking balances."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 41,
+    "line": 63,
     "kind": "Error",
     "text": "Arc escrow inventory is not covered."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 53,
+    "line": 83,
+    "kind": "Status / notice",
+    "text": "Add funds for settlement gas. The recovery allowance is already used."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/escrow-runtime.ts",
+    "line": 85,
+    "kind": "Status / notice",
+    "text": "Settlement gas exceeds the small recovery allowance."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/escrow-runtime.ts",
+    "line": 102,
     "kind": "Error",
     "text": "Escrow needs gas to return the remaining funds."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/escrow-runtime.ts",
-    "line": 58,
+    "line": 108,
     "kind": "Error",
     "text": "Not enough funds for the amount and gas."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 10,
+    "kind": "Status / notice",
+    "text": "Listing principal is not dust."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 11,
+    "kind": "Status / notice",
+    "text": "Return already has a transaction."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 12,
+    "kind": "Status / notice",
+    "text": "Funding is not verified."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 14,
+    "kind": "Status / notice",
+    "text": "Dust balance is not current."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 16,
+    "kind": "Status / notice",
+    "text": "Remainder exceeds the dust limit."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 26,
+    "kind": "Status / notice",
+    "text": "Funding amount is already fixed."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 29,
+    "kind": "Status / notice",
+    "text": "Funding gas exceeds the recovery allowance."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 40,
+    "kind": "Status / notice",
+    "text": "Payouts must be verified before retaining dust."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 41,
+    "kind": "Status / notice",
+    "text": "Refund already has a transaction."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 56,
+    "kind": "Status / notice",
+    "text": "Payment must be verified before gas recovery."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/gas-recovery.ts",
+    "line": 58,
+    "kind": "Status / notice",
+    "text": "Gas recovery exceeds the small network allowance."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
@@ -7821,224 +8185,224 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 75,
+    "line": 76,
     "kind": "Error",
     "text": "Wallet owner mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 79,
+    "line": 80,
     "kind": "Error",
     "text": "A wallet transaction is pending. Wait for confirmation."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 80,
+    "line": 81,
     "kind": "Error",
     "text": "Balance snapshot is behind the last wallet transaction."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 83,
+    "line": 84,
     "kind": "Error",
     "text": "Invalid reservation."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 85,
+    "line": 86,
     "kind": "Error",
     "text": "Not enough available funds, including gas and existing reservations."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 101,
+    "line": 102,
     "kind": "Error",
     "text": "Gas estimate is unavailable."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 105,
+    "line": 106,
     "kind": "Error",
     "text": "Minimum listing is 10 USDC after gas. Increase the total amount."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 114,
+    "line": 115,
     "kind": "Error",
     "text": "Listing identity or terms mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 121,
+    "line": 122,
     "kind": "Error",
     "text": "Not enough available USDC for this listing budget."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 121,
+    "line": 122,
     "kind": "Dynamic Error",
     "text": "You don't have enough for gas on top of {input.amount} USDC."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 129,
+    "line": 130,
     "kind": "Error",
     "text": "Quote owner mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 131,
+    "line": 132,
     "kind": "Error",
     "text": "Listing is not available."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 132,
+    "line": 133,
     "kind": "Error",
     "text": "Listing is settling another order. Try again shortly."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 133,
+    "line": 134,
     "kind": "Error",
     "text": "You cannot buy your own listing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 135,
+    "line": 136,
     "kind": "Error",
     "text": "Listing amount changed. Request a new quote."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 136,
+    "line": 137,
     "kind": "Error",
     "text": "Price or gas estimate expired."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 137,
+    "line": 138,
     "kind": "Error",
     "text": "Unsupported Base payment asset."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 143,
+    "line": 144,
     "kind": "Error",
     "text": "Not enough available Base USDC or approval gas allowance."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 144,
+    "line": 145,
     "kind": "Error",
     "text": "Invalid escrow payment terms."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 145,
+    "line": 146,
     "kind": "Error",
     "text": "Not enough available Base ETH for this quote and gas."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 158,
+    "line": 159,
     "kind": "Error",
     "text": "Order not found."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 160,
+    "line": 161,
     "kind": "Error",
     "text": "Payment options changed. Request a new ETH quote."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 161,
+    "line": 162,
     "kind": "Error",
     "text": "Quote expired. Request a new quote."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 164,
+    "line": 165,
     "kind": "Error",
     "text": "Seller balance or gas reserve is insufficient. No Base payment was sent."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 169,
+    "line": 170,
     "kind": "Error",
     "text": "A Base USDC purchase is pending. Wait for payment verification."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 170,
+    "line": 171,
     "kind": "Error",
     "text": "Not enough available Base USDC."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 178,
+    "line": 179,
     "kind": "Error",
     "text": "Listing not found."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 182,
+    "line": 183,
     "kind": "Error",
     "text": "Position is locked by its funding transaction. Wait for verification."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 191,
+    "line": 192,
     "kind": "Error",
     "text": "Position is locked by a pending quote or transaction. Wait for settlement."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 197,
+    "line": 198,
     "kind": "Error",
     "text": "Only unsigned expired quotes can be released."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 199,
+    "line": 200,
     "kind": "Error",
     "text": "Listing record missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/model.ts",
-    "line": 202,
+    "line": 204,
     "kind": "Error",
     "text": "Reservation mismatch."
   },
@@ -8087,462 +8451,455 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 24,
+    "line": 25,
     "kind": "Dynamic Error",
     "text": "{key} is not configured."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 25,
+    "line": 26,
     "kind": "Text / template",
     "text": "function approve(address,uint256) returns (bool)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 25,
+    "line": 26,
     "kind": "Text / template",
     "text": "function approve(address,address,uint160,uint48)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 25,
+    "line": 26,
     "kind": "Text / template",
     "text": "function allowance(address,address) view returns (uint256)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 25,
+    "line": 26,
     "kind": "Text / template",
     "text": "function allowance(address,address,address) view returns (uint160,uint48,uint48)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 35,
+    "line": 36,
     "kind": "Error",
     "text": "Invalid OTC payment configuration."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 48,
+    "line": 49,
     "kind": "Error",
     "text": "Balance snapshot changed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 55,
+    "line": 56,
     "kind": "Error",
     "text": "Base payment contract does not match the configured deployment."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 63,
+    "line": 64,
     "kind": "Error",
     "text": "Base payment contract does not support native USDC."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 66,
+    "line": 67,
     "kind": "Error",
     "text": "Base USDC reservation is not covered."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 70,
+    "line": 71,
     "kind": "Error",
     "text": "ETH/USD price is unavailable."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 72,
+    "line": 73,
     "kind": "Error",
     "text": "Invalid ETH/USD price response."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 79,
+    "line": 80,
     "kind": "Error",
     "text": "Wallet has a pending transaction."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 81,
+    "line": 82,
     "kind": "Error",
     "text": "Not enough funds for the amount and gas."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 88,
+    "line": 89,
     "kind": "Error",
     "text": "Gas exceeds the configured policy."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 94,
+    "line": 95,
     "kind": "Error",
     "text": "Invalid Base fee estimate."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 96,
+    "line": 97,
     "kind": "Error",
     "text": "Base fees exceed the configured cap."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 102,
+    "line": 103,
     "kind": "Error",
     "text": "Expected an EIP-1559 transaction."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 107,
+    "line": 108,
     "kind": "Error",
     "text": "Signer returned a different transaction."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 118,
+    "line": 120,
     "kind": "Error",
     "text": "Payment configuration changed. Recovery required."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 122,
+    "line": 124,
     "kind": "Error",
     "text": "Stored transaction chain mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 126,
+    "line": 128,
     "kind": "Error",
     "text": "Stored settlement transaction does not match the order."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 131,
+    "line": 142,
     "kind": "Error",
     "text": "Social command authorization changed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 134,
+    "line": 145,
     "kind": "Error",
     "text": "Invalid Arc swap target."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 136,
+    "line": 147,
     "kind": "Error",
     "text": "Arc router code changed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 140,
+    "line": 151,
     "kind": "Error",
     "text": "Wallet ownership or active status changed before signing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 141,
+    "line": 152,
     "kind": "Error",
     "text": "Wallet nonce changed before signing. Recovery required."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 143,
+    "line": 154,
     "kind": "Error",
     "text": "Wallet reservation is not covered."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 145,
+    "line": 156,
     "kind": "Error",
     "text": "Transaction amount and gas exceed its reservation."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 170,
+    "line": 182,
     "kind": "Error",
     "text": "Stored signature hash mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 178,
+    "line": 190,
     "kind": "Error",
     "text": "Receipt is not canonical."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 180,
+    "line": 192,
     "kind": "Error",
     "text": "Receipt transaction does not match the order."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 184,
+    "line": 196,
     "kind": "Error",
     "text": "Token delivery evidence unavailable."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 193,
+    "line": 205,
     "kind": "Error",
     "text": "Swap delivery terms missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 195,
+    "line": 207,
     "kind": "Error",
     "text": "Unsupported swap recipient."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 196,
+    "line": 208,
     "kind": "Error",
     "text": "Native output must go to the wallet."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 199,
+    "line": 211,
     "kind": "Error",
     "text": "Unsupported native swap chain."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 201,
+    "line": 213,
     "kind": "Text / template",
     "text": "Transfer"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 207,
+    "line": 219,
     "kind": "Error",
     "text": "Invalid swap receipt amount."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 208,
+    "line": 220,
     "kind": "Text / template",
     "text": "function decimals() view returns (uint8)"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 210,
+    "line": 222,
     "kind": "Error",
     "text": "Minimum swap output was not delivered."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 218,
+    "line": 230,
     "kind": "Error",
     "text": "Arc delivery block changed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 224,
+    "line": 236,
     "kind": "Error",
     "text": "Arc gas receipt mismatch."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 227,
+    "line": 239,
     "kind": "Error",
     "text": "Arc gas transaction missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 240,
+    "line": 252,
     "kind": "Error",
     "text": "Approval terms missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 242,
+    "line": 254,
     "kind": "Error",
     "text": "Invalid approval call."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 245,
+    "line": 257,
     "kind": "Error",
     "text": "Token approval was not verified."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 248,
+    "line": 260,
     "kind": "Error",
     "text": "Router approval was not verified."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 253,
+    "line": 265,
     "kind": "Text / template",
     "text": "Approval"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 255,
+    "line": 267,
     "kind": "Error",
     "text": "USDC approval was not verified."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 259,
+    "line": 271,
     "kind": "Text / template",
     "text": "PaidUsdc"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 259,
+    "line": 271,
     "kind": "Text / template",
     "text": "Paid"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 262,
+    "line": 274,
     "kind": "Error",
     "text": "Base split payment was not verified."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 266,
+    "line": 278,
     "kind": "Error",
     "text": "Base delivery evidence unavailable."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 268,
-    "kind": "Error",
-    "text": "Base recipient balance increase was not verified."
-  },
-  {
-    "area": "Supporting messages (may be translated or masked)",
-    "file": "lib/otc/runtime.ts",
-    "line": 270,
+    "line": 283,
     "kind": "Error",
     "text": "Receipt changed during verification."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 278,
+    "line": 291,
     "kind": "Error",
     "text": "Finality evidence changed."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 282,
+    "line": 295,
     "kind": "Error",
     "text": "Nonce consumed without a verified receipt. Funds remain reserved."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 284,
+    "line": 297,
     "kind": "Error",
     "text": "Signed request is no longer covered by wallet reservations."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 294,
+    "line": 307,
     "kind": "Error",
     "text": "Base fees exceeded the reserved allowance. Signature retained for recovery."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 299,
+    "line": 312,
     "kind": "Error",
     "text": "Broadcast returned the wrong hash."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 316,
+    "line": 329,
     "kind": "Error",
     "text": "Order missing."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 327,
+    "line": 340,
     "kind": "Dynamic Text / template",
     "text": "tx:{id}:{leg}{leg===\"payout\" && order.payoutAttempt ? `:${order.payoutAttempt}` : \"\"}"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 334,
+    "line": 347,
     "kind": "Error",
     "text": "Seller cannot cover the exact Arc payout and reserved gas."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 338,
+    "line": 351,
     "kind": "Error",
     "text": "Gas exceeded the accepted reserve. Order remains reserved."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/runtime.ts",
-    "line": 362,
+    "line": 375,
     "kind": "Text / template",
     "text": "Escrow wallet setup is pending. Listing funds remain reserved in your wallet."
   },
@@ -8570,7 +8927,35 @@
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/otc/settlement-error.ts",
+    "line": 11,
+    "kind": "Text / template",
+    "text": "Settlement blocked: gas recovery allowance is exhausted. Operator assistance is required."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/settlement-error.ts",
+    "line": 12,
+    "kind": "Text / template",
+    "text": "Settlement blocked: gas exceeds the automatic recovery limit. Operator assistance is required."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/settlement-error.ts",
     "line": 13,
+    "kind": "Text / template",
+    "text": "Settlement blocked: insufficient funds for gas. Add funds to the paying wallet and contact support to resume settlement."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/settlement-error.ts",
+    "line": 14,
+    "kind": "Text / template",
+    "text": "Settlement blocked: network fees exceed the allowed gas budget. Operator assistance is required."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/settlement-error.ts",
+    "line": 17,
     "kind": "Text / template",
     "text": "Pending verification"
   },
@@ -8692,6 +9077,20 @@
     "line": 15,
     "kind": "Dynamic Text / template",
     "text": "{gas||native&&chain===8453?exact:displayAmount(exact,symbol===\"USDC\"?2:0)} {symbol??address}"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/transaction-history.ts",
+    "line": 17,
+    "kind": "Text / template",
+    "text": "Base gas recovery"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/transaction-history.ts",
+    "line": 17,
+    "kind": "Text / template",
+    "text": "Arc gas recovery"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
@@ -9094,22 +9493,50 @@
   },
   {
     "area": "Supporting messages (may be translated or masked)",
-    "file": "lib/project-config.ts",
-    "line": 2,
+    "file": "lib/otc/unsigned-recovery.ts",
+    "line": 4,
     "kind": "Text / template",
-    "text": "TheArctosBot"
+    "text": "function execute(bytes,bytes[],uint256)"
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/unsigned-recovery.ts",
+    "line": 12,
+    "kind": "Status / notice",
+    "text": "Transaction is no longer awaiting a signature."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/unsigned-recovery.ts",
+    "line": 14,
+    "kind": "Status / notice",
+    "text": "Wallet transaction lease mismatch."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/unsigned-recovery.ts",
+    "line": 22,
+    "kind": "Status / notice",
+    "text": "Transaction cannot be safely cancelled."
+  },
+  {
+    "area": "Supporting messages (may be translated or masked)",
+    "file": "lib/otc/unsigned-recovery.ts",
+    "line": 26,
+    "kind": "Text / template",
+    "text": "Trade expired before signing. Funds released. Submit again for a fresh quote."
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/project-config.ts",
-    "line": 4,
+    "line": 5,
     "kind": "Text / template",
     "text": "TheArgosBot"
   },
   {
     "area": "Supporting messages (may be translated or masked)",
     "file": "lib/project-config.ts",
-    "line": 14,
+    "line": 15,
     "kind": "Error",
     "text": "Configure an HTTPS website origin for the wallet worker."
   },
@@ -9146,7 +9573,7 @@
     "file": "lib/public-links.ts",
     "line": 17,
     "kind": "Dynamic Text / template",
-    "text": "Arc Explorer: {arcTransactionUrl(hash)}"
+    "text": "Transaction: {chainId===8453?`https://basescan.org/tx/${hash}`:arcTransactionUrl(hash)}"
   },
   {
     "area": "Supporting messages (may be translated or masked)",

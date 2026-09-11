@@ -1,6 +1,6 @@
 # Website message printout
 
-Generated from the current local source on 2026-09-11T02:11:08.141Z. This is a source inventory, not a capture of the live deployment.
+Generated from the current local source on 2026-09-11T15:53:49.797Z. This is a source inventory, not a capture of the live deployment.
 
 Includes visible page text, button labels, fields, accessibility text, notifications, confirmation templates, validation errors and website API text. Entries are grouped by source file; each has its source line for editing. Repeated text within a file is listed once per category.
 
@@ -14,7 +14,7 @@ The supporting-message section is an audit appendix, not a claim that every inte
 
 This extraction follows local imports from all app routes, plus the OTC storage boundary. It excludes secrets, environment files, test fixtures, comments, imports, CSS classes, type-only strings and logging-only messages. Shared libraries can contain additional non-website branches; their text is included conservatively in the appendix.
 
-**1754 text entries across 131 files.**
+**1815 text entries across 136 files.**
 
 
 ## Pages and shared metadata
@@ -82,20 +82,20 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### app/otc/page.tsx
 
-- **Line 5 · Text / template:** Buy Arc USDC with Base ETH. Review listings, premiums, and fees.
-- **Line 6 · Visible text:** ARGOS BOT / OTC MARKET
-- **Line 6 · Visible text:** Get Arc USDC Early
-- **Line 6 · Visible text:** Buy Arc USDC with Base ETH.
-- **Line 6 · Visible text:** Set your amount. Check the premium. Trade.
-- **Line 6 · Visible text:** 01
-- **Line 6 · Visible text:** Fund your wallet
-- **Line 6 · Visible text:** Arc USDC to sell. Base ETH to buy. Keep Base ETH for gas.
-- **Line 6 · Visible text:** 02
-- **Line 6 · Visible text:** Agree on the amount
-- **Line 6 · Visible text:** Buy part or all of a listing. Premium and 1.5% service fee are included in the quote.
-- **Line 6 · Visible text:** 03
-- **Line 6 · Visible text:** Track both transfers
-- **Line 6 · Visible text:** USDC and Base assets are securely escrowed and settled upon successful payment.
+- **Line 6 · Text / template:** Buy Arc USDC with Base ETH. Review listings, premiums, and fees.
+- **Line 7 · Visible text:** ARGOS BOT / OTC MARKET
+- **Line 7 · Visible text:** Get Arc USDC Early
+- **Line 7 · Visible text:** Buy Arc USDC with Base ETH.
+- **Line 7 · Visible text:** Set your amount. Check the premium. Trade.
+- **Line 7 · Visible text:** 01
+- **Line 7 · Visible text:** Fund your wallet
+- **Line 7 · Visible text:** Arc USDC to sell. Base ETH to buy. Keep Base ETH for gas.
+- **Line 7 · Visible text:** 02
+- **Line 7 · Visible text:** Agree on the amount
+- **Line 7 · Visible text:** Buy part or all of a listing. Premium and 1.5% service fee are included in the quote.
+- **Line 7 · Visible text:** 03
+- **Line 7 · Visible text:** Track both transfers
+- **Line 7 · Visible text:** USDC and Base assets are securely escrowed and settled upon successful payment.
 
 ### app/page.tsx
 
@@ -204,8 +204,8 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### app/wallet/page.tsx
 
-- **Line 6 · Text / template:** Buy, sell, swap, and send Arc tokens. Track your funds and transactions.
-- **Line 7 · Visible text:** Your Wallet.
+- **Line 7 · Text / template:** Buy, sell, swap, and send Arc tokens. Track your funds and transactions.
+- **Line 8 · Visible text:** Your Wallet.
 
 ### app/wallet/sign-in-error/page.tsx
 
@@ -714,47 +714,66 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### app/api/arc/command/route.ts
 
-- **Line 19 · Text / template:** function decimals() view returns (uint8)
-- **Line 19 · Text / template:** function balanceOf(address) view returns (uint256)
-- **Line 19 · Text / template:** function transfer(address,uint256) returns (bool)
-- **Line 25 · Error:** Use the Arc token contract address.
-- **Line 30 · Dynamic Text / template:** Bearer {secret}
-- **Line 30 · Text / template:** Unauthorized.
-- **Line 41 · Text / template:** Arc transaction reverted. Check wallet history.
-- **Line 42 · Text / template:** Arc transaction pending. Check wallet history.
-- **Line 43 · Text / template:** Buy and burn confirmed. Purchased tokens were delivered to the dead address.
-- **Line 43 · Dynamic Text / template:** Buy and send confirmed. Purchased tokens were delivered to {command.recipient}.
-- **Line 43 · Text / template:** Sell confirmed. Token quantity was based on the requested USDC value; proceeds reflect the executed price and fees.
-- **Line 43 · Text / template:** Arc transaction confirmed.
-- **Line 46 · Error:** Request expired before the next transaction was prepared. Check wallet history before sending a new command.
-- **Line 50 · Error:** Specify the USDC amount to spend, for example buy 10 USDC of TOKEN or buy $10 of TOKEN.
-- **Line 51 · Error:** Specify a USDC value, token amount, or percentage to sell.
-- **Line 52 · Error:** Specify the percentage of input tokens to swap.
-- **Line 58 · Error:** Specify a percentage up to 100.
-- **Line 65 · Error:** Use a valid recipient wallet.
-- **Line 68 · Error:** Use an explicit Arc USDC or token amount. Base actions are website only.
-- **Line 70 · Error:** Specify the token amount to send.
-- **Line 72 · Error:** Use a different nonzero recipient.
-- **Line 77 · Error:** Command not supported. Use buy, sell, send, or burn with explicit amounts.
-- **Line 79 · Text / template:** Arc request recorded. Funds remain reserved for verification.
-- **Line 80 · Text / template:** Arc request recorded. Check wallet history.
-- **Line 82 · Error:** Approval steps exceeded the request limit. Check wallet history.
-- **Line 84 · Text / template:** Arc command failed.
-- **Line 87 · Text / template:** Wallet authorization changed. Reconnect before sending a new command.
-- **Line 89 · Text / template:** Arc request is waiting for verification.
+- **Line 23 · Text / template:** Unsupported Argus pool configuration.
+- **Line 24 · Text / template:** Unexpected Argus token record length.
+- **Line 25 · Text / template:** Unexpected Argus Portal format.
+- **Line 26 · Text / template:** Argus token contract code missing.
+- **Line 27 · Text / template:** Argus hook identity mismatch.
+- **Line 28 · Text / template:** Argus launch quote asset mismatch.
+- **Line 29 · Text / template:** Argus pool ID mismatch.
+- **Line 30 · Text / template:** Arc router code does not match the reviewed deployment.
+- **Line 31 · Text / template:** Hook execution requires a reviewed adapter
+- **Line 32 · Text / template:** Mixed routes require two or three pools and ERC-20 currencies
+- **Line 33 · Text / template:** Minimum output rounds to zero
+- **Line 34 · Text / template:** Invalid output or slippage (maximum 10%)
+- **Line 35 · Text / template:** V4 amount exceeds uint128
+- **Line 42 · Error:** Use the Arc token contract address.
+- **Line 46 · Text / template:** Input
+- **Line 46 · Text / template:** Received
+- **Line 46 · Text / template:** Amount
+- **Line 46 · Text / template:** To
+- **Line 46 · Text / template:** Burn destination
+- **Line 46 · Text / template:** Gas paid
+- **Line 46 · Text / template:** Route
+- **Line 47 · Text / template:** Base withdrawal
+- **Line 47 · Text / template:** Buy and burn
+- **Line 47 · Text / template:** Buy and send
+- **Line 47 · Text / template:** Swap
+- **Line 48 · Text / template:** confirmed.
+- **Line 52 · Dynamic Text / template:** Bearer {secret}
+- **Line 52 · Text / template:** Unauthorized.
+- **Line 60 · Status / notice:** Command not supported.
+- **Line 68 · Status / notice:** Command not supported. Stored transaction chain mismatch.
+- **Line 70 · Text / template:** Trade expired before signing. Funds released. Submit a new command.
+- **Line 71 · Text / template:** Arc transaction reverted. Check wallet history.
+- **Line 72 · Text / template:** Arc transaction pending. Check wallet history.
+- **Line 77 · Error:** Request expired before the next transaction was prepared. Check wallet history before sending a new command.
+- **Line 83 · Error:** Specify the USDC amount to spend, for example buy 10 USDC of TOKEN or buy $10 of TOKEN.
+- **Line 84 · Error:** Specify a USDC value, token amount, or percentage to sell.
+- **Line 85 · Error:** Specify a token amount, USDC value, or percentage to swap.
+- **Line 89 · Error:** Use a valid recipient wallet.
+- **Line 93 · Error:** Use /withdraw to send Base ETH.
+- **Line 93 · Error:** Use Telegram or the website to withdraw Base ETH.
+- **Line 95 · Error:** Command not supported. Use buy, sell, send, or burn with explicit amounts.
+- **Line 100 · Text / template:** Arc request recorded. Funds remain reserved for verification.
+- **Line 104 · Text / template:** Arc request recorded. Check wallet history.
+- **Line 106 · Text / template:** Approval steps exceeded the request limit. Check wallet history.
+- **Line 108 · Text / template:** Arc command failed.
+- **Line 111 · Text / template:** Wallet authorization changed. Reconnect before sending a new command.
+- **Line 113 · Text / template:** Arc request is waiting for verification.
 
 ### app/api/auth/x/callback/route.ts
 
-- **Line 30 · Status / notice:** configuration
-- **Line 36 · Status / notice:** invalid_state
-- **Line 39 · Dynamic Text / template:** {siteUrl.replace(/\/$/, "")}/api/auth/x/callback
-- **Line 41 · Text / template:** POST
-- **Line 43 · Dynamic Text / template:** Basic {Buffer.from(\`${clientId}:${clientSecret}\`).toString("base64")}
-- **Line 55 · Status / notice:** token_exchange
-- **Line 60 · Dynamic Text / template:** Bearer {token.access_token}
-- **Line 64 · Status / notice:** identity
-- **Line 96 · Status / notice:** session
-- **Line 115 · Status / notice:** wallet
+- **Line 31 · Status / notice:** configuration
+- **Line 37 · Status / notice:** invalid_state
+- **Line 40 · Dynamic Text / template:** {siteUrl.replace(/\/$/, "")}/api/auth/x/callback
+- **Line 42 · Text / template:** POST
+- **Line 44 · Dynamic Text / template:** Basic {Buffer.from(\`${clientId}:${clientSecret}\`).toString("base64")}
+- **Line 56 · Status / notice:** token_exchange
+- **Line 61 · Dynamic Text / template:** Bearer {token.access_token}
+- **Line 65 · Status / notice:** identity
+- **Line 97 · Status / notice:** session
+- **Line 116 · Status / notice:** wallet
 
 ### app/api/auth/x/session/route.ts
 
@@ -765,8 +784,8 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 ### app/api/auth/x/start/route.ts
 
 - **Line 20 · Text / template:** X wallet sign-in is not configured
-- **Line 42 · Dynamic Text / template:** {siteUrl.replace(/\/$/, "")}/api/auth/x/callback
-- **Line 48 · Text / template:** users.read tweet.read
+- **Line 46 · Dynamic Text / template:** {siteUrl.replace(/\/$/, "")}/api/auth/x/callback
+- **Line 52 · Text / template:** users.read tweet.read
 
 ### app/api/auth/x/telegram-confirm/route.ts
 
@@ -774,14 +793,11 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 21 · Text / template:** Link expired. Start again from Telegram.
 - **Line 24 · Text / template:** Unable to check the link right now. Reload this page to retry. No wallet access was granted by this page.
 - **Line 25 · Text / template:** This link expired or was already used. Return to Telegram to check your link or start again.
-- **Line 26 · Dynamic Text / template:** <!doctype html><html><head><title>Confirm Telegram wallet access</title><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><main><h1>Confirm Telegram wallet access</h1><p>You signed in as X @{escape(ctx.consent.username)}.</p><p>Telegram account: {target.telegramUsername ? \`@${escape(target.telegramUsername)}\` : "No username"}<br>Telegram user ID: {escape(target.telegramUserId)}</p><p>This Telegram account will be able to send and trade funds from your Argos Bot wallet. Confirm only if this is your Telegram account and you started linking from the bot. Do not approve a link someone sent you.</p><form method="post"><input type="hidden" name="csrf" value="{escape(ctx.consent.csrf)}"><button name="decision" value="confirm">Confirm wallet access</button><button name="decision" value="cancel">Cancel</button></form></main></body></html>
-- **Line 26 · Text / template:** No username
-- **Line 26 · Text / template:** text/html; charset=utf-8
-- **Line 26 · Text / template:** default-src 'none'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'
-- **Line 31 · Text / template:** Unauthorized
-- **Line 33 · Text / template:** Invalid confirmation. Reload this page and try again.
-- **Line 43 · Text / template:** We couldn't verify the linking result. Check Telegram first. If it isn't linked, reload this page or start linking again from Telegram.
-- **Line 45 · Text / template:** Invalid choice
+- **Line 28 · Text / template:** Link could not be checked. Start again in Telegram.
+- **Line 37 · Text / template:** Unauthorized
+- **Line 39 · Text / template:** Invalid confirmation. Reload this page and try again.
+- **Line 49 · Text / template:** We couldn't verify the linking result. Check Telegram first. If it isn't linked, reload this page or start linking again from Telegram.
+- **Line 51 · Text / template:** Invalid choice
 
 ### app/api/csp-report/route.ts
 
@@ -841,17 +857,18 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### app/api/token-image/route.ts
 
-- **Line 34 · Error:** image URL is too long
-- **Line 36 · Error:** image URL is not allowed
-- **Line 38 · Error:** image host is not allowed
-- **Line 40 · Error:** image host is not public
-- **Line 53 · Error:** too many image redirects
-- **Line 57 · Error:** image request failed
-- **Line 59 · Error:** unsupported image type
-- **Line 61 · Error:** image is too large
-- **Line 80 · Text / template:** Image URL is required
-- **Line 85 · Text / template:** public, max-age=86400, stale-while-revalidate=604800
-- **Line 89 · Text / template:** public, max-age=300
+- **Line 35 · Error:** image URL is too long
+- **Line 37 · Error:** image URL is not allowed
+- **Line 39 · Error:** image host is not allowed
+- **Line 41 · Error:** image host is not public
+- **Line 62 · Status / notice:** image response is not allowed
+- **Line 66 · Status / notice:** image is too large
+- **Line 70 · Status / notice:** image response interrupted
+- **Line 82 · Status / notice:** too many image redirects
+- **Line 86 · Status / notice:** image request failed
+- **Line 94 · Text / template:** Image URL is required
+- **Line 99 · Text / template:** public, max-age=86400, stale-while-revalidate=604800
+- **Line 103 · Text / template:** public, max-age=300
 
 ### app/api/tokens/route.ts
 
@@ -869,8 +886,8 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 206 · Error:** manual vault broadcast requires its allowlisted token address
 - **Line 259 · Error:** wallet reference mismatch
 - **Line 261 · Error:** wallet owner mismatch
-- **Line 328 · Text / template:** not found
-- **Line 331 · Status / notice:** /
+- **Line 324 · Text / template:** not found
+- **Line 327 · Status / notice:** /
 
 ### app/api/wallet/public/[address]/route.ts
 
@@ -879,27 +896,15 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### app/api/wallet/send/route.ts
 
-- **Line 22 · Text / template:** function decimals() view returns (uint8)
-- **Line 22 · Text / template:** function balanceOf(address) view returns (uint256)
-- **Line 22 · Text / template:** function transfer(address,uint256) returns (bool)
-- **Line 31 · Error:** Use a different, nonzero recipient.
-- **Line 33 · Error:** Base withdrawals support ETH only.
-- **Line 34 · Error:** Enter an amount for Base withdrawals.
-- **Line 35 · Error:** Choose a percentage or a USD value.
-- **Line 39 · Error:** ETH price unavailable. Try again.
-- **Line 46 · Error:** Wallet has a pending transaction.
-- **Line 48 · Error:** Not enough available USDC after gas.
-- **Line 61 · Error:** Token precision is not supported.
-- **Line 63 · Error:** Not enough tokens.
-- **Line 69 · Error:** Not enough available Base USDC.
-- **Line 70 · Error:** Not enough available funds. OTC listings and gas are reserved.
-- **Line 73 · Text / template:** USDC
-- **Line 73 · Text / template:** ETH
-- **Line 76 · Error:** Invalid send quote.
-- **Line 78 · Error:** Quote owner mismatch.
-- **Line 81 · Error:** Quote expired. Check the amount again.
-- **Line 84 · Error:** Base withdrawals support ETH only. Request a new quote.
-- **Line 85 · Error:** Wallet nonce changed. Request a new quote.
+- **Line 28 · Error:** Use a different, nonzero recipient.
+- **Line 35 · Error:** Base withdrawals support ETH only.
+- **Line 36 · Error:** Enter an amount for Base withdrawals.
+- **Line 40 · Text / template:** ETH
+- **Line 43 · Error:** Invalid send quote.
+- **Line 45 · Error:** Quote owner mismatch.
+- **Line 48 · Error:** Quote expired. Check the amount again.
+- **Line 51 · Error:** Base withdrawals support ETH only. Request a new quote.
+- **Line 52 · Error:** Wallet nonce changed. Request a new quote.
 
 ### app/api/wallet/tokens/route.ts
 
@@ -907,11 +912,11 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### app/api/wallet/trade/route.ts
 
-- **Line 32 · Error:** Not enough available funds or a wallet transaction is pending.
-- **Line 38 · Error:** Invalid trade quote.
-- **Line 40 · Error:** Quote owner mismatch.
-- **Line 43 · Error:** Quote expired. Review the trade again.
-- **Line 45 · Error:** Wallet nonce changed. Review the trade again.
+- **Line 33 · Error:** Not enough available funds or a wallet transaction is pending.
+- **Line 39 · Error:** Invalid trade quote.
+- **Line 41 · Error:** Quote owner mismatch.
+- **Line 44 · Error:** Quote expired. Review the trade again.
+- **Line 46 · Error:** Wallet nonce changed. Review the trade again.
 
 ### app/api/wallet/transaction/route.ts
 
@@ -923,27 +928,28 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### convex/otc.ts
 
-- **Line 10 · Error:** OTC service authorization failed.
-- **Line 21 · Error:** OTC request too large.
-- **Line 41 · Error:** Escrow listing configuration missing.
-- **Line 46 · Status / notice:** by_owner
-- **Line 46 · Status / notice:** quoted
-- **Line 50 · Error:** You already have a quote. Confirm it or wait for it to expire.
-- **Line 59 · Error:** Order missing.
-- **Line 73 · Error:** Record missing.
-- **Line 76 · Error:** Unknown OTC command.
-- **Line 98 · Status / notice:** otcRecords
-- **Line 98 · Status / notice:** by_kind_status
-- **Line 98 · Status / notice:** status
-- **Line 98 · Status / notice:** asc
-- **Line 103 · Status / notice:** active
-- **Line 119 · Error:** OTC worker URL is not configured.
-- **Line 120 · Text / template:** POST
-- **Line 120 · Dynamic Text / template:** Bearer {args.secret}
-- **Line 121 · Error:** OTC settlement worker failed.
-- **Line 130 · Error:** Wallet worker configuration missing.
-- **Line 131 · Dynamic Text / template:** Bearer {secret}
-- **Line 132 · Error:** OTC worker failed.
+- **Line 12 · Error:** OTC service authorization failed.
+- **Line 23 · Error:** OTC request too large.
+- **Line 50 · Error:** Escrow listing configuration missing.
+- **Line 55 · Status / notice:** by_owner
+- **Line 55 · Status / notice:** quoted
+- **Line 59 · Error:** You already have a quote. Confirm it or wait for it to expire.
+- **Line 68 · Error:** Order missing.
+- **Line 82 · Error:** Record missing.
+- **Line 85 · Error:** Unknown OTC command.
+- **Line 107 · Status / notice:** otcRecords
+- **Line 107 · Status / notice:** by_kind_status
+- **Line 107 · Status / notice:** status
+- **Line 107 · Status / notice:** asc
+- **Line 112 · Status / notice:** active
+- **Line 128 · Error:** OTC worker URL is not configured.
+- **Line 129 · Text / template:** POST
+- **Line 129 · Dynamic Text / template:** Bearer {args.secret}
+- **Line 130 · Error:** OTC settlement worker failed.
+- **Line 139 · Error:** Wallet worker configuration missing.
+- **Line 140 · Dynamic Text / template:** Bearer {secret}
+- **Line 141 · Error:** OTC worker failed. Inspect pending jobs and worker logs.
+- **Line 143 · Dynamic Error:** OTC worker: {result.failed} failed jobs; {result.processed} processed.
 
 ### lib/address-display.ts
 
@@ -961,23 +967,25 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### lib/arc/argus-discovery.ts
 
-- **Line 13 · Text / template:** function LAUNCH_STRUCT_WORDS() view returns(uint8)
-- **Line 14 · Text / template:** function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256,int24)
-- **Line 15 · Text / template:** function poolId() view returns(bytes32)
-- **Line 15 · Text / template:** function token() view returns(address)
-- **Line 16 · Text / template:** function portal() view returns(address)
-- **Line 16 · Text / template:** function splitter() view returns(address)
-- **Line 17 · Text / template:** function poolManager() view returns(address)
-- **Line 17 · Text / template:** function quoteAsset() view returns(address)
-- **Line 18 · Text / template:** function poolFee() view returns(uint24)
-- **Line 18 · Text / template:** function tickSpacing() view returns(int24)
-- **Line 20 · Text / template:** function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256)
-- **Line 28 · Error:** Unexpected Argus token record length.
-- **Line 31 · Error:** Unexpected Argus Portal format.
-- **Line 33 · Error:** Argus token contract code missing.
-- **Line 35 · Error:** Argus hook identity mismatch.
-- **Line 37 · Error:** Unsupported Argus pool configuration.
-- **Line 40 · Error:** Argus pool ID mismatch.
+- **Line 14 · Text / template:** function LAUNCH_STRUCT_WORDS() view returns(uint8)
+- **Line 15 · Text / template:** function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256,int24)
+- **Line 16 · Text / template:** function poolId() view returns(bytes32)
+- **Line 16 · Text / template:** function token() view returns(address)
+- **Line 17 · Text / template:** function portal() view returns(address)
+- **Line 17 · Text / template:** function splitter() view returns(address)
+- **Line 18 · Text / template:** function poolManager() view returns(address)
+- **Line 18 · Text / template:** function quoteAsset() view returns(address)
+- **Line 19 · Text / template:** function poolFee() view returns(uint24)
+- **Line 19 · Text / template:** function tickSpacing() view returns(int24)
+- **Line 21 · Text / template:** function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256,int24,address)
+- **Line 22 · Text / template:** function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256)
+- **Line 30 · Error:** Unexpected Argus token record length.
+- **Line 33 · Error:** Unexpected Argus Portal format.
+- **Line 35 · Error:** Argus token contract code missing.
+- **Line 37 · Error:** Argus hook identity mismatch.
+- **Line 38 · Error:** Argus launch quote asset mismatch.
+- **Line 40 · Error:** Unsupported Argus pool configuration.
+- **Line 43 · Error:** Argus pool ID mismatch.
 
 ### lib/arc/config.ts
 
@@ -986,6 +994,12 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 33 · Error:** Configure ARC_MAINNET_RPC_URL, ARC_CHECKPOINT_NUMBER and ARC_CHECKPOINT_HASH before preparing Arc transactions
 - **Line 44 · Text / template:** Arc Mainnet
 - **Line 45 · Text / template:** USDC
+
+### lib/arc/discovery.ts
+
+- **Line 20 · Error:** Arc explorer unavailable
+- **Line 23 · Error:** Arc explorer market index is stale
+- **Line 36 · Error:** Explorer returned conflicting pool identities
 
 ### lib/arc/estimate-refresh.ts
 
@@ -1008,25 +1022,25 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 25 · Error:** Invalid input amount
 - **Line 31 · Error:** Arc quote head is stale or invalid
 - **Line 46 · Error:** Contract code missing
-- **Line 52 · Status / notice:** Mixed routes require ERC-20 USDC
-- **Line 54 · Status / notice:** No intermediate output
-- **Line 62 · Error:** Invalid V3 route
-- **Line 64 · Error:** V3 factory pool mismatch
-- **Line 66 · Error:** No active liquidity
-- **Line 71 · Error:** V4 input exceeds uint128
-- **Line 74 · Error:** Invalid V4 route
-- **Line 77 · Error:** V4 pool is uninitialized or has no active liquidity
-- **Line 92 · Text / template:** Hook requires a reviewed adapter and sender-specific simulation
-- **Line 97 · Text / template:** Mixed-protocol quotes are unsupported
-- **Line 97 · Text / template:** V3 factory pool mismatch
-- **Line 97 · Text / template:** No active liquidity
-- **Line 97 · Text / template:** V4 multihop quotes are unsupported
-- **Line 97 · Text / template:** V4 input exceeds uint128
-- **Line 97 · Text / template:** V4 pool is uninitialized or has no active liquidity
-- **Line 97 · Text / template:** Contract code missing
-- **Line 98 · Text / template:** Route validation or quote failed
-- **Line 105 · Error:** Quote snapshot changed
-- **Line 107 · Error:** Quote candidates must share input and output currencies
+- **Line 52 · Status / notice:** Mixed routes require ERC-20 currencies
+- **Line 56 · Status / notice:** No intermediate output
+- **Line 65 · Error:** Invalid V3 route
+- **Line 67 · Error:** V3 factory pool mismatch
+- **Line 69 · Error:** No active liquidity
+- **Line 74 · Error:** V4 input exceeds uint128
+- **Line 77 · Error:** Invalid V4 route
+- **Line 80 · Error:** V4 pool is uninitialized or has no active liquidity
+- **Line 95 · Text / template:** Hook requires a reviewed adapter and sender-specific simulation
+- **Line 100 · Text / template:** Mixed-protocol quotes are unsupported
+- **Line 100 · Text / template:** V3 factory pool mismatch
+- **Line 100 · Text / template:** No active liquidity
+- **Line 100 · Text / template:** V4 multihop quotes are unsupported
+- **Line 100 · Text / template:** V4 input exceeds uint128
+- **Line 100 · Text / template:** V4 pool is uninitialized or has no active liquidity
+- **Line 100 · Text / template:** Contract code missing
+- **Line 101 · Text / template:** Route validation or quote failed
+- **Line 108 · Error:** Quote snapshot changed
+- **Line 110 · Error:** Quote candidates must share input and output currencies
 
 ### lib/arc/route-hint.ts
 
@@ -1042,25 +1056,25 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 24 · Error:** Unsupported pool fee
 - **Line 26 · Error:** V3 requires ERC-20 currencies and a pool address
 - **Line 30 · Error:** Invalid tick spacing
-- **Line 36 · Error:** Route must have one or two hops between distinct currencies
+- **Line 36 · Error:** Route must have one to three hops between distinct currencies
 - **Line 42 · Error:** Repeated pool
 - **Line 46 · Error:** Disconnected or cyclic route
 - **Line 49 · Error:** Wrong route output
 - **Line 55 · Error:** Too many pool candidates
-- **Line 71 · Error:** V3 path requires V3 pools
-- **Line 73 · Dynamic Text / template:** {path}{encodePacked(["uint24", "address"], [pool.fee, currencies[i + 1]]).slice(2)}
-- **Line 80 · Error:** V4 path requires V4 pools
-- **Line 86 · Error:** Invalid output or slippage (maximum 10%)
-- **Line 88 · Error:** Minimum output rounds to zero
-- **Line 96 · Error:** Use a valid recipient wallet.
-- **Line 98 · Error:** Swap limits must be positive
-- **Line 108 · Error:** V4 amount exceeds uint128
-- **Line 109 · Error:** Hook execution requires a reviewed adapter
-- **Line 134 · Status / notice:** Mixed routes require an ERC-20 USDC intermediate and ERC-20 endpoints
-- **Line 135 · Status / notice:** V4 amount exceeds uint128
-- **Line 137 · Status / notice:** Hook execution requires a reviewed adapter
-- **Line 165 · Status / notice:** Invalid swap router
-- **Line 171 · Status / notice:** Invalid token balance guard
+- **Line 86 · Error:** V3 path requires V3 pools
+- **Line 88 · Dynamic Text / template:** {path}{encodePacked(["uint24", "address"], [pool.fee, currencies[i + 1]]).slice(2)}
+- **Line 95 · Error:** V4 path requires V4 pools
+- **Line 101 · Error:** Invalid output or slippage (maximum 10%)
+- **Line 103 · Error:** Minimum output rounds to zero
+- **Line 111 · Error:** Use a valid recipient wallet.
+- **Line 113 · Error:** Swap limits must be positive
+- **Line 123 · Error:** V4 amount exceeds uint128
+- **Line 124 · Error:** Hook execution requires a reviewed adapter
+- **Line 148 · Status / notice:** Mixed routes require two or three pools and ERC-20 currencies
+- **Line 149 · Status / notice:** V4 amount exceeds uint128
+- **Line 151 · Status / notice:** Hook execution requires a reviewed adapter
+- **Line 181 · Status / notice:** Invalid swap router
+- **Line 187 · Status / notice:** Invalid token balance guard
 
 ### lib/arc/rpc.ts
 
@@ -1077,12 +1091,17 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### lib/arc/social-balance.ts
 
-- **Line 13 · Status / notice:** Use the Arc token contract address in the balance command.
-- **Line 20 · Status / notice:** Arc balance block changed. Retry the balance command.
-- **Line 21 · Dynamic Text / template:** {formatUnits(raw, 18)} USDC
-- **Line 22 · Text / template:** USDC
-- **Line 24 · Dynamic Text / template:** {t.balance} {t.symbol} {t.address}
-- **Line 24 · Text / template:** Some token balances are unavailable. Check the balance using a contract address.
+- **Line 18 · Status / notice:** Use the Arc token contract address in the balance command.
+- **Line 23 · Dynamic Text / template:** {displayAmount(amount, 0)} {balance.symbol}
+- **Line 27 · Status / notice:** Arc balance block changed. Retry the balance command.
+- **Line 29 · Dynamic Text / template:** {displayUsdc(usdcAmount)} USDC
+- **Line 30 · Text / template:** USDC
+- **Line 37 · Dynamic Text / template:** {formatUnits(BigInt(snapshot.balanceWei),18)} Base ETH{usd?\` (${usd})\`:""}
+- **Line 37 · Dynamic Text / template:** ({usd})
+- **Line 38 · Text / template:** Base balance unavailable.
+- **Line 40 · Dynamic Text / template:** {balanceWithUsd(\`${displayAmount(t.balance, 0)} ${t.symbol}\`, t.usdValue ?? undefined)} {t.address}
+- **Line 40 · Dynamic Text / template:** {displayAmount(t.balance, 0)} {t.symbol}
+- **Line 40 · Text / template:** Some token balances are unavailable. Check the balance using a contract address.
 
 ### lib/arc/social-timing.ts
 
@@ -1139,28 +1158,28 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### lib/arc/trading.ts
 
-- **Line 16 · Text / template:** function allowance(address,address) view returns (uint256)
-- **Line 16 · Text / template:** function approve(address,uint256) returns (bool)
-- **Line 17 · Text / template:** function allowance(address,address,address) view returns (uint160,uint48,uint48)
-- **Line 17 · Text / template:** function approve(address,address,uint160,uint48)
-- **Line 30 · Error:** Arc router code does not match the reviewed deployment.
-- **Line 31 · Error:** Choose different assets.
-- **Line 59 · Error:** Discovery block changed.
-- **Line 115 · Error:** No supported liquid Arc route found.
-- **Line 132 · Text / template:** USDC
-- **Line 132 · Text / template:** function symbol() view returns (string)
-- **Line 133 · Error:** Quote expired. Try again.
-- **Line 146 · Error:** Not enough tokens.
-- **Line 152 · Error:** Use a larger sell amount.
-- **Line 154 · Error:** Not enough tokens for that USDC value.
-- **Line 160 · Error:** Use a valid recipient wallet.
-- **Line 161 · Error:** Buy and burn requires USDC input and a different token output.
-- **Line 165 · Error:** Not enough tokens for the amount plus token tax. Use a smaller amount or 100%.
-- **Line 169 · Error:** Amount exceeds Permit2 limits.
-- **Line 176 · Text / template:** reset token approval
-- **Line 176 · Text / template:** approve token
-- **Line 179 · Text / template:** approve router
-- **Line 194 · Status / notice:** Swap balance snapshot changed.
+- **Line 17 · Text / template:** function allowance(address,address) view returns (uint256)
+- **Line 17 · Text / template:** function approve(address,uint256) returns (bool)
+- **Line 18 · Text / template:** function allowance(address,address,address) view returns (uint160,uint48,uint48)
+- **Line 18 · Text / template:** function approve(address,address,uint160,uint48)
+- **Line 32 · Error:** Arc router code does not match the reviewed deployment.
+- **Line 33 · Error:** Choose different assets.
+- **Line 61 · Error:** Discovery block changed.
+- **Line 124 · Error:** No supported liquid Arc route found.
+- **Line 141 · Text / template:** USDC
+- **Line 141 · Text / template:** function symbol() view returns (string)
+- **Line 142 · Error:** Quote expired. Try again.
+- **Line 155 · Error:** Not enough tokens.
+- **Line 161 · Error:** Use a larger sell amount.
+- **Line 163 · Error:** Not enough tokens for that USDC value.
+- **Line 169 · Error:** Use a valid recipient wallet.
+- **Line 170 · Error:** Buy and burn requires USDC input and a different token output.
+- **Line 174 · Error:** Not enough tokens for the amount plus token tax. Use a smaller amount or 100%.
+- **Line 178 · Error:** Amount exceeds Permit2 limits.
+- **Line 185 · Text / template:** reset token approval
+- **Line 185 · Text / template:** approve token
+- **Line 188 · Text / template:** approve router
+- **Line 203 · Status / notice:** Swap balance snapshot changed.
 
 ### lib/arc/transaction-progress.ts
 
@@ -1168,45 +1187,61 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 5 · Dynamic Text / template:** Submitting {action}…
 - **Line 6 · Dynamic Text / template:** Confirming {action}…
 - **Line 7 · Dynamic Text / template:** {action[0].toUpperCase()+action.slice(1)} completed.
-- **Line 8 · Dynamic Text / template:** {action[0].toUpperCase()+action.slice(1)} reverted. Check transaction history.
-- **Line 9 · Error:** Transaction status unavailable. Check transaction history before submitting again.
-- **Line 14 · Error:** Status could not refresh. Check transaction history before submitting again.
-- **Line 20 · Error:** Tracking stopped. Check transaction history before submitting again.
-- **Line 21 · Error:** Unexpected transaction status. Check transaction history.
-- **Line 23 · Dynamic Status / notice:** {action[0].toUpperCase()+action.slice(1)} received on Base. Verifying delivery…
-- **Line 23 · Dynamic Status / notice:** {action[0].toUpperCase()+action.slice(1)} reverted on Base. Verifying receipt…
-- **Line 30 · Dynamic Status / notice:** Reconnecting to check {action} confirmation…
+- **Line 8 · Text / template:** Trade expired before signing. Funds released. Submit again.
+- **Line 9 · Dynamic Text / template:** {action[0].toUpperCase()+action.slice(1)} reverted. Check transaction history.
+- **Line 10 · Error:** Transaction status unavailable. Check transaction history before submitting again.
+- **Line 15 · Error:** Status could not refresh. Check transaction history before submitting again.
+- **Line 21 · Error:** Tracking stopped. Check transaction history before submitting again.
+- **Line 22 · Error:** Unexpected transaction status. Check transaction history.
+- **Line 24 · Dynamic Status / notice:** {action[0].toUpperCase()+action.slice(1)} received on Base. Verifying delivery…
+- **Line 24 · Dynamic Status / notice:** {action[0].toUpperCase()+action.slice(1)} reverted on Base. Verifying receipt…
+- **Line 31 · Dynamic Status / notice:** Reconnecting to check {action} confirmation…
 
 ### lib/arc/transfer-tax.ts
 
 - **Line 7 · Text / template:** function currentTaxes() view returns(uint16,uint16)
 - **Line 7 · Text / template:** function isExempt(address) view returns(bool)
 - **Line 10 · Error:** Invalid token tax or balance.
-- **Line 26 · Error:** Invalid on-chain token tax.
+- **Line 25 · Error:** Invalid on-chain token tax.
 
 ### lib/arc/transport.ts
 
-- **Line 32 · Text / template:** POST
-- **Line 34 · Error:** Arc RPC connection unavailable
-- **Line 35 · Dynamic Error:** Arc RPC HTTP {response.status}
-- **Line 37 · Error:** Invalid Arc RPC response
-- **Line 40 · Error:** Invalid Arc RPC error
-- **Line 41 · Text / template:** RPC error
-- **Line 44 · Error:** Arc RPC capacity or method unavailable
-- **Line 44 · Error:** Arc RPC rejected request
-- **Line 46 · Error:** Missing Arc RPC result
-- **Line 51 · Error:** Arc RPC chain mismatch
-- **Line 53 · Error:** Arc RPC checkpoint mismatch
-- **Line 56 · Error:** Arc RPC head is stale
-- **Line 60 · Error:** Arc RPC cooling down
-- **Line 74 · Error:** Arc RPC method not authorized
-- **Line 92 · Error:** No healthy Arc RPC supports this request
+- **Line 33 · Text / template:** POST
+- **Line 35 · Error:** Arc RPC connection unavailable
+- **Line 36 · Dynamic Error:** Arc RPC HTTP {response.status}
+- **Line 38 · Error:** Invalid Arc RPC response
+- **Line 41 · Error:** Invalid Arc RPC error
+- **Line 42 · Text / template:** RPC error
+- **Line 45 · Error:** Arc RPC capacity or method unavailable
+- **Line 45 · Error:** Arc RPC rejected request
+- **Line 47 · Error:** Missing Arc RPC result
+- **Line 52 · Error:** Arc RPC chain mismatch
+- **Line 54 · Error:** Arc RPC checkpoint mismatch
+- **Line 57 · Error:** Arc RPC head is stale
+- **Line 61 · Error:** Arc RPC cooling down
+- **Line 75 · Error:** Arc RPC method not authorized
+- **Line 93 · Error:** No healthy Arc RPC supports this request
 
 ### lib/arc/usdc-delivery.ts
 
 - **Line 9 · Error:** Invalid Arc gas evidence.
 - **Line 13 · Text / template:** Transfer
 - **Line 19 · Error:** Arc USDC transfer evidence does not match.
+
+### lib/arc/wallet-actions.ts
+
+- **Line 11 · Text / template:** function decimals() view returns (uint8)
+- **Line 11 · Text / template:** function balanceOf(address) view returns (uint256)
+- **Line 11 · Text / template:** function transfer(address,uint256) returns (bool)
+- **Line 18 · Error:** Use a percentage up to 100.
+- **Line 28 · Error:** Wallet has a pending transaction.
+- **Line 30 · Error:** Not enough available funds. OTC listings and gas are reserved.
+- **Line 36 · Error:** Use a different, nonzero recipient.
+- **Line 37 · Error:** Choose a percentage or a USD value.
+- **Line 46 · Error:** Not enough available USDC after gas.
+- **Line 54 · Error:** Token precision is not supported.
+- **Line 56 · Error:** Not enough tokens.
+- **Line 60 · Text / template:** USDC
 
 ### lib/arc/wallet-balance.ts
 
@@ -1271,6 +1306,15 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 8 · Text / template:** function approve(address,uint256) returns (bool)
 - **Line 9 · Text / template:** event Approval(address indexed owner,address indexed spender,uint256 value)
 - **Line 10 · Text / template:** event Transfer(address indexed from,address indexed to,uint256 value)
+
+### lib/base/wallet-actions.ts
+
+- **Line 11 · Error:** Use a different, nonzero recipient.
+- **Line 15 · Error:** ETH price unavailable. Try again.
+- **Line 19 · Error:** Use a positive ETH amount.
+- **Line 22 · Error:** Wallet has a pending transaction.
+- **Line 23 · Error:** Not enough available funds. OTC listings and gas are reserved.
+- **Line 24 · Text / template:** ETH
 
 ### lib/bounded-json.ts
 
@@ -1369,48 +1413,68 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### lib/otc/escrow-model.ts
 
-- **Line 8 · Text / template:** function transfer(address,uint256) returns(bool)
-- **Line 19 · Error:** Escrow position missing.
-- **Line 20 · Error:** Escrow order mismatch.
-- **Line 30 · Error:** Escrow wallet is not provisioned.
-- **Line 32 · Error:** Combined escrow deposits require Base ETH.
-- **Line 33 · Error:** Order is not settling.
-- **Line 35 · Error:** Invalid escrow step.
-- **Line 36 · Error:** Escrow deposit or preceding payout is not verified.
-- **Line 37 · Error:** Arc escrow deposit is not verified.
-- **Line 39 · Error:** Position is not funding.
-- **Line 41 · Error:** Position cannot return funds during settlement.
-- **Line 42 · Error:** Escrow return does not cover remaining principal within the gas allowance.
-- **Line 58 · Error:** Escrow transaction does not match its step.
-- **Line 59 · Error:** Invalid escrow reservation.
-- **Line 62 · Error:** Gas exceeds the escrow allowance.
-- **Line 63 · Error:** Only return gas may reduce unsold funds.
-- **Line 65 · Error:** A wallet transaction is pending.
-- **Line 69 · Error:** Escrow funds are not reserved.
-- **Line 79 · Error:** Escrow must be a separate wallet.
-- **Line 80 · Error:** Escrow wallet binding is immutable.
-- **Line 82 · Error:** Escrow name cannot change after provisioning.
-- **Line 95 · Error:** Final Arc escrow balance is not verified.
-- **Line 97 · Error:** Arc escrow gas balance is pending verification.
-- **Line 99 · Error:** Arc escrow gas credits are not covered.
-- **Line 114 · Error:** Final escrow balance is not verified.
-- **Line 116 · Error:** Escrow gas balance is pending verification.
-- **Line 117 · Error:** Escrow gas credits are not covered.
-- **Line 124 · Error:** Escrow owner mismatch.
-- **Line 130 · Error:** No verified reverted escrow transaction to retry.
+- **Line 9 · Text / template:** function transfer(address,uint256) returns(bool)
+- **Line 20 · Error:** Escrow position missing.
+- **Line 21 · Error:** Escrow order mismatch.
+- **Line 31 · Error:** Escrow wallet is not provisioned.
+- **Line 33 · Status / notice:** Another order is settling for this listing.
+- **Line 34 · Error:** Combined escrow deposits require Base ETH.
+- **Line 35 · Error:** Order is not settling.
+- **Line 38 · Status / notice:** Gas recovery is not authorized.
+- **Line 39 · Error:** Invalid escrow step.
+- **Line 40 · Error:** Escrow deposit or preceding payout is not verified.
+- **Line 41 · Error:** Arc escrow deposit is not verified.
+- **Line 43 · Error:** Position is not funding.
+- **Line 45 · Error:** Position cannot return funds during settlement.
+- **Line 46 · Error:** Escrow return does not cover remaining principal within the gas allowance.
+- **Line 62 · Error:** Escrow transaction does not match its step.
+- **Line 63 · Error:** Invalid escrow reservation.
+- **Line 66 · Error:** Gas exceeds the escrow allowance.
+- **Line 67 · Error:** Only return gas may reduce unsold funds.
+- **Line 72 · Status / notice:** Seller must add Arc USDC for payout gas.
+- **Line 75 · Error:** A wallet transaction is pending.
+- **Line 79 · Status / notice:** Add funds for the updated network gas allowance.
+- **Line 83 · Error:** Escrow funds are not reserved.
+- **Line 93 · Error:** Escrow must be a separate wallet.
+- **Line 94 · Error:** Escrow wallet binding is immutable.
+- **Line 96 · Error:** Escrow name cannot change after provisioning.
+- **Line 109 · Error:** Final Arc escrow balance is not verified.
+- **Line 111 · Error:** Arc escrow gas balance is pending verification.
+- **Line 113 · Error:** Arc escrow gas credits are not covered.
+- **Line 128 · Error:** Final escrow balance is not verified.
+- **Line 130 · Error:** Escrow gas balance is pending verification.
+- **Line 131 · Error:** Escrow gas credits are not covered.
+- **Line 138 · Error:** Escrow owner mismatch.
+- **Line 145 · Error:** No verified reverted escrow transaction to retry.
 
 ### lib/otc/escrow-runtime.ts
 
-- **Line 17 · Status / notice:** Read only
-- **Line 19 · Error:** Escrow transaction context missing.
-- **Line 21 · Error:** Escrow attempt changed.
-- **Line 23 · Error:** Escrow signing authorization mismatch.
-- **Line 24 · Error:** Escrow participant wallet is not active.
-- **Line 29 · Error:** Escrow account name mismatch.
-- **Line 36 · Error:** Escrow transaction reverted. Retry settlement after checking balances.
-- **Line 41 · Error:** Arc escrow inventory is not covered.
-- **Line 53 · Error:** Escrow needs gas to return the remaining funds.
-- **Line 58 · Error:** Not enough funds for the amount and gas.
+- **Line 18 · Status / notice:** Read only
+- **Line 20 · Error:** Escrow transaction context missing.
+- **Line 22 · Error:** Escrow attempt changed.
+- **Line 24 · Error:** Escrow signing authorization mismatch.
+- **Line 25 · Error:** Escrow participant wallet is not active.
+- **Line 30 · Error:** Escrow account name mismatch.
+- **Line 39 · Error:** Escrow transaction reverted. Retry settlement after checking balances.
+- **Line 63 · Error:** Arc escrow inventory is not covered.
+- **Line 83 · Status / notice:** Add funds for settlement gas. The recovery allowance is already used.
+- **Line 85 · Status / notice:** Settlement gas exceeds the small recovery allowance.
+- **Line 102 · Error:** Escrow needs gas to return the remaining funds.
+- **Line 108 · Error:** Not enough funds for the amount and gas.
+
+### lib/otc/gas-recovery.ts
+
+- **Line 10 · Status / notice:** Listing principal is not dust.
+- **Line 11 · Status / notice:** Return already has a transaction.
+- **Line 12 · Status / notice:** Funding is not verified.
+- **Line 14 · Status / notice:** Dust balance is not current.
+- **Line 16 · Status / notice:** Remainder exceeds the dust limit.
+- **Line 26 · Status / notice:** Funding amount is already fixed.
+- **Line 29 · Status / notice:** Funding gas exceeds the recovery allowance.
+- **Line 40 · Status / notice:** Payouts must be verified before retaining dust.
+- **Line 41 · Status / notice:** Refund already has a transaction.
+- **Line 56 · Status / notice:** Payment must be verified before gas recovery.
+- **Line 58 · Status / notice:** Gas recovery exceeds the small network allowance.
 
 ### lib/otc/http.ts
 
@@ -1448,38 +1512,38 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 18 · Error:** Enter a premium from 0% to 10,000%, with up to two decimal places.
 - **Line 21 · Error:** Maximum premium is 10,000%.
 - **Line 25 · Error:** Invalid OTC price inputs.
-- **Line 75 · Error:** Wallet owner mismatch.
-- **Line 79 · Error:** A wallet transaction is pending. Wait for confirmation.
-- **Line 80 · Error:** Balance snapshot is behind the last wallet transaction.
-- **Line 83 · Error:** Invalid reservation.
-- **Line 85 · Error:** Not enough available funds, including gas and existing reservations.
-- **Line 101 · Error:** Gas estimate is unavailable.
-- **Line 105 · Error:** Minimum listing is 10 USDC after gas. Increase the total amount.
-- **Line 114 · Error:** Listing identity or terms mismatch.
-- **Line 121 · Error:** Not enough available USDC for this listing budget.
-- **Line 121 · Dynamic Error:** You don't have enough for gas on top of {input.amount} USDC.
-- **Line 129 · Error:** Quote owner mismatch.
-- **Line 131 · Error:** Listing is not available.
-- **Line 132 · Error:** Listing is settling another order. Try again shortly.
-- **Line 133 · Error:** You cannot buy your own listing.
-- **Line 135 · Error:** Listing amount changed. Request a new quote.
-- **Line 136 · Error:** Price or gas estimate expired.
-- **Line 137 · Error:** Unsupported Base payment asset.
-- **Line 143 · Error:** Not enough available Base USDC or approval gas allowance.
-- **Line 144 · Error:** Invalid escrow payment terms.
-- **Line 145 · Error:** Not enough available Base ETH for this quote and gas.
-- **Line 158 · Error:** Order not found.
-- **Line 160 · Error:** Payment options changed. Request a new ETH quote.
-- **Line 161 · Error:** Quote expired. Request a new quote.
-- **Line 164 · Error:** Seller balance or gas reserve is insufficient. No Base payment was sent.
-- **Line 169 · Error:** A Base USDC purchase is pending. Wait for payment verification.
-- **Line 170 · Error:** Not enough available Base USDC.
-- **Line 178 · Error:** Listing not found.
-- **Line 182 · Error:** Position is locked by its funding transaction. Wait for verification.
-- **Line 191 · Error:** Position is locked by a pending quote or transaction. Wait for settlement.
-- **Line 197 · Error:** Only unsigned expired quotes can be released.
-- **Line 199 · Error:** Listing record missing.
-- **Line 202 · Error:** Reservation mismatch.
+- **Line 76 · Error:** Wallet owner mismatch.
+- **Line 80 · Error:** A wallet transaction is pending. Wait for confirmation.
+- **Line 81 · Error:** Balance snapshot is behind the last wallet transaction.
+- **Line 84 · Error:** Invalid reservation.
+- **Line 86 · Error:** Not enough available funds, including gas and existing reservations.
+- **Line 102 · Error:** Gas estimate is unavailable.
+- **Line 106 · Error:** Minimum listing is 10 USDC after gas. Increase the total amount.
+- **Line 115 · Error:** Listing identity or terms mismatch.
+- **Line 122 · Error:** Not enough available USDC for this listing budget.
+- **Line 122 · Dynamic Error:** You don't have enough for gas on top of {input.amount} USDC.
+- **Line 130 · Error:** Quote owner mismatch.
+- **Line 132 · Error:** Listing is not available.
+- **Line 133 · Error:** Listing is settling another order. Try again shortly.
+- **Line 134 · Error:** You cannot buy your own listing.
+- **Line 136 · Error:** Listing amount changed. Request a new quote.
+- **Line 137 · Error:** Price or gas estimate expired.
+- **Line 138 · Error:** Unsupported Base payment asset.
+- **Line 144 · Error:** Not enough available Base USDC or approval gas allowance.
+- **Line 145 · Error:** Invalid escrow payment terms.
+- **Line 146 · Error:** Not enough available Base ETH for this quote and gas.
+- **Line 159 · Error:** Order not found.
+- **Line 161 · Error:** Payment options changed. Request a new ETH quote.
+- **Line 162 · Error:** Quote expired. Request a new quote.
+- **Line 165 · Error:** Seller balance or gas reserve is insufficient. No Base payment was sent.
+- **Line 170 · Error:** A Base USDC purchase is pending. Wait for payment verification.
+- **Line 171 · Error:** Not enough available Base USDC.
+- **Line 179 · Error:** Listing not found.
+- **Line 183 · Error:** Position is locked by its funding transaction. Wait for verification.
+- **Line 192 · Error:** Position is locked by a pending quote or transaction. Wait for settlement.
+- **Line 198 · Error:** Only unsigned expired quotes can be released.
+- **Line 200 · Error:** Listing record missing.
+- **Line 204 · Error:** Reservation mismatch.
 
 ### lib/otc/native-spend.ts
 
@@ -1498,79 +1562,82 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 
 ### lib/otc/runtime.ts
 
-- **Line 24 · Dynamic Error:** {key} is not configured.
-- **Line 25 · Text / template:** function approve(address,uint256) returns (bool)
-- **Line 25 · Text / template:** function approve(address,address,uint160,uint48)
-- **Line 25 · Text / template:** function allowance(address,address) view returns (uint256)
-- **Line 25 · Text / template:** function allowance(address,address,address) view returns (uint160,uint48,uint48)
-- **Line 35 · Error:** Invalid OTC payment configuration.
-- **Line 48 · Error:** Balance snapshot changed.
-- **Line 55 · Error:** Base payment contract does not match the configured deployment.
-- **Line 63 · Error:** Base payment contract does not support native USDC.
-- **Line 66 · Error:** Base USDC reservation is not covered.
-- **Line 70 · Error:** ETH/USD price is unavailable.
-- **Line 72 · Error:** Invalid ETH/USD price response.
-- **Line 79 · Error:** Wallet has a pending transaction.
-- **Line 81 · Error:** Not enough funds for the amount and gas.
-- **Line 88 · Error:** Gas exceeds the configured policy.
-- **Line 94 · Error:** Invalid Base fee estimate.
-- **Line 96 · Error:** Base fees exceed the configured cap.
-- **Line 102 · Error:** Expected an EIP-1559 transaction.
-- **Line 107 · Error:** Signer returned a different transaction.
-- **Line 118 · Error:** Payment configuration changed. Recovery required.
-- **Line 122 · Error:** Stored transaction chain mismatch.
-- **Line 126 · Error:** Stored settlement transaction does not match the order.
-- **Line 131 · Error:** Social command authorization changed.
-- **Line 134 · Error:** Invalid Arc swap target.
-- **Line 136 · Error:** Arc router code changed.
-- **Line 140 · Error:** Wallet ownership or active status changed before signing.
-- **Line 141 · Error:** Wallet nonce changed before signing. Recovery required.
-- **Line 143 · Error:** Wallet reservation is not covered.
-- **Line 145 · Error:** Transaction amount and gas exceed its reservation.
-- **Line 170 · Error:** Stored signature hash mismatch.
-- **Line 178 · Error:** Receipt is not canonical.
-- **Line 180 · Error:** Receipt transaction does not match the order.
-- **Line 184 · Error:** Token delivery evidence unavailable.
-- **Line 193 · Error:** Swap delivery terms missing.
-- **Line 195 · Error:** Unsupported swap recipient.
-- **Line 196 · Error:** Native output must go to the wallet.
-- **Line 199 · Error:** Unsupported native swap chain.
-- **Line 201 · Text / template:** Transfer
-- **Line 207 · Error:** Invalid swap receipt amount.
-- **Line 208 · Text / template:** function decimals() view returns (uint8)
-- **Line 210 · Error:** Minimum swap output was not delivered.
-- **Line 218 · Error:** Arc delivery block changed.
-- **Line 224 · Error:** Arc gas receipt mismatch.
-- **Line 227 · Error:** Arc gas transaction missing.
-- **Line 240 · Error:** Approval terms missing.
-- **Line 242 · Error:** Invalid approval call.
-- **Line 245 · Error:** Token approval was not verified.
-- **Line 248 · Error:** Router approval was not verified.
-- **Line 253 · Text / template:** Approval
-- **Line 255 · Error:** USDC approval was not verified.
-- **Line 259 · Text / template:** PaidUsdc
-- **Line 259 · Text / template:** Paid
-- **Line 262 · Error:** Base split payment was not verified.
-- **Line 266 · Error:** Base delivery evidence unavailable.
-- **Line 268 · Error:** Base recipient balance increase was not verified.
-- **Line 270 · Error:** Receipt changed during verification.
-- **Line 278 · Error:** Finality evidence changed.
-- **Line 282 · Error:** Nonce consumed without a verified receipt. Funds remain reserved.
-- **Line 284 · Error:** Signed request is no longer covered by wallet reservations.
-- **Line 294 · Error:** Base fees exceeded the reserved allowance. Signature retained for recovery.
-- **Line 299 · Error:** Broadcast returned the wrong hash.
-- **Line 316 · Error:** Order missing.
-- **Line 327 · Dynamic Text / template:** tx:{id}:{leg}{leg==="payout" && order.payoutAttempt ? \`:${order.payoutAttempt}\` : ""}
-- **Line 334 · Error:** Seller cannot cover the exact Arc payout and reserved gas.
-- **Line 338 · Error:** Gas exceeded the accepted reserve. Order remains reserved.
-- **Line 362 · Text / template:** Escrow wallet setup is pending. Listing funds remain reserved in your wallet.
+- **Line 25 · Dynamic Error:** {key} is not configured.
+- **Line 26 · Text / template:** function approve(address,uint256) returns (bool)
+- **Line 26 · Text / template:** function approve(address,address,uint160,uint48)
+- **Line 26 · Text / template:** function allowance(address,address) view returns (uint256)
+- **Line 26 · Text / template:** function allowance(address,address,address) view returns (uint160,uint48,uint48)
+- **Line 36 · Error:** Invalid OTC payment configuration.
+- **Line 49 · Error:** Balance snapshot changed.
+- **Line 56 · Error:** Base payment contract does not match the configured deployment.
+- **Line 64 · Error:** Base payment contract does not support native USDC.
+- **Line 67 · Error:** Base USDC reservation is not covered.
+- **Line 71 · Error:** ETH/USD price is unavailable.
+- **Line 73 · Error:** Invalid ETH/USD price response.
+- **Line 80 · Error:** Wallet has a pending transaction.
+- **Line 82 · Error:** Not enough funds for the amount and gas.
+- **Line 89 · Error:** Gas exceeds the configured policy.
+- **Line 95 · Error:** Invalid Base fee estimate.
+- **Line 97 · Error:** Base fees exceed the configured cap.
+- **Line 103 · Error:** Expected an EIP-1559 transaction.
+- **Line 108 · Error:** Signer returned a different transaction.
+- **Line 120 · Error:** Payment configuration changed. Recovery required.
+- **Line 124 · Error:** Stored transaction chain mismatch.
+- **Line 128 · Error:** Stored settlement transaction does not match the order.
+- **Line 142 · Error:** Social command authorization changed.
+- **Line 145 · Error:** Invalid Arc swap target.
+- **Line 147 · Error:** Arc router code changed.
+- **Line 151 · Error:** Wallet ownership or active status changed before signing.
+- **Line 152 · Error:** Wallet nonce changed before signing. Recovery required.
+- **Line 154 · Error:** Wallet reservation is not covered.
+- **Line 156 · Error:** Transaction amount and gas exceed its reservation.
+- **Line 182 · Error:** Stored signature hash mismatch.
+- **Line 190 · Error:** Receipt is not canonical.
+- **Line 192 · Error:** Receipt transaction does not match the order.
+- **Line 196 · Error:** Token delivery evidence unavailable.
+- **Line 205 · Error:** Swap delivery terms missing.
+- **Line 207 · Error:** Unsupported swap recipient.
+- **Line 208 · Error:** Native output must go to the wallet.
+- **Line 211 · Error:** Unsupported native swap chain.
+- **Line 213 · Text / template:** Transfer
+- **Line 219 · Error:** Invalid swap receipt amount.
+- **Line 220 · Text / template:** function decimals() view returns (uint8)
+- **Line 222 · Error:** Minimum swap output was not delivered.
+- **Line 230 · Error:** Arc delivery block changed.
+- **Line 236 · Error:** Arc gas receipt mismatch.
+- **Line 239 · Error:** Arc gas transaction missing.
+- **Line 252 · Error:** Approval terms missing.
+- **Line 254 · Error:** Invalid approval call.
+- **Line 257 · Error:** Token approval was not verified.
+- **Line 260 · Error:** Router approval was not verified.
+- **Line 265 · Text / template:** Approval
+- **Line 267 · Error:** USDC approval was not verified.
+- **Line 271 · Text / template:** PaidUsdc
+- **Line 271 · Text / template:** Paid
+- **Line 274 · Error:** Base split payment was not verified.
+- **Line 278 · Error:** Base delivery evidence unavailable.
+- **Line 283 · Error:** Receipt changed during verification.
+- **Line 291 · Error:** Finality evidence changed.
+- **Line 295 · Error:** Nonce consumed without a verified receipt. Funds remain reserved.
+- **Line 297 · Error:** Signed request is no longer covered by wallet reservations.
+- **Line 307 · Error:** Base fees exceeded the reserved allowance. Signature retained for recovery.
+- **Line 312 · Error:** Broadcast returned the wrong hash.
+- **Line 329 · Error:** Order missing.
+- **Line 340 · Dynamic Text / template:** tx:{id}:{leg}{leg==="payout" && order.payoutAttempt ? \`:${order.payoutAttempt}\` : ""}
+- **Line 347 · Error:** Seller cannot cover the exact Arc payout and reserved gas.
+- **Line 351 · Error:** Gas exceeded the accepted reserve. Order remains reserved.
+- **Line 375 · Text / template:** Escrow wallet setup is pending. Listing funds remain reserved in your wallet.
 
 ### lib/otc/settlement-error.ts
 
 - **Line 8 · Text / template:** Settlement blocked: wallet signing needs operator attention. Funds remain protected.
 - **Line 9 · Text / template:** Base RPC is busy. Settlement will retry automatically.
 - **Line 10 · Text / template:** Settlement paused: gas exceeds this order's allowance.
-- **Line 13 · Text / template:** Pending verification
+- **Line 11 · Text / template:** Settlement blocked: gas recovery allowance is exhausted. Operator assistance is required.
+- **Line 12 · Text / template:** Settlement blocked: gas exceeds the automatic recovery limit. Operator assistance is required.
+- **Line 13 · Text / template:** Settlement blocked: insufficient funds for gas. Add funds to the paying wallet and contact support to resume settlement.
+- **Line 14 · Text / template:** Settlement blocked: network fees exceed the allowed gas budget. Operator assistance is required.
+- **Line 17 · Text / template:** Pending verification
 
 ### lib/otc/token-delivery.ts
 
@@ -1594,6 +1661,8 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 12 · Text / template:** ETH
 - **Line 13 · Dynamic Text / template:** {raw} base units · {address}
 - **Line 15 · Dynamic Text / template:** {gas||native&&chain===8453?exact:displayAmount(exact,symbol==="USDC"?2:0)} {symbol??address}
+- **Line 17 · Text / template:** Base gas recovery
+- **Line 17 · Text / template:** Arc gas recovery
 - **Line 17 · Text / template:** Send
 - **Line 17 · Text / template:** Swap
 - **Line 17 · Text / template:** Token approval
@@ -1655,11 +1724,18 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 114 · Error:** Wallet transaction lease mismatch.
 - **Line 143 · Text / template:** Arc payout reverted. Funds remain reserved. Operator recovery required.
 
+### lib/otc/unsigned-recovery.ts
+
+- **Line 4 · Text / template:** function execute(bytes,bytes[],uint256)
+- **Line 12 · Status / notice:** Transaction is no longer awaiting a signature.
+- **Line 14 · Status / notice:** Wallet transaction lease mismatch.
+- **Line 22 · Status / notice:** Transaction cannot be safely cancelled.
+- **Line 26 · Text / template:** Trade expired before signing. Funds released. Submit again for a fresh quote.
+
 ### lib/project-config.ts
 
-- **Line 2 · Text / template:** TheArctosBot
-- **Line 4 · Text / template:** TheArgosBot
-- **Line 14 · Error:** Configure an HTTPS website origin for the wallet worker.
+- **Line 5 · Text / template:** TheArgosBot
+- **Line 15 · Error:** Configure an HTTPS website origin for the wallet worker.
 
 ### lib/public-links.ts
 
@@ -1667,7 +1743,7 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 6 · Dynamic Text / template:** {ARC_BOT_SITE_URL}/wallet/{address}{requestId ? \`?request=${encodeURIComponent(requestId)}\` : ""}
 - **Line 9 · Status / notice:** Invalid Arc transaction hash
 - **Line 13 · Status / notice:** Invalid Arc address
-- **Line 17 · Dynamic Text / template:** Arc Explorer: {arcTransactionUrl(hash)}
+- **Line 17 · Dynamic Text / template:** Transaction: {chainId===8453?\`https://basescan.org/tx/${hash}\`:arcTransactionUrl(hash)}
 - **Line 17 · Dynamic Text / template:** Your wallet: {arcWalletUrl(address)}
 
 ### lib/rpc-http.ts

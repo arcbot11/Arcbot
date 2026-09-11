@@ -1,15 +1,15 @@
+import {prepareBaseWithdrawal} from "@/lib/base/wallet-actions";
 import {prepareArcSend} from "@/lib/arc/wallet-actions";
 import { createHmac, randomUUID } from "node:crypto";
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { formatUnits, getAddress, parseTransaction } from "viem";
+import { getAddress, parseTransaction } from "viem";
 import { boundedJson } from "@/lib/bounded-json";
-import { exactAmount } from "@/lib/arc/amounts";
 import { BASE_USDC } from "@/lib/base/usdc";
 import { repository } from "@/lib/otc/repository";
-import { prepareCall, walletTransferConfiguration, balanceSnapshot, advanceTransaction, ethPrice, baseUsdcBalance } from "@/lib/otc/runtime";
+import { walletTransferConfiguration, balanceSnapshot, advanceTransaction, baseUsdcBalance } from "@/lib/otc/runtime";
 import { websiteSession, WebError, json, webFailure, sameSecret } from "@/lib/otc/http";
-import { locked, walletId, type Wallet, type Transaction } from "@/lib/otc/model";
+import { type Transaction } from "@/lib/otc/model";
 export const runtime="nodejs";
 export const maxDuration=120;
 const address=z.string().regex(/^0x[0-9a-fA-F]{40}$/);
@@ -34,18 +34,10 @@ export async function POST(request:NextRequest){
       }
       if(input.asset!=="native")throw new WebError("Base withdrawals support ETH only.");
       if(input.percentage!==undefined)throw new WebError("Enter an amount for Base withdrawals.");
-      if(input.amountUnit==="usd"){
-        const rate=await ethPrice();
-        if(BigInt(rate.ethUsdMicros)<=0n||Math.abs(Date.now()-rate.priceAt)>60000)throw new WebError("ETH price unavailable. Try again.");
-        input.amount=formatUnits(exactAmount(input.amount,6)*10n**18n/BigInt(rate.ethUsdMicros),18);
-      }
-      const prepared=await prepareCall(8453,{from,to:recipient,value:exactAmount(input.amount,18),data:"0x"});
-      const w=await repo.read<Wallet|null>({id:walletId(8453,from)});
-      if(w?.activeTx)throw new WebError("Wallet has a pending transaction.");
-      if(BigInt(prepared.snapshot.balanceWei)-(w?locked(w):0n)<BigInt(prepared.reserveWei))throw new WebError("Not enough available funds. OTC listings and gas are reserved.");
+      const prepared=await prepareBaseWithdrawal(from,input);
       const quote={id:`send:${randomUUID()}`,owner:session.xUserId,wallet:from,chainId:input.chainId,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,expiresAt:Date.now()+30_000};
       const payload=Buffer.from(JSON.stringify(quote)).toString("base64url");
-      return json({quote:`${payload}.${signature(payload)}`,amount:input.amount,recipient,asset:"ETH",gasWei:prepared.gasWei,expiresAt:quote.expiresAt});
+      return json({quote:`${payload}.${signature(payload)}`,amount:prepared.amount,recipient,asset:"ETH",gasWei:prepared.gasWei,expiresAt:quote.expiresAt});
     }
     const [payload,mac,extra]=input.quote.split(".");
     if(!payload||!mac||extra||!sameSecret(mac,signature(payload)))throw new WebError("Invalid send quote.");

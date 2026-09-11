@@ -9,8 +9,8 @@ Public configuration lives in `lib/project-config.ts`. The eight legacy executio
 | `WEB_AUTH_SECRET` | Environment only; shared signing/authentication secret. |
 | `X_BOT_USERNAME` | Removed. Fixed to `TheArgosBot`, including the authorization script. |
 | `NEXT_PUBLIC_ARCBOT_X_URL` | Removed. Fixed to `https://x.com/TheArgosBot`. |
-| `NEXT_PUBLIC_ARCBOT_TELEGRAM_URL` | Environment for now; Argos Bot Telegram identity has not been provided. |
-| `TELEGRAM_BOT_USERNAME` | Removed; no current application reader. The public Telegram URL is the remaining display setting. |
+| `NEXT_PUBLIC_ARCBOT_TELEGRAM_URL` | Removed. Fixed to `https://t.me/The_ArgosBot` in `lib/project-config.ts`. |
+| `TELEGRAM_BOT_USERNAME` | Removed. The command username is fixed to `The_ArgosBot` in `lib/project-config.ts`. |
 | `ARC_MAINNET_RPC_URL` | Environment; owned provider endpoint not configured, and endpoint URLs may contain API credentials. |
 | `ARC_CHECKPOINT_NUMBER` | Environment; trusted mainnet checkpoint not configured. Can become a public constant after verification. |
 | `ARC_CHECKPOINT_HASH` | Environment; same verified checkpoint required. |

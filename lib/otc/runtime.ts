@@ -127,6 +127,15 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     const expected=record.leg==="approval"?approvalCall(order):record.leg==="payment"?paymentCall(order):payoutCall(order);
     if(tx.to?.toLowerCase()!==expected.to.toLowerCase()||(tx.value??0n)!==expected.value||(tx.data??"0x")!==expected.data||record.wallet.toLowerCase()!==expected.from.toLowerCase())throw new Error("Stored settlement transaction does not match the order.");
   }
+  // Reconcile a prior signing attempt using its exact bytes and original idempotency keys.
+  // Its authorization was fenced before CDP was called; fresh simulation/nonce checks
+  // must not prevent retrieval after the deadline or an already-mined submission.
+  if (!record.raw && record.signingStartedAt) {
+    const cdp=new CdpClient({apiKeyId:required("CDP_API_KEY_ID"),apiKeySecret:required("CDP_API_KEY_SECRET"),walletSecret:required("CDP_WALLET_SECRET")});
+    const {signature}=await signWithAuthRecovery(id,idempotencyKey=>cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey}));
+    const hash=await verifyRaw(signature as Hex,record.unsigned as Hex,record.wallet);
+    record=await repo.command<Transaction>("sign",{id,raw:signature,hash});
+  }
   if (!record.raw) {
     if(record.sourceRequestId){
       const authority=await socialAuthority(record.sourceRequestId);

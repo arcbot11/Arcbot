@@ -4,7 +4,7 @@ import {getFunctionName} from "convex/server";
 
 const handler=(value:unknown)=>(value as {_handler:(ctx:unknown,args:unknown)=>Promise<unknown>})._handler;
 it("persists the payload and schedules processing in the same mutation",async()=>{
- const insert=vi.fn(async()=>"row"),schedule=vi.fn(async()=>"job");
+ const insert=vi.fn(async()=>"row"),schedule=vi.fn(async(_delay:number,_ref:Parameters<typeof getFunctionName>[0],_args:unknown)=>"job");
  const ctx={db:{query:()=>({withIndex:()=>({unique:async()=>null,collect:async()=>[]})}),insert},scheduler:{runAfter:schedule}};
  const input={updateId:"8280311402_10",telegramUserId:"123",telegramChatId:"123",updateJson:JSON.stringify({update_id:10,message:{text:"/buy 10 USDC ARGUS"}})};
  expect(await handler(reserveUpdate)(ctx,input)).toBe(true);

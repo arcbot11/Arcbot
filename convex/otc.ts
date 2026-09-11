@@ -38,7 +38,7 @@ export const command = mutation({
       case "escrow_arc_dust": return retainArcDust(store,input.listingId,input.balanceWei,input.block,now);
       case "escrow_funding_gas": return repriceFunding(store,input.listingId,input.gasWei,now);
       case "escrow_claim": return claimSettlement(store,input.listingId,input.orderId,now);
-      case "escrow_dust": return retainGasDust(store,input.listingId,input.orderId,input.balanceWei,input.block,now);
+      case "escrow_dust": return retainGasDust(store,input.listingId,input.orderId,input.balanceWei,input.block,now,input.refundGasWei);
       case "escrow_topup": return requestGasTopup(store,input.listingId,input.orderId,input.amount,now,input.arc===true);
       case "begin_signing": return beginSigning(store,input.id,now);
       case "cancel_unsigned_trade": return cancelUnsignedTrade(store,input.id,now);

@@ -1,7 +1,7 @@
 import {afterEach,beforeEach,expect,it,vi} from "vitest";
 import {getFunctionName} from "convex/server";
 import {scheduleInteractionRetry} from "../convex/xReplies";
-import {continueArcCommand} from "../convex/wallets";
+import {continueArcCommand,executeCommand} from "../convex/wallets";
 import {ARC_WALLET_PENDING,ARC_COMMAND_HTTP_TIMEOUT_MS,arcPendingRetryDelay,arcServiceResult} from "../lib/arc/social-timing";
 const invoke=(fn:unknown,ctx:unknown,args:unknown)=>(fn as {_handler:(ctx:unknown,args:unknown)=>Promise<unknown>})._handler(ctx,args);
 beforeEach(()=>{vi.stubEnv("WEB_AUTH_SECRET","test-secret");});
@@ -42,4 +42,19 @@ it.each(["timeout","malformed"])("keeps %s responses pending without failing the
  const result=await invoke(continueArcCommand,ctx,{requestId:"x:post:buy",attempt:80});
  expect(result).toMatchObject({pending:true});expect(ctx.runMutation).not.toHaveBeenCalled();expect(ctx.scheduler.runAfter).not.toHaveBeenCalled();
  expect(timeout).toHaveBeenCalledWith(ARC_COMMAND_HTTP_TIMEOUT_MS);
+});
+
+it.each(["telegram","x"])("defers pending %s messages until verification",async source=>{
+ const request={source,status:"prepared",ownerXUserId:"alice",_creationTime:Date.now()};
+ const ctx={runQuery:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref).endsWith("getWalletRequest")?request:{wallet:{address:"0x1111111111111111111111111111111111111111"}}),runMutation:vi.fn(),scheduler:{runAfter:vi.fn()}};
+ vi.stubGlobal("fetch",vi.fn().mockResolvedValue({ok:true,json:async()=>({pending:true,message:"Arc request recorded. Check wallet history."})}));
+ expect(await invoke(continueArcCommand,ctx,{requestId:"request"})).toMatchObject({pending:true,deferred:true,message:""});
+ expect(ctx.runMutation).not.toHaveBeenCalled();
+ expect(ctx.scheduler.runAfter).toHaveBeenCalledTimes(source==="telegram"?1:0);
+});
+
+it("blocks a forged Base withdrawal from X before wallet access",async()=>{
+ const ctx={runQuery:vi.fn(),runMutation:vi.fn(),runAction:vi.fn()};
+ const result=await invoke(executeCommand,ctx,{source:"x",xUserId:"12345",sourcePostId:"post",text:"withdraw",parsedCommandJson:JSON.stringify({kind:"send",chainId:8453,unit:"eth",amount:"0.001",recipient:"0x1111111111111111111111111111111111111111"})});
+ expect(result).toMatchObject({ok:false});expect(ctx.runQuery).not.toHaveBeenCalled();expect(ctx.runMutation).not.toHaveBeenCalled();expect(ctx.runAction).not.toHaveBeenCalled();
 });

@@ -13,7 +13,7 @@ export function arcAddressUrl(address: string) {
   if (!/^0x[0-9a-f]{40}$/i.test(address)) throw Error("Invalid Arc address");
   return `${ARC_EXPLORER_URL}/address/${address}`;
 }
-export function arcCommandResponse(message: string, address: string, hash?: string) {
-  const links = [hash && /^0x[0-9a-f]{64}$/i.test(hash) ? `Arc Explorer: ${arcTransactionUrl(hash)}` : "", `Your wallet: ${arcWalletUrl(address)}`];
+export function arcCommandResponse(message: string, address: string, hash?: string, chainId:5042|8453=5042) {
+  const links = [hash && /^0x[0-9a-f]{64}$/i.test(hash) ? `Transaction: ${chainId===8453?`https://basescan.org/tx/${hash}`:arcTransactionUrl(hash)}` : "", `Your wallet: ${arcWalletUrl(address)}`];
   return [message, ...links.filter(line => line && !message.includes(line.split(": ").slice(1).join(": ")))].join("\n");
 }

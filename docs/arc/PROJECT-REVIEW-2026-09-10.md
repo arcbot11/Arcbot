@@ -1,5 +1,7 @@
 # Argos Bot project review — September 10, 2026
 
+> Historical audit. Account and deployment observations below are superseded by `docs/readiness-followup-2026-09-11.md`. Current public identities are in `lib/project-config.ts`.
+
 Scope: local source, full Vitest suite, TypeScript, deployed Convex configuration and records, public production HTTP routes, accessible Vercel projects, Telegram API, and the preceding read-only CDP/wallet/RPC checks. No signing, broadcasting, deployment, or remote configuration changes were performed. Secret values were not written to this report.
 
 ## Findings

@@ -1,14 +1,15 @@
 import { describe,it,expect,vi,beforeEach,afterEach } from "vitest";
 import { privateKeyToAccount } from "viem/accounts";
-import { encodeFunctionData,encodeAbiParameters,encodeEventTopics,keccak256,serializeTransaction,type Hex } from "viem";
+import { encodeFunctionData,encodeAbiParameters,encodeEventTopics,keccak256,serializeTransaction,type Hex,parseAbi } from "viem";
 import { transferAbi } from "../lib/otc/token-delivery";
 import { PAYMENT_ABI,paymentCall,orderHash } from "../lib/otc/transactions";
 import { type Order,type Transaction,type Wallet,walletId } from "../lib/otc/model";
 import { advanceTransaction,selectSettlementWork } from "../lib/otc/runtime";
 
-const mocks=vi.hoisted(()=>({client:{} as Record<string,unknown>,read:vi.fn(),command:vi.fn(),identity:vi.fn(async()=>true)}));
+const mocks=vi.hoisted(()=>({sign:vi.fn(),client:{} as Record<string,unknown>,read:vi.fn(),command:vi.fn(),identity:vi.fn(async()=>true)}));
 vi.mock("viem",async original=>({...await original<typeof import("viem")>(),createPublicClient:()=>mocks.client}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:mocks.read,command:mocks.command,identity:mocks.identity})}));
+vi.mock("@coinbase/cdp-sdk",()=>({CdpClient:class{evm={signTransaction:mocks.sign};}}));
 const key=`0x${"1".padStart(64,"0")}` as Hex,account=privateKeyToAccount(key);
 const hash=`0x${"a".repeat(64)}` as Hex,otherHash=`0x${"b".repeat(64)}` as Hex;
 const seller="0x2222222222222222222222222222222222222222",router="0x3333333333333333333333333333333333333333";
@@ -224,3 +225,40 @@ describe("Arc USDC swap settlement",()=>{
  });
 });
 
+
+it.each(["mined revert","awaiting receipt","CDP unavailable","wrong signature"])("recovers a lost signing result before expired simulation: %s",async mode=>{
+ const {ARC_ROUTER}=await import("../lib/arc/routing");
+ const tx={chainId:5042,type:"eip1559" as const,to:ARC_ROUTER,value:0n,data:encodeFunctionData({abi:parseAbi(["function execute(bytes,bytes[],uint256)"]),functionName:"execute",args:["0x",[],1n]}),nonce:0,gas:100000n,maxFeePerGas:100n,maxPriorityFeePerGas:1n};
+ const signature=await account.signTransaction(tx);
+ record={...record,chainId:5042,orderId:undefined,leg:"swap",status:"prepared",unsigned:serializeTransaction(tx),raw:undefined,hash:undefined,recoveryVersion:1,signingStartedAt:1};
+ wallet={...wallet,id:walletId(5042,account.address),chainId:5042};
+ mocks.sign.mockResolvedValue({signature});
+ (mocks.client.getChainId as ReturnType<typeof vi.fn>).mockResolvedValue(5042);
+ mocks.client.call=vi.fn().mockRejectedValue(Error("Transaction deadline passed"));
+ mocks.client.getTransaction=vi.fn().mockResolvedValue({from:account.address,to:ARC_ROUTER,value:0n,input:tx.data});
+ receipt={transactionHash:keccak256(signature),status:"reverted",blockNumber:100n,blockHash:hash,logs:[],gasUsed:21000n,effectiveGasPrice:100n};
+ mocks.command.mockImplementation(async(command:string,input:{raw?:string;hash?:string;success?:boolean})=>{
+   if(command==="sign"){record.raw=input.raw;record.hash=input.hash;record.status="signed";}
+   if(command==="settled")record.status=input.success?"completed":"reverted";
+   return structuredClone(record);
+ });
+ if(mode==="CDP unavailable"||mode==="wrong signature"){
+   if(mode==="CDP unavailable")mocks.sign.mockRejectedValue(Error("timeout"));
+   else mocks.sign.mockResolvedValue({signature:await account.signTransaction({...tx,value:1n})});
+   await expect(advanceTransaction(record.id)).rejects.toThrow(mode==="CDP unavailable"?"timeout":"different transaction");
+   expect(mocks.command).not.toHaveBeenCalled();expect(wallet.activeTx).toBe(record.id);return;
+ }
+ if(mode==="awaiting receipt"){
+   receipt=null;nonce=0;
+   await advanceTransaction(record.id);
+   expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:signature});
+   expect(mocks.command.mock.calls.some(c=>c[0]==="settled")).toBe(false);
+   expect(wallet.activeTx).toBe(record.id);
+ }else{
+   expect((await advanceTransaction(record.id)).status).toBe("reverted");
+   expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:false}));
+ }
+ expect(mocks.sign).toHaveBeenCalledWith(expect.objectContaining({transaction:record.unsigned}));
+ expect(mocks.client.call).not.toHaveBeenCalled();
+ expect(mocks.command.mock.calls.some(c=>c[0]==="cancel_unsigned_trade")).toBe(false);
+});

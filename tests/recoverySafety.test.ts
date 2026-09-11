@@ -44,3 +44,18 @@ it("retries only verified reverted recovery deposits with a new immutable attemp
  expect(next.escrow!.attempts!.topup).toBe(1);expect(next.escrow!.topupWei).toBe("500");
  expect(escrowTxId(d.listing,"topup",next)).not.toBe(id);
 });
+
+it("credits an uneconomic refund only after verified payouts, without touching others",async()=>{
+ const d=position();const amount=1500000000000n;
+ await claimSettlement(d.store,d.listing.id,d.order.id,2);
+ await retainGasDust(d.store,d.listing.id,d.order.id,(amount+77n).toString(),"101",3,"1000000000000");
+ await advanceEscrowState(d.store,d.listing.id,d.order.id,4,(amount+77n).toString(),"101");
+ expect(await d.store.get(d.order.id)).toMatchObject({status:"completed",escrow:{refundSkipped:true,gasRemainderWei:amount.toString()}});
+ expect(await d.store.get(d.w.id)).toMatchObject({holds:{"gas-credit:other":"77","gas-credit:order:test":amount.toString()}});
+});
+it.each(["economic","large","unpaid","existing"])("does not retain an %s refund under the gas-margin exception",async mode=>{
+ const d=position();
+ if(mode==="unpaid")d.rows.delete(escrowTxId(d.listing,"seller",d.order));
+ if(mode==="existing")d.rows.set(escrowTxId(d.listing,"return_gas",d.order),{...trade().tx,id:escrowTxId(d.listing,"return_gas",d.order)});
+ await expect(retainGasDust(d.store,d.listing.id,d.order.id,mode==="large"?"10000000000078":"1500000000077","101",3,mode==="economic"?"1000":"10000000000000")).rejects.toThrow();
+});

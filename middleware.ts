@@ -37,7 +37,7 @@ function policy(request: NextRequest, nonce?: string) {
 }
 
 function isSensitivePage(pathname: string) {
-  return pathname === "/terminal" || pathname === "/votes" || pathname.startsWith("/votes/") || pathname.startsWith("/wallet/") || pathname.startsWith("/launch/");
+  return pathname === "/wallet" || pathname === "/otc" || pathname.startsWith("/otc/") || pathname === "/terminal" || pathname === "/votes" || pathname.startsWith("/votes/") || pathname.startsWith("/wallet/") || pathname.startsWith("/launch/");
 }
 
 export function middleware(request: NextRequest) {
@@ -47,6 +47,8 @@ export function middleware(request: NextRequest) {
   const csp = policy(request, nonce);
   const requestHeaders = new Headers(request.headers);
   if (nonce) requestHeaders.set("x-nonce", nonce);
+  else requestHeaders.delete("x-nonce");
+  requestHeaders.set("Content-Security-Policy", csp);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   const reportOnly = process.env.CSP_REPORT_ONLY === "true";
   response.headers.set(reportOnly ? "Content-Security-Policy-Report-Only" : "Content-Security-Policy", csp);

@@ -83,7 +83,8 @@ async function sendMessage(chatId: string, text: string, replyMarkup?: Record<st
 }
 
 export function telegramRecipientAllowed(command: WalletCommand) {
-  if (command.kind !== "send" && command.kind !== "buy_and_send") return true;
+  if (command.kind === "buy_and_send" || command.kind === "buy_and_burn") return false;
+  if (command.kind !== "send") return true;
   return /^0x[a-fA-F0-9]{40}$/.test(command.recipient);
 }
 
@@ -409,7 +410,7 @@ export const processUpdate = internalAction({
       const text = (update.message?.text || callback?.data || "").trim();
       const input = telegramInput(text, Boolean(callback));
       if (!input) {
-        await sendMessage(chatId, "Use the buttons or a /command. Open /help for formats.", TELEGRAM_MENU);
+        await sendMessage(chatId, "Use the buttons or a /command. Open /help for formats.");
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "ignored" });
         return;
       }
@@ -459,16 +460,16 @@ export const processUpdate = internalAction({
           inline_keyboard: [[{ text: "Link X Account", url: `${site}/api/auth/x/start?telegramLink=${nonce}` }]],
         });
       } else if (command === "/start" || command === "/help") {
-        await sendMessage(chatId, TELEGRAM_HELP, TELEGRAM_MENU);
+        await sendMessage(chatId, TELEGRAM_HELP, command === "/start" ? TELEGRAM_MENU : undefined);
       } else if (!input.args && TELEGRAM_FORMATS[input.name]) {
-        await sendMessage(chatId, TELEGRAM_FORMATS[input.name], TELEGRAM_MENU);
+        await sendMessage(chatId, TELEGRAM_FORMATS[input.name]);
       } else {
         const parsedCommand = telegramWalletCommand(input.name, input.args);
         if (!parsedCommand || !telegramRecipientAllowed(parsedCommand)) {
-          await sendMessage(chatId, TELEGRAM_FORMATS[input.name] || "Use /wallet or /balance [TICKER or contract].", TELEGRAM_MENU);
+          await sendMessage(chatId, TELEGRAM_FORMATS[input.name] || "Use /wallet or /balance [TICKER or contract].");
         } else {
           const effectiveText = text;
-          const recipientAddress = parsedCommand.kind === "send" || parsedCommand.kind === "buy_and_send" ? parsedCommand.recipient : undefined;
+          const recipientAddress = parsedCommand.kind === "send" ? parsedCommand.recipient : undefined;
           const sourcePostId = `tg_${telegramUserId}_${message.message_id || args.updateId}`;
           const requestId = `telegram:${telegramUserId}:${args.updateId}:${parsedCommand.kind}`;
           await assertBoundLink();
@@ -485,8 +486,9 @@ export const processUpdate = internalAction({
             channel: "telegram_chat",
             ...(recipientAddress ? { recipientAddress } : {}),
           });
-          if (result.deferred) {
-            await sendMessage(chatId, "Processing. The result will appear here.");
+          if (result.pending || result.deferred) {
+            const action = parsedCommand.kind === "send" && parsedCommand.chainId === 8453 ? "Base withdrawal" : parsedCommand.kind === "swap_token_for_token" ? "Swap" : parsedCommand.kind[0].toUpperCase() + parsedCommand.kind.slice(1);
+            await sendMessage(chatId, `${action} processing.`);
           } else {
             await ctx.runMutation(internal.telegramDeliveries.setText, { requestId, text: telegramResponse(result.message) });
             await ctx.runAction(internal.telegramDeliveries.deliver, { requestId });

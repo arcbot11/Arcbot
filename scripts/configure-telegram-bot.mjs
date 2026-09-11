@@ -24,8 +24,7 @@ const commands = [
   { command: "sell", description: "Sell an Arc token" },
   { command: "swap", description: "Swap between Arc tokens" },
   { command: "send", description: "Send Arc USDC or tokens" },
-  { command: "buyandsend", description: "Buy Arc tokens and send to a wallet" },
-  { command: "buyandburn", description: "Buy Arc tokens and burn them" },
+  { command: "withdraw", description: "Withdraw Base ETH" },
   { command: "burn", description: "Burn tokens" },
   { command: "help", description: "Show Argos Bot commands" },
   { command: "link", description: "Connect your X account" },
@@ -34,6 +33,14 @@ const commands = [
 
 const identity = await call("getMe", {});
 if (String(identity.id) !== "8280311402" || identity.username?.toLowerCase() !== "the_argosbot") throw new Error("Telegram bot identity does not match @The_ArgosBot");
+
+if (process.argv.includes("--commands-only")) {
+  await call("setMyCommands", { commands });
+  const current = await call("getMyCommands", {});
+  if (JSON.stringify(current) !== JSON.stringify(commands)) throw new Error("Telegram command menu verification failed");
+  console.log(JSON.stringify({status:"commands updated",username:identity.username,commands:current.map(c=>c.command)}));
+  process.exit(0);
+}
 
 if (brandingOnly) {
   const bot = await call("getMe", {});

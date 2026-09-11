@@ -1,4 +1,4 @@
-import {BASE_DUST_WEI,BASE_RECOVERY_WEI} from "./gas-recovery";
+import {BASE_DUST_WEI,BASE_RECOVERY_WEI,BASE_UNECONOMIC_REFUND_WEI} from "./gas-recovery";
 import { CdpClient } from "@coinbase/cdp-sdk";
 import { OTC_FEE_RECIPIENT } from "../project-config";
 import { getAddress, parseTransaction, type Hex } from "viem";
@@ -65,7 +65,7 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
     const returning=step==="return_arc"||step==="return_gas";
     // Probe the cost first; a return sends only balance above other users' gas credits.
     const probe=returning?{chainId:step==="return_arc"?5042 as const:8453 as const,owner:listing.owner,from:getAddress(listing.escrow!.address!),to:getAddress(step==="return_arc"?listing.seller:order!.buyer),value:0n,data:"0x" as Hex}:await escrowCall(readStore(),listing,step,order);
-    let prepared=await prepareCall(probe.chainId,probe,step==="fund"||!!order&&["arc","seller","fee"].includes(step));
+    let prepared=await prepareCall(probe.chainId,probe,returning||step==="fund"||!!order&&["arc","seller","fee"].includes(step));
     if(step==="fund"&&BigInt(prepared.gasWei)>BigInt(listing.escrow!.fundingGasWei)){
       listing=await repo.command<Listing>("escrow_funding_gas",{listingId:listing.id,gasWei:prepared.gasWei});
       if(listing.status!=="funding")return false;
@@ -94,7 +94,13 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
       const refundGasMargin=step==="return_gas"?2n:1n;
       for(let attempt=0;attempt<3;attempt++){
         const value=BigInt(prepared.snapshot.balanceWei)-others-BigInt(prepared.gasWei)*refundGasMargin;
-        if(value<=0n)throw new Error("Escrow needs gas to return the remaining funds.");
+        if(value<=0n){
+          const remainder=BigInt(prepared.snapshot.balanceWei)-others;
+          if(step==="return_gas"&&order&&remainder>=0n&&remainder<=BASE_UNECONOMIC_REFUND_WEI){
+            await repo.command("escrow_dust",{listingId:listing.id,orderId:order.id,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block,refundGasWei:prepared.gasWei});return true;
+          }
+          throw new Error("Escrow needs gas to return the remaining funds.");
+        }
         const call=await escrowCall(readStore(),listing,step,order,value);
         try{
           const next=await prepareCall(call.chainId,call);
@@ -104,7 +110,7 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
         }catch(error){
           if(attempt===2||!(error instanceof Error)||error.message!=="Not enough funds for the amount and gas.")throw error;
           // Recalculate only an unsigned refund. Never touch another owner's credits or a submitted transaction.
-          prepared=await prepareCall(probe.chainId,probe);
+          prepared=await prepareCall(probe.chainId,probe,true);
         }
       }
     }

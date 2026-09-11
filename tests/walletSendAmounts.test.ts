@@ -70,3 +70,14 @@ it("rejects stale wallet locks and mixed percentage/USD requests",async()=>{
  expect((await POST(request({percentage:25,amountUnit:"usd"}))).status).not.toBe(200);
  expect((await POST(request({chainId:8453,asset:"native",percentage:100}))).status).not.toBe(200);
 });
+
+it("does not withdraw funds reserved by another Base request",async()=>{
+ m.read.mockResolvedValue({holds:{other:(100n*10n**18n).toString()}});
+ const result=await POST(request({chainId:8453,asset:"native",amount:"0.001",amountUnit:"tokens"}));
+ expect(result.status).toBe(400);expect(await result.json()).toMatchObject({error:expect.stringContaining("Not enough available")});
+});
+it("rejects stale USD conversion before preparing a Base withdrawal",async()=>{
+ m.price.mockResolvedValue({ethUsdMicros:"2000000000",priceAt:Date.now()-120000});
+ const result=await POST(request({chainId:8453,asset:"native",amount:"10",amountUnit:"usd"}));
+ expect(result.status).toBe(400);expect(m.prepare).not.toHaveBeenCalled();
+});

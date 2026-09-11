@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { pageMetadata } from "@/lib/site-metadata";
 import type { Metadata } from "next";
 import { SiteHeader, SiteFooter } from "@/components/SiteChrome";

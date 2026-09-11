@@ -15,7 +15,7 @@ export type WalletCommand =
   | { kind: "show_wallet" }
   | { kind: "show_balance"; token?: string }
   | { kind: "show_burned"; token: string; expectedTicker?: string }
-  | { kind: "send"; amount: string; unit: AmountUnit; token?: string; recipient: string }
+  | { kind: "send"; chainId?: 8453; amount: string; unit: AmountUnit; token?: string; recipient: string }
   | { kind: "burn"; amount: string; unit: AmountUnit; token: string }
   | { kind: "buy"; amount: string; unit: "eth" | "usd" | "pair" | "token"; token: string; pairAsset?: string; slippageBps: number }
   | { kind: "buy_and_send"; amount: string; unit: "eth" | "usd" | "pair" | "token"; token: string; pairAsset?: string; recipient: string; slippageBps: number }
@@ -661,6 +661,11 @@ export function validateStructuredWalletCommand(value: unknown): WalletCommand |
     const token = item.token === undefined ? undefined : tokenIdentifier(item.token);
     if (item.token !== undefined && !token) return null;
     return { kind, ...(token ? { token } : {}) };
+  }
+  if (kind === "send" && item.chainId !== undefined) {
+    const amount=finitePositiveString(item.amount);
+    if(item.chainId!==8453||!amount||!["eth","usd"].includes(String(item.unit))||item.token!==undefined||typeof item.recipient!=="string"||!/^0x[a-fA-F0-9]{40}$/.test(item.recipient))return null;
+    return {kind,chainId:8453,amount,unit:item.unit as "eth"|"usd",recipient:item.recipient};
   }
   if (kind === "send") {
     const amount = finitePositiveString(item.amount);

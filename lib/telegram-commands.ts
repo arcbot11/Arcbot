@@ -1,21 +1,20 @@
 import { ARC_BOT_TELEGRAM_USERNAME } from "./project-config";
 import type { WalletCommand } from "../convex/walletCommands";
 
-export const TELEGRAM_HELP = "Argos Bot\nYour Arc Chain wallet.\n\nUse the buttons or a full /command. Arc gas is paid in USDC. Token names accept a ticker or contract address. Sends require a full wallet address.\n\nBase and OTC are available on the website only.";
+export const TELEGRAM_HELP = "Argos Bot\nYour Arc Chain wallet.\n\nUse the buttons or a full /command. Arc gas is paid in USDC. Token names accept a ticker or contract address. Sends require a full wallet address.";
 export const TELEGRAM_FORMATS: Record<string, string> = {
-  buy: "Buy with Arc USDC:\n/buy 10 USDC ARGUS\n/buy $10 ARGUS",
-  sell: "Sell for Arc USDC:\n/sell 100 ARGUS\n/sell $10 ARGUS\n/sell 50% ARGUS\n/sell all ARGUS",
+  buy: "Buy with Arc USDC:\n/buy 10 USDC ARGOS\n/buy $10 ARGOS",
+  sell: "Sell for Arc USDC:\n/sell 100 ARGOS\n/sell $10 ARGOS\n/sell 50% ARGOS\n/sell all ARGOS",
   swap: "Swap Arc tokens:\n/swap 100 ARGUS for TOKEN\n/swap $10 ARGUS for TOKEN\n/swap 50% ARGUS for TOKEN\n/swap all ARGUS for TOKEN",
   send: "Send Arc tokens:\n/send 10 USDC to ADDRESS\n/send 100 ARGUS to ADDRESS\n/send $10 ARGUS to ADDRESS\n/send 50% ARGUS to ADDRESS\nReplace ADDRESS with a full 0x wallet address.",
+  withdraw: "Withdraw Base ETH:\n/withdraw 0.001 ETH to ADDRESS\n/withdraw $10 to ADDRESS\nReplace ADDRESS with a full 0x wallet address. Base gas is paid in ETH.",
   burn: "Burn Arc tokens. Burns are permanent.\n/burn 100 ARGUS",
-  buyandsend: "Buy with Arc USDC and send the tokens:\n/buyandsend 10 USDC ARGUS to ADDRESS\nReplace ADDRESS with a full 0x wallet address.",
-  buyandburn: "Buy with Arc USDC and burn the tokens. Burns are permanent.\n/buyandburn 10 USDC ARGUS",
 };
 export const TELEGRAM_MENU = { inline_keyboard: [
   [{ text: "Wallet", callback_data: "/wallet" }, { text: "Balances", callback_data: "/balance" }],
   [{ text: "Buy", callback_data: "/buy" }, { text: "Sell", callback_data: "/sell" }, { text: "Swap", callback_data: "/swap" }],
   [{ text: "Send", callback_data: "/send" }, { text: "Burn", callback_data: "/burn" }],
-  [{ text: "Buy and Send", callback_data: "/buyandsend" }, { text: "Buy and Burn", callback_data: "/buyandburn" }],
+  [{ text: "Withdraw Base ETH", callback_data: "/withdraw" }],
   [{ text: "Help", callback_data: "/help" }, { text: "Unlink X", callback_data: "/unlink" }],
 ] };
 const commands = new Set(["start", "help", "link", "unlink", "wallet", "balance", ...Object.keys(TELEGRAM_FORMATS)]);
@@ -37,14 +36,20 @@ export function telegramWalletCommand(name: string, args: string): WalletCommand
   if (name === "wallet") return args ? null : { kind: "show_wallet" };
   if (name === "balance") return !args ? { kind: "show_balance" } : new RegExp(`^${token}$`).test(args) ? { kind: "show_balance", token: args } : null;
   let match: RegExpMatchArray | null;
-  if (["buy", "buyandsend", "buyandburn"].includes(name)) {
-    const recipient = name === "buyandsend" ? "\\s+to\\s+(0x[a-fA-F0-9]{40})" : "";
-    match = args.match(new RegExp(`^(?:\\$${number}|${number}\\s+USDC)\\s+(?:of\\s+)?${token}${recipient}$`, "i"));
+  if (name === "withdraw") {
+    match=args.match(/^(?:(\d+(?:\.\d+)?|\.\d+)\s+ETH|\$(\d+(?:\.\d+)?|\.\d+))\s+to\s+(0x[a-fA-F0-9]{40})$/i);
+    if(!match)return null;
+    const amount=match[1]||match[2];
+    if(!(Number(amount)>0)||!Number.isFinite(Number(amount)))return null;
+    return {kind:"send",chainId:8453,amount,unit:match[1]?"eth":"usd",recipient:match[3]};
+  }
+  if (name === "buy") {
+    match = args.match(new RegExp(`^(?:\\$${number}|${number}\\s+USDC)\\s+(?:of\\s+)?${token}$`, "i"));
     if (!match) return null;
     const amount = match[1] || match[2];
     if (!(Number(amount) > 0) || !Number.isFinite(Number(amount))) return null;
     const base = { amount, unit: "usd" as const, token: match[3], slippageBps };
-    return name === "buyandsend" ? { kind: "buy_and_send", ...base, recipient: match[4] } : { kind: name === "buyandburn" ? "buy_and_burn" : "buy", ...base };
+    return { kind: "buy", ...base };
   }
   if (!["sell", "swap", "send", "burn"].includes(name)) return null;
   const suffix = name === "swap" ? `\\s+(?:for|to)\\s+${token}` : name === "send" ? "\\s+to\\s+(0x[a-fA-F0-9]{40})" : "";

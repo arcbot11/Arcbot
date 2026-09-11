@@ -1,5 +1,7 @@
 # X and website execution review
 
+> Historical audit. Account and deployment observations below are superseded by `docs/readiness-followup-2026-09-11.md`. Current public identities are in `lib/project-config.ts`.
+
 Reviewed September 11, 2026. Changes are local; deployment is required.
 
 ## Execution

@@ -31,3 +31,8 @@ it("keeps public help aligned with Arc USDC and current fees", () => {
   expect(walletHelpMessage("pairs")).not.toMatch(/legacy|MSFT|SPY|robinhood/i);
   expect(walletHelpMessage("buy_sell")).not.toMatch(/pending|coming soon/i);
 });
+
+it("uses Basescan for Base withdrawal receipts",()=>{
+ const reply=arcCommandResponse("Base withdrawal confirmed.",wallet,hash,8453);
+ expect(reply).toContain("https://basescan.org/tx/"+hash);expect(reply).not.toContain("arcexplorer.org/tx");
+});

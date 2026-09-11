@@ -1,5 +1,7 @@
 # Argos Bot branding — 2026-09-10
 
+> Historical audit. Account and deployment observations below are superseded by `docs/readiness-followup-2026-09-11.md`. Current public identities are in `lib/project-config.ts`.
+
 Website pages, metadata, social cards, app manifest, navigation, footer, legal pages, wallet responses, X replies, Telegram responses, setup scripts, license and package name now use Argos Bot. The approved full-body dog and text banner replace the bear. Retired public images are archived outside the web root. Favicons and compatibility image URLs are regenerated.
 
 Website URL is https://www.argosbot.io. X account IDs, wallet mappings, signing identities, recipient addresses, service-fee recipient, support email and transaction configuration are unchanged.

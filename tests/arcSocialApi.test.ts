@@ -13,6 +13,45 @@ const request=(secret="secret")=>new NextRequest("https://www.argosbot.io/api/ar
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","secret");command={kind:"send",unit:"usd",amount:"10",recipient};m.auth.mockImplementation(async()=>({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()}));m.read.mockResolvedValue(null);m.prepare.mockResolvedValue({unsigned:"0x02",reserveWei:"10000000000000000100",snapshot:{balanceWei:"20000000000000000000",block:"1"}});m.command.mockImplementation(async(_kind,tx)=>({...tx,status:"prepared"}));m.advance.mockResolvedValue({status:"submitted",hash:"txhash"});});
 afterEach(()=>vi.unstubAllEnvs());
 describe("Arc social execution boundary",()=>{
+ it.each([
+   "Unsupported Argus pool configuration.","Unexpected Argus Portal format.",
+   "Argus hook identity mismatch.","Argus pool ID mismatch.",
+   "Hook execution requires a reviewed adapter","No supported liquid Arc route found.",
+ ])("returns a definite preparation error immediately: %s",async message=>{
+   command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:100};
+   m.trade.mockRejectedValue(Error(message));
+   expect(await(await POST(request())).json()).toEqual({ok:false,message});
+   expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+ });
+ it("reports an unsupported swap immediately even after a completed approval",async()=>{
+   command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:100};
+   m.read.mockResolvedValueOnce({chainId:5042,status:"completed",leg:"allowance"}).mockResolvedValue(null);
+   m.trade.mockRejectedValue(Error("Unsupported Argus pool configuration."));
+   expect(await(await POST(request())).json()).toEqual({ok:false,message:"Unsupported Argus pool configuration."});
+   expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+ });
+ it.each(["RPC timed out","Malformed RPC response"])("keeps transient preparation failures retryable: %s",async message=>{
+   command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:100};
+   m.trade.mockRejectedValue(Error(message));
+   expect(await(await POST(request())).json()).toMatchObject({pending:true});
+   expect(m.command).not.toHaveBeenCalled();
+ });
+ it.each(["Unsupported Argus pool configuration.","Not enough gas"])("does not finalize uncertain recovery from error wording: %s",async message=>{
+   m.read.mockResolvedValue({chainId:5042,status:"submitted",leg:"swap"});
+   m.advance.mockRejectedValue(Error(message));
+   expect(await(await POST(request())).json()).toMatchObject({pending:true});
+   expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
+ });
+ it("keeps a lost storage response pending even if its message resembles validation",async()=>{
+   m.command.mockRejectedValue(Error("Not enough gas"));
+   expect(await(await POST(request())).json()).toMatchObject({pending:true});
+   expect(m.advance).not.toHaveBeenCalled();
+ });
+ it("keeps an unreadable transaction record pending",async()=>{
+   m.read.mockRejectedValueOnce(Error("Unsupported Argus pool configuration."));
+   expect(await(await POST(request())).json()).toMatchObject({pending:true});
+   expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
+ });
  it("prepares buy-and-send to its already resolved wallet",async()=>{
    command={kind:"buy_and_send",unit:"usd",amount:"10",token:"0x3333333333333333333333333333333333333333",recipient,slippageBps:100};
    m.trade.mockResolvedValue({unsigned:"0x02",leg:"swap",reserveWei:"100",swapOutput:{token:"0x3333333333333333333333333333333333333333",minimum:"25",recipient},snapshot:{balanceWei:"1000",block:"1"}});
@@ -32,10 +71,10 @@ describe("Arc social execution boundary",()=>{
  it("sends Arc USDC through the same durable reservation store",async()=>{const r=await POST(request());expect((await r.json()).pending).toBe(true);expect(m.prepare).toHaveBeenCalledWith(5042,expect.objectContaining({from:wallet,to:recipient,value:10n*10n**18n}));expect(m.command).toHaveBeenCalledWith("prepare",expect.objectContaining({owner:"alice",chainId:5042,sourceRequestId:"x:123:send"}));});
  it("never executes Base ETH from social channels",async()=>{command={kind:"send",unit:"eth",amount:"1",recipient};expect((await(await POST(request())).json()).ok).toBe(false);expect(m.prepare).not.toHaveBeenCalled();});
  it("rejects creation workflows",async()=>{command={kind:"launch",name:"test"};expect((await(await POST(request())).json()).ok).toBe(false);expect(m.command).not.toHaveBeenCalled();});
- it("does not duplicate completed social transactions",async()=>{m.read.mockResolvedValue({status:"completed",leg:"send",hash:"old"});expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"old"});expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();});
- it("keeps an ambiguous stored transaction pending",async()=>{m.read.mockResolvedValue({status:"submitted",leg:"send"});expect((await(await POST(request())).json()).pending).toBe(true);expect(m.prepare).not.toHaveBeenCalled();});
+ it("does not duplicate completed social transactions",async()=>{m.read.mockResolvedValue({chainId:5042,status:"completed",leg:"send",hash:"old"});expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"old"});expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();});
+ it("keeps an ambiguous stored transaction pending",async()=>{m.read.mockResolvedValue({chainId:5042,status:"submitted",leg:"send"});expect((await(await POST(request())).json()).pending).toBe(true);expect(m.prepare).not.toHaveBeenCalled();});
  it("does not report a failed trade when receipt verification times out",async()=>{
-   m.read.mockResolvedValue({status:"submitted",leg:"swap"});m.advance.mockRejectedValue(Error("RPC timed out"));
+   m.read.mockResolvedValue({chainId:5042,status:"submitted",leg:"swap"});m.advance.mockRejectedValue(Error("RPC timed out"));
    expect(await(await POST(request())).json()).toMatchObject({pending:true});expect(m.prepare).not.toHaveBeenCalled();
  });
  it("allows slow approval workflows twenty minutes after the command",async()=>{
@@ -45,7 +84,7 @@ describe("Arc social execution boundary",()=>{
  it("expires permission to create new transactions but continues checking existing submissions",async()=>{
    m.auth.mockResolvedValue({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()-40*60_000});
    expect(await(await POST(request())).json()).toMatchObject({ok:false,message:expect.stringMatching(/^Request expired/)});expect(m.prepare).not.toHaveBeenCalled();
-   m.read.mockResolvedValue({status:"submitted",leg:"send"});m.advance.mockResolvedValue({status:"completed",leg:"send",hash:"verified"});
+   m.read.mockResolvedValue({chainId:5042,status:"submitted",leg:"send"});m.advance.mockResolvedValue({status:"completed",leg:"send",hash:"verified"});
    expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"verified"});expect(m.prepare).not.toHaveBeenCalled();
  });
 });
@@ -70,4 +109,17 @@ it("does not submit social sends against funds reserved on the website",async()=
 it("reports a newly verified send without another recovery round",async()=>{
  m.advance.mockResolvedValue({status:"completed",leg:"send",hash:"verified"});
  expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"verified"});
+});
+
+it("prepares Telegram Base ETH through the shared withdrawal pipeline",async()=>{
+ command={kind:"send",chainId:8453,unit:"eth",amount:"0.001",recipient};
+ m.auth.mockResolvedValue({source:"telegram",owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()});
+ expect(await(await POST(request())).json()).toMatchObject({pending:true});
+ expect(m.prepare).toHaveBeenCalledWith(8453,{from:wallet,to:recipient,value:1000000000000000n,data:"0x"});
+ expect(m.command).toHaveBeenCalledWith("prepare",expect.objectContaining({chainId:8453,leg:"send",sourceRequestId:"x:123:send"}));
+});
+it.each(["x",undefined])("rejects Base withdrawal without explicit Telegram authority: %s",async source=>{
+ command={kind:"send",chainId:8453,unit:"eth",amount:"0.001",recipient};
+ m.auth.mockResolvedValue({source,owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()});
+ expect(await(await POST(request())).json()).toMatchObject({ok:false});expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
 });

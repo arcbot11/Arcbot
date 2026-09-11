@@ -2,6 +2,7 @@ import { type Store, type Transaction, wallet, locked, MIN_USDC, cancelListing }
 import { completedStep, escrowRecords, escrowTxId } from "./escrow-model";
 
 export const BASE_DUST_WEI=1_000_000_000_000n; // 0.000001 ETH; ownership remains recorded.
+export const BASE_UNECONOMIC_REFUND_WEI=10n*BASE_DUST_WEI; // At most 0.00001 ETH stays credited.
 export const BASE_RECOVERY_WEI=BASE_DUST_WEI;
 
 export async function retainArcDust(store:Store,listingId:string,balanceWei:string,block:string,now:number){
@@ -33,7 +34,7 @@ export async function repriceFunding(store:Store,listingId:string,gasWei:string,
   await store.put(listing);return listing;
 }
 
-export async function retainGasDust(store:Store,listingId:string,orderId:string,balanceWei:string,block:string,now:number){
+export async function retainGasDust(store:Store,listingId:string,orderId:string,balanceWei:string,block:string,now:number,refundGasWei?:string){
   const {listing,order}=await escrowRecords(store,listingId,orderId);
   if(order!.status==="completed"||order!.escrow!.refundSkipped)return order;
   for(const step of ["deposit","arc","seller","fee"] as const)if(!await completedStep(store,listing,step,order))throw Error("Payouts must be verified before retaining dust.");
@@ -41,7 +42,9 @@ export async function retainGasDust(store:Store,listingId:string,orderId:string,
   const w=await wallet(store,8453,order!.escrow!.address,listing.owner,now);
   if(w.activeTx||(w.lastSettledBlock&&BigInt(block)<BigInt(w.lastSettledBlock)))throw Error("Dust balance is not current.");
   const remainder=BigInt(balanceWei)-locked(w);
-  if(remainder<0n||remainder>BASE_DUST_WEI)throw Error("Remainder exceeds the dust limit.");
+  const gas=refundGasWei===undefined?0n:BigInt(refundGasWei);
+  const uneconomic=gas>0n&&remainder<=2n*gas&&remainder<=BASE_UNECONOMIC_REFUND_WEI;
+  if(remainder<0n||(remainder>BASE_DUST_WEI&&!uneconomic))throw Error("Remainder exceeds the dust limit.");
   w.holds[`gas-credit:${order!.id}`]=remainder.toString();w.updatedAt=now;
   order!.escrow!.gasRemainderWei=remainder.toString();order!.escrow!.refundSkipped=true;order!.updatedAt=now;
   await store.put(w);await store.put(order!);return order;

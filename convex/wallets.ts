@@ -3662,6 +3662,7 @@ export const executeCommand = internalAction({
       : null;
     if (args.source === "telegram" && !structured) return { ok: false, message: "Use a full /command. Open /help for formats." };
     let command = structured || parseWalletCommand(args.text);
+    if(command.kind==="send"&&command.chainId===8453&&args.source!=="telegram")return {ok:false,message:"Base withdrawals are available in Telegram and on the website."};
     if (disabledCreationKind(command.kind)) return { ok: false, message: "Command not supported." };
     if (!arcPublicSource(args.source)) return { ok: false, message: "Use the wallet page controls." };
     if (!arcPublicCommand(command.kind) && command.kind !== "unknown") return { ok: false, message: "Command not supported. Use wallet, balance, buy, sell, swap, send or burn." };
@@ -3727,7 +3728,7 @@ export const executeCommand = internalAction({
     try {
       // Burn inquiries preserve their explicit ticker separately and validate
       // it in the inquiry handler, where failed matches can save a CA reply.
-      if (command.kind !== "show_burned") command = await normalizeExplicitTickerContracts(ctx, command, args.text);
+      if (command.kind !== "show_burned" && !(command.kind === "send" && command.chainId === 8453)) command = await normalizeExplicitTickerContracts(ctx, command, args.text);
     } catch (error) {
       const ticker = (error instanceof Error ? error.message : "").match(tokenPattern(/^TOKEN_CONTRACT_TICKER_MISMATCH:([A-Z0-9]{1,32})$/))?.[1];
       if (ticker) return {
@@ -3762,7 +3763,7 @@ Tap the link above to view holdings.`,
             chainId: WALLET_HOME_CHAIN_ID, walletRef: wallet.signerWalletRef, expectedAddress: wallet.address,
             ownerReference: `x:${args.xUserId}`, ...(command.token ? { token: command.token } : {}),
           }, 60_000);
-          return { ok: true, message: `Arc balances\n${balance.display}\n\nYour wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}` };
+          return { ok: true, message: `Balances\n${balance.display}${args.source === "telegram" ? "" : `\n\nYour wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`}` };
         }
         await ctx.runMutation(internal.registry.ensureInitialized, {});
         const knownTokens = command.token
@@ -6991,7 +6992,7 @@ export const revokeWebSession = action({
   },
 });
 
-export const authorizeArcCommand=action({args:{secret:v.string(),requestId:v.string()},handler:async(ctx,args):Promise<{owner:string;wallet:string;command:string;createdAt:number}>=>{
+export const authorizeArcCommand=action({args:{secret:v.string(),requestId:v.string()},handler:async(ctx,args):Promise<{owner:string;wallet:string;command:string;createdAt:number;source:string}>=>{
   if(!process.env.WEB_AUTH_SECRET||args.secret!==process.env.WEB_AUTH_SECRET)throw new Error("Unauthorized.");
   const request=await ctx.runQuery(internal.wallets.getWalletRequest,{requestId:args.requestId});
   if(!request||!["x","telegram"].includes(request.source??"x")||["rejected","failed","skipped"].includes(request.status))throw new Error("Request is not authorized.");
@@ -6999,7 +7000,9 @@ export const authorizeArcCommand=action({args:{secret:v.string(),requestId:v.str
   if(request.source==="telegram"&&!await ctx.runQuery(internal.telegram.executionAuthorized,{updateId:request.telegramUpdateId,ownerXUserId:request.ownerXUserId}))throw new Error("Telegram authorization changed.");
   const context=await ctx.runQuery(internal.wallets.getXUserAndWallet,{xUserId:request.ownerXUserId});
   if(!context?.wallet||context.wallet.status!=="active"||context.wallet._id!==request.walletId)throw new Error("Wallet authorization changed.");
-  return {owner:request.ownerXUserId,wallet:context.wallet.address,command:request.normalizedJson,createdAt:request._creationTime};
+  const command=JSON.parse(request.normalizedJson);
+  if(command.chainId===8453&&request.source!=="telegram")throw new Error("Request is not authorized.");
+  return {owner:request.ownerXUserId,wallet:context.wallet.address,command:request.normalizedJson,createdAt:request._creationTime,source:request.source??"x"};
 }});
 
 export const continueArcCommand=internalAction({args:{requestId:v.string(),attempt:v.optional(v.number())},handler:async(ctx,args):Promise<CommandResult>=>{
@@ -7008,7 +7011,8 @@ export const continueArcCommand=internalAction({args:{requestId:v.string(),attem
   const request=await ctx.runQuery(internal.wallets.getWalletRequest,{requestId:args.requestId});
   if(!request)return {ok:false,message:"Request not found."};
   const walletContext = await ctx.runQuery(internal.wallets.getXUserAndWallet, { xUserId: request.ownerXUserId });
-  const responseMessage = (message: string, hash?: string) => walletContext?.wallet?.address ? arcCommandResponse(message, walletContext.wallet.address, hash) : message;
+  const savedCommand=JSON.parse(request.normalizedJson??"{}");
+  const responseMessage = (message: string, hash?: string) => walletContext?.wallet?.address ? arcCommandResponse(message, walletContext.wallet.address, hash, savedCommand.kind==="send"&&savedCommand.chainId===8453?8453:5042) : message;
   if(["confirmed","failed","rejected"].includes(request.status))return {ok:request.status==="confirmed",message:responseMessage(request.finalMessage??"Check wallet history.", request.transactionHash)};
   let result:{ok?:boolean;pending?:boolean;message:string;hash?:string};
   try{
@@ -7021,7 +7025,7 @@ export const continueArcCommand=internalAction({args:{requestId:v.string(),attem
     // X owns one interaction retry chain, which also publishes the final reply.
     // Do not create a second self-scheduling chain on every X poll.
     if(request.source==="telegram")await ctx.scheduler.runAfter(arcPendingRetryDelay(request._creationTime),internal.wallets.continueArcCommand,{requestId:args.requestId,attempt:(args.attempt??0)+1});
-    return {ok:false,pending:true,message:result.message,...(result.hash?{transactionHash:result.hash}:{})};
+    return {ok:false,pending:true,deferred:true,message:"",...(result.hash?{transactionHash:result.hash}:{})};
   }
   await ctx.runMutation(internal.wallets.updateWalletRequest,{requestId:args.requestId,status:result.ok?"confirmed":"failed",finalMessage:result.message,...(result.hash?{transactionHash:result.hash}:{})});
   return {ok:!!result.ok,message:result.message,...(result.hash?{transactionHash:result.hash}:{})};
