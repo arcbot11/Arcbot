@@ -38,5 +38,5 @@ export async function arcSocialBalance(wallet: `0x${string}`, identifier?: strin
       return `${formatUnits(BigInt(snapshot.balanceWei),18)} Base ETH${usd?` (${usd})`:""}`;
     } catch { return "Base balance unavailable."; }
   })()]);
-  return { display: [usdc, ...(base?[base]:[]), ...holdings.tokens.map(t => `${balanceWithUsd(`${displayAmount(t.balance, 0)} ${t.symbol}`, t.usdValue ?? undefined)}\n${t.address}`), ...(holdings.partial ? ["Some token balances are unavailable. Check the balance using a contract address."] : [])].join("\n\n") };
+  return { display: [usdc, ...holdings.tokens.map(t => `${balanceWithUsd(`${displayAmount(t.balance, 0)} ${t.symbol}`, t.usdValue ?? undefined)}\nhttps://www.arcexplorer.org/token/${t.address}`), ...(base?[base]:[]), ...(holdings.partial ? ["Some token balances are unavailable. Check the balance using a contract address."] : [])].join("\n\n") };
 }

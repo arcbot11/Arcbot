@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { formatTokenUsd } from "@/lib/arc/token-value";
+import { formatBalanceUsd } from "@/lib/balance-display";
 import {displayTokenAmount,isUsdcAsset} from "@/lib/amount-display";
 import type { ArcTokenBalance } from "@/lib/arc/wallet-tokens";
 
@@ -10,7 +10,7 @@ export function HoldingCard({token,onError,onTrade,busy}:{token:ArcTokenBalance;
   const balance=displayTokenAmount(token.balance,token.address);
   return <article className="arc-holding-card">
     <div className="arc-holding-top"><div className="arc-holding-mark" aria-hidden="true">{token.symbol.slice(0,2).toUpperCase()}</div><div><h3>{token.symbol}</h3><p>{token.name}</p></div><span className="arc-holding-chain">ARC</span></div>
-    <div className="arc-holding-amount"><span>Balance</span><strong>{balance}</strong><small>{token.symbol}{!isUsdcAsset(token.address)&&<> · <span title={token.pricedAt?`Explorer price as of ${token.pricedAt}`:undefined}>{formatTokenUsd(token.usdValue)}</span></>}</small></div>
+    <div className="arc-holding-amount"><span>Balance</span><strong>{balance} {token.symbol}</strong>{!isUsdcAsset(token.address)&&<small title={token.pricedAt?`Price as of ${token.pricedAt}`:undefined}>{token.usdValue!=null?`(${formatBalanceUsd(token.usdValue)})`:"USD estimate unavailable"}</small>}</div>
     <div className="arc-holding-contract"><span>Contract address</span><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(token.address);setCopied(true);}catch{onError("Could not copy the contract address. Select and copy it below.");}}} aria-label={`Copy ${token.symbol} contract address`}>{copied?"Copied":"Copy CA"}</button><code>{token.address}</code></div>
     <a className="arc-text-link" href={`https://www.arcexplorer.org/token/${token.address}`} target="_blank" rel="noreferrer">View on explorer ↗</a>
     {onTrade&&<div className="arc-sell-percentages" role="group" aria-label={`Trade ${token.symbol}`}><button type="button" disabled={busy} aria-label={`Buy ${token.symbol}`} onClick={()=>onTrade("buy",token.address)}>Buy</button><button type="button" disabled={busy} aria-label={`Sell ${token.symbol}`} onClick={()=>onTrade("sell",token.address)}>Sell</button></div>}
