@@ -7,7 +7,7 @@ import { arcConfigFromEnv } from "../arc/config";
 import { baseConfigFromEnv } from "../base/config";
 import { type Store, type Listing, type Order, type Transaction, type Wallet, type RecordValue, locked, walletId } from "./model";
 import { repository } from "./repository";
-import { advanceTransaction, balanceSnapshot, prepareCall, walletTransferConfiguration } from "./runtime";
+import { advanceTransaction, balanceSnapshot, chainClient, prepareCall, walletTransferConfiguration } from "./runtime";
 import { escrowCall, escrowRecords, escrowTxId, settlementSteps, type EscrowStep } from "./escrow-model";
 
 export function escrowConfiguration(){
@@ -47,14 +47,16 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
     if(returning){
       const w=await repo.read<Wallet|null>({id:walletId(probe.chainId,probe.from)});
       const others=w?locked(w)-BigInt(w.holds[listing.id]??"0"):0n;
+      const refundGasMargin=step==="return_gas"?2n:1n;
       for(let attempt=0;attempt<3;attempt++){
-        const value=BigInt(prepared.snapshot.balanceWei)-others-BigInt(prepared.gasWei);
+        const value=BigInt(prepared.snapshot.balanceWei)-others-BigInt(prepared.gasWei)*refundGasMargin;
         if(value<=0n)throw new Error("Escrow needs gas to return the remaining funds.");
         const call=await escrowCall(readStore(),listing,step,order,value);
         try{
           const next=await prepareCall(call.chainId,call);
-          if(BigInt(next.reserveWei)+others>BigInt(next.snapshot.balanceWei))throw new Error("Not enough funds for the amount and gas.");
-          prepared=next;break;
+          const gasWei=BigInt(next.gasWei)*refundGasMargin,reserveWei=value+gasWei;
+          if(reserveWei+others>BigInt(next.snapshot.balanceWei))throw new Error("Not enough funds for the amount and gas.");
+          prepared={...next,gasWei:gasWei.toString(),reserveWei:reserveWei.toString()};break;
         }catch(error){
           if(attempt===2||!(error instanceof Error)||error.message!=="Not enough funds for the amount and gas.")throw error;
           // Recalculate only an unsigned refund. Never touch another owner's credits or a submitted transaction.
@@ -65,7 +67,12 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
     record=await repo.command<Transaction>("escrow_prepare",{listingId:listing.id,...(order?{orderId:order.id}:{}),step,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,gasWei:prepared.gasWei,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
   }
   if(record.status!=="completed")await advanceTransaction(record.id);
-  const latest=await repo.read<Transaction>({id});
+  let latest=await repo.read<Transaction>({id});
+  if(latest.status==="submitted"&&latest.hash){
+    // Continue a promptly mined payout in this worker pass instead of waiting a minute per leg.
+    const receipt=await chainClient(latest.chainId).waitForTransactionReceipt({hash:latest.hash as Hex,timeout:8000,pollingInterval:1000}).catch(()=>null);
+    if(receipt){await advanceTransaction(id,true);latest=await repo.read<Transaction>({id});}
+  }
   if(latest.status==="reverted")throw new Error("Escrow transaction reverted. Retry settlement after checking balances.");
   return latest.status==="completed";
 }
@@ -83,9 +90,23 @@ export async function advanceEscrowOrder(order:Order){
   if(!order.escrow||["quoted","completed","expired","payment_failed"].includes(order.status))return;
   const repo=repository(),listing=await repo.read<Listing>({id:order.listingId});
   for(const step of settlementSteps(order)){
-    if(!await runStep(listing,step,order))return;
-    if(step!=="return_gas")await repo.command("escrow_advance",{listingId:listing.id,orderId:order.id});
+    let complete=false;
+    for(let attempt=0;attempt<3;attempt++){
+      try{complete=await runStep(listing,step,order);break;}
+      catch(error){
+        const message=error instanceof Error?error.message:"";
+        if(step==="arc"||attempt===2||!/Receipt is not canonical|Base RPC block is unavailable|Block at number.*could not be found/i.test(message))throw error;
+        // Re-read the durable step; never construct a replacement for a submitted transaction.
+        await new Promise(resolve=>setTimeout(resolve,1000*(attempt+1)));
+      }
+    }
+    if(!complete){
+      await repo.command("escrow_advance",{listingId:listing.id,orderId:order.id});
+      return;
+    }
   }
+  // A resumed order may already have every receipt, including its refund.
+  // Finalize once with the balance evidence; an intermediate advance without it throws.
   const balance=await balanceSnapshot(8453,order.escrow.address);
   await repo.command("escrow_advance",{listingId:listing.id,orderId:order.id,baseBalanceWei:balance.balanceWei,baseBlock:balance.block});
 }

@@ -28,8 +28,8 @@ export function MobileNav() {
       <Link href="/wallet" onClick={() => setOpen(false)}>Wallet</Link>
       <Link href="/guide" onClick={() => setOpen(false)}>Guide</Link>
       <Link href="/otc" onClick={() => setOpen(false)}>OTC Market</Link>
-      <a href={brand.xUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>X ↗</a>
-      <a href={brand.telegramUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>TG ↗</a>
+      <a href={brand.xUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>X</a>
+      <a href={brand.telegramUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>TG</a>
       <WalletAccountMenu />
     </div> : null}
   </div>;

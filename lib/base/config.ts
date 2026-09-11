@@ -11,6 +11,7 @@ const rpcUrl = z.string().url().refine((value) => {
 }, "Base RPC must be an explicit HTTPS endpoint without embedded user credentials");
 const configuration = z.object({
   rpcUrl,
+  rpcFallbackUrls: z.array(rpcUrl).max(4).default(["https://base.gateway.tenderly.co"]),
   checkpointNumber: uint,
   checkpointHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
   maxHeadAgeSeconds: z.number().int().min(1).max(300).default(30),
@@ -32,6 +33,7 @@ export function baseConfigFromEnv(env: Record<string, string | undefined> = proc
     throw new Error("Configure BASE_MAINNET_RPC_URL, BASE_CHECKPOINT_NUMBER and BASE_CHECKPOINT_HASH before preparing Base transactions");
   }
   return baseConfig({ rpcUrl: env.BASE_MAINNET_RPC_URL,
+    ...(env.BASE_RPC_FALLBACK_URLS!==undefined?{rpcFallbackUrls:env.BASE_RPC_FALLBACK_URLS.split(",").map(v=>v.trim()).filter(Boolean)}:{}),
     checkpointNumber: env.BASE_CHECKPOINT_NUMBER, checkpointHash: env.BASE_CHECKPOINT_HASH,
     ...BASE_GAS_POLICY,
   });

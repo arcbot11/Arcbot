@@ -1,4 +1,5 @@
-import { createPublicClient, http, parseAbi, serializeTransaction, size, TransactionReceiptNotFoundError, type Address, type Hex } from "viem";
+import { createPublicClient, parseAbi, serializeTransaction, size, TransactionReceiptNotFoundError, type Address, type Hex } from "viem";
+import { baseTransport } from "./transport";
 import { BASE_CHAIN_ID, baseChain, type BaseConfig } from "./config";
 import type { BaseTransaction } from "./transfers";
 export type BaseBlock = { number: bigint; hash: Hex; timestamp: bigint };
@@ -21,7 +22,7 @@ export interface BaseRpc {
 const oracle = "0x420000000000000000000000000000000000000F";
 const feeAbi = parseAbi(["function getL1FeeUpperBound(uint256) view returns (uint256)", "function getOperatorFee(uint256) view returns (uint256)"]);
 export function createBaseRpc(config: BaseConfig): BaseRpc {
-  const client = createPublicClient({ chain: baseChain(config), transport: http(config.rpcUrl, { batch: false, retryCount: 0, timeout: 12000 }) });
+  const client = createPublicClient({ chain: baseChain(config), transport: baseTransport(config) });
   const mined = (b: { number: bigint | null; hash: Hex | null; timestamp: bigint }): BaseBlock => {
     if (b.number === null || !b.hash) throw new Error("Unmined Base block");
     return { number: b.number, hash: b.hash, timestamp: b.timestamp };

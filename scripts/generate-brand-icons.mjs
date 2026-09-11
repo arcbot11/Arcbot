@@ -3,8 +3,8 @@ import path from "node:path";
 import sharp from "sharp";
 
 const root = process.cwd();
-const source = path.join(root, "public", "brand", "arc-bot-logo.png");
-const iconSource = path.join(root, "public", "brand", "arc-bot-icon-circle.png");
+const source = path.join(root, "public", "brand", "arctos-bear-logo.png");
+const iconSource = path.join(root, "public", "brand", "arctos-bear-favicon.png");
 
 
 async function icon(size) { return sharp(iconSource).resize(size, size).png().toBuffer(); }
@@ -26,7 +26,7 @@ function ico(pngs) {
 }
 
 await sharp(source).png().toFile(path.join(root, "public", "arcbot.png"));
-await sharp(path.join(root, "public", "brand", "arctos-bot-social-banner.jpg")).png().toFile(path.join(root, "public", "arcbot-banner.png"));
+await sharp(path.join(root, "public", "brand", "arctos-bear-social-banner.jpg")).png().toFile(path.join(root, "public", "arcbot-banner.png"));
 const sizes = new Map();
 for (const size of [16, 32, 48, 180, 192, 512]) sizes.set(size, await icon(size));
 await Promise.all([

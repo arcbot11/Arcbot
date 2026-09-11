@@ -3,11 +3,11 @@ import { serializeTransaction } from "viem";
 import { type RecordValue, type Listing, type Order, type Transaction } from "../lib/otc/model";
 import { escrowTxId } from "../lib/otc/escrow-model";
 
-const m=vi.hoisted(()=>({read:vi.fn(),command:vi.fn(),identity:vi.fn(),account:vi.fn(),prepare:vi.fn(),advance:vi.fn()}));
-vi.mock("../lib/otc/runtime",()=>({prepareCall:m.prepare,advanceTransaction:m.advance,balanceSnapshot:vi.fn(),walletTransferConfiguration:vi.fn()}));
+const m=vi.hoisted(()=>({read:vi.fn(),command:vi.fn(),identity:vi.fn(),account:vi.fn(),prepare:vi.fn(),advance:vi.fn(),balance:vi.fn(),receipt:vi.fn()}));
+vi.mock("../lib/otc/runtime",()=>({prepareCall:m.prepare,advanceTransaction:m.advance,balanceSnapshot:m.balance,chainClient:()=>({waitForTransactionReceipt:m.receipt}),walletTransferConfiguration:vi.fn()}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.command,identity:m.identity})}));
 vi.mock("@coinbase/cdp-sdk",()=>({CdpClient:class{evm={getOrCreateAccount:m.account};}}));
-import { assertEscrowTransaction, escrowAccountName, provisionEscrow, advanceEscrowPosition } from "../lib/otc/escrow-runtime";
+import { assertEscrowTransaction, escrowAccountName, provisionEscrow, advanceEscrowPosition, advanceEscrowOrder } from "../lib/otc/escrow-runtime";
 
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222",escrow="0x3333333333333333333333333333333333333333",fee="0x4444444444444444444444444444444444444444";
 let records:Map<string,RecordValue>,listing:Listing,order:Order;
@@ -73,4 +73,59 @@ describe("escrow signing authority",()=>{
     verifyDeposits();
     for(const tx of [arcPayout(seller),{...arcPayout(),owner:"buyer"},{...arcPayout(),wallet:buyer},{...arcPayout(),id:"escrow:forged"}])await expect(assertEscrowTransaction(tx)).rejects.toThrow();
   });
+});
+
+
+it.each([1,2] as const)('finalizes a resumed v%s order with balance evidence after all receipts exist',async(version)=>{
+  order.escrow!.version=version;
+  records.set(order.id,order);
+  for(const step of ['fund','gas','deposit','arc','seller','fee','return_gas'] as const){
+    const id=escrowTxId(listing,step,step==='fund'?undefined:order);
+    records.set(id,{...arcPayout(),id,status:'completed',hash:'receipt-hash',blockNumber:'100'});
+  }
+  m.balance.mockResolvedValue({balanceWei:'500',block:'101'});
+  m.command.mockImplementation(async(action:string,input:{baseBalanceWei?:string;baseBlock?:string})=>{
+    expect(action).toBe('escrow_advance');
+    if(!input.baseBalanceWei||!input.baseBlock)throw new Error('Final escrow balance is not verified.');
+    return {...order,status:'completed'};
+  });
+  await advanceEscrowOrder(order);
+  expect(m.prepare).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+  expect(m.command).toHaveBeenCalledExactlyOnceWith('escrow_advance',{listingId:listing.id,orderId:order.id,baseBalanceWei:'500',baseBlock:'101'});
+});
+
+it('keeps the order pending and updates progress when a payout still needs verification',async()=>{
+  verifyDeposits();
+  const tx={...arcPayout(),status:'submitted' as const};records.set(tx.id,tx);
+  await advanceEscrowOrder(order);
+  expect(m.advance).toHaveBeenCalledWith(tx.id);
+  expect(m.prepare).not.toHaveBeenCalled();
+  expect(m.command).toHaveBeenCalledExactlyOnceWith('escrow_advance',{listingId:listing.id,orderId:order.id});
+  expect(m.balance).not.toHaveBeenCalled();
+});
+
+
+it('verifies a newly mined refund and finalizes in the same worker pass',async()=>{
+  for(const step of ['fund','gas','deposit','arc','seller','fee'] as const){const id=escrowTxId(listing,step,step==='fund'?undefined:order);records.set(id,{...arcPayout(),id,status:'completed',hash:'receipt-hash',blockNumber:'100'});}
+  const id=escrowTxId(listing,'return_gas',order);
+  records.set(id,{...arcPayout(),id,chainId:8453,status:'submitted',hash:'refund-hash'});
+  m.receipt.mockResolvedValue({status:'success'});
+  m.advance.mockImplementation(async(txId:string,receiptOnly?:boolean)=>{if(receiptOnly)records.set(txId,{...records.get(txId) as Transaction,status:'completed',blockNumber:'101'});});
+  m.balance.mockResolvedValue({balanceWei:'500',block:'101'});
+  await advanceEscrowOrder(order);
+  expect(m.receipt).toHaveBeenCalledWith({hash:'refund-hash',timeout:8000,pollingInterval:1000});
+  expect(m.advance).toHaveBeenCalledWith(id,true);
+  expect(m.command).toHaveBeenCalledExactlyOnceWith('escrow_advance',{listingId:listing.id,orderId:order.id,baseBalanceWei:'500',baseBlock:'101'});
+});
+
+it('reserves refund gas headroom without spending another buyer gas credit',async()=>{
+ for(const step of ['fund','gas','deposit','arc','seller','fee'] as const){const id=escrowTxId(listing,step,step==='fund'?undefined:order);records.set(id,{...arcPayout(),id,status:'completed',hash:'receipt-hash',blockNumber:'100'});}
+ const key=`wallet:8453:${escrow.toLowerCase()}`;const read=m.read.getMockImplementation()!;
+ m.read.mockImplementation(async(arg:{id:string})=>arg.id===key?{holds:{'gas-credit:other':'100'}}:read(arg));
+ m.prepare.mockResolvedValue({unsigned:'0x',gasWei:'1000',reserveWei:'1000',snapshot:{balanceWei:'10000',block:'100'}});
+ m.command.mockImplementation(async(action:string,args:{gasWei?:string;reserveWei?:string})=>{
+  if(action==='escrow_prepare'){expect(args.gasWei).toBe('2000');expect(args.reserveWei).toBe('9900');const tx={...arcPayout(),id:escrowTxId(listing,'return_gas',order),chainId:8453 as const,status:'submitted' as const};records.set(tx.id,tx);return tx;}
+  return order;
+ });
+ await advanceEscrowOrder(order);expect(m.prepare.mock.calls[1][1].value).toBe(7900n);
 });

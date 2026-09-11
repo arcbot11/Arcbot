@@ -1,4 +1,6 @@
 import { ARC_NATIVE_TRANSFER, verifyArcUsdcDelivery } from "../arc/usdc-delivery";
+import { settlementFailure } from "./settlement-error";
+import { baseTransport } from "../base/transport";
 import { otcWorkerUrl } from "../project-config";
 import { nativeSpend } from "./native-spend";
 import { ARC_ROUTER, ARC_ROUTER_CODE_HASH } from "../arc/routing";
@@ -6,8 +8,8 @@ import { socialAuthority } from "../arc/social-authority";
 import { BASE_USDC, baseUsdcAbi } from "../base/usdc";
 import { tokenTransfer, transferAbi, verifyTransferReturn, verifyTransferDelivery } from "./token-delivery";
 import { CdpClient } from "@coinbase/cdp-sdk";
-import { createHash } from "node:crypto";
-import { createPublicClient, http, getAddress, keccak256, parseTransaction, recoverTransactionAddress, serializeTransaction, parseEventLogs, decodeFunctionData, parseAbi, type Address, type Hex } from "viem";
+import { signWithAuthRecovery } from "./signing";
+import { createPublicClient, getAddress, keccak256, parseTransaction, recoverTransactionAddress, serializeTransaction, parseEventLogs, decodeFunctionData, parseAbi, type Address, type Hex } from "viem";
 import { arcConfigFromEnv, ARC_USDC } from "../arc/config";
 import { createArcRpc, checkArcRpc } from "../arc/rpc";
 import { arcTransport } from "../arc/transport";
@@ -36,8 +38,7 @@ export function otcConfiguration(_requireEnabled = true) {
   return { router, feeRecipient, routerCodeHash, arc: arcConfigFromEnv(), base: baseConfigFromEnv() };
 }
 export function chainClient(chain: Chain) {
-  const config = chain === 5042 ? arcConfigFromEnv() : baseConfigFromEnv();
-  return createPublicClient({ transport: chain === 5042 ? arcTransport(arcConfigFromEnv()) : http(config.rpcUrl, { timeout: 12_000, retryCount: 0 }) });
+  return createPublicClient({ transport: chain === 5042 ? arcTransport(arcConfigFromEnv()) : baseTransport(baseConfigFromEnv()) });
 }
 export async function balanceSnapshot(chain: Chain, address: string) {
   const owner = getAddress(address);
@@ -106,10 +107,6 @@ export async function verifyRaw(raw: Hex, unsigned: Hex, sender: string) {
     || (await recoverTransactionAddress({serializedTransaction:raw as `0x02${string}`})).toLowerCase() !== sender.toLowerCase()) throw new Error("Signer returned a different transaction.");
   return keccak256(raw);
 }
-function signingId(id: string) {
-  const h=createHash("sha256").update(`arc-otc:${id}`).digest("hex");
-  return `${h.slice(0,8)}-${h.slice(8,12)}-4${h.slice(13,16)}-a${h.slice(17,20)}-${h.slice(20,32)}`;
-}
 /** Persisted unsigned bytes and a wallet lease precede signing; persisted signed bytes precede every broadcast. */
 export async function advanceTransaction(id: string, receiptOnly = false) {
   const repo=repository(); let record=await repo.read<Transaction>({id});
@@ -166,7 +163,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
       if(tx.data?.startsWith("0x095ea7b3"))verifyTransferReturn(simulation.data);
     }
     const cdp=new CdpClient({apiKeyId:required("CDP_API_KEY_ID"),apiKeySecret:required("CDP_API_KEY_SECRET"),walletSecret:required("CDP_WALLET_SECRET")});
-    const {signature}=await cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey:signingId(id)});
+    const {signature}=await signWithAuthRecovery(id,idempotencyKey=>cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey}));
     const hash=await verifyRaw(signature as Hex,record.unsigned as Hex,record.wallet);
     record=await repo.command<Transaction>("sign",{id,raw:signature,hash});
   }
@@ -297,10 +294,9 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     if(worst>allowance || worst>baseConfigFromEnv().maxTotalFeeWei)throw new Error("Base fees exceeded the reserved allowance. Signature retained for recovery.");
   }
   record=await repo.command<Transaction>("submitted",{id});
-  try {
-    const hash=await client.sendRawTransaction({serializedTransaction:record.raw as Hex});
-    if (hash!==record.hash) throw new Error("Broadcast returned the wrong hash.");
-  } catch { /* Ambiguous broadcasts retain the exact signature, reservation and nonce. */ }
+  // The signature and submitted state remain durable if broadcasting throws.
+  const hash=await client.sendRawTransaction({serializedTransaction:record.raw as Hex});
+  if (hash!==record.hash) throw new Error("Broadcast returned the wrong hash.");
   return record;
 }
 export async function verifyUsdcPaymentDelivery(order: Order, block: bigint, logs: Parameters<typeof verifyTransferDelivery>[0]["logs"]) {
@@ -353,17 +349,19 @@ export function selectSettlementWork(records:Array<Order|Transaction|Listing>,no
 export async function drainWork() {
   const repo=repository();
   const records=await repo.read<Array<Order|Transaction|Listing>>({work:true});
-  let processed=0;
+  let processed=0,failed=0;
   // Bounded batches. Repeated scheduler calls resume immutable jobs.
   const deadline=Date.now()+240_000;
   for (const record of selectSettlementWork(records)) {
     if(Date.now()>=deadline)break;
     try { if(record.kind==="order") await advanceOrder(record.id); else if(record.kind==="listing")await (await import("./escrow-runtime")).advanceEscrowPosition(record.id);else await advanceTransaction(record.id); await repo.command("touch",{id:record.id}); processed++; }
     catch(error) {
-      console.error("otc_worker",record.id,error instanceof Error?error.message:"Settlement failed");
-      await repo.command("note",{id:record.id,note:record.kind==="listing"&&record.status==="funding"&&!record.escrow?.address?"Escrow wallet setup is pending. Listing funds remain reserved in your wallet.":"Pending verification"});
+      failed++;
+      const note=settlementFailure(error);
+      console.error("otc_worker",record.id,note);
+      await repo.command("note",{id:record.id,note:record.kind==="listing"&&record.status==="funding"&&!record.escrow?.address?"Escrow wallet setup is pending. Listing funds remain reserved in your wallet.":note});
     }
   }
-  return {processed};
+  return {processed,failed};
 }
 export const quoteFresh = (priceAt:number) => Date.now()-priceAt<=QUOTE_MS;

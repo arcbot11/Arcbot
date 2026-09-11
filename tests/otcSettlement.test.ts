@@ -45,7 +45,7 @@ describe("OTC receipt verification and retry boundaries",()=>{
   it("rejects the wrong actual transaction recipient",async()=>{(mocks.client.getTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({from:account.address,to:seller,value:BigInt(order.totalWei),input:paymentCall(order).data});await expect(advanceTransaction(record.id)).rejects.toThrow("does not match");});
   it("rejects a noncanonical receipt",async()=>{receipt!.blockHash=otherHash;await expect(advanceTransaction(record.id)).rejects.toThrow("not canonical");});
   it("keeps an unknown nonce consumption reserved",async()=>{receipt=null;nonce=1;await expect(advanceTransaction(record.id)).rejects.toThrow("Nonce consumed");expect(mocks.command).not.toHaveBeenCalled();});
-  it("persists submitted state before rebroadcasting identical bytes after timeout",async()=>{receipt=null;nonce=0;(mocks.client.sendRawTransaction as ReturnType<typeof vi.fn>).mockImplementation(async()=>{expect(mocks.command).toHaveBeenCalledWith("submitted",{id:record.id});throw new Error("network timeout");});await advanceTransaction(record.id);expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:record.raw});expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
+  it("persists submitted state before rebroadcasting identical bytes after timeout",async()=>{receipt=null;nonce=0;(mocks.client.sendRawTransaction as ReturnType<typeof vi.fn>).mockImplementation(async()=>{expect(mocks.command).toHaveBeenCalledWith("submitted",{id:record.id});throw new Error("network timeout");});await expect(advanceTransaction(record.id)).rejects.toThrow("network timeout");await expect(advanceTransaction(record.id)).rejects.toThrow("network timeout");expect(mocks.client.sendRawTransaction).toHaveBeenCalledTimes(2);expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:record.raw});expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
   it("does not rebroadcast if Base extra fees outgrow the allowance",async()=>{receipt=null;nonce=0;extraFee=10n**18n;await expect(advanceTransaction(record.id)).rejects.toThrow("fees exceeded");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
   it("does not broadcast if other wallet reservations are no longer covered",async()=>{receipt=null;nonce=0;wallet.holds.other=(10n**20n).toString();await expect(advanceTransaction(record.id)).rejects.toThrow("no longer covered");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
 });
@@ -223,3 +223,4 @@ describe("Arc USDC swap settlement",()=>{
    expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();expect(mocks.command).not.toHaveBeenCalled();
  });
 });
+
