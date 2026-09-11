@@ -3747,7 +3747,7 @@ export const executeCommand = internalAction({
     if (command.kind === "create_wallet" || command.kind === "show_wallet") {
       if (args.source === "telegram" || (args.source ?? "x") === "x") return {
         ok: true,
-        message: `Your Argos Bot wallet\nArc mainnet (5042)\n${wallet.address}\n\n${walletPageUrl(wallet.address, args.sourcePostId)}\n\nFund with Arc USDC. Keep USDC for gas.`,
+        message: `Your Argos Bot wallet\n${walletPageUrl(wallet.address, args.sourcePostId)}\n\nFund with Arc USDC.`,
       };
       return {
         ok: true,

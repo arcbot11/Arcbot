@@ -20,9 +20,16 @@
   "burnBps": 0,
   "dividendBps": 0,
   "liquidityBps": 0,
-  "tokenSalt": null,
-  "hookSalt": null,
-  "simulation": null,
+  "tokenSalt": "0xbc259270987b377556bd2de5ad0bdec9e523d64a2a504e70184d3fa602ff238e",
+  "hookSalt": "0x9fe39d50f33f5cd686cf34e82c6fd61202386e9fa94e62da5ef71b9a0b03edcf",
+  "simulation": {
+    "status": "passed-read-only",
+    "report": "SIMULATION-2026-09-11.json",
+    "block": 20341358,
+    "receivedTokens": "105852084.931909393213875199",
+    "creator": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+    "gasUnits": 3220177
+  },
   "notes": [
     "Image URI is owner-supplied; availability has not been verified.",
     "300 USDC is the requested developer-buy input; token output requires simulation. Gas is additional.",
@@ -46,5 +53,11 @@
       "Read creator() from that launch record’s deployed splitter; require creatorRewardRecipient.",
       "Creator payout claims must target creatorRewardRecipient; verify actual delivery separately from accrual."
     ]
-  }
+  },
+  "totalSupply": "1000000000000000000000000000",
+  "startFdvUsdc6": "2500000000",
+  "bondFdvUsdc6": "45000000000",
+  "predictedToken": "0xe86688530C456E099732f953ed7aA7C583026680",
+  "predictedHook": "0xD9005842Eebf8F5974747CB7E2D4b585A45B2044",
+  "predictedSplitter": "0x13F5F9011f399067A80125D48c248B14791d1b2c"
 }

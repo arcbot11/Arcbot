@@ -1,4 +1,5 @@
 import { suppressCreationReply } from "../lib/disabled-creation";
+import { socialAddressLinks } from "../lib/social-address-links";
 import { ARC_BOT_TELEGRAM_USER_ID } from "../lib/project-config";
 import { internal } from "./_generated/api";
 import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
@@ -63,6 +64,7 @@ async function telegramApi(method: string, body: Record<string, unknown>) {
 }
 
 async function sendMessage(chatId: string, text: string, replyMarkup?: Record<string, unknown>) {
+  text = socialAddressLinks(text);
   if (suppressCreationReply(text)) return;
   const chunks: string[] = [];
   let remaining = telegramResponse(text).trim() || " ";

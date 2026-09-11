@@ -1,0 +1,35 @@
+{
+  "simulatedAt": "2026-09-11T17:01:07.776Z",
+  "simulationOnly": true,
+  "block": 20341358,
+  "blockHash": "0x9f2d597f9f51742724490263899914d1bf4ee95aae0a1405149f43f6de5f7637",
+  "observer": "Simulation-only code at creator wallet directly calls Portal, then reads new token balance and splitter.creator. Separate direct launch simulation already passed with allowance override alone.",
+  "token": "0xe86688530C456E099732f953ed7aA7C583026680",
+  "creator": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+  "receivedTokens": "105852084.931909393213875199",
+  "balanceBeforeUSDC": "447.1059108925",
+  "balanceAfterUSDCExcludingGas": "147.1059108925",
+  "spentUSDCExcludingGas": "300",
+  "gasUnits": 3220177,
+  "gasPriceWei": "0x5d21dba00",
+  "estimatedGasUSDC": "0.080504425",
+  "liveChecksAfterSimulation": {
+    "chainId": 5042,
+    "realAllowance": "0",
+    "realTokenCode": "0x",
+    "realWalletCode": "0x",
+    "realWalletUSDC": "447.1059108925"
+  },
+  "allowanceOverride": {
+    "0x3600000000000000000000000000000000000000": {
+      "stateDiff": {
+        "0xe042370062d7ebeb1a380003a816aaa95b4218db4dc3ae397719dc202001156e": "0x0000000000000000000000000000000000000000000000000000000011e1a300"
+      }
+    }
+  },
+  "limitations": [
+    "Simulated allowance only; actual approval remains outstanding. Approval transaction gas is not included.",
+    "Gas price and implementation pointers can change; re-simulate before any separately authorized execution.",
+    "Post-launch getters were read using temporary observer code at the creator address, only inside eth_call. Direct launch also passed with allowance override alone."
+  ]
+}
