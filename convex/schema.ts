@@ -12,6 +12,21 @@ const intakeFilterGuardState = v.object({
 });
 
 export default defineSchema({
+  telegramNativeWallets: defineTable({
+    telegramUserId: v.string(), telegramChatId: v.string(), address: v.string(), signerWalletRef: v.string(),
+    createdAt: v.number(),
+  }).index("by_user", ["telegramUserId"]),
+  telegramWalletSelections: defineTable({
+    pendingUpdateId: v.optional(v.string()),
+    telegramUserId: v.string(), selected: v.union(v.literal("tg"), v.literal("x")), updatedAt: v.number(),
+  }).index("by_user", ["telegramUserId"]),
+  telegramNativeRequests: defineTable({
+    diagnosticCode: v.optional(v.string()), attempts: v.optional(v.number()),
+    requestId: v.string(), updateId: v.string(), walletId: v.id("telegramNativeWallets"),
+    telegramUserId: v.string(), telegramChatId: v.string(), command: v.string(),
+    status: v.union(v.literal("pending"), v.literal("complete")), result: v.optional(v.string()), delivered: v.boolean(),
+    lease: v.optional(v.string()), leaseUntil: v.optional(v.number()), nextAttemptAt: v.number(), createdAt: v.number(),
+  }).index("by_request", ["requestId"]).index("by_due", ["delivered", "nextAttemptAt"]),
   otcRecords: defineTable({ key: v.string(), kind: v.string(), owner: v.string(), counterparty: v.optional(v.string()), status: v.string(), updatedAt: v.number(), json: v.string() })
     .index("by_key", ["key"]).index("by_kind_status", ["kind", "status", "updatedAt"]).index("by_owner", ["owner", "kind"]).index("by_counterparty", ["counterparty", "kind"]),
 
@@ -693,6 +708,9 @@ export default defineSchema({
   }).index("by_nonce_hash", ["nonceHash"]).index("by_return_hash", ["returnHash"]),
 
   telegramUpdates: defineTable({
+    walletTransitionBlocked: v.optional(v.boolean()),
+    unlinkBindingVersion: v.optional(v.number()), unlinkLinkId: v.optional(v.id("telegramAccountLinks")),
+    boundTelegramWalletId: v.optional(v.id("telegramNativeWallets")),
     linkBindingVersion: v.optional(v.number()),
     boundLinkId: v.optional(v.id("telegramAccountLinks")),
     boundOwnerXUserId: v.optional(v.string()),

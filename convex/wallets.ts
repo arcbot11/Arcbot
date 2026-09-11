@@ -486,7 +486,7 @@ function signerConfiguration() {
   return { baseUrl, token };
 }
 
-async function signerRequest<T>(
+export async function signerRequest<T>(
   path: string,
   body: unknown,
   timeoutMs?: number,
@@ -6999,17 +6999,18 @@ export const revokeWebSession = action({
   },
 });
 
-export const authorizeArcCommand=action({args:{secret:v.string(),requestId:v.string()},handler:async(ctx,args):Promise<{owner:string;wallet:string;command:string;createdAt:number;source:string}>=>{
+export const authorizeArcCommand=action({args:{secret:v.string(),requestId:v.string()},handler:async(ctx,args):Promise<{owner:string;wallet:string;command:string;createdAt:number;source:string;recoveryOnly?:boolean}>=>{
   if(!process.env.WEB_AUTH_SECRET||args.secret!==process.env.WEB_AUTH_SECRET)throw new Error("Unauthorized.");
+  if(args.requestId.startsWith("telegram-native:"))return ctx.runQuery(internal.telegramWallets.authority,{requestId:args.requestId});
   const request=await ctx.runQuery(internal.wallets.getWalletRequest,{requestId:args.requestId});
   if(!request||!["x","telegram"].includes(request.source??"x")||["rejected","failed","skipped"].includes(request.status))throw new Error("Request is not authorized.");
   if(request.source!=="telegram"&&isXBotAuthor(request.ownerXUserId))throw new Error("Bot wallet spending is not authorized.");
-  if(request.source==="telegram"&&!await ctx.runQuery(internal.telegram.executionAuthorized,{updateId:request.telegramUpdateId,ownerXUserId:request.ownerXUserId}))throw new Error("Telegram authorization changed.");
+  const recoveryOnly=request.source==="telegram"&&!await ctx.runQuery(internal.telegram.executionAuthorized,{updateId:request.telegramUpdateId,ownerXUserId:request.ownerXUserId});
   const context=await ctx.runQuery(internal.wallets.getXUserAndWallet,{xUserId:request.ownerXUserId});
   if(!context?.wallet||context.wallet.status!=="active"||context.wallet._id!==request.walletId)throw new Error("Wallet authorization changed.");
   const command=JSON.parse(request.normalizedJson);
   if(command.chainId===8453&&request.source!=="telegram")throw new Error("Request is not authorized.");
-  return {owner:request.ownerXUserId,wallet:context.wallet.address,command:request.normalizedJson,createdAt:request._creationTime,source:request.source??"x"};
+  return {owner:request.ownerXUserId,wallet:context.wallet.address,command:request.normalizedJson,createdAt:request._creationTime,source:request.source??"x",...(recoveryOnly?{recoveryOnly:true}:{})};
 }});
 
 export const continueArcCommand=internalAction({args:{requestId:v.string(),attempt:v.optional(v.number())},handler:async(ctx,args):Promise<CommandResult>=>{

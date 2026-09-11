@@ -61,6 +61,8 @@ export async function POST(request:NextRequest){
       let tx=await repo.read<Transaction|null>({id});
       if(tx){
         if(tx.chainId!==chainId)throw Error("Command not supported. Stored transaction chain mismatch.");
+        if(auth.recoveryOnly&&tx.status==="prepared"&&tx.recoveryVersion===1&&!tx.signingStartedAt&&!tx.raw&&!tx.hash)
+          tx=await repo.command<Transaction>("cancel_unsigned_trade",{id,owner:auth.owner});
         if(!["completed","reverted"].includes(tx.status))tx=await advanceTransaction(id);
         if(tx.status==="cancelled")return json({ok:false,message:tx.nonceConflict?"Request replaced by another transaction. Check wallet history.":"Request cancelled before signing. Funds released. Submit a new command."});
         if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
@@ -69,6 +71,7 @@ export async function POST(request:NextRequest){
         continue;
       }
       preparing=true;
+      if(auth.recoveryOnly)return json({ok:false,message:"X unlinked from Telegram. This request cannot start another transaction."});
       if(Date.now()-auth.createdAt>ARC_COMMAND_AUTHORIZATION_MS)throw new Error("Request expired before the next transaction was prepared. Check wallet history before sending a new command.");
       let prepared:Awaited<ReturnType<typeof prepareCall>> & {leg:"send"|"swap"|"allowance";swapOutput?:{token:string;minimum:string;recipient?:string}};
       if(baseWithdrawal&&command.kind==="send"){

@@ -2,6 +2,7 @@ import { cronJobs, makeFunctionReference } from "convex/server";
 import { internal } from "./_generated/api";
 
 const crons = cronJobs();
+crons.interval("recover TG native wallet commands", { minutes: 1 }, internal.telegramWallets.recover);
 crons.interval("recover interrupted Telegram intake", { minutes: 1 }, internal.telegram.recoverUpdates);
 
 // X jobs exit before contacting X unless replies are explicitly enabled.

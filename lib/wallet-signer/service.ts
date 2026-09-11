@@ -370,6 +370,11 @@ async function submitSignedTransaction(
 }
 
 function accountName(ownerReference: string) {
+  if (ownerReference.startsWith("tg:")) {
+    const digest = createHmac("sha256", required("WALLET_SIGNER_IDEMPOTENCY_SECRET"))
+      .update(`argos:telegram-wallet:v1:${ownerReference}`).digest("hex");
+    return `argos-tg-${digest.slice(0, 25)}`;
+  }
   const digest = createHmac("sha256", required("WALLET_SIGNER_IDEMPOTENCY_SECRET"))
     .update(`arcbot:legacyNetwork:4663:${ownerReference}`).digest("hex");
   return `arcbot-rh-${digest.slice(0, 25)}`;

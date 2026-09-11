@@ -5,7 +5,7 @@ import { z } from "zod";
 export const LEGACY_NETWORK_CHAIN_ID = 4663;
 const address = z.string().regex(/^0x[a-fA-F0-9]{40}$/);
 const transactionHash = z.string().regex(/^0x[a-fA-F0-9]{64}$/);
-const ownerReference = z.string().regex(/^x:\d{1,30}$/);
+const ownerReference = z.string().regex(/^(?:x|tg):\d{1,30}$/);
 const amount = z.string().regex(/^(?:0|[1-9]\d*)(?:\.\d+)?$/).max(80)
   .refine((value) => Number(value) > 0, "amount must be positive");
 const token = z.string().min(1).max(50);

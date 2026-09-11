@@ -5,7 +5,10 @@ import { internal } from "./_generated/api";
 import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import type { WalletCommand } from "./walletCommands";
-import { TELEGRAM_HELP, TELEGRAM_MENU, TELEGRAM_FORMATS, telegramInput, telegramWalletCommand, telegramResponse } from "../lib/telegram-commands";
+import { walletContext, saveSelection } from "./telegramWallets";
+import { releaseUnsignedTelegramWork } from "./lib/telegramUnlink";
+import { telegramMenu, telegramWalletLabel } from "../lib/telegram-commands";
+import { TELEGRAM_HELP, TELEGRAM_FORMATS, telegramInput, telegramWalletCommand, telegramResponse } from "../lib/telegram-commands";
 
 
 
@@ -98,7 +101,26 @@ export const reserveUpdate = internalMutation({
     const now = Date.now();
     const links = args.telegramUserId ? await ctx.db.query("telegramAccountLinks").withIndex("by_telegram_user", q => q.eq("telegramUserId", args.telegramUserId!)).collect() : [];
     const link = links.find(row => !row.revokedAt && row.telegramChatId === args.telegramChatId);
-    await ctx.db.insert("telegramUpdates", { ...args, linkBindingVersion: 1, ...(link ? { boundLinkId: link._id, boundOwnerXUserId: link.ownerXUserId } : {}), status: "received", createdAt: now, updatedAt: now });
+    const state = args.telegramUserId && args.telegramChatId ? await walletContext(ctx, args.telegramUserId, args.telegramChatId) : null;
+    let walletTransitionBlocked = false;
+    if (state && args.updateJson && args.telegramUserId === args.telegramChatId) {
+      const payload = JSON.parse(args.updateJson) as TelegramUpdate;
+      const source = payload.message || payload.callback_query?.message;
+      const from = payload.message?.from || payload.callback_query?.from;
+      const input = telegramInput(payload.message?.text || payload.callback_query?.data || "", Boolean(payload.callback_query));
+      if (source?.chat?.type === "private" && !from?.is_bot && String(from?.id) === args.telegramUserId && input) {
+        const changesWallet = (["createtg", "usetg", "usex", "unlink"].includes(input.name) && !input.args)
+          || (input.name === "start" && /^link_[a-f0-9]{32}$/.test(input.args));
+        const spends = ["buy", "sell", "swap", "send", "burn", "withdraw"].includes(input.name) && Boolean(input.args);
+        const selection = await ctx.db.query("telegramWalletSelections").withIndex("by_user", q => q.eq("telegramUserId", args.telegramUserId!)).unique();
+        walletTransitionBlocked = Boolean(selection?.pendingUpdateId && (changesWallet || spends));
+        if (changesWallet && !walletTransitionBlocked) {
+          if (selection) await ctx.db.patch(selection._id, { pendingUpdateId: args.updateId });
+          else await ctx.db.insert("telegramWalletSelections", { telegramUserId: args.telegramUserId!, selected: state.selected === "tg" ? "tg" : "x", updatedAt: now, pendingUpdateId: args.updateId });
+        }
+      }
+    }
+    await ctx.db.insert("telegramUpdates", { ...args, walletTransitionBlocked, unlinkBindingVersion: 1, ...(link ? { unlinkLinkId: link._id } : {}), linkBindingVersion: 1, ...(state?.selected === "tg" && state.native ? { boundTelegramWalletId: state.native._id } : link ? { boundLinkId: link._id, boundOwnerXUserId: link.ownerXUserId } : {}), status: "received", createdAt: now, updatedAt: now });
     if (args.updateJson) await ctx.scheduler.runAfter(0, internal.telegram.processUpdate, { updateId: args.updateId, updateJson: args.updateJson });
     return true;
   },
@@ -109,6 +131,10 @@ export const updateStatus = internalMutation({
   handler: async (ctx, args) => {
     const row = await ctx.db.query("telegramUpdates").withIndex("by_update_id", q => q.eq("updateId", args.updateId)).unique();
     if (row) await ctx.db.patch(row._id, { status: args.status, safeError: args.safeError, updatedAt: Date.now() });
+    if (row?.telegramUserId && args.status !== "processing") {
+      const selection = await ctx.db.query("telegramWalletSelections").withIndex("by_user", q => q.eq("telegramUserId", row.telegramUserId!)).unique();
+      if (selection?.pendingUpdateId === args.updateId) await ctx.db.patch(selection._id, { pendingUpdateId: undefined });
+    }
   },
 });
 
@@ -166,7 +192,10 @@ export const revokeLinkByTelegram = internalMutation({
     const links = await ctx.db.query("telegramAccountLinks")
       .withIndex("by_telegram_user", q => q.eq("telegramUserId", args.telegramUserId)).collect();
     const active = links.filter(row => !row.revokedAt && row.ownerXUserId === args.ownerXUserId);
-    for (const row of active) await ctx.db.patch(row._id, { revokedAt: now, updatedAt: now });
+    for (const row of active) {
+      await ctx.db.patch(row._id, { revokedAt: now, updatedAt: now });
+      await releaseUnsignedTelegramWork(ctx, row, now);
+    }
     const conversations = await ctx.db.query("telegramConversations")
       .withIndex("by_user_active", q => q.eq("telegramUserId", args.telegramUserId).eq("active", true)).collect();
     for (const row of conversations) await ctx.db.patch(row._id, { active: false, updatedAt: now });
@@ -184,6 +213,7 @@ export const revokeLinkByX = internalMutation({
     const active = links.filter(row => !row.revokedAt);
     for (const row of active) {
       await ctx.db.patch(row._id, { revokedAt: now, updatedAt: now });
+      await releaseUnsignedTelegramWork(ctx, row, now);
       const conversations = await ctx.db.query("telegramConversations")
         .withIndex("by_user_active", q => q.eq("telegramUserId", row.telegramUserId).eq("active", true)).collect();
       for (const conversation of conversations) await ctx.db.patch(conversation._id, { active: false, updatedAt: now });
@@ -192,6 +222,20 @@ export const revokeLinkByX = internalMutation({
     return active.length > 0;
   },
 });
+
+export const unlinkUpdate = internalMutation({ args: { updateId: v.string() }, handler: async (ctx, args) => {
+  const update = await ctx.db.query("telegramUpdates").withIndex("by_update_id", q => q.eq("updateId", args.updateId)).unique();
+  if (!update || update.walletTransitionBlocked) return false;
+  const linkId = update.unlinkBindingVersion === 1 ? update.unlinkLinkId : update.boundLinkId;
+  const link = linkId ? await ctx.db.get(linkId) : null;
+  if (!link || link.revokedAt || link.telegramUserId !== update.telegramUserId || link.telegramChatId !== update.telegramChatId) return false;
+  const now = Date.now();
+  await ctx.db.patch(link._id, { revokedAt: now, updatedAt: now });
+  await releaseUnsignedTelegramWork(ctx, link, now);
+  const conversations = await ctx.db.query("telegramConversations").withIndex("by_user_active", q => q.eq("telegramUserId", link.telegramUserId).eq("active", true)).collect();
+  for (const row of conversations) await ctx.db.patch(row._id, { active: false, updatedAt: now });
+  return true;
+} });
 
 export const storeLinkNonce = internalMutation({
   args: { nonceHash: v.string(), telegramUserId: v.string(), telegramChatId: v.string(), telegramUsername: v.optional(v.string()), expiresAt: v.number() },
@@ -210,7 +254,12 @@ export const boundUpdateLink = internalQuery({
   args: { updateId: v.string(), telegramUserId: v.string(), telegramChatId: v.string() },
   handler: async (ctx, args) => {
     const update = await ctx.db.query("telegramUpdates").withIndex("by_update_id", q => q.eq("updateId", args.updateId)).unique();
-    if (!update || update.linkBindingVersion !== 1 || update.telegramUserId !== args.telegramUserId || update.telegramChatId !== args.telegramChatId) return { valid: false, link: null };
+    if (!update || update.walletTransitionBlocked || update.linkBindingVersion !== 1 || update.telegramUserId !== args.telegramUserId || update.telegramChatId !== args.telegramChatId) return { valid: false, link: null };
+    if (update.boundTelegramWalletId) {
+      const native = await ctx.db.get(update.boundTelegramWalletId);
+      const valid = Boolean(native && native.telegramUserId === args.telegramUserId && native.telegramChatId === args.telegramChatId);
+      return { valid, link: null, native: valid ? native : null };
+    }
     const links = await ctx.db.query("telegramAccountLinks").withIndex("by_telegram_user", q => q.eq("telegramUserId", args.telegramUserId)).collect();
     const link = links.find(row => !row.revokedAt) || null;
     const valid = link ? link._id === update.boundLinkId && link.ownerXUserId === update.boundOwnerXUserId && link.telegramChatId === args.telegramChatId : !update.boundLinkId;
@@ -224,7 +273,7 @@ export const executionAuthorized = internalQuery({
   handler: async (ctx, args) => {
     if (!args.updateId) return false;
     const update = await ctx.db.query("telegramUpdates").withIndex("by_update_id", q => q.eq("updateId", args.updateId!)).unique();
-    if (!update || update.linkBindingVersion !== 1 || !update.boundLinkId || update.boundOwnerXUserId !== args.ownerXUserId) return false;
+    if (!update || update.walletTransitionBlocked || update.linkBindingVersion !== 1 || !update.boundLinkId || update.boundOwnerXUserId !== args.ownerXUserId) return false;
     const link = await ctx.db.get(update.boundLinkId);
     return Boolean(link && !link.revokedAt && link.ownerXUserId === args.ownerXUserId && link.telegramUserId === update.telegramUserId && link.telegramChatId === update.telegramChatId);
   },
@@ -331,6 +380,7 @@ export const consumeLinkNonce = internalMutation({
     if (activeTelegramLink && activeXLink) {
       await ctx.db.patch(nonce._id, { consumedAt: now });
       await ctx.db.patch(activeTelegramLink._id, { lastAuthenticatedAt: now, updatedAt: now });
+      await saveSelection(ctx, nonce.telegramUserId, "x");
       return { status: "linked" as const, telegramUserId: nonce.telegramUserId, telegramChatId: nonce.telegramChatId };
     }
     await ctx.db.patch(nonce._id, { consumedAt: now });
@@ -344,6 +394,7 @@ export const consumeLinkNonce = internalMutation({
       createdAt: now,
       updatedAt: now,
     });
+    await saveSelection(ctx, nonce.telegramUserId, "x");
     return { status: "linked" as const, telegramUserId: nonce.telegramUserId, telegramChatId: nonce.telegramChatId };
   },
 });
@@ -404,7 +455,10 @@ export const processUpdate = internalAction({
       const callback = update.callback_query;
       const message = update.message || callback?.message;
       const from = update.message?.from || callback?.from;
-      if (callback?.id) await telegramApi("answerCallbackQuery", { callback_query_id: callback.id });
+      if (callback?.id) {
+        try { await telegramApi("answerCallbackQuery", { callback_query_id: callback.id }); }
+        catch { /* Acknowledgement is UI feedback, not command authorization. */ }
+      }
       if (!message?.chat?.id || message.chat.type !== "private" || !from?.id || from.is_bot) {
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "ignored" });
         return;
@@ -423,55 +477,81 @@ export const processUpdate = internalAction({
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "ignored" });
         return;
       }
+      const guard = await ctx.runQuery(internal.telegramWallets.intakeGuard, { updateId: args.updateId });
+      if (guard.blocked) {
+        await sendMessage(chatId, "Wallet change in progress. Wait for confirmation, then send this command again. Nothing was submitted.");
+        await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "ignored" });
+        return;
+      }
       if(!callback&&input.name==="start"&&/^link_[a-f0-9]{32}$/.test(input.args)){
         const result=await ctx.runMutation(internal.telegram.consumeLinkNonce,{returnHash:await sha256(input.args.slice(5)),telegramUserId,telegramChatId:chatId});
         const reply=result.status==="linked"?"X linked. Your wallet is ready.":result.status==="wallet_already_linked"?"This X wallet is linked to another Telegram account. Unlink it first.":result.status==="telegram_already_linked"?"This Telegram account already has a different X wallet. Use /unlink first.":"Link expired or belongs to another Telegram account. Use /link to start again.";
-        await sendMessage(chatId,reply,TELEGRAM_MENU);
+        const state = await ctx.runQuery(internal.telegramWallets.context, { telegramUserId, telegramChatId: chatId });
+        await sendMessage(chatId,`${reply}\n\n${telegramWalletLabel(state.selected,state.xUsername)}`,telegramMenu(state));
         await ctx.runMutation(internal.telegram.updateStatus,{updateId:args.updateId,status:"completed"});return;
       }
       const command = "/" + input.name;
-      if (["start", "help", "link", "unlink", "wallet"].includes(input.name) && input.args) {
+      if (["start", "help", "link", "unlink", "wallet", "createtg", "usetg", "usex"].includes(input.name) && input.args) {
         await sendMessage(chatId, "Use " + command + " without extra text.");
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "ignored" });
         return;
       }
       if (update.message?.text) await ctx.runMutation(internal.telegram.recordMessage, { telegramUserId, telegramChatId: chatId, role: "user", text, updateId: args.updateId });
+      let state = await ctx.runQuery(internal.telegramWallets.context, { telegramUserId, telegramChatId: chatId });
+      if (["createtg", "usetg", "usex", "unlink", "link", "start", "help"].includes(input.name)) {
+        let reply = "";
+        if (input.name === "createtg") {
+          await ctx.runAction(internal.telegramWallets.create, { updateId: args.updateId });
+          reply = "TG wallet ready. This wallet is permanently linked to your Telegram account.";
+        } else if (input.name === "usetg" || input.name === "usex") {
+          await ctx.runMutation(internal.telegramWallets.select, { updateId: args.updateId, selected: input.name === "usetg" ? "tg" : "x" });
+        } else if (input.name === "unlink") {
+          const revoked = await ctx.runMutation(internal.telegram.unlinkUpdate, { updateId: args.updateId });
+          reply = revoked ? "X unlinked from Telegram. Your X wallet and funds are unchanged." : "The original X link is no longer active. No current link was changed.";
+        } else if (input.name === "link" && !state.link) {
+          const nonce = randomNonce();
+          await ctx.runMutation(internal.telegram.storeLinkNonce, { nonceHash: await sha256(nonce), telegramUserId, telegramChatId: chatId, ...(from.username ? { telegramUsername: from.username } : {}), expiresAt: Date.now() + LINK_TTL_MS });
+          const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
+          if (!site) throw Error("Telegram linking is not configured");
+          await sendMessage(chatId, "Sign in with X to link your X wallet.", { inline_keyboard: [[{ text: "Link X", url: `${site}/api/auth/x/start?telegramLink=${nonce}` }]] });
+          await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "completed" });
+          return;
+        } else if (input.name === "link") reply = "X is already linked. Use /usex to select it.";
+        state = await ctx.runQuery(internal.telegramWallets.context, { telegramUserId, telegramChatId: chatId });
+        const label = telegramWalletLabel(state.selected, state.xUsername);
+        await sendMessage(chatId, [label, reply, ["start", "help"].includes(input.name) && state.selected ? TELEGRAM_HELP : ""].filter(Boolean).join("\n\n"), input.name === "help" ? undefined : telegramMenu(state));
+        await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "completed" });
+        return;
+      }
       const binding = await ctx.runQuery(internal.telegram.boundUpdateLink, { updateId: args.updateId, telegramUserId, telegramChatId: chatId });
       if (!binding.valid) {
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "ignored" });
         return;
       }
       const link = binding.link;
+      if ("native" in binding && binding.native) {
+        const label = telegramWalletLabel("tg");
+        const parsed = telegramWalletCommand(input.name, input.args);
+        if (!input.args && TELEGRAM_FORMATS[input.name]) await sendMessage(chatId, `${label}\n\n${TELEGRAM_FORMATS[input.name]}`);
+        else if (!parsed || !telegramRecipientAllowed(parsed)) await sendMessage(chatId, `${label}\n\n${TELEGRAM_FORMATS[input.name] || "Use /wallet or /balance [TICKER or contract]."}`);
+        else {
+          await ctx.runMutation(internal.telegramWallets.enqueue, { updateId: args.updateId, name: input.name, args: input.args });
+          if (!["show_wallet", "show_balance"].includes(parsed.kind)) {
+            const action = parsed.kind === "send" && parsed.chainId === 8453 ? "Base withdrawal" : parsed.kind === "swap_token_for_token" ? "Swap" : parsed.kind[0].toUpperCase() + parsed.kind.slice(1);
+            await sendMessage(chatId, `${label}\n\n${action} processing.`);
+          }
+        }
+        await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "completed" });
+        return;
+      }
       const assertBoundLink = async () => {
         const current = await ctx.runQuery(internal.telegram.boundUpdateLink, { updateId: args.updateId, telegramUserId, telegramChatId: chatId });
         if (!current.valid || current.link?._id !== link?._id) throw new Error("Telegram wallet link changed; request cancelled");
       };
-      if (isTelegramUnlinkCommand(text) && link) {
-        const revoked = await ctx.runMutation(internal.telegram.revokeLinkByTelegram, {
-          telegramUserId, ownerXUserId: link.ownerXUserId,
-        });
-        await sendMessage(chatId, revoked
-          ? "Confirmed: Telegram has been unlinked from your Argos Bot X account. Your wallet and funds are unchanged."
-          : "No active Telegram link was found.");
-      } else if (command === "/link" && link) {
-        await sendMessage(chatId, "Confirmed: Your Telegram account is linked to your Argos Bot X account.");
-      } else if (command === "/unlink") {
-        await sendMessage(chatId, "No X account linked.");
-      } else if (!link) {
-        const nonce = randomNonce();
-        await ctx.runMutation(internal.telegram.storeLinkNonce, {
-          nonceHash: await sha256(nonce), telegramUserId, telegramChatId: chatId,
-          ...(from.username ? { telegramUsername: from.username } : {}), expiresAt: Date.now() + LINK_TTL_MS,
-        });
-        const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-        if (!site) throw new Error("Telegram linking is not configured");
-        await sendMessage(chatId, "Link your X account to use your Argos Bot wallet in Telegram.", {
-          inline_keyboard: [[{ text: "Link X Account", url: `${site}/api/auth/x/start?telegramLink=${nonce}` }]],
-        });
-      } else if (command === "/start" || command === "/help") {
-        await sendMessage(chatId, TELEGRAM_HELP, command === "/start" ? TELEGRAM_MENU : undefined);
+      if (!link) {
+        await sendMessage(chatId, telegramWalletLabel(null), telegramMenu(state));
       } else if (!input.args && TELEGRAM_FORMATS[input.name]) {
-        await sendMessage(chatId, TELEGRAM_FORMATS[input.name]);
+        await sendMessage(chatId, `${telegramWalletLabel("x",state.xUsername)}\n\n${TELEGRAM_FORMATS[input.name]}`);
       } else {
         const parsedCommand = telegramWalletCommand(input.name, input.args);
         if (!parsedCommand || !telegramRecipientAllowed(parsedCommand)) {
@@ -497,7 +577,7 @@ export const processUpdate = internalAction({
           });
           if (result.pending || result.deferred) {
             const action = parsedCommand.kind === "send" && parsedCommand.chainId === 8453 ? "Base withdrawal" : parsedCommand.kind === "swap_token_for_token" ? "Swap" : parsedCommand.kind[0].toUpperCase() + parsedCommand.kind.slice(1);
-            await sendMessage(chatId, `${action} processing.`);
+            await sendMessage(chatId, `${telegramWalletLabel("x",state.xUsername)}\n\n${action} processing.`);
           } else {
             await ctx.runMutation(internal.telegramDeliveries.setText, { requestId, text: telegramResponse(result.message) });
             await ctx.runAction(internal.telegramDeliveries.deliver, { requestId });
@@ -543,10 +623,25 @@ export const deliverWalletMessage = internalAction({
     const link = await ctx.runQuery(internal.telegram.activeLink, { telegramUserId: args.telegramUserId });
     if (!link || link.ownerXUserId !== args.ownerXUserId || link.telegramChatId !== args.telegramChatId) return false;
     if (await ctx.runQuery(internal.telegram.deliveredMessage, { requestId: args.requestId, telegramUserId: args.telegramUserId, telegramChatId: args.telegramChatId })) return true;
-    await sendMessage(args.telegramChatId, args.text);
+    const state = await ctx.runQuery(internal.telegramWallets.context, { telegramUserId: args.telegramUserId, telegramChatId: args.telegramChatId });
+    await sendMessage(args.telegramChatId, `${telegramWalletLabel("x",state.xUsername)}\n\n${args.text}`);
     await ctx.runMutation(internal.telegram.recordMessage, {
       telegramUserId: args.telegramUserId, telegramChatId: args.telegramChatId, role: "assistant", text: args.text, requestId: args.requestId,
     });
+    return true;
+  },
+});
+
+export const nativeWallet = internalQuery({ args: { walletId: v.id("telegramNativeWallets") }, handler: (ctx, a) => ctx.db.get(a.walletId) });
+export const deliverNativeWalletMessage = internalAction({
+  args: { walletId: v.id("telegramNativeWallets"), text: v.string(), requestId: v.string() },
+  handler: async (ctx, args): Promise<boolean> => {
+    const wallet = await ctx.runQuery(internal.telegram.nativeWallet, { walletId: args.walletId });
+    if (!wallet) return false;
+    const identity = { telegramUserId: wallet.telegramUserId, telegramChatId: wallet.telegramChatId, requestId: args.requestId };
+    if (await ctx.runQuery(internal.telegram.deliveredMessage, identity)) return true;
+    await sendMessage(wallet.telegramChatId, args.text);
+    await ctx.runMutation(internal.telegram.recordMessage, { ...identity, role: "assistant", text: args.text });
     return true;
   },
 });

@@ -17,14 +17,26 @@ export const TELEGRAM_MENU = { inline_keyboard: [
   [{ text: "Withdraw Base ETH", callback_data: "/withdraw" }],
   [{ text: "Help", callback_data: "/help" }, { text: "Unlink X", callback_data: "/unlink" }],
 ] };
-const commands = new Set(["start", "help", "link", "unlink", "wallet", "balance", ...Object.keys(TELEGRAM_FORMATS)]);
+const walletNavigation = ["createtg", "usetg", "usex", "link"];
+export function telegramMenu(state: { native: unknown; link: unknown; selected: string | null }) {
+  const rows = state.native || state.link ? TELEGRAM_MENU.inline_keyboard.slice(0, -1).concat([[{ text: "Help", callback_data: "/help" }]]) : [];
+  if (!state.native) rows.push([{ text: "Create TG Linked Wallet", callback_data: "/createtg" }]);
+  if (!state.link) rows.push([{ text: "Link X", callback_data: "/link" }]);
+  if (state.native && state.link) rows.push([{ text: state.selected === "tg" ? "Switch to X Wallet" : "Switch to TG Wallet", callback_data: state.selected === "tg" ? "/usex" : "/usetg" }]);
+  if (state.link) rows.push([{ text: "Unlink X", callback_data: "/unlink" }]);
+  return { inline_keyboard: rows };
+}
+export function telegramWalletLabel(selected: string | null, username?: string | null) {
+  return selected === "tg" ? "You are using your TG linked wallet" : selected === "x" ? `You are using your X linked wallet${username ? ` for @${username.replace(/^@/, "")}` : ""}` : "Choose a wallet for Telegram. A TG wallet is permanently linked to your Telegram account.";
+}
+const commands = new Set(["start", "help", "link", "unlink", "wallet", "balance", ...walletNavigation, ...Object.keys(TELEGRAM_FORMATS)]);
 export function telegramInput(text: string, callback = false, username = ARC_BOT_TELEGRAM_USERNAME) {
   const match = text.trim().match(/^\/([a-z]+)(?:@([a-z0-9_]+))?(?:\s+([^\r\n]+))?$/i);
   if (!match || !commands.has(match[1].toLowerCase())) return null;
   if (match[2] && (!username || match[2].toLowerCase() !== username.replace(/^@/, "").toLowerCase())) return null;
   const name = match[1].toLowerCase(), args = match[3]?.trim() || "";
   // Callback payloads are navigation only. They never carry transaction arguments.
-  if (callback && (args || !TELEGRAM_MENU.inline_keyboard.flat().some(b => b.callback_data === `/${name}`))) return null;
+  if (callback && (args || !(walletNavigation.includes(name) || TELEGRAM_MENU.inline_keyboard.flat().some(b => b.callback_data === `/${name}`)))) return null;
   return { name, args };
 }
 

@@ -38,7 +38,7 @@ describe("Telegram account linking", () => {
     const f = fixture([]);
     expect(await handler(f.ctx, { nonceHash: "hash", ownerXUserId: "x-new" })).toMatchObject({ status: "linked" });
     expect(await handler(f.ctx, { nonceHash: "hash", ownerXUserId: "x-new" })).toMatchObject({ status: "expired" });
-    expect(f.inserted).toHaveLength(1);
+    expect(f.rows.telegramAccountLinks).toHaveLength(1);
   });
   it("allows both identities to be reused once their previous links are revoked", async () => {
     const f = fixture([
@@ -68,10 +68,10 @@ describe("Telegram OAuth return",()=>{
   const args={returnHash:"return",telegramUserId:"tg-new",telegramChatId:"chat"};
   expect(await handler(f.ctx,args)).toMatchObject({status:"linked"});
   const authenticated=f.rows.telegramAccountLinks[0].lastAuthenticatedAt;
-  expect(await handler(f.ctx,args)).toMatchObject({status:"linked"});expect(f.inserted).toHaveLength(1);
+  expect(await handler(f.ctx,args)).toMatchObject({status:"linked"});expect(f.rows.telegramAccountLinks).toHaveLength(1);
   expect(f.rows.telegramAccountLinks[0].lastAuthenticatedAt).toBe(authenticated);
   f.rows.telegramAccountLinks[0].revokedAt=Date.now();
-  expect(await handler(f.ctx,args)).toMatchObject({status:"expired"});expect(f.inserted).toHaveLength(1);
+  expect(await handler(f.ctx,args)).toMatchObject({status:"expired"});expect(f.rows.telegramAccountLinks).toHaveLength(1);
  });
  it.each(["tg-new","other"])("requires the originating Telegram user: %s",async user=>{
   const f=fixture([]);Object.assign(f.rows.telegramLinkNonces[0],{returnHash:"return",pendingOwnerXUserId:"x-new"});

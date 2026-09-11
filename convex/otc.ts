@@ -15,6 +15,10 @@ function authorize(secret: string) {
 }
 export const identity = query({args:{secret:v.string(),owner:v.string(),address:v.string()},handler:async(ctx,args)=>{
   authorize(args.secret);
+  if (/^tg:\d{1,30}$/.test(args.owner)) {
+    const wallet = await ctx.db.query("telegramNativeWallets").withIndex("by_user", q => q.eq("telegramUserId", args.owner.slice(3))).unique();
+    return Boolean(wallet && wallet.address.toLowerCase() === args.address.toLowerCase());
+  }
   const records=await ctx.db.query("cryptoWallets").withIndex("by_owner_x_user_id",q=>q.eq("ownerXUserId",args.owner)).collect();
   return records.some(wallet=>wallet.status==="active"&&wallet.address.toLowerCase()===args.address.toLowerCase());
 }});
@@ -45,7 +49,21 @@ export const command = mutation({
       case "escrow_dust": return retainGasDust(store,input.listingId,input.orderId,input.balanceWei,input.block,now,input.refundGasWei);
       case "escrow_topup": return requestGasTopup(store,input.listingId,input.orderId,input.amount,now,input.arc===true,input.expectedAttempt);
       case "escrow_gas_allowance": return authorizeGasRecovery(store,input.listingId,input.orderId,input.owner,input.limitWei,input.arc===true,now);
-      case "begin_signing": return beginSigning(store,input.id,now);
+      case "begin_signing": {
+        const tx = await store.get<import("../lib/otc/model").Transaction>(input.id);
+        if (tx?.sourceRequestId && !tx.signingStartedAt) {
+          const request = await ctx.db.query("walletRequests").withIndex("by_request_id", q => q.eq("requestId", tx.sourceRequestId!)).unique();
+          if (request?.source === "telegram") {
+            const update = request.telegramUpdateId ? await ctx.db.query("telegramUpdates").withIndex("by_update_id", q => q.eq("updateId", request.telegramUpdateId!)).unique() : null;
+            const link = update?.boundLinkId ? await ctx.db.get(update.boundLinkId) : null;
+            // Atomic with unlink: a revoked Telegram link cannot start signing.
+            // Already-started signatures are recovered using their original bytes.
+            if (!link || update?.walletTransitionBlocked || link.revokedAt || link.ownerXUserId !== tx.owner || link.telegramUserId !== update?.telegramUserId || link.telegramChatId !== update?.telegramChatId)
+              return cancelUnsignedTrade(store, input.id, now, tx.owner);
+          }
+        }
+        return beginSigning(store,input.id,now);
+      }
       case "replace_fees": return prepareReplacement(store,input,now);
       case "select_mined_attempt": return selectMinedAttempt(store,input.id,input.hash,now);
       case "reconcile_mined_nonce": return reconcileMinedNonce(store,input,now);

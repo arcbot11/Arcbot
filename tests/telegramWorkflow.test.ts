@@ -88,6 +88,11 @@ describe("Telegram update execution boundary", () => {
     expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("telegram:setConversation");
     expect(vi.mocked(fetch).mock.calls.some(c=>String(c[1]?.body).includes("/buy 10 USDC ARGOS"))).toBe(true);
   });
+  it("executes a persisted switch even when Telegram rejects its callback acknowledgement",async()=>{
+    vi.mocked(fetch).mockImplementation(async url=>new Response(JSON.stringify(String(url).endsWith("answerCallbackQuery")?{ok:false,description:"query is too old"}:{ok:true})));
+    const ctx=await run("/usetg",true);
+    expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).toContain("telegramWallets:select");
+  });
   it.each(["buy", "sell"])("keeps pending %s replies out of the final delivery queue",async kind=>{
     const ctx=await run(kind==="buy"?"/buy 10 USDC ARGOS":"/sell 100 ARGOS",false,{ok:false,pending:true,message:"Arc request recorded. Check wallet history."});
     expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("telegramDeliveries:setText");

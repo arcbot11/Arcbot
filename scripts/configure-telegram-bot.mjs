@@ -18,7 +18,10 @@ async function call(method, body) {
 
 const commands = [
   { command: "start", description: "Open the Argos Bot menu" },
-  { command: "wallet", description: "Show or create your Argos Bot wallet" },
+  { command: "wallet", description: "Show your selected wallet" },
+  { command: "createtg", description: "Create your permanent TG linked wallet" },
+  { command: "usetg", description: "Switch to your TG linked wallet" },
+  { command: "usex", description: "Switch to your X linked wallet" },
   { command: "balance", description: "Show wallet balances" },
   { command: "buy", description: "Buy an Arc token" },
   { command: "sell", description: "Sell an Arc token" },

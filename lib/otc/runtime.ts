@@ -147,7 +147,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
   if (!record.raw) {
     if(record.sourceRequestId){
       const authority=await socialAuthority(record.sourceRequestId);
-      if(authority.owner!==record.owner||authority.wallet.toLowerCase()!==record.wallet.toLowerCase())throw new Error("Social command authorization changed.");
+      if(authority.recoveryOnly||authority.owner!==record.owner||authority.wallet.toLowerCase()!==record.wallet.toLowerCase())throw new Error("Social command authorization changed.");
     }
     if(record.leg==="swap"){
       if(record.chainId!==5042||tx.to?.toLowerCase()!==ARC_ROUTER.toLowerCase())throw new Error("Invalid Arc swap target.");
@@ -182,7 +182,10 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
       if(tx.data?.startsWith("0x095ea7b3"))verifyTransferReturn(simulation.data);
     }
     const cdp=new CdpClient({apiKeyId:required("CDP_API_KEY_ID"),apiKeySecret:required("CDP_API_KEY_SECRET"),walletSecret:required("CDP_WALLET_SECRET")});
-    if(record.recoveryVersion===1)await repo.command("begin_signing",{id});
+    if(record.recoveryVersion===1){
+      const fenced=await repo.command<Transaction>("begin_signing",{id});
+      if(fenced.status==="cancelled")return fenced;
+    }
     const {signature}=await signWithAuthRecovery(id,idempotencyKey=>cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey}));
     const hash=await verifyRaw(signature as Hex,record.unsigned as Hex,record.wallet);
     record=await repo.command<Transaction>("sign",{id,raw:signature,hash,unsigned:record.unsigned});

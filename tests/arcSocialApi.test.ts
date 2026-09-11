@@ -13,6 +13,27 @@ const request=(secret="secret")=>new NextRequest("https://www.argosbot.io/api/ar
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","secret");command={kind:"send",unit:"usd",amount:"10",recipient};m.auth.mockImplementation(async()=>({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()}));m.read.mockResolvedValue(null);m.prepare.mockResolvedValue({unsigned:"0x02",reserveWei:"10000000000000000100",snapshot:{balanceWei:"20000000000000000000",block:"1"}});m.command.mockImplementation(async(_kind,tx)=>({...tx,status:"prepared"}));m.advance.mockResolvedValue({status:"submitted",hash:"txhash"});});
 afterEach(()=>vi.unstubAllEnvs());
 describe("Arc social execution boundary",()=>{
+ it("does not prepare another step after Telegram is unlinked",async()=>{
+   m.auth.mockResolvedValue({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now(),source:"telegram",recoveryOnly:true});
+   expect(await(await POST(request())).json()).toMatchObject({ok:false,message:expect.stringContaining("unlinked")});
+   expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
+ });
+ it("recovers an already signed transaction after unlink without preparing another",async()=>{
+   m.auth.mockResolvedValue({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now(),source:"telegram",recoveryOnly:true});
+   m.read.mockResolvedValue({chainId:5042,status:"prepared",leg:"send",signingStartedAt:1});
+   m.advance.mockResolvedValue({chainId:5042,status:"completed",leg:"send",hash:"old"});
+   expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"old"});
+   expect(m.advance).toHaveBeenCalledOnce();expect(m.prepare).not.toHaveBeenCalled();
+ });
+ it("cancels a never-signed transaction after unlink",async()=>{
+   m.auth.mockResolvedValue({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now(),source:"telegram",recoveryOnly:true});
+   m.read.mockResolvedValue({chainId:5042,status:"prepared",leg:"send",recoveryVersion:1});
+   m.command.mockResolvedValue({chainId:5042,status:"cancelled",leg:"send"});
+   m.advance.mockResolvedValue({chainId:5042,status:"cancelled",leg:"send"});
+   expect(await(await POST(request())).json()).toMatchObject({ok:false,message:expect.stringContaining("cancelled")});
+   expect(m.command).toHaveBeenCalledWith("cancel_unsigned_trade",expect.objectContaining({owner:"alice"}));
+   expect(m.prepare).not.toHaveBeenCalled();
+ });
  it.each(["buy","sell","send","burn"])("asks for an unknown %s ticker before preparing a transaction",async kind=>{
    command={kind,unit:"usd",amount:"10",token:"NOTINDEXEDXYZ",recipient,slippageBps:100};
    expect(await(await POST(request())).json()).toEqual({ok:false,message:"Token NOTINDEXEDXYZ is not in the index. Enter its contract address."});
