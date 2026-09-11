@@ -19,7 +19,7 @@ describe("X command-only policy", () => {
     expect(xCommandReply(prompt, true)).toContain("Reply with the contract address and tag @ArctosBot.");
   });
   it("does not start a follow-up for missing or mismatched tokens", () => {
-    expect(duplicateTickerReply("Action needed: This is not an Arctos Bot token. Reply with a CA to buy this token.")).toBe(false);
+    expect(duplicateTickerReply("Action needed: This is not an Argos Bot token. Reply with a CA to buy this token.")).toBe(false);
     expect(xCommandReply("Reply with a CA to buy this token.")).toBe("Submit a full buy command with its contract address.");
     expect(xCommandReply("Reply with its contract address to check how much has been burned.")).not.toMatch(/reply/i);
   });

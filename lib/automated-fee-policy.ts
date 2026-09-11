@@ -164,7 +164,7 @@ export function automatedFeeEnrollmentAllowed(
     && isAutomatedFeeManualTestToken(tokenAddress, config.manualTestTokens);
 }
 
-/** Direct Argus holder sharing bypasses the Arctos Bot vault and is therefore
+/** Direct Argus holder sharing bypasses the Argos Bot vault and is therefore
  * outside the automated ARCBOT buyback-and-burn flywheel. */
 export function automatedFeeDistributionEligible(distributionMode: "wallet" | "holders") {
   return distributionMode === "wallet";

@@ -8,4 +8,4 @@ Token creation remains blocked. The legacy chain 4663 executor remains gated and
 
 Website buy/sell controls still lack a trade-submission handler. Their disabled state reflects missing execution infrastructure, not a rollout flag. Mixed V3/V4 execution and V4 multihop quotes remain unsupported.
 
-These source changes do not deploy a backend or verify funded settlement. Configure a separate Arctos Bot backend before deployment; the inherited backend is not an Arc deployment target.
+These source changes do not deploy a backend or verify funded settlement. Configure a separate Argos Bot backend before deployment; the inherited backend is not an Arc deployment target.

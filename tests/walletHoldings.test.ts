@@ -20,7 +20,7 @@ const wallet = "0x94613D7B572d03B280cdab84318c778B320acD77";
 const usdg = "0x3333333333333333333333333333333333333333";
 const other = `0x${"1".repeat(40)}`;
 const rawBalance = "6235726516564749138350510";
-const entry = (address = arcToken, value = rawBalance, decimals = "18") => ({ value, token: { address_hash: address, name: "Arctos Bot", symbol: "TOKEN1", decimals, type: "ERC-20" } });
+const entry = (address = arcToken, value = rawBalance, decimals = "18") => ({ value, token: { address_hash: address, name: "Argos Bot", symbol: "TOKEN1", decimals, type: "ERC-20" } });
 const page = (items: unknown[], next_page_params: unknown = null) => ({ items, next_page_params });
 
 beforeEach(() => {
@@ -32,7 +32,7 @@ beforeEach(() => {
     if (functionName === "balanceOf") return BigInt(rawBalance);
     if (functionName === "decimals") return 18;
     if (functionName === "symbol") return "TOKEN1";
-    if (functionName === "name") return "Arctos Bot";
+    if (functionName === "name") return "Argos Bot";
     throw new Error("Unexpected RPC read");
   });
   vi.stubGlobal("fetch", vi.fn(async (url: string) => {

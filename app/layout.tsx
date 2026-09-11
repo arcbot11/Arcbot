@@ -9,12 +9,12 @@ import { pageMetadata, siteUrl } from "@/lib/site-metadata";
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   ...pageMetadata("/"),
-  applicationName: "Arctos Bot",
-  authors: [{ name: "Arctos Bot" }],
-  creator: "Arctos Bot",
-  publisher: "Arctos Bot",
+  applicationName: "Argos Bot",
+  authors: [{ name: "Argos Bot" }],
+  creator: "Argos Bot",
+  publisher: "Argos Bot",
   category: "finance",
-  keywords: ["Arctos Bot", "Arc Chain", "Arc wallet", "USDC", "Arc token swaps"],
+  keywords: ["Argos Bot", "Arc Chain", "Arc wallet", "USDC", "Arc token swaps"],
   alternates: { canonical: "/" },
   icons: {
     icon: [

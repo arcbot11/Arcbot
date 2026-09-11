@@ -170,12 +170,12 @@ afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); vi.unstubAllEnvs();
 describe("priority categories", () => {
   it("keeps actual no-emoji upgrade confirmations in A without promoting automatic-fee notices", () => {
     expect(replyQueuePriority(feeUpgradeSuccessMessage("ARCBOT", "https://arcbot.invalid/token/example"), "upgrade_fees", true)).toBe("A");
-    expect(replyQueuePriority("ℹ️ $ARCBOT is an Arctos Bot V2 token. Creator-fee claims and payouts are automated; 5% buys back and burns $ARCBOT.", "claim_fees", true)).toBe("C");
+    expect(replyQueuePriority("ℹ️ $ARCBOT is an Argos Bot V2 token. Creator-fee claims and payouts are automated; 5% buys back and burns $ARCBOT.", "claim_fees", true)).toBe("C");
     expect(replyQueuePriority("There aren't any creator fees available to claim in that asset right now.", "claim_fees", true)).toBe("C");
   });
   it.each([
     ["Confirmed: Launched Help (HELP) on Argus!", "launch", "A"],
-    ["Confirmed: Your Arctos Bot wallet is ready!", "show_wallet", "C"],
+    ["Confirmed: Your Argos Bot wallet is ready!", "show_wallet", "C"],
     ["🔄 Buy, sell, send and burn with me!", "help", "C"],
     ["Failed: Swap failed.", "legacy_swap_final", "A"],
     ["🚀 $TEST has graduated!", "graduation", "A"],
@@ -196,8 +196,8 @@ describe("priority categories", () => {
     ["Failed: There aren't enough funds for that amount.", "buy", "B"],
     ["⛽ There isn't enough ETH in your wallet to cover this transaction and network gas.", "send", "C"],
     ["There aren't any creator fees available to claim in that asset right now.", "claim_fees", "C"],
-    ["ℹ️ $ARCBOT is an Arctos Bot V2 token. Creator-fee claims and payouts are automated; 5% buys back and burns $ARCBOT.", "claim_fees", "C"],
-    ["ℹ️ $ARCBOT is already an Arctos Bot V2 token.", "upgrade_fees", "C"],
+    ["ℹ️ $ARCBOT is an Argos Bot V2 token. Creator-fee claims and payouts are automated; 5% buys back and burns $ARCBOT.", "claim_fees", "C"],
+    ["ℹ️ $ARCBOT is already an Argos Bot V2 token.", "upgrade_fees", "C"],
     ["Pending: Your wallet is still processing an earlier transaction.", "launch", "C"],
     ["🤔 I couldn't quite make that out. Try show my wallet.", "unknown_wallet", "C"],
     ["🟢 What would you like to buy?", "guided_help:buy", "B"],

@@ -1,4 +1,4 @@
-# Arctos Bot project review — September 10, 2026
+# Argos Bot project review — September 10, 2026
 
 Scope: local source, full Vitest suite, TypeScript, deployed Convex configuration and records, public production HTTP routes, accessible Vercel projects, Telegram API, and the preceding read-only CDP/wallet/RPC checks. No signing, broadcasting, deployment, or remote configuration changes were performed. Secret values were not written to this report.
 

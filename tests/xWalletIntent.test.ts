@@ -91,10 +91,10 @@ describe("deterministic X wallet replies", () => {
     expect(requestedOperations("send 2 ETH to @alice and burn 5 ROOT")).toEqual(["send", "burn"]);
     expect(requestedOperations("show my wallet and my balance")).toEqual(["show_wallet", "show_balance"]);
     expect(requestedOperations("launch Test ticker TEST and buy $10 of AMD")).toEqual(["buy", "launch"]);
-    expect(requestedOperations("swap $25 into MSFT and launch Arctos Bot ticker ARCBOT")).toEqual(["buy", "launch"]);
+    expect(requestedOperations("swap $25 into MSFT and launch Argos Bot ticker ARCBOT")).toEqual(["buy", "launch"]);
     expect(requestedOperations("buy $10 of ARCBOT and send it to @alice")).toEqual(["buy_and_send"]);
     expect(requestedOperations("buy $10 of ARCBOT and burn it")).toEqual(["buy_and_burn"]);
-    expect(requestedOperations('launch Arctos Bot ticker ARCBOT description "buy, send, burn" dev buy $10')).toEqual(["launch"]);
+    expect(requestedOperations('launch Argos Bot ticker ARCBOT description "buy, send, burn" dev buy $10')).toEqual(["launch"]);
   });
   it("grounds flexible launch names and pair-asset syntax", () => {
     expect(groundedCanonicalCommand("launch a token named Tesladog")).toMatchObject({ kind: "launch", name: "Tesladog", symbol: "TESLADOG" });
@@ -108,9 +108,9 @@ describe("deterministic X wallet replies", () => {
     expect(groundedCanonicalCommand("launch token name ticker wowo")).toMatchObject({ kind: "launch", name: "wowo", symbol: "WOWO" });
     expect(groundedCanonicalCommand("launch token name ticker DEGAN")).toMatchObject({ kind: "launch", name: "DEGAN", symbol: "DEGAN" });
     expect(parseWalletCommand("launch Market Dog ticker MDOG pair asset 0x1111111111111111111111111111111111111111")).toMatchObject({ kind: "launch", pairToken: "0x1111111111111111111111111111111111111111" });
-    expect(parseWalletCommand("Launch Arctos Bot ticker ARCBOT, pair asset TSLA")).toMatchObject({ kind: "launch", pairToken: "TSLA" });
+    expect(parseWalletCommand("Launch Argos Bot ticker ARCBOT, pair asset TSLA")).toMatchObject({ kind: "launch", pairToken: "TSLA" });
     expect(groundedCanonicalCommand("Launch token, name is Velvet Rope and the symbol is VELVET")).toMatchObject({ kind: "launch", name: "Velvet Rope", symbol: "VELVET" });
-    expect(groundedCanonicalCommand("Launch Arctos Bot $ARCBOT pair ETH")).toMatchObject({ kind: "launch", name: "Arctos Bot", symbol: "ARCBOT" });
+    expect(groundedCanonicalCommand("Launch Argos Bot $ARCBOT pair ETH")).toMatchObject({ kind: "launch", name: "Argos Bot", symbol: "ARCBOT" });
     expect(groundedCanonicalCommand("Launch $RAIN — ‘Rain Check’ pair AAPL")).toMatchObject({ kind: "launch", name: "Rain Check", symbol: "RAIN" });
     expect(groundedCanonicalCommand("launch Plain Token ticker PLAIN no description needed")).toMatchObject({ kind: "launch", name: "Plain Token", symbol: "PLAIN" });
     expect(groundedCanonicalCommand("launch Plain Token ticker PLAIN no description needed")).not.toHaveProperty("description");
@@ -227,7 +227,7 @@ describe("deterministic X wallet replies", () => {
     const topics = ["capabilities", "wallet", "fund", "gas", "balance", "send", "buy_sell", "burn", "launch", "pairs", "fees"] as const;
     for (const topic of topics) expect(walletHelpMessage(topic).length).toBeLessThanOrEqual(25_000);
     expect(unknownWalletMessage().length).toBeLessThanOrEqual(280);
-    expect(conversationalWalletMessage()).toContain("Arctos Bot. Enter a command.");
+    expect(conversationalWalletMessage()).toContain("Argos Bot. Enter a command.");
     expect(conversationalWalletMessage()).not.toContain("couldn't quite make that out");
     expect(conversationalWalletMessage().length).toBeLessThanOrEqual(280);
   });
@@ -247,10 +247,10 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("does not count command words inside quoted launch metadata", () => {
-    const post = 'launch "Arctos Bot" ticker $ARCBOT X: www.x.com/arcbot description "Swap, sell, and launch on Argus with just one X post."';
-    expect(parseWalletCommand(canonicalCommandText(post))).toMatchObject({ kind: "launch", name: "Arctos Bot", symbol: "ARCBOT" });
+    const post = 'launch "Argos Bot" ticker $ARCBOT X: www.x.com/arcbot description "Swap, sell, and launch on Argus with just one X post."';
+    expect(parseWalletCommand(canonicalCommandText(post))).toMatchObject({ kind: "launch", name: "Argos Bot", symbol: "ARCBOT" });
     expect(groundedCanonicalCommand(post)).toMatchObject({
-      kind: "launch", name: "Arctos Bot", symbol: "ARCBOT", twitter: "https://x.com/arcbot", description: "Swap, sell, and launch on Argus with just one X post.",
+      kind: "launch", name: "Argos Bot", symbol: "ARCBOT", twitter: "https://x.com/arcbot", description: "Swap, sell, and launch on Argus with just one X post.",
     });
   });
 
@@ -327,16 +327,16 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("accepts ticker labels with optional dollars and wrapping quotes", () => {
-    const exactPost = 'Hey @ArctosBot, launch "Arctos Bot", ticker "ARCBOT", X: www.x.com/arcbot, website: arcbot.invalid, dev buy: $100, description "Swap, sell, and launch on Argus with just one X post."';
+    const exactPost = 'Hey @ArctosBot, launch "Argos Bot", ticker "ARCBOT", X: www.x.com/arcbot, website: arcbot.invalid, dev buy: $100, description "Swap, sell, and launch on Argus with just one X post."';
     expect(groundedCanonicalCommand(exactPost)).toMatchObject({
-      kind: "launch", name: "Arctos Bot", symbol: "ARCBOT",
+      kind: "launch", name: "Argos Bot", symbol: "ARCBOT",
       description: "Swap, sell, and launch on Argus with just one X post.",
       website: "https://arcbot.invalid", twitter: "https://x.com/arcbot",
       devBuy: { amount: "100", unit: "usd" },
     });
     for (const ticker of ["ARCBOT", "$ARCBOT", "'ARCBOT'", "‘$ARCBOT’", "\"$ARCBOT\""]) {
-      expect(groundedCanonicalCommand(`launch "Arctos Bot" ticker ${ticker}`), ticker).toMatchObject({
-        kind: "launch", name: "Arctos Bot", symbol: "ARCBOT",
+      expect(groundedCanonicalCommand(`launch "Argos Bot" ticker ${ticker}`), ticker).toMatchObject({
+        kind: "launch", name: "Argos Bot", symbol: "ARCBOT",
       });
     }
   });
@@ -422,12 +422,12 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("grounds normalized launch links from labeled bare values", () => {
-    const post = `Hey @ArctosBot launch Arctos Bot ticker $ARCBOT
+    const post = `Hey @ArctosBot launch Argos Bot ticker $ARCBOT
 Website: arcbot.invalid X: @ArctosBot Dev buy $100`;
     expect(groundedCanonicalCommand(post)).toEqual({
       kind: "launch",
       launchMode: "argus",
-      name: "Arctos Bot",
+      name: "Argos Bot",
       symbol: "ARCBOT",
       website: "https://arcbot.invalid",
       twitter: "https://x.com/ArcBot",

@@ -218,7 +218,7 @@ describe("wallet signer operation policy", () => {
       tickSpacing: 25, hook: address("0") }).routeKind).toBe("v4");
   });
 
-  it("binds controller lifecycle requests to one Arctos Bot wallet", () => {
+  it("binds controller lifecycle requests to one Argos Bot wallet", () => {
     const request = { idempotencyKey: "automated:controller", chainId: 4663, ownerReference: base.ownerReference,
       walletRef: base.walletRef, expectedAddress: base.expectedFrom, vaultAddress: address("2"),
       operation: { type: "exit" as const, recipient: address("3") } };

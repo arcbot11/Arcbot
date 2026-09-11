@@ -1505,8 +1505,8 @@ export const retryInteraction = internalAction({
         ownerXUserId: current.user.xUserId,
       });
       const message = revoked
-        ? "Confirmed: Telegram has been unlinked from your Arctos Bot X account. Your wallet and funds are unchanged."
-        : "No Telegram account is currently linked to your Arctos Bot X account.";
+        ? "Confirmed: Telegram has been unlinked from your Argos Bot X account. Your wallet and funds are unchanged."
+        : "No Telegram account is currently linked to your Argos Bot X account.";
       const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: true, kind: "reply" });
       await ctx.runMutation(internal.xReplies.updateInteraction, {
         postId, status: "completed", commandKind: "unlink_telegram", responsePostId,
@@ -1610,7 +1610,7 @@ export const retryInteraction = internalAction({
           try {
             const tokenAddress = await ctx.runQuery(internal.wallets.resolveKnownToken, { identifier });
             const launch = await ctx.runQuery(api.site.getLaunch, { tokenAddress });
-            message = launch ? feeAssignmentMessage(launch) : "Could not find an Arctos Bot launch for that token. Include its contract address in your question.";
+            message = launch ? feeAssignmentMessage(launch) : "Could not find an Argos Bot launch for that token. Include its contract address in your question.";
           } catch (error) {
             message = String(error).includes("more than one token")
               ? "More than one token uses that ticker. Include the contract address in your question."

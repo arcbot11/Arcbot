@@ -5,7 +5,7 @@ export default function NotFound() {
     <main className="center-screen">
       <p className="kicker">404</p>
       <h1>Page not found.</h1>
-      <Link className="secondary" href="/">Return to Arctos Bot</Link>
+      <Link className="secondary" href="/">Return to Argos Bot</Link>
     </main>
   );
 }

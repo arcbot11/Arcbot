@@ -1,6 +1,6 @@
 import { isAddressLiteral } from "./address-normalization";
 
-export const NON_INDEXED_BUY_TARGET_MESSAGE = "Action needed: This is not an Arctos Bot token. Reply with a CA to buy this token.";
+export const NON_INDEXED_BUY_TARGET_MESSAGE = "Action needed: This is not an Argos Bot token. Reply with a CA to buy this token.";
 
 /** Accept a contract-only clarification while allowing the labels users
  * naturally put before an address. No other command text is admitted. */

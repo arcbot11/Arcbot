@@ -3,7 +3,7 @@ import { arcAddressUrl, arcTransactionUrl, arcWalletUrl, arcCommandResponse } fr
 import { walletHelpMessage } from "../convex/xWalletIntent";
 const wallet = "0x1111111111111111111111111111111111111111", hash = "0x" + "a".repeat(64);
 afterEach(() => vi.unstubAllEnvs());
-it("pins public wallet links to Arctos Bot despite inherited environment values", () => {
+it("pins public wallet links to Argos Bot despite inherited environment values", () => {
   vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://old-project.invalid");
   expect(arcWalletUrl(wallet, "x:1:buy")).toBe(`https://www.arcchainbot.io/wallet/${wallet}?request=x%3A1%3Abuy`);
 });

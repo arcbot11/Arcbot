@@ -29,9 +29,9 @@ export function replyQueuePriority(text: string, kind?: string, ok?: boolean): R
   const opening = replyBody(text);
   // Read-only outputs must not be promoted by transaction words in help text.
   if (["help", "show_wallet", "create_wallet", "show_balance", "rate_limited"].includes(kind ?? "")) return "C";
-  if (/^(?:Your Arctos Bot wallet|Here's your wallet balance|Here is your wallet balance|Ask\b|Tell me\b|Say\b|Claim with\b|You can pair|Hi there|I couldn't quite make that out|This request did not complete)/i.test(opening)) return "C";
+  if (/^(?:Your Argos Bot wallet|Here's your wallet balance|Here is your wallet balance|Ask\b|Tell me\b|Say\b|Claim with\b|You can pair|Hi there|I couldn't quite make that out|This request did not complete)/i.test(opening)) return "C";
   if (/^(?:There isn't enough ETH|You (?:don't|do not) have enough ETH|You'll need to fund your wallet with (?:~?[\d.]+\s+)?ETH for gas|This wallet needs a little more ETH|Not enough ETH|Insufficient ETH|There aren't any .*fees|No .*fees|That launch already|That token.*already|You've reached|You've requested several|Your wallet is still processing|This request is already|One moment|Please wait|Token launches are currently available)/i.test(opening)
-    || /already an Arctos Bot V2 token|is an Arctos Bot V2 token|automated creator-fee (?:claims|processing)|creator-fee claims.*automated|fees (?:are|have been) automated|uses? manual (?:creator-)?fee claims/i.test(opening)) return "C";
+    || /already an Argos Bot V2 token|is an Argos Bot V2 token|automated creator-fee (?:claims|processing)|creator-fee claims.*automated|fees (?:are|have been) automated|uses? manual (?:creator-)?fee claims/i.test(opening)) return "C";
   // Some confirmations deliberately have no emoji (notably upgrades). Use the
   // trusted workflow result, not punctuation, after excluding routine notices.
   if (ok === true && ["launch", "buy", "sell", "send", "burn", "buy_and_send", "buy_and_burn", "buy_top_five", "swap_token_for_token", "claim_fees", "reassign_fees", "upgrade_fees"].includes(kind ?? "")) return "A";

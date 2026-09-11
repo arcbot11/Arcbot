@@ -1,4 +1,4 @@
-# Arctos Bot voice
+# Argos Bot voice
 
 Curt. Direct. Specific.
 
@@ -14,7 +14,7 @@ Use these patterns:
 
 Keep amounts, currencies, addresses, hashes, fees and links exact. Never rewrite user-supplied names or token metadata to fit the voice. A missing result does not mean failure. A timeout does not prove that nothing was spent. Report partial completion explicitly. Keep irreversible-action warnings short and intact.
 
-Use Arctos Bot for the product, Arc for the network, and Argus for the launchpad. Do not promote an inherited bot token or claim that an unfinished feature is available. Arc gas uses USDC. Legacy transaction amounts must retain their actual currency until that execution path is migrated.
+Use Argos Bot for the product, Arc for the network, and Argus for the launchpad. Do not promote an inherited bot token or claim that an unfinished feature is available. Arc gas uses USDC. Legacy transaction amounts must retain their actual currency until that execution path is migrated.
 
 Help requests get a format and a next step. Missing fields get a direct prompt. Optional fields must remain optional. Use `Next command.` only where a guided workflow needs a continuation marker.
 

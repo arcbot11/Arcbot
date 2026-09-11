@@ -1,4 +1,4 @@
-/** Public Arctos Bot identity and transaction policy. Credentials stay in the environment. */
+/** Public Argos Bot identity and transaction policy. Credentials stay in the environment. */
 export const ARC_BOT_TELEGRAM_USERNAME = "TheArctosBot";
 export const ARC_BOT_TELEGRAM_URL = "https://t.me/TheArctosBot";
 export const ARC_BOT_USERNAME = "ArctosBot";

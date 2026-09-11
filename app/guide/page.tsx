@@ -1,5 +1,5 @@
 import { pageMetadata } from "@/lib/site-metadata";
-export const metadata = pageMetadata("/guide", "Arctos Bot examples for buying, selling, swapping, and sending Arc tokens.");
+export const metadata = pageMetadata("/guide", "Argos Bot examples for buying, selling, swapping, and sending Arc tokens.");
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { OpenWalletLink } from "@/components/OpenWalletLink";
 

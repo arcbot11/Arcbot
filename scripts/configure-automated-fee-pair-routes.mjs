@@ -1,4 +1,4 @@
-throw new Error("Legacy automated fee operations are permanently disabled in Arctos Bot.");
+throw new Error("Legacy automated fee operations are permanently disabled in Argos Bot.");
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { CdpClient } from "@coinbase/cdp-sdk";

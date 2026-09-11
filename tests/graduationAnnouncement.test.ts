@@ -3,7 +3,7 @@ import { graduationAnnouncementText, graduationNextCheckAt, graduationTokenPageU
 import { xWeightedLength } from "../convex/xText";
 
 describe("graduation announcements", () => {
-  it("links to the Arctos Bot token page and stays within X limits", () => {
+  it("links to the Argos Bot token page and stays within X limits", () => {
     const url = graduationTokenPageUrl("0x1111111111111111111111111111111111111b07", "https://arcbot.invalid/");
     const text = graduationAnnouncementText("$river", url);
     expect(url).toBe("https://arcbot.invalid/launch/0x1111111111111111111111111111111111111b07");

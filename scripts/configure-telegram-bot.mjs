@@ -3,6 +3,7 @@ const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
 const site = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
 const dropPendingUpdates = process.argv.includes("--drop-pending-updates");
 const checkOnly = process.argv.includes("--check");
+const brandingOnly = process.argv.includes("--branding-only");
 if (!token || !secret || !site) throw new Error("TELEGRAM_BOT_TOKEN, TELEGRAM_WEBHOOK_SECRET, and NEXT_PUBLIC_SITE_URL are required");
 if (!/^[A-Za-z0-9_-]{16,256}$/.test(secret)) throw new Error("TELEGRAM_WEBHOOK_SECRET must be 16-256 URL-safe characters");
 
@@ -16,8 +17,8 @@ async function call(method, body) {
 }
 
 const commands = [
-  { command: "start", description: "Open the Arctos Bot menu" },
-  { command: "wallet", description: "Show or create your Arctos Bot wallet" },
+  { command: "start", description: "Open the Argos Bot menu" },
+  { command: "wallet", description: "Show or create your Argos Bot wallet" },
   { command: "balance", description: "Show wallet balances" },
   { command: "buy", description: "Buy an Arc token" },
   { command: "sell", description: "Sell an Arc token" },
@@ -26,10 +27,22 @@ const commands = [
   { command: "buyandsend", description: "Buy Arc tokens and send to a wallet" },
   { command: "buyandburn", description: "Buy Arc tokens and burn them" },
   { command: "burn", description: "Burn tokens" },
-  { command: "help", description: "Show Arctos Bot commands" },
+  { command: "help", description: "Show Argos Bot commands" },
   { command: "link", description: "Connect your X account" },
   { command: "unlink", description: "Unlink your X account" },
 ];
+
+if (brandingOnly) {
+  const bot = await call("getMe", {});
+  if (String(bot.id) !== "8679508645") throw new Error("Telegram bot identity does not match the configured project account");
+  await call("setMyName", { name: "Argos Bot" });
+  await call("setMyDescription", { description: "Argos Bot. Your gateway to Arc Chain. Buy, sell, swap, send, and burn Arc tokens with buttons and /commands." });
+  await call("setMyShortDescription", { short_description: "Argos Bot — Your Arc Chain wallet. https://www.arcchainbot.io" });
+  await call("setMyCommands", { commands });
+  const verified = await call("getMe", {});
+  console.log(JSON.stringify({ status: "branding updated", name: verified.first_name, username: verified.username, commands: commands.length }));
+  process.exit(0);
+}
 
 if (checkOnly) {
   const [bot, webhook] = await Promise.all([call("getMe", {}), call("getWebhookInfo", {})]);
@@ -46,7 +59,7 @@ if (checkOnly) {
   process.exit(0);
 }
 
-await call("setMyName", { name: "Arctos Bot" });
+await call("setMyName", { name: "Argos Bot" });
 await call("setMyDescription", { description: "Your gateway to Arc Chain. Buy, sell, swap, send, and burn Arc tokens with buttons and /commands." });
 await call("setMyShortDescription", { short_description: "Your Arc Chain wallet. https://www.arcchainbot.io" });
 await call("setMyCommands", { commands });

@@ -16,7 +16,7 @@ const rows: Row[] = [
     "Wait so I can really manage a wallet from X? @ArctosBot how does that work",
     "I'm new here 👋 @ArctosBot what can I do with this bot?",
     "Seeing @ArctosBot everywhere lately. What's the point of this thing?",
-    "No command here, genuinely asking: @ArctosBot how does Arctos Bot work?",
+    "No command here, genuinely asking: @ArctosBot how does Argos Bot work?",
     "Someone told me I can trade straight from X with this. How? @ArctosBot",
     "So what's the workflow here? Post something and you reply? @ArctosBot",
     "Could you explain how to get started @ArctosBot?",
@@ -34,7 +34,7 @@ const rows: Row[] = [
     "What chain is the wallet on again @ArctosBot?",
     "Does asking what's my wallet create one if I don't already have one @ArctosBot?",
   ]),
-  ...questions("fund", ["How would somebody send assets into my Arctos Bot wallet @ArctosBot?"]),
+  ...questions("fund", ["How would somebody send assets into my Argos Bot wallet @ArctosBot?"]),
   ...questions("balance", [
     "How do I check what tokens I'm holding @ArctosBot?",
     "Can you show balances or only give me the wallet address @ArctosBot?",

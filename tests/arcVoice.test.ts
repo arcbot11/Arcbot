@@ -5,7 +5,7 @@ import { guidedLaunchPrompt } from "../lib/guided-launch-workflow";
 import { replyQueuePriority } from "../lib/x-reply-queue-policy";
 import { isConfirmedReply } from "../lib/voice";
 
-describe("Arctos Bot response voice and workflow compatibility", () => {
+describe("Argos Bot response voice and workflow compatibility", () => {
   it("keeps public help direct without greetings, hype, or emojis", () => {
     const replies = [conversationalWalletMessage(), unknownWalletMessage(),
       ...(["wallet", "fund", "gas", "send", "buy_sell", "launch", "fees"] as const).map(walletHelpMessage),
@@ -14,7 +14,7 @@ describe("Arctos Bot response voice and workflow compatibility", () => {
       expect(reply).not.toMatch(/\p{Extended_Pictographic}|!|Hi there|I['’]ll|would you like|everything bot/iu);
     }
     expect(walletHelpMessage("gas")).toContain("USDC");
-    expect(walletHelpMessage("buy_sell")).toContain("pending");
+    expect(walletHelpMessage("buy_sell")).toContain("Arc gas is paid in USDC.");
   });
   it("does not describe optional guide inputs as requirements or failures", () => {
     for (const phase of ["artwork", "description", "website", "twitter", "telegram"] as const) {

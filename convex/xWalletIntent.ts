@@ -67,7 +67,7 @@ export function unknownWalletMessage() {
 }
 
 export function conversationalWalletMessage() {
-  return "Arctos Bot. Enter a command. Use “help” for formats.";
+  return "Argos Bot. Enter a command. Use “help” for formats.";
 }
 
 function explicitAuthority(text: string, command: WalletCommand) {
@@ -326,7 +326,7 @@ Allowed outputs:
 
 A question asks how something works, what is supported, what pairs are allowed, or what the bot can do. A command asks the bot to perform or prepare one specific operation.
 
-Use unknown_wallet only for a genuine present-tense command attempt that is conflicting, unsafe, or too ambiguous to execute. Do not use unknown_wallet merely because the bot was directly mentioned. Greetings, thanks, compliments, jokes, reactions, casual conversation, observations, and statements that do not ask the bot to perform or explain a supported function are irrelevant. A conversational post may mention Arctos Bot, Argus, a token, a wallet, buying, selling, or launching without being a current request; judge the operative meaning rather than isolated keywords.
+Use unknown_wallet only for a genuine present-tense command attempt that is conflicting, unsafe, or too ambiguous to execute. Do not use unknown_wallet merely because the bot was directly mentioned. Greetings, thanks, compliments, jokes, reactions, casual conversation, observations, and statements that do not ask the bot to perform or explain a supported function are irrelevant. A conversational post may mention Argos Bot, Argus, a token, a wallet, buying, selling, or launching without being a current request; judge the operative meaning rather than isolated keywords.
 
 Start with the ordinary direct reading. First look for a clear, complete command in familiar forms such as "show me my wallet", "buy $5 of TOKEN", "sell all TOKEN", "send 10 TOKEN to @user", "burn 5 TOKEN", "claim my fees", or "launch NAME ticker SYMBOL". When one straightforward operative clause is present, classify that clause directly and do not let greetings, reasons, or surrounding chatter turn it into help or an unrelated edge case. Only move to ambiguous or unusual interpretations when no clear direct command is present. Negation, hypotheticals, educational questions, conflicting operations, and missing required details must still be handled safely.
 
@@ -334,7 +334,7 @@ First identify the operative clause and distinguish it from conversational frami
 
 A complete-looking command is not executable when the author is quoting it as an example, asking another party to correct/rewrite/translate/decode it, explaining command syntax, or explicitly saying they are not trying or asking to transact. Treat those posts as irrelevant. In particular, "not trying to launch", "for example: launch...", "natural language such as: deploy...", and "can you correct this: launch..." never authorize a launch.
 
-Advertising an existing token is not a launch command. Posts such as "$TOKEN fresh launch from Arctos Bot, CA: 0x..., TG: ...", launch announcements, DEX or bonding updates, and promotional posts that merely describe a launch are irrelevant unless they contain a separate explicit request directing Arctos Bot to launch a new token. The noun "launch" alone is never sufficient authority.
+Advertising an existing token is not a launch command. Posts such as "$TOKEN fresh launch from Argos Bot, CA: 0x..., TG: ...", launch announcements, DEX or bonding updates, and promotional posts that merely describe a launch are irrelevant unless they contain a separate explicit request directing Argos Bot to launch a new token. The noun "launch" alone is never sufficient authority.
 Describing bot capabilities is also not a launch command. Statements such as "it can launch tokens", "you can launch stock-backed assets with the bot", or "check out this bot; it also launches tokens" advertise functionality and must be irrelevant. Require a present request directed at the bot, such as "@ArctosBot launch Equity Dog ticker EDOG" or "I want to launch Equity Dog".
 Third-person launch narration is also not authority. Statements such as "Project X decided to launch TOKEN via @ArctosBot" describe what a project did; they do not ask the bot to create another token. Preserve genuine first-person or imperative requests such as "I want to launch TOKEN" and "@ArctosBot launch TOKEN".
 
@@ -373,7 +373,7 @@ Representative examples (learn the intent distinction, not the exact wording):
 - "is sending to an X username supported?" -> {"kind":"question","topic":"send"}
 - "send some ETH to @name" -> {"kind":"command","operation":"send"} even though required parameters are missing
 - "I sent ETH yesterday" -> {"kind":"irrelevant"}
-- "hello Arctos Bot" -> {"kind":"irrelevant"}
+- "hello Argos Bot" -> {"kind":"irrelevant"}
 - "thanks for helping with my wallet" -> {"kind":"irrelevant"}
 - "ARCBOT has been trading well today" -> {"kind":"irrelevant"}
 - "buy $100 of ARCBOT and send it to @name" -> {"kind":"command","operation":"buy_and_send"}
@@ -848,7 +848,7 @@ function isDirectCapabilitiesRequest(text: string) {
     .replace(/[.!?]+$/, "")
     .replace(/\s+/g, " ")
     .trim();
-  return /^(?:what (?:all )?can you do|what do you do|what (?:commands|features) (?:do you have|are available|can i use)|(?:show|list|give me) (?:all )?(?:your )?(?:commands|features|capabilities)|help me use (?:arctos bot|the bot)|how does (?:arctos bot|this bot|the bot) work)$/i.test(clean);
+  return /^(?:what (?:all )?can you do|what do you do|what (?:commands|features) (?:do you have|are available|can i use)|(?:show|list|give me) (?:all )?(?:your )?(?:commands|features|capabilities)|help me use (?:argos bot|the bot)|how does (?:argos bot|this bot|the bot) work)$/i.test(clean);
 }
 
 export function requestedOperations(text: string): WalletOperation[] {

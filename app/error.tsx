@@ -7,5 +7,5 @@ export default function ErrorPage({ reset }: { error: Error & { digest?: string 
     const timer = window.setTimeout(reset, 2_000);
     return () => window.clearTimeout(timer);
   }, [reset]);
-  return <main className="not-found"><p className="eyebrow">Arctos Bot</p><h1>Page unavailable.</h1><p>Retrying automatically.</p><button className="button button-dark" type="button" onClick={reset}>Retry</button></main>;
+  return <main className="not-found"><p className="eyebrow">Argos Bot</p><h1>Page unavailable.</h1><p>Retrying automatically.</p><button className="button button-dark" type="button" onClick={reset}>Retry</button></main>;
 }

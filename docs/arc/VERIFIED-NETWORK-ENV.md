@@ -10,7 +10,7 @@ This establishes live CDP signing, Arcscan broadcast, and finalized native-USDC 
 
 ## Follow-up: Arcscan reachable from Convex
 
-The funded-wallet probe at 14:25 UTC supersedes the local-only connectivity conclusion below. From the deployed Convex internal action, `https://rpc.arc-scan.org` returned chain 5042, fresh latest/finalized blocks (0–1 seconds old), the expected historical checkpoint hash, and the wallet's 46 USDC. A simulated $1 transfer to the second Arctos Bot wallet succeeded through both native and ERC-20 interfaces; approval simulation, nonce, fee history, fee pricing and gas estimation also worked. Native transfer estimated 21,000 gas; ERC-20 transfer estimated 74,826 gas. These are simulations, not completed transfers.
+The funded-wallet probe at 14:25 UTC supersedes the local-only connectivity conclusion below. From the deployed Convex internal action, `https://rpc.arc-scan.org` returned chain 5042, fresh latest/finalized blocks (0–1 seconds old), the expected historical checkpoint hash, and the wallet's 46 USDC. A simulated $1 transfer to the second Argos Bot wallet succeeded through both native and ERC-20 interfaces; approval simulation, nonce, fee history, fee pricing and gas estimation also worked. Native transfer estimated 21,000 gas; ERC-20 transfer estimated 74,826 gas. These are simulations, not completed transfers.
 
 The empty `eth_sendRawTransaction` probe returned -32602 (transaction decoding error), demonstrating that the method is recognized, rather than rejected as unsupported. No valid signed transaction was submitted, so successful broadcast and settlement remain unverified. Local Node connections still reset; public DNS agrees with local DNS. The precise local connectivity cause is unknown.
 
@@ -56,13 +56,13 @@ Actual authenticated requests using the current local `ALCHEMY_ADMIN_API_ACCESS_
 
 No Alchemy app RPC URL or separate Alchemy app API key is configured in the local environment. Consequently, this check cannot establish this account's Arc mainnet entitlement or test an authenticated Arc mainnet RPC. The admin access key is not an app RPC key. No app, permissions, or environment settings were changed.
 
-Alchemy's [public chain list](https://www.alchemy.com/docs/reference/node-supported-chains) lists Arc Testnet only. Its [November 6, 2025 changelog](https://www.alchemy.com/docs/changelog/2025/11/6) mentions Arc Mainnet node upgrades, so absence from the public list is not proof that Alchemy has no mainnet infrastructure. An account-provided mainnet endpoint is needed to resolve availability for Arctos Bot.
+Alchemy's [public chain list](https://www.alchemy.com/docs/reference/node-supported-chains) lists Arc Testnet only. Its [November 6, 2025 changelog](https://www.alchemy.com/docs/changelog/2025/11/6) mentions Arc Mainnet node upgrades, so absence from the public list is not proof that Alchemy has no mainnet infrastructure. An account-provided mainnet endpoint is needed to resolve availability for Argos Bot.
 
 Arcscan's [detailed RPC documentation](https://docs.arc-scan.org/docs/rpc) explicitly advertises mainnet 5042 and `eth_sendRawTransaction` forwarding. Connection resets in our probes do not establish a global outage or a read-only endpoint. It refuses `debug_*`, which means the current V4 native-output verification path needs another provider or a separately reviewed verification implementation even if ordinary RPC calls work. Argus's integration JSON and frontend default chain configuration both advertise this Arcscan endpoint.
 
 ## OTC deployment requirements
 
-No Arctos Bot OTC deployment record was found locally. `OTC_BASE_PAYMENT_ROUTER` must be the deployed Base address of the updated `contracts/src/ArcBotOtcPayments.sol`, supporting ETH and USDC. `OTC_BASE_ROUTER_CODE_HASH` must be Keccak-256 of its deployed runtime bytecode fetched through `eth_getCode`, including its immutable fee recipient. A compiled artifact alone cannot provide the final configured pair.
+No Argos Bot OTC deployment record was found locally. `OTC_BASE_PAYMENT_ROUTER` must be the deployed Base address of the updated `contracts/src/ArcBotOtcPayments.sol`, supporting ETH and USDC. `OTC_BASE_ROUTER_CODE_HASH` must be Keccak-256 of its deployed runtime bytecode fetched through `eth_getCode`, including its immutable fee recipient. A compiled artifact alone cannot provide the final configured pair.
 
 Deployment still requires the dedicated fee recipient and a funded deployment account. No deployment was performed. Local `.env.local` was not modified by this verification.
 

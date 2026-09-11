@@ -599,7 +599,7 @@ describe("upgrade incident: continuation, cancellation and fresh-post recovery",
     Object.assign(ctx.rows.automatedFeePrograms[0], { deploymentTransactionHash: h(1), deploymentConfirmedAt: 1 });
     const result = await handler(wallets.executeCommand)(ctx, args);
     expect(result).toMatchObject({ ok: true, transactionHash: h(2) });
-    expect(result.message).toContain("$TEST has been upgraded to Arctos Bot V2");
+    expect(result.message).toContain("$TEST has been upgraded to Argos Bot V2");
     expect((await handler(wallets.executeCommand)(ctx, args)).ok).toBe(true);
     expect(submits).toBe(1); expect(quota).toBe(1);
   });

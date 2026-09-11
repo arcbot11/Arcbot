@@ -20,8 +20,8 @@ export function MobileNav() {
     return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", escape); };
   }, [open]);
   return <div className="mobile-nav" ref={menuRef}>
-    {brand.xUrl ? <a className="mobile-x-link" href={brand.xUrl} target="_blank" rel="noreferrer" aria-label="Arctos Bot on X"><Image src="/x-logo.png" alt="" width={17} height={17} /></a> : null}
-    {brand.telegramUrl ? <a className="mobile-tg-link" href={brand.telegramUrl} target="_blank" rel="noreferrer" aria-label="Arctos Bot on Telegram"><Image src="/telegram-logo.png" alt="" width={17} height={17} /></a> : null}
+    {brand.xUrl ? <a className="mobile-x-link" href={brand.xUrl} target="_blank" rel="noreferrer" aria-label="Argos Bot on X"><Image src="/x-logo.png" alt="" width={17} height={17} /></a> : null}
+    {brand.telegramUrl ? <a className="mobile-tg-link" href={brand.telegramUrl} target="_blank" rel="noreferrer" aria-label="Argos Bot on Telegram"><Image src="/telegram-logo.png" alt="" width={17} height={17} /></a> : null}
     <button className="mobile-menu-toggle" type="button" aria-label={open ? "Close navigation menu" : "Open navigation menu"} aria-controls="mobile-navigation" aria-expanded={open} onClick={() => setOpen((value) => !value)}><span /><span /><span /></button>
     {open ? <div className="mobile-menu" id="mobile-navigation">
       <Link href="/" onClick={() => setOpen(false)}>Home</Link>

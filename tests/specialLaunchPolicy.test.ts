@@ -22,7 +22,7 @@ describe("reserved launch tickers", () => {
   });
 
   it("blocks ARCBOT launches for every account after the official launch", () => {
-    const launch = { kind: "launch", launchMode: "argus", name: "Arctos Bot", symbol: "$arcbot" } as const;
+    const launch = { kind: "launch", launchMode: "argus", name: "Argos Bot", symbol: "$arcbot" } as const;
     expect(launchTickerAllowed("123", launch)).toBe(false);
     expect(launchTickerAllowed("456", launch)).toBe(false);
   });

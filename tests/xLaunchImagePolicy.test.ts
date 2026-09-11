@@ -3,31 +3,31 @@ import { firstPhotoUrl, requestsReferencedLaunchImage, selectLaunchImageReferenc
 
 describe("referenced launch image phrase policy", () => {
   it.each([
-    "launch Arctos Bot ticker ARCBOT use this image",
-    "launch Arctos Bot ticker ARCBOT use this picture",
-    "launch Arctos Bot ticker ARCBOT using this image",
-    "launch Arctos Bot ticker ARCBOT using this picture",
-    "launch Arctos Bot ticker ARCBOT with this image",
-    "LAUNCH Arctos Bot TICKER ARCBOT WITH THIS PICTURE please",
+    "launch Argos Bot ticker ARCBOT use this image",
+    "launch Argos Bot ticker ARCBOT use this picture",
+    "launch Argos Bot ticker ARCBOT using this image",
+    "launch Argos Bot ticker ARCBOT using this picture",
+    "launch Argos Bot ticker ARCBOT with this image",
+    "LAUNCH Argos Bot TICKER ARCBOT WITH THIS PICTURE please",
   ])("accepts the exact allowlisted wording: %s", (text) => {
     expect(requestsReferencedLaunchImage(text)).toBe(true);
   });
 
   it.each([
-    "launch Arctos Bot ticker ARCBOT use an image",
-    "launch Arctos Bot ticker ARCBOT use this imagery",
-    "this image looks good, launch Arctos Bot ticker ARCBOT",
-    "launch Arctos Bot ticker ARCBOT and attach the photo",
-    "launch Arctos Bot ticker ARCBOT without using this image",
-    "launch Arctos Bot ticker ARCBOT do not use this picture",
-    "launch Arctos Bot ticker ARCBOT don't use this image",
-    "launch Arctos Bot ticker ARCBOT never use this picture",
+    "launch Argos Bot ticker ARCBOT use an image",
+    "launch Argos Bot ticker ARCBOT use this imagery",
+    "this image looks good, launch Argos Bot ticker ARCBOT",
+    "launch Argos Bot ticker ARCBOT and attach the photo",
+    "launch Argos Bot ticker ARCBOT without using this image",
+    "launch Argos Bot ticker ARCBOT do not use this picture",
+    "launch Argos Bot ticker ARCBOT don't use this image",
+    "launch Argos Bot ticker ARCBOT never use this picture",
   ])("rejects near matches and negations: %s", (text) => {
     expect(requestsReferencedLaunchImage(text)).toBe(false);
   });
 
   it("ignores an allowlisted phrase inside metadata quotes", () => {
-    expect(requestsReferencedLaunchImage('launch Arctos Bot ticker ARCBOT description "use this image"')).toBe(false);
+    expect(requestsReferencedLaunchImage('launch Argos Bot ticker ARCBOT description "use this image"')).toBe(false);
     expect(requestsReferencedLaunchImage("launch ‘Use This Image’ ticker IMAGE")).toBe(false);
   });
 });

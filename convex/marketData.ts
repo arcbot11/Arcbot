@@ -277,7 +277,7 @@ export const syncCoinGeckoUsage = internalAction({
     if (!key) return { status: "not_configured" as const };
     try {
       const response = await fetch("https://pro-api.coingecko.com/api/v3/key", {
-        headers: { accept: "application/json", "x-cg-pro-api-key": key, "user-agent": "ArctosBot/1.0" },
+        headers: { accept: "application/json", "x-cg-pro-api-key": key, "user-agent": "ArgosBot/1.0" },
         cache: "no-store", signal: AbortSignal.timeout(8_000),
       });
       if (!response.ok) return { status: "unavailable" as const, httpStatus: response.status };

@@ -1,6 +1,6 @@
 # Private automated-fee testing gates
 
-This subsystem must remain invisible and unreachable from normal Arctos Bot use while it is under test.
+This subsystem must remain invisible and unreachable from normal Argos Bot use while it is under test.
 
 ## Invariants during private testing
 
@@ -68,7 +68,7 @@ npm run automated-fees:prepare-test-launch
 This command is read-only. It verifies the dedicated CDP launcher, predicts a
 deterministic fee vault, uses a salt without a token-address suffix requirement, predicts the Argus
 token and curve, checks address collisions and balances, and simulates the
-exact ETH-paired launch with no developer buy. It does not invoke the Arctos Bot
+exact ETH-paired launch with no developer buy. It does not invoke the Argos Bot
 launch pipeline, write Convex records, sign a transaction, or broadcast.
 
 The scripts require the git-ignored official Solidity 0.8.24 binary and Foundry v1.7.1 binaries. They verify pinned SHA-256 checksums before running.

@@ -1,8 +1,8 @@
-# Arctos Bot
+# Argos Bot
 
-Product copy follows the [Arctos Bot voice guide](docs/VOICE.md): curt, direct, result first.
+Product copy follows the [Argos Bot voice guide](docs/VOICE.md): curt, direct, result first.
 
-Arctos Bot is a trading and wallet project for Arc mainnet, with Argus market discovery and support planned for other Arc venues.
+Argos Bot is a trading and wallet project for Arc mainnet, with Argus market discovery and support planned for other Arc venues.
 
 ## Current scope
 
@@ -13,7 +13,7 @@ Arctos Bot is a trading and wallet project for Arc mainnet, with Argus market di
 
 ## Status
 
-The application has been rebranded as Arctos Bot. Mainnet research and the implementation plan are in [docs/arc/IMPLEMENTATION.md](docs/arc/IMPLEMENTATION.md). The retained transaction engine and contracts are legacy infrastructure awaiting migration; renamed symbols do not establish Arc deployment compatibility. Existing addresses and chain-4663 transaction semantics have not been converted into verified Argus deployments.
+The application has been rebranded as Argos Bot. Mainnet research and the implementation plan are in [docs/arc/IMPLEMENTATION.md](docs/arc/IMPLEMENTATION.md). The retained transaction engine and contracts are legacy infrastructure awaiting migration; renamed symbols do not establish Arc deployment compatibility. Existing addresses and chain-4663 transaction semantics have not been converted into verified Argus deployments.
 
 Do not enable inherited workers or deploy contract changes as an Arc service until the network, signing account, deployment registry, and transaction flows pass the implementation plan's acceptance gates. Renamed contract names and typed-data domains require matching new deployments and signatures; they are not upgrades to any existing deployment.
 
@@ -29,6 +29,6 @@ Arc ERC-20 [dead-address burns](docs/arc/BURNING.md) share the transfer engine. 
 
 Install dependencies with npm install, then use npm run dev. Run npm run typecheck, npm test, and npm run build for validation.
 
-Configure an independent Arctos Bot environment using .env.example. NEXT_PUBLIC_SITE_URL is the OAuth and webhook origin. Public website and X links use the Arctos Bot identity in lib/project-config.ts. Telegram links and the default command username use the verified TheArcChainBot identity in lib/project-config.ts. Legacy .invalid endpoints remain in retained modules; they are not Arc RPC fallbacks. See docs/arc/BRANDING-LINK-REVIEW-2026-09-10.md.
+Configure an independent Argos Bot environment using .env.example. NEXT_PUBLIC_SITE_URL is the OAuth and webhook origin. Public website and X links use the Argos Bot identity in lib/project-config.ts. Telegram links and the default command username use the verified TheArcChainBot identity in lib/project-config.ts. Legacy .invalid endpoints remain in retained modules; they are not Arc RPC fallbacks. See docs/arc/BRANDING-LINK-REVIEW-2026-09-10.md.
 
-The supplied Arctos Bot logo and social banner are stored in public/brand. Browser icons are stored in public and app. Preserve the supplied assets; the older vector-generation script is not the source of the current branding.
+The supplied Argos Bot logo and social banner are stored in public/brand. Browser icons are stored in public and app. Preserve the supplied assets; the older vector-generation script is not the source of the current branding.
