@@ -79,11 +79,10 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
         :BigInt(step==="seller"?order.sellerWei:"0")+BigInt(order.feeWei)+gas*(step==="seller"?2n:1n);
       const shortfall=needed>free?needed-free:0n;
       if(shortfall>0n){
-        const arc=step==="arc",already=arc?order.escrow!.arcTopupWei:order.escrow!.topupWei;
-        if(already)throw Error("Add funds for settlement gas. The recovery allowance is already used.");
-        const limit=arc?10n**16n:BASE_RECOVERY_WEI;
+        const arc=step==="arc";
+        const limit=BigInt((arc?order.escrow!.arcRecoveryLimitWei:order.escrow!.baseRecoveryLimitWei)??(arc?10n**16n:BASE_RECOVERY_WEI).toString());
         if(shortfall>limit)throw Error("Settlement gas exceeds the small recovery allowance.");
-        order=await repo.command<Order>("escrow_topup",{listingId:listing.id,orderId:order.id,amount:shortfall.toString(),arc});
+        order=await repo.command<Order>("escrow_topup",{listingId:listing.id,orderId:order.id,amount:shortfall.toString(),arc,expectedAttempt:order.escrow!.attempts?.[arc?"arc_topup":"topup"]??0});
         if(!await runStep(listing,arc?"arc_topup":"topup",order))return false;
         prepared=await prepareCall(probe.chainId,probe);
       }

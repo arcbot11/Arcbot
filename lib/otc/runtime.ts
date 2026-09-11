@@ -1,4 +1,4 @@
-import {expiredSwap} from "./unsigned-recovery";
+import {staleUnsigned} from "./unsigned-recovery";
 import { ARC_NATIVE_TRANSFER, verifyArcUsdcDelivery } from "../arc/usdc-delivery";
 import { settlementFailure } from "./settlement-error";
 import { baseTransport } from "../base/transport";
@@ -113,8 +113,16 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
   const repo=repository(); let record=await repo.read<Transaction>({id});
   if (!record || ["completed","reverted","cancelled"].includes(record.status)) return record;
   if(receiptOnly&&(!record.raw||!record.hash||record.status!=="submitted"))return record;
-  if(record.recoveryVersion===1&&!record.signingStartedAt&&!record.raw&&!record.escrowRef&&!record.orderId&&expiredSwap(record))return repo.command<Transaction>("cancel_unsigned_trade",{id});
+  if(record.recoveryVersion===1&&record.signingStartedAt===undefined&&!record.raw&&!record.escrowRef&&!record.orderId&&staleUnsigned(record))return repo.command<Transaction>("cancel_unsigned_trade",{id});
   walletTransferConfiguration(record.chainId);
+  // A prior fee version may win while its replacement is being signed. Check
+  // all persisted hashes before signing or rebroadcasting anything else.
+  for(const attempt of record.previousSigned??[]){
+    if(attempt.hash===record.hash)continue;
+    const client=chainClient(record.chainId);
+    const evidence=await client.getTransactionReceipt({hash:attempt.hash as Hex}).catch(error=>{if(error?.name==="TransactionReceiptNotFoundError")return null;throw error;});
+    if(evidence&&(await client.getBlock({blockNumber:evidence.blockNumber})).hash===evidence.blockHash){record=await repo.command<Transaction>("select_mined_attempt",{id,hash:attempt.hash});break;}
+  }
   if (["approval", "payment"].includes(record.leg) && !record.raw) {
     const config=await verifyRouter(false),order=await repo.read<Order>({id:record.orderId!});
     if(order.router.toLowerCase()!==config.router.toLowerCase()||order.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new Error("Payment configuration changed. Recovery required.");
@@ -132,9 +140,9 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
   // must not prevent retrieval after the deadline or an already-mined submission.
   if (!record.raw && record.signingStartedAt) {
     const cdp=new CdpClient({apiKeyId:required("CDP_API_KEY_ID"),apiKeySecret:required("CDP_API_KEY_SECRET"),walletSecret:required("CDP_WALLET_SECRET")});
-    const {signature}=await signWithAuthRecovery(id,idempotencyKey=>cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey}));
+    const {signature}=await signWithAuthRecovery(record.signingRevision?`${id}:fees:${record.signingRevision}`:id,idempotencyKey=>cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey}));
     const hash=await verifyRaw(signature as Hex,record.unsigned as Hex,record.wallet);
-    record=await repo.command<Transaction>("sign",{id,raw:signature,hash});
+    record=await repo.command<Transaction>("sign",{id,raw:signature,hash,unsigned:record.unsigned});
   }
   if (!record.raw) {
     if(record.sourceRequestId){
@@ -177,7 +185,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     if(record.recoveryVersion===1)await repo.command("begin_signing",{id});
     const {signature}=await signWithAuthRecovery(id,idempotencyKey=>cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey}));
     const hash=await verifyRaw(signature as Hex,record.unsigned as Hex,record.wallet);
-    record=await repo.command<Transaction>("sign",{id,raw:signature,hash});
+    record=await repo.command<Transaction>("sign",{id,raw:signature,hash,unsigned:record.unsigned});
   }
   if (await verifyRaw(record.raw as Hex,record.unsigned as Hex,record.wallet)!==record.hash) throw new Error("Stored signature hash mismatch.");
   const client=chainClient(record.chainId);
@@ -186,7 +194,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
   });
   if (receipt) {
     const arrivedBaseNative=record.chainId===8453&&record.leg==="send"&&receipt.status==="success"&&(!tx.data||tx.data==="0x")&&(tx.value??0n)>0n;
-    const settlement:Transaction["settlement"]=record.chainId===5042&&record.leg==="swap"?{gasWei:(receipt.gasUsed*receipt.effectiveGasPrice).toString()}:undefined;
+    const settlement:Transaction["settlement"]=record.chainId===5042&&(record.leg==="swap"||record.leg==="send"&&tx.data&&tx.data!=="0x")?{gasWei:(receipt.gasUsed*receipt.effectiveGasPrice).toString()}:undefined;
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt is not canonical.");
     const chainTx=await client.getTransaction({hash:record.hash as Hex});
     if (chainTx.from.toLowerCase()!==record.wallet.toLowerCase() || chainTx.to?.toLowerCase()!==tx.to?.toLowerCase() || chainTx.value!==(tx.value??0n) || chainTx.input!==(tx.data??"0x")) throw new Error("Receipt transaction does not match the order.");
@@ -197,7 +205,10 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
         const token=tx.to;
         const [before,after]=await Promise.all([receipt.blockNumber-1n,receipt.blockNumber].map(blockNumber=>client.readContract({address:token,abi:transferAbi,functionName:"balanceOf",args:[transfer.recipient],blockNumber})));
         const blockLogs=await client.getLogs({address:token,fromBlock:receipt.blockNumber,toBlock:receipt.blockNumber});
-        verifyTransferDelivery({token,sender:record.wallet,...transfer,before,after,logs:receipt.logs,blockLogs});
+        const ordinaryToken=record.chainId===5042&&!record.escrowRef&&!record.orderId&&token.toLowerCase()!==ARC_USDC.toLowerCase();
+        const senderBalances=ordinaryToken?await Promise.all([receipt.blockNumber-1n,receipt.blockNumber].map(blockNumber=>client.readContract({address:token,abi:transferAbi,functionName:"balanceOf",args:[getAddress(record.wallet)],blockNumber}))):undefined;
+        const delivered=verifyTransferDelivery({token,sender:record.wallet,...transfer,before,after,logs:receipt.logs,blockLogs,...(senderBalances?{taxedSend:{senderBefore:senderBalances[0],senderAfter:senderBalances[1]}}:{})});
+        if(settlement){const decimals=await client.readContract({address:token,abi:parseAbi(["function decimals() view returns(uint8)"]),functionName:"decimals",blockNumber:receipt.blockNumber}).catch(()=>undefined);settlement.output={raw:delivered.toString(),...(typeof decimals==="number"&&Number.isInteger(decimals)&&decimals>=0&&decimals<=255?{decimals}:{})};}
       }
     }
     if(receipt.status==="success"&&record.leg==="swap"){
@@ -283,13 +294,13 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt changed during verification.");
     // All Base operations use canonical receipt verification and the delivery checks above.
     // Reverted receipts are recorded as failures, never delivery. Arc still requires finality.
-    if(record.chainId===8453)return repo.command<Transaction>("settled",{id,block:receipt.blockNumber.toString(),success:receipt.status==="success"});
+    if(record.chainId===8453)return repo.command<Transaction>("settled",{id,expectedHash:record.hash,block:receipt.blockNumber.toString(),success:receipt.status==="success"});
     const finalized=await client.getBlock({blockTag:"finalized"});
     if(typeof finalized.number!=="bigint"||finalized.number<receipt.blockNumber){
       return record;
     }
     if((await client.getBlock({blockNumber:finalized.number})).hash!==finalized.hash)throw new Error("Finality evidence changed.");
-    return repo.command<Transaction>("settled",{id,block:receipt.blockNumber.toString(),success:receipt.status==="success",...(settlement?{settlement}:{})});
+    return repo.command<Transaction>("settled",{id,expectedHash:record.hash,block:receipt.blockNumber.toString(),success:receipt.status==="success",...(settlement?{settlement}:{})});
   }
   if(receiptOnly)return record;
   if (snapshot.nonce>(tx.nonce??0)) throw new Error("Nonce consumed without a verified receipt. Funds remain reserved.");

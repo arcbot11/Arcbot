@@ -4,7 +4,7 @@ import { ARC_BOT_SITE_URL, ARC_BOT_USERNAME } from "./project-config";
 export const siteUrl = ARC_BOT_SITE_URL;
 export const siteTitle = "Argos Bot - Your Gateway to Arc Chain";
 export const siteDescription = "Your Arc Chain Wallet. Buy, sell, swap, and send Arc tokens with Argos Bot.";
-const banner = { url: "/brand/argos-social-banner.jpg", width: 1500, height: 500, alt: siteTitle };
+const banner = { url: "/brand/argos-social-card-v2.jpg", width: 1200, height: 600, alt: siteTitle };
 
 export function pageMetadata(path: string, description = siteDescription): Metadata {
   return {

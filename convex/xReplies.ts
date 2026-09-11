@@ -68,7 +68,7 @@ import {
   shouldRestrictChainReply,
 } from "../lib/x-passive-chain-policy";
 
-import { X_COMMAND_HELP, X_CONTRACT_CLARIFICATION_TTL_MS, retiredXWorkflow, xCommandReply, duplicateTickerReply } from "../lib/x-command-workflows";
+import { X_COMMAND_HELP, X_CONTRACT_CLARIFICATION_TTL_MS, retiredXWorkflow, xCommandReply, tokenClarificationReply } from "../lib/x-command-workflows";
 import { exceedsXReplyDepthLimit } from "../lib/x-reply-depth-policy";
 
 // Only reuse locally recorded context. No extra X reads or wallet operations.
@@ -868,13 +868,14 @@ function decodeAmbiguousTokenState(value?: string) {
   if (!value || value.length > 2_000) return null;
   try {
     const parsed = JSON.parse(value) as { type?: unknown; reason?: unknown; intent?: unknown; field?: unknown; explicitMentionAuthorized?: unknown };
-    if (parsed.type !== "ambiguous_token" || parsed.reason !== "duplicate_ticker" || typeof parsed.explicitMentionAuthorized !== "boolean") return null;
+    if (parsed.type !== "ambiguous_token" || !["duplicate_ticker","unknown_ticker"].includes(String(parsed.reason)) || parsed.explicitMentionAuthorized !== true) return null;
     const intent = decodePersistedXWalletIntent(JSON.stringify(parsed.intent));
     if (intent.kind !== "command") return null;
     const field = parsed.field === "token" || parsed.field === "fromToken" || parsed.field === "toToken" || parsed.field === "pairAsset"
       ? parsed.field
       : ambiguousTokenField(intent.command);
-    return field ? { intent, field, explicitMentionAuthorized: parsed.explicitMentionAuthorized } : null;
+    const identifier=field?ambiguousTokenValue(intent.command,field):null;
+    return field && identifier && !/^0x/i.test(identifier) ? { intent, field, reason:parsed.reason, explicitMentionAuthorized: parsed.explicitMentionAuthorized } : null;
   } catch {
     return null;
   }
@@ -1546,9 +1547,9 @@ export const retryInteraction = internalAction({
         tokenAddress: suppliedContract,
       });
       if (!identity.matches) {
-        const message = `Action needed: That contract address's onchain ticker does not match $${originalTicker}. Double-check that you've got the right contract address, then reply with it.`;
+        const message = `That contract's ticker does not match ${originalTicker}. Reply with the correct contract address and tag @TheArgosBot.`;
         const stateJson = JSON.stringify({
-          type: "ambiguous_token", reason: "duplicate_ticker",
+          type: "ambiguous_token", reason: ambiguousTokenContext.reason,
           intent: ambiguousTokenContext.intent,
           field: ambiguousTokenContext.field,
           explicitMentionAuthorized: ambiguousTokenContext.explicitMentionAuthorized,
@@ -1880,11 +1881,12 @@ export const retryInteraction = internalAction({
       const longCommandResult = intent.kind === "command" &&
         (intent.command.kind === "claim_fees" || intent.command.kind === "buy_top_five" || (intent.command.kind === "reassign_fees" && intent.command.selfBurnBps!==undefined));
       const longHelpResult = intent.kind === "help" && intent.topic === "pairs";
-      const ambiguousField = intent.kind === "command" ? ambiguousTokenField(intent.command) : null;
+      const clarification=tokenClarificationReply(reply);
+      const ambiguousField = intent.kind === "command" && clarification ? ambiguousTokenField(intent.command,clarification.ticker) : null;
       const ambiguousTokenStateJson = !ok && intent.kind === "command" && ambiguousField
-        && duplicateTickerReply(reply)
+        && clarification
         ? JSON.stringify({
-            type: "ambiguous_token", reason: "duplicate_ticker",
+            type: "ambiguous_token", reason: clarification.reason,
             intent,
             field: ambiguousField,
             explicitMentionAuthorized: current.interaction.botParentAuthorized === true

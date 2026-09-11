@@ -5,7 +5,7 @@ export function transactionProgress(status:string,action:string){
     case "signed":return `Submitting ${action}…`;
     case "submitted":return `Confirming ${action}…`;
     case "completed":return `${action[0].toUpperCase()+action.slice(1)} completed.`;
-    case "cancelled":return "Trade expired before signing. Funds released. Submit again.";
+    case "cancelled":return "Request cancelled. Check transaction history before submitting again.";
     case "reverted":return `${action[0].toUpperCase()+action.slice(1)} reverted. Check transaction history.`;
     default:throw new Error("Transaction status unavailable. Check transaction history before submitting again.");
   }

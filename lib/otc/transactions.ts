@@ -77,9 +77,10 @@ export async function prepareTransaction(store: Store, input: { id: string; owne
   const tx: Transaction = { kind: "transaction", id: input.id, owner: input.owner, wallet: input.wallet, chainId: input.chainId, leg: input.leg, ...(input.orderId ? { orderId: input.orderId } : {}), holdId, ...(input.swapOutput ? {swapOutput:input.swapOutput} : {}), ...(input.sourceRequestId ? {sourceRequestId:input.sourceRequestId} : {}), unsigned: input.unsigned, recoveryVersion:1, status: "prepared", createdAt: now, updatedAt: now };
   await store.put(w); await store.put(tx); return tx;
 }
-export async function signTransactionRecord(store: Store, id: string, raw: string, hash: string, now: number) {
+export async function signTransactionRecord(store: Store, id: string, raw: string, hash: string, now: number,expectedUnsigned?:string) {
   const tx = await store.get<Transaction>(id);
   if (!tx) throw new Error("Transaction missing.");
+  if(expectedUnsigned!==undefined&&tx.unsigned!==expectedUnsigned)throw Error("Signing attempt changed. Reconcile the current request.");
   if (tx.raw) { if (tx.raw !== raw || tx.hash !== hash) throw new Error("Signed transaction is immutable."); return tx; }
   if (tx.status !== "prepared") throw new Error("Transaction cannot be signed.");
   tx.raw = raw; tx.hash = hash; tx.status = "signed"; tx.updatedAt = now;
@@ -102,12 +103,13 @@ export async function submitted(store: Store, id: string, now: number) {
   return tx;
 }
 /** Only the private settlement worker may submit canonical, finalized receipt evidence. */
-export async function settled(store: Store, id: string, block: string, success: boolean, now: number, evidence?:Transaction["settlement"]) {
+export async function settled(store: Store, id: string, block: string, success: boolean, now: number, evidence?:Transaction["settlement"],expectedHash?:string) {
   const tx = await store.get<Transaction>(id);
   if (!tx?.raw || !tx.hash) throw new Error("Signed transaction missing.");
+  if(expectedHash!==undefined&&tx.hash!==expectedHash)throw Error("Settlement attempt changed. Reconcile the mined hash.");
   if (["completed", "reverted"].includes(tx.status)) return tx;
   if(evidence){
-    if(!/^\d+$/.test(evidence.gasWei)||evidence.output&&(!success||tx.leg!=="swap"||!/^\d+$/.test(evidence.output.raw)||evidence.output.decimals!==undefined&&(!Number.isInteger(evidence.output.decimals)||evidence.output.decimals<0||evidence.output.decimals>255)))throw new Error("Invalid settlement amounts.");
+    if(!/^\d+$/.test(evidence.gasWei)||evidence.output&&(!success||!["swap","send"].includes(tx.leg)||!/^\d+$/.test(evidence.output.raw)||evidence.output.decimals!==undefined&&(!Number.isInteger(evidence.output.decimals)||evidence.output.decimals<0||evidence.output.decimals>255)))throw new Error("Invalid settlement amounts.");
     tx.settlement=evidence;
   }
   const w = await wallet(store, tx.chainId, tx.wallet, tx.owner, now);

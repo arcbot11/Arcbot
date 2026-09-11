@@ -24,6 +24,6 @@ it.each(["/", "/wallet", "/otc", "/guide", "/privacy", "/terms"])("brands metada
   expect(siteTitle).toBe("Argos Bot - Your Gateway to Arc Chain");
   const metadata = pageMetadata(path);
   expect(metadata.alternates?.canonical).toBe(path);
-  expect(metadata.openGraph).toMatchObject({ siteName: "Argos Bot", images: [{ url: "/brand/argos-social-banner.jpg", width: 1500, height: 500 }] });
+  expect(metadata.openGraph).toMatchObject({ siteName: "Argos Bot", images: [{ url: "/brand/argos-social-card-v2.jpg", width: 1200, height: 600 }] });
   expect(metadata.twitter).toMatchObject({ site: "@TheArgosBot", creator: "@TheArgosBot", card: "summary_large_image" });
 });

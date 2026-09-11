@@ -487,6 +487,15 @@ describe("command-only X rollout", () => {
     await source(ctx, "parent", "ambiguous_token", { responsePostId: "prompt", guidedHelpStateJson: clarification.replace(',"reason":"duplicate_ticker"', '') });
     expect(await invoke(replies.ambiguousTokenReplyContext, ctx, { ownerXUserId: "parent", parentPostId: "prompt" })).toBeNull();
   });
+  it("allows a new unknown-ticker prompt but refuses untagged authority and other consumers",async()=>{
+    const ctx=fixture();
+    const state=clarification.replace('duplicate_ticker','unknown_ticker');
+    const id=await source(ctx,"parent","ambiguous_token",{responsePostId:"prompt",guidedHelpStateJson:state});
+    expect(await invoke(replies.ambiguousTokenReplyContext,ctx,{ownerXUserId:"parent",parentPostId:"prompt"})).toMatchObject({reason:"unknown_ticker",field:"token",intent:{command:{amount:"10",token:"DUP"}}});
+    expect(await invoke(replies.claimAmbiguousTokenReply,ctx,{ownerXUserId:"other",parentPostId:"prompt",consumerPostId:"new"})).toBe(false);
+    await ctx.db.patch(id,{guidedHelpStateJson:state.replace('"explicitMentionAuthorized":true','"explicitMentionAuthorized":false')});
+    expect(await invoke(replies.claimAmbiguousTokenReply,ctx,{ownerXUserId:"parent",parentPostId:"prompt",consumerPostId:"new"})).toBe(false);
+  });
   it("publishes duplicate contract prompts with the explicit tag requirement", async () => {
     const ctx = fixture(); await source(ctx, "dup", "ambiguous_token", { guidedHelpStateJson: clarification });
     expect(await invoke(queue.enqueue, ctx, { key: "dup", postId: "dup", kind: "reply", ok: false, text: "Action needed: More than one indexed token uses that ticker. Enter the contract address." })).toMatchObject({ status: "queued" });

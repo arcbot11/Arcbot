@@ -13,6 +13,16 @@ const request=(secret="secret")=>new NextRequest("https://www.argosbot.io/api/ar
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","secret");command={kind:"send",unit:"usd",amount:"10",recipient};m.auth.mockImplementation(async()=>({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()}));m.read.mockResolvedValue(null);m.prepare.mockResolvedValue({unsigned:"0x02",reserveWei:"10000000000000000100",snapshot:{balanceWei:"20000000000000000000",block:"1"}});m.command.mockImplementation(async(_kind,tx)=>({...tx,status:"prepared"}));m.advance.mockResolvedValue({status:"submitted",hash:"txhash"});});
 afterEach(()=>vi.unstubAllEnvs());
 describe("Arc social execution boundary",()=>{
+ it.each(["buy","sell","send","burn"])("asks for an unknown %s ticker before preparing a transaction",async kind=>{
+   command={kind,unit:"usd",amount:"10",token:"NOTINDEXEDXYZ",recipient,slippageBps:100};
+   expect(await(await POST(request())).json()).toEqual({ok:false,message:"Token NOTINDEXEDXYZ is not in the index. Enter its contract address."});
+   expect(m.prepare).not.toHaveBeenCalled();expect(m.trade).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
+ });
+ it("identifies the output ticker of a swap without converting or preparing the input",async()=>{
+   command={kind:"swap_token_for_token",unit:"usd",amount:"10",fromToken:recipient,toToken:"NOTINDEXEDXYZ",slippageBps:100};
+   expect(await(await POST(request())).json()).toEqual({ok:false,message:"Token NOTINDEXEDXYZ is not in the index. Enter its contract address."});
+   expect(m.convert).not.toHaveBeenCalled();expect(m.trade).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
+ });
  it.each([
    "Unsupported Argus pool configuration.","Unexpected Argus Portal format.",
    "Argus hook identity mismatch.","Argus pool ID mismatch.",

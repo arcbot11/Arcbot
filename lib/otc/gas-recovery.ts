@@ -51,12 +51,31 @@ export async function retainGasDust(store:Store,listingId:string,orderId:string,
 }
 
 /** One bounded recovery deposit, paid by this buyer, never another order. */
-export async function requestGasTopup(store:Store,listingId:string,orderId:string,amount:string,now:number,arc=false){
+export async function requestGasTopup(store:Store,listingId:string,orderId:string,amount:string,now:number,arc=false,expectedAttempt?:number){
   const {listing,order}=await escrowRecords(store,listingId,orderId);
   if(!order||order.status==="completed"||order.escrow?.version!==2||!await completedStep(store,listing,"deposit",order))throw Error("Payment must be verified before gas recovery.");
-  if(arc?order.escrow.arcTopupWei:order.escrow.topupWei)return order;
-  if(BigInt(amount)<=0n||BigInt(amount)>(arc?10n**16n:BASE_RECOVERY_WEI))throw Error("Gas recovery exceeds the small network allowance.");
+  const e=order.escrow,step=arc?"arc_topup":"topup",previous=arc?e.arcTopupWei:e.topupWei;
+  let spent=BigInt((arc?e.arcTopupSpentWei:e.topupSpentWei)??"0");
+  if(previous){
+    if(expectedAttempt===undefined||expectedAttempt!==(e.attempts?.[step]??0))return order;
+    if(!await completedStep(store,listing,step,order))return order;
+    spent+=BigInt(previous);
+  }
+  const limit=BigInt((arc?e.arcRecoveryLimitWei:e.baseRecoveryLimitWei)??(arc?10n**16n:BASE_RECOVERY_WEI).toString());
+  if(BigInt(amount)<=0n||spent+BigInt(amount)>limit)throw Error("Gas recovery exceeds the small network allowance.");
+  if(previous)e.attempts={...e.attempts,[step]:(e.attempts?.[step]??0)+1};
+  if(arc)e.arcTopupSpentWei=spent.toString();else e.topupSpentWei=spent.toString();
   if(arc)order.escrow.arcTopupWei=amount;else order.escrow.topupWei=amount;order.updatedAt=now;await store.put(order);return order;
+}
+
+/** Explicit payer authorization; never increase an automatic allowance silently. */
+export async function authorizeGasRecovery(store:Store,listingId:string,orderId:string,owner:string,limitWei:string,arc:boolean,now:number){
+  const {listing,order}=await escrowRecords(store,listingId,orderId);
+  if(!order||order.escrow?.version!==2||["quoted","expired","completed","payment_failed"].includes(order.status)||owner!==(arc?listing.owner:order.owner))throw Error("Gas payer authorization mismatch.");
+  const e=order.escrow,limit=BigInt(limitWei),previous=BigInt((arc?e.arcRecoveryLimitWei:e.baseRecoveryLimitWei)??(arc?10n**16n:BASE_RECOVERY_WEI).toString());
+  if(limit<previous||limit>(arc?10n**17n:10n*BASE_RECOVERY_WEI))throw Error("Gas recovery allowance is outside policy.");
+  if(arc)e.arcRecoveryLimitWei=limit.toString();else e.baseRecoveryLimitWei=limit.toString();
+  delete order.note;order.updatedAt=now;await store.put(order);return order;
 }
 
 export async function claimSettlement(store:Store,listingId:string,orderId:string,now:number){

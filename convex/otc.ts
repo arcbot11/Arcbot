@@ -1,5 +1,6 @@
-import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement} from "../lib/otc/gas-recovery";
+import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement,authorizeGasRecovery} from "../lib/otc/gas-recovery";
 import {beginSigning,cancelUnsignedTrade} from "../lib/otc/unsigned-recovery";
+import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce} from "../lib/otc/signed-recovery";
 import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
 import { publicMarket } from "../lib/otc/public-market";
 import { otcWorkerUrl } from "../lib/project-config";
@@ -39,9 +40,13 @@ export const command = mutation({
       case "escrow_funding_gas": return repriceFunding(store,input.listingId,input.gasWei,now);
       case "escrow_claim": return claimSettlement(store,input.listingId,input.orderId,now);
       case "escrow_dust": return retainGasDust(store,input.listingId,input.orderId,input.balanceWei,input.block,now,input.refundGasWei);
-      case "escrow_topup": return requestGasTopup(store,input.listingId,input.orderId,input.amount,now,input.arc===true);
+      case "escrow_topup": return requestGasTopup(store,input.listingId,input.orderId,input.amount,now,input.arc===true,input.expectedAttempt);
+      case "escrow_gas_allowance": return authorizeGasRecovery(store,input.listingId,input.orderId,input.owner,input.limitWei,input.arc===true,now);
       case "begin_signing": return beginSigning(store,input.id,now);
-      case "cancel_unsigned_trade": return cancelUnsignedTrade(store,input.id,now);
+      case "replace_fees": return prepareReplacement(store,input,now);
+      case "select_mined_attempt": return selectMinedAttempt(store,input.id,input.hash,now);
+      case "reconcile_mined_nonce": return reconcileMinedNonce(store,input,now);
+      case "cancel_unsigned_trade": return cancelUnsignedTrade(store,input.id,now,input.owner);
       case "escrow_bind": return bindEscrow(store,input.id,input.address,now,input.accountName);
       case "escrow_prepare": return prepareEscrowStep(store,input,now);
       case "escrow_advance": return advanceEscrowState(store,input.listingId,input.orderId,now,input.baseBalanceWei,input.baseBlock,input.arcBalanceWei,input.arcBlock);
@@ -69,9 +74,9 @@ export const command = mutation({
         return finishOrder(store,order,"expired",now);
       }
       case "prepare": return prepareTransaction(store,input,now);
-      case "sign": return signTransactionRecord(store,input.id,input.raw,input.hash,now);
+      case "sign": return signTransactionRecord(store,input.id,input.raw,input.hash,now,input.unsigned);
       case "submitted": return submitted(store,input.id,now);
-      case "settled": return settled(store,input.id,input.block,input.success,now,input.settlement);
+      case "settled": return settled(store,input.id,input.block,input.success,now,input.settlement,input.expectedHash);
       case "retry_payout": return retryPayout(store,input,now);
       case "touch": {
         const record=await store.get<RecordValue>(input.id);

@@ -33,7 +33,10 @@ export function transactionHistory(record:Transaction){
       details.push({label:"Amount",value:amount(record.chainId,zeroAddress,tx.value??0n)},{label:"To",value:tx.to});
     }else{
       const call=decodeFunctionData({abi,data:tx.data});
-      if(call.functionName==="transfer")details.push({label:"Amount",value:amount(record.chainId,tx.to,call.args[1])},{label:"To",value:call.args[0]});
+      if(call.functionName==="transfer"){
+        const actual=record.status==="completed"?record.settlement?.output:undefined;
+        details.push({label:"Amount",value:amount(record.chainId,tx.to,actual?BigInt(actual.raw):call.args[1],actual?.decimals)},{label:"To",value:call.args[0]});
+      }
       if(call.functionName==="approve"){
         const token=call.args.length===4?call.args[0]:tx.to;
         const spender=call.args.length===4?call.args[1]:call.args[0];
@@ -53,11 +56,13 @@ export function transactionHistory(record:Transaction){
             details.push({label:"Input",value:amount(record.chainId,tokenIn,input)},{label:"Minimum output",value:amount(record.chainId,tokenOut,minimum)},{label:"Route",value:actions==="0x070c0f"?"V4 · 2 pools":"V4"});
           }
         }
+        const codes:string[]=commands.slice(2).match(/../g)??[];
+        if(codes.includes("00")&&codes.includes("10")){const route=details.find(d=>d.label==="Route");if(route)route.value="V3/V4";else details.push({label:"Route",value:"V3/V4"});}
       }
     }
   }catch{/* Older or unsupported encodings keep their status and explorer link. */}
-  if(record.swapOutput&&!details.some(d=>d.label==="Minimum output")){
-    try{details.push({label:"Minimum output",value:amount(record.chainId,record.swapOutput.token,BigInt(record.swapOutput.minimum))});}catch{/* Malformed historical metadata must not hide history. */}
+  if(record.swapOutput){
+    try{const final={label:"Minimum output",value:amount(record.chainId,record.swapOutput.token,BigInt(record.swapOutput.minimum))};const index=details.findIndex(d=>d.label==="Minimum output");if(index>=0)details.splice(index,1,final);else details.push(final);}catch{/* Malformed historical metadata must not hide history. */}
   }
   if(record.status==="completed"&&record.swapOutput&&record.settlement?.output){
     const actual=record.settlement.output;

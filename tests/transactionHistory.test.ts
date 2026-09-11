@@ -18,6 +18,17 @@ it("shows ERC20 sends with the correct decimals and recipient without exposing s
 it("shows native Arc USDC in 18 decimals",()=>{
   expect(transactionHistory(record({to:recipient,value:10n**18n,data:"0x"})).details[0].value).toBe("1.00 USDC");
 });
+it('uses actual delivered tokens for a completed taxed send',()=>{
+ const tx=record({to:argus,value:0n,data:encodeFunctionData({abi:parseAbi(['function transfer(address,uint256)']),functionName:'transfer',args:[recipient,100n*10n**18n]})});
+ tx.settlement={gasWei:'100',output:{raw:(99n*10n**18n).toString(),decimals:18}};
+ expect(transactionHistory(tx).details.find(d=>d.label==='Amount')?.value).toBe('99 ARGUS');
+});
+it('shows the final output for a mixed route rather than the intermediate hop minimum',()=>{
+ const intermediate='0x4000000000000000000000000000000000000000';
+ const route:Route={tokenIn:usdc,tokenOut:argus,pools:[{protocol:'v3',address:recipient,currency0:usdc,currency1:intermediate,fee:3000},{protocol:'v4',currency0:intermediate,currency1:argus,fee:3000,tickSpacing:60,hooks:zeroAddress}]};
+ const tx=record(encodeArcSwap(route,1000000n,20n*10n**18n,9999999999n),'swap');tx.status='submitted';tx.swapOutput={token:argus,minimum:(20n*10n**18n).toString()};
+ const details=transactionHistory(tx).details;expect(details.find(d=>d.label==='Minimum output')?.value).toBe('20 ARGUS');expect(details.find(d=>d.label==='Route')?.value).toBe('V3/V4');
+});
 it.each(["v3","v4"] as const)("shows %s swap input and minimum, not an invented receipt amount",protocol=>{
   const route:Route={tokenIn:usdc,tokenOut:argus,pools:[protocol==="v3"?{protocol,address:recipient,currency0:usdc,currency1:argus,fee:10000}:{protocol,currency0:usdc,currency1:argus,fee:10000,tickSpacing:200,hooks:zeroAddress}]};
   const result=transactionHistory(record(encodeArcSwap(route,10000000n,9000n*10n**18n,9999999999n),"swap"));

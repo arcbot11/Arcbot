@@ -5,6 +5,11 @@ import { fileURLToPath } from 'node:url';
 // The app bundlers resolve extensionless TS imports; native Node needs this
 // equivalent resolution for the operator tools. Never rewrite package imports.
 registerHooks({ resolve(specifier, context, nextResolve) {
+    // TypeScript/Next imports local JSON without Node's mandatory attribute.
+    if(specifier.startsWith('.')&&specifier.endsWith('.json')&&!context.importAttributes?.type){
+      const importAttributes={...context.importAttributes,type:'json'};
+      return {...nextResolve(specifier,{...context,importAttributes}),importAttributes};
+    }
   try { return nextResolve(specifier, context); }
   catch (error) {
     if (error.code !== 'ERR_MODULE_NOT_FOUND' || !specifier.startsWith('.') || !context.parentURL?.startsWith('file:')) throw error;

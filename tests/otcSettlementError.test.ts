@@ -7,6 +7,9 @@ describe('safe settlement failure status',()=>{
 });
 
 it.each([
+ ["Nonce consumed without a verified receipt. Funds remain reserved.","needs wallet recovery"],
+ ["Wallet nonce changed before signing. Recovery required.","needs wallet recovery"],
+ ["Signed request is no longer covered by wallet reservations.","insufficient funds for gas"],
  ["Add funds for settlement gas. The recovery allowance is already used.","allowance is exhausted"],
  ["Settlement gas exceeds the small recovery allowance.","automatic recovery limit"],
  ["Funding gas exceeds the recovery allowance.","automatic recovery limit"],

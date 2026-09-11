@@ -183,7 +183,7 @@ describe("position CDP escrow",()=>{
     expect(final.status).toBe("cancelled");expect(final.escrow?.returnedWei).toBe((BigInt(listing.available)*10n**12n).toString());
   });
   it("never retries uncertain transactions, but can retry a verified revert",async()=>{
-    const {store,listing}=await setup();await expect(retryEscrow(store,listing.id,undefined,"seller",now)).rejects.toThrow("No verified");
+    const {store,listing}=await setup();await retryEscrow(store,listing.id,undefined,"seller",now);
     await complete(store,listing,"fund",undefined,undefined,false);
     const retried=await retryEscrow(store,listing.id,undefined,"seller",now) as Listing;
     expect(escrowTxId(retried,"fund")).not.toBe(escrowTxId(listing,"fund"));

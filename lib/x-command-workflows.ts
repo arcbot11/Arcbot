@@ -8,6 +8,15 @@ export function duplicateTickerReply(text: string) {
   return /^Action needed: More than one (?:indexed token|token|token in your wallet) uses that ticker\. Enter the contract address\.$/.test(text);
 }
 
+export function tokenClarificationReply(text:string):{reason:"duplicate_ticker"|"unknown_ticker";ticker?:string}|null {
+  const line=text.split(/\r?\n/,1)[0];
+  if(duplicateTickerReply(line))return {reason:"duplicate_ticker"};
+  const duplicate=/^More than one token uses (.{1,64})\. Enter its contract address\.$/.exec(line);
+  if(duplicate)return {reason:"duplicate_ticker",ticker:duplicate[1]};
+  const missing=/^Token (.{1,64}) is not in the index\. Enter its contract address\.$/.exec(line);
+  return missing?{reason:"unknown_ticker",ticker:missing[1]}:null;
+}
+
 /** Persisted guided state must never grant authority to a new X command. */
 export function retiredXWorkflow(commandKind?: string, stateJson?: string) {
   if (retiredSocialKind(commandKind)) return true;
@@ -16,7 +25,7 @@ export function retiredXWorkflow(commandKind?: string, stateJson?: string) {
   try {
     const state = JSON.parse(stateJson) as { type?: unknown; reason?: unknown; intent?: {command?: {kind?: string}} };
     if (retiredSocialKind(state.intent?.command?.kind)) return true;
-    return state.type !== "ambiguous_token" || state.reason !== "duplicate_ticker";
+    return state.type !== "ambiguous_token" || !["duplicate_ticker","unknown_ticker"].includes(String(state.reason));
   } catch { return true; }
 }
 
@@ -29,8 +38,8 @@ export function xCommandReply(text: string, contractClarification = false) {
     .replace(/Arc Explorer:/g, "Transaction:")
     .replace(/More than one indexed token uses that ticker/g, "More than one token uses that ticker");
   result = result.replace(/reply\s+[“"']resume[”"']/gi, "submit the full command again");
-  if (contractClarification && duplicateTickerReply(result)) {
-    return result.replace("Enter the contract address.", "Reply with the contract address and tag @TheArgosBot.");
+  if (contractClarification && tokenClarificationReply(result)) {
+    return socialAddressLinks(result.replace(/Enter (?:the|its) contract address\./, "Reply with the contract address and tag @TheArgosBot."));
   }
   if (!contractClarification) {
     result = result.replace("Reply with its contract address to check how much has been burned.", "Submit a full burned-token query with its contract address.");

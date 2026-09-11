@@ -1,5 +1,6 @@
 import { getAddress, zeroAddress } from "viem";
 import { settlementSteps } from "@/lib/otc/escrow-model";
+import {neverSigned} from "@/lib/otc/unsigned-recovery";
 import { escrowBaseGasBudget } from "@/lib/otc/base-gas-budget";
 import { escrowConfiguration, escrowAccountName, advanceEscrowPosition } from "@/lib/otc/escrow-runtime";
 import { assertListingRetry } from "@/lib/otc/listing-submission";
@@ -48,10 +49,10 @@ export async function GET(request:NextRequest) {
       });
       const retryAvailable=async(record:Order|Listing)=>{
         if(!record.escrow||["quoted","completed","expired","payment_failed","active","filled","cancelled"].includes(record.status))return false;
-        const steps=record.kind==="order"?settlementSteps(record):[record.status==="funding"?"fund":"return_arc"];
+        const steps=record.kind==="order"?settlementSteps(record).flatMap(step=>[...(step==="arc"&&record.escrow?.arcTopupWei?["arc_topup"]:[]),...(step==="seller"&&record.escrow?.topupWei?["topup"]:[]),step]):[record.status==="funding"?"fund":"return_arc"];
         const txs=await Promise.all(steps.map(step=>repo.read<Transaction|null>({id:'escrow:'+record.id+':'+step+':'+(record.escrow!.attempts?.[step]??0)})));
         const next=txs.find(tx=>!tx||tx.status!=="completed");
-        return Boolean(next?.status==="reverted"&&next.hash&&next.blockNumber);
+        return !next||neverSigned(next)||Boolean(next.status==="reverted"&&next.hash&&next.blockNumber)||Boolean(next.status==="cancelled"&&next.nonceConflict);
       };
       const orders=await Promise.all(records.filter(r=>r.kind==="order"&&r.status!=="expired"&&r.status!=="quoted").map(async r=>{
         const o=r as Order; return {received:arcOrderReceived(o,records.filter((r):r is Transaction=>r.kind==="transaction")),listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.xUserId?"buy":"sell"};

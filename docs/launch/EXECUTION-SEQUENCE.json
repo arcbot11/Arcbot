@@ -1,0 +1,71 @@
+{
+  "status": "planning-only-awaiting-user-go-ahead",
+  "executionAuthorized": false,
+  "launchDraft": "argos-launch-draft.json",
+  "steps": [
+    {
+      "action": "launch",
+      "wallet": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+      "required": "Revalidate draft and simulate; obtain explicit later execution authorization. Verify successful launch receipt, recorded creator, actual token address and deployed hook/pool before personal buys."
+    },
+    {
+      "action": "opening-window",
+      "required": "Wait until the current canonical block timestamp is at least launch timestamp plus 3 seconds, avoiding the documented opening tax."
+    },
+    {
+      "action": "buy",
+      "accountName": "Personal2",
+      "expectedAddress": "0x2ce720a19394C3Ab5387Dd5d8c72a6f3E77b3565",
+      "spendPercent": 95
+    },
+    {
+      "action": "buy",
+      "accountName": "Personal4",
+      "expectedAddress": "0xa94e1073F745Ea47402d3EC83BAe23054c83eEc2",
+      "spendPercent": 95,
+      "dispatch": "After Personal2 broadcast acknowledgement; do not await Personal2 receipt."
+    },
+    {
+      "action": "report-token-address",
+      "required": "Return actual launch receipt token address and both buy submission hashes/statuses. Do not imply pending buys are confirmed."
+    },
+    {
+      "action": "index",
+      "required": "Add verified ARGOS address/metadata to Arc catalog and pin this exact address ahead of ARGUS in shared comparator. Update all relevant consumers and deploy required changes so the live index reflects the update."
+    },
+    {
+      "action": "reconcile-buys",
+      "required": "Track both receipts and delivered balances independently. Never blindly resubmit after an ambiguous broadcast or signing response."
+    }
+  ],
+  "budgetPolicy": {
+    "source": "Fresh verified available native USDC balance, excluding existing reservations",
+    "calculation": "floor(available native atomic units * 95 / 100 / 1e12) in ERC-20 USDC atomic units",
+    "gas": "Remaining 5% must cover all approvals and swap gas. Stop before signing if insufficient; do not exceed the requested 95% trade budget.",
+    "lastObserved": {
+      "Personal2": {
+        "balanceUSDC": "46",
+        "exampleBuyUSDC": "43.70"
+      },
+      "Personal4": {
+        "balanceUSDC": "49",
+        "exampleBuyUSDC": "46.55"
+      }
+    }
+  },
+  "executionConstraints": [
+    "No transactions, approvals, signing or broadcasts before the later go-ahead.",
+    "Use the actual confirmed token address, not ticker resolution or a prediction alone.",
+    "Reuse verified pool identity; refresh price and simulation. Account for Personal2 price impact when preparing Personal4.",
+    "Submission order is controlled; block execution order across independent wallets is not guaranteed.",
+    "Required router/Permit2 allowances must be verified before each dependent swap. Approval requirements can prevent immediate back-to-back swap broadcasts; establish the preparation path beforehand.",
+    "Keep quote minimum output and slippage bounds. Do not silently raise slippage to force Personal4 through.",
+    "Use durable per-wallet jobs and idempotent signing/broadcast recovery."
+  ],
+  "readiness": {
+    "launchSimulation": "passed; refresh required before execution",
+    "personalBuySimulation": "not yet performed against the simulated new pool",
+    "combinedOperatorRunner": "not yet implemented or tested",
+    "indexChange": "planned; do not publish a nonexistent token"
+  }
+}

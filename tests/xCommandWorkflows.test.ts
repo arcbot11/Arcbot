@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { duplicateTickerReply, retiredXPrompt, retiredXWorkflow, xCommandReply, X_COMMAND_HELP } from "../lib/x-command-workflows";
+import { duplicateTickerReply, tokenClarificationReply, retiredXPrompt, retiredXWorkflow, xCommandReply, X_COMMAND_HELP } from "../lib/x-command-workflows";
 
 describe("X command-only policy", () => {
   it.each(["guided_help", "guided_help:buy", "guided_help_pending:send", "gas_resume", "workflow_expired"])("retires %s", kind => {
@@ -12,6 +12,12 @@ describe("X command-only policy", () => {
     expect(retiredXWorkflow("ambiguous_token", JSON.stringify({ type: "ambiguous_token", reason: "duplicate_ticker" }))).toBe(false);
     expect(retiredXWorkflow("ambiguous_token", JSON.stringify({ type: "ambiguous_token" }))).toBe(true);
     expect(retiredXWorkflow("buy")).toBe(false);
+    expect(retiredXWorkflow("ambiguous_token", JSON.stringify({type:"ambiguous_token",reason:"unknown_ticker"}))).toBe(false);
+  });
+  it.each(["Token NEWTOKEN is not in the index. Enter its contract address.","More than one token uses NEWTOKEN. Enter its contract address."])("keeps the exact unresolved ticker through decorated replies",prompt=>{
+    const reply=prompt+"\nYour wallet: https://www.argosbot.io/wallet/0x1111111111111111111111111111111111111111";
+    expect(tokenClarificationReply(reply)?.ticker).toBe("NEWTOKEN");
+    expect(xCommandReply(reply,true)).toContain("Reply with the contract address and tag @TheArgosBot.");
   });
   it.each(["indexed token", "token in your wallet"])("keeps %s ambiguity", source => {
     const prompt = `Action needed: More than one ${source} uses that ticker. Enter the contract address.`;

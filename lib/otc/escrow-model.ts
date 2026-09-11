@@ -1,4 +1,5 @@
 import {BASE_RECOVERY_WEI} from "./gas-recovery";
+import {neverSigned} from "./unsigned-recovery";
 import { encodeFunctionData, getAddress, parseAbi, parseTransaction, type Hex } from "viem";
 import { BASE_USDC } from "../base/usdc";
 import { type Store, type Listing, type Order, type Transaction, wallet, locked, updateListingHold, finishOrder, paymentAsset } from "./model";
@@ -62,7 +63,7 @@ export async function prepareEscrowStep(store:Store,input:EscrowPrepare,now:numb
   if(tx.chainId!==call.chainId||tx.to?.toLowerCase()!==call.to.toLowerCase()||(tx.value??0n)!==call.value||(tx.data??"0x")!==call.data)throw new Error("Escrow transaction does not match its step.");
   if(BigInt(input.gasWei)<=0n||BigInt(input.reserveWei)!==call.value+BigInt(input.gasWei))throw new Error("Invalid escrow reservation.");
   const gasLimit=input.step==="fund"||input.step==="arc_topup"?listing.escrow!.fundingGasWei:input.step==="arc"?order!.arcGasWei:input.step==="return_arc"?listing.escrow!.closeGasWei:order?.baseGasWei;
-  const allowedGas=gasLimit?BigInt(gasLimit)+(call.chainId===5042?ARC_RETURN_GAS_FLEX_WEI:BASE_RECOVERY_WEI):undefined;
+  const allowedGas=gasLimit?BigInt(gasLimit)+BigInt((call.chainId===5042?order?.escrow?.arcRecoveryLimitWei:order?.escrow?.baseRecoveryLimitWei)??(call.chainId===5042?ARC_RETURN_GAS_FLEX_WEI:BASE_RECOVERY_WEI).toString()):undefined;
   if(allowedGas!==undefined&&BigInt(input.gasWei)>allowedGas)throw new Error("Gas exceeds the escrow allowance.");
   if(input.step==="return_arc"&&call.value+BigInt(input.gasWei)<BigInt(listing.available)*10n**12n)throw new Error("Only return gas may reduce unsold funds.");
   const excess=gasLimit&&BigInt(input.gasWei)>BigInt(gasLimit)?BigInt(input.gasWei)-BigInt(gasLimit):0n;
@@ -136,9 +137,22 @@ export async function advanceEscrowState(store:Store,listingId:string,orderId:st
 export async function retryEscrow(store:Store,listingId:string,orderId:string|undefined,owner:string,now:number){
   const {listing,order}=await escrowRecords(store,listingId,orderId);
   if(owner!==listing.owner&&owner!==order?.owner)throw new Error("Escrow owner mismatch.");
+  if(order?["quoted","expired","completed","payment_failed"].includes(order.status):!["funding","closing"].includes(listing.status))throw Error("Escrow is not awaiting recovery.");
   const retrySteps:EscrowStep[]=order?settlementSteps(order).flatMap(step=>[...(step==="arc"&&order.escrow?.arcTopupWei?["arc_topup" as const]:[]),...(step==="seller"&&order.escrow?.topupWei?["topup" as const]:[]),step]):[];
   for(const step of order?retrySteps:listing.status==="funding"?["fund" as const]:["return_arc" as const]){
     const tx=await store.get<Transaction>(escrowTxId(listing,step,order));
+    if(!tx){const record=order??listing;record.updatedAt=now;if(record.kind==="order")delete record.note;else delete record.escrow!.note;await store.put(record);return record;}
+    if(tx.status==="cancelled"&&tx.nonceConflict){const record=order??listing,e=record.escrow!;e.attempts={...e.attempts,[step]:(e.attempts?.[step]??0)+1};record.updatedAt=now;await store.put(record);return record;}
+    if(neverSigned(tx)){
+      const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);
+      if(w.activeTx!==tx.id)throw Error("Wallet transaction lease mismatch.");
+      const held=BigInt(w.holds[tx.holdId]??"0");
+      delete w.activeTx;delete w.holds[tx.holdId];
+      if(tx.escrowRef?.sourceHold)w.holds[tx.escrowRef.sourceHold]=(BigInt(w.holds[tx.escrowRef.sourceHold]??"0")+held).toString();
+      tx.status="cancelled";tx.note="Unsigned escrow step replaced for recovery.";tx.updatedAt=w.updatedAt=now;
+      const record=order??listing,e=record.escrow!;e.attempts={...e.attempts,[step]:(e.attempts?.[step]??0)+1};record.updatedAt=now;
+      await store.put(w);await store.put(tx);await store.put(record);return record;
+    }
     if(tx?.status==="reverted"&&tx.hash&&tx.blockNumber){if(tx.escrowRef?.sourceHold&&tx.escrowRef.reserveWei){const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);w.holds[tx.escrowRef.sourceHold]=(BigInt(w.holds[tx.escrowRef.sourceHold]??"0")+BigInt(tx.escrowRef.reserveWei)).toString();await store.put(w);}const record=order??listing,e=record.escrow!;e.attempts={...e.attempts,[step]:(e.attempts?.[step]??0)+1};record.updatedAt=now;await store.put(record);return record;}
     if(!tx||tx.status!=="completed")break;
   }

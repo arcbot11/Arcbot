@@ -23,6 +23,7 @@ const routeCache=new Map<string,{expires:number;cacheExpires:number;route:Route;
 export function clearTradeDiscoveryCache(){discoveryCache.clear();v3Candidates.clear();routeCache.clear();explorerCandidates.clear();}
 export type TradeInput={tokenIn:string;tokenOut:string;amount:string;slippageBps:number;routeHint?:string};
 const native=(a:string)=>a==="native"||a.toLowerCase()===ARC_USDC.toLowerCase()||a===zeroAddress;
+const uniquePools=(pools:ArcPool[])=>[...new Map(pools.map(p=>[p.protocol+poolId(p),p])).values()].sort((a,b)=>Number(b.protocol==="v4"&&b.hooks!==zeroAddress)-Number(a.protocol==="v4"&&a.hooks!==zeroAddress)||Number(b.protocol==="v3")-Number(a.protocol==="v3")).slice(0,100);
 
 /** Exact-input routes only. Candidate pool identities are verified on chain by quoteRoutes. */
 async function quoteArcTrade(wallet:Address,input:TradeInput){
@@ -51,8 +52,16 @@ async function quoteArcTrade(wallet:Address,input:TradeInput){
     routeCache.delete(routeKey);
   }
   const discoveries:NonNullable<Awaited<ReturnType<typeof discoverArgusPool>>>[]=[];
+  const specialQuoteAssets=new Set<Address>();
   const tokens=[...new Set([input.tokenIn,input.tokenOut].filter(a=>!native(a)).map(a=>getAddress(a)))];
-  await Promise.all(tokens.map(async token=>{
+  const seen=new Set<string>();
+  // Three pools is the execution limit. Follow only the quote assets recorded
+  // on these verified launches; do not crawl the whole token index.
+  let frontier=tokens;
+  for(let depth=0;depth<3&&frontier.length;depth++){
+  const next:Address[]=[];
+  await Promise.all(frontier.filter(token=>!seen.has(token.toLowerCase())).map(async token=>{
+    seen.add(token.toLowerCase());
     const key=scope+token,cached=discoveryCache.get(key);
     let result:Awaited<ReturnType<typeof discoverArgusPool>>;
     if(cached&&cached.expires>Date.now()&&cached.block<=head.number&&(await rpc.block(cached.block)).hash===cached.hash)result=cached.result;
@@ -62,13 +71,17 @@ async function quoteArcTrade(wallet:Address,input:TradeInput){
       if(discoveryCache.size>=500)discoveryCache.delete(discoveryCache.keys().next().value!);
       discoveryCache.set(key,{expires:Date.now()+(result?60000:15000),block:head.number,hash:head.hash,result});
     }
-    if(result)discoveries.push(result);
+    if(result){discoveries.push(result);const quote=result.pool.currency0.toLowerCase()===token.toLowerCase()?result.pool.currency1:result.pool.currency0;if(!native(quote)){specialQuoteAssets.add(getAddress(quote));if(!seen.has(quote.toLowerCase()))next.push(getAddress(quote));}}
   }));
-  const discovered=discoveries[0];
+  frontier=[...new Set(next)];
+  }
+  const quoteTokens=[...specialQuoteAssets];
   const verifiedHookPoolIds:string[]=discoveries.map(d=>d.poolId);
   const allPools: ArcPool[] = [];
   for(const protocol of ["v3","v4"] as const){
-    const resolve=(a:string)=>native(a)?getAddress(protocol==="v3"?ARC_USDC:discovered?(discovered.pool.currency0.toLowerCase()===getAddress(native(input.tokenIn)?input.tokenOut:input.tokenIn).toLowerCase()?discovered.pool.currency1:discovered.pool.currency0):zeroAddress):getAddress(a);
+    // A USDC request must never be rewritten to an arbitrary pool quote token.
+    const nativePool=!discoveries.length||discoveries.some(d=>d.pool.currency0===zeroAddress||d.pool.currency1===zeroAddress);
+    const resolve=(a:string)=>native(a)?getAddress(protocol==="v4"&&nativePool?zeroAddress:ARC_USDC):getAddress(a);
     const tokenIn=resolve(input.tokenIn),tokenOut=resolve(input.tokenOut);
     const decimals=tokenIn===zeroAddress?18:await rpc.decimals(tokenIn,head.number);
     const amountIn=exactAmount(input.amount,decimals);
@@ -76,6 +89,7 @@ async function quoteArcTrade(wallet:Address,input:TradeInput){
     if(protocol==="v3"){
       const pairs:[[Address,Address],...[Address,Address][]]=[[tokenIn,tokenOut]];
       if(tokenIn.toLowerCase()!==ARC_USDC.toLowerCase()&&tokenOut.toLowerCase()!==ARC_USDC.toLowerCase())pairs.push([tokenIn,getAddress(ARC_USDC)],[getAddress(ARC_USDC),tokenOut]);
+      for(const quote of quoteTokens)if(!pairs.some(([a,b])=>[a.toLowerCase(),b.toLowerCase()].includes(quote.toLowerCase())&&[a.toLowerCase(),b.toLowerCase()].includes(ARC_USDC.toLowerCase())))pairs.push([quote,getAddress(ARC_USDC)]);
       const candidateKey=scope+[tokenIn,tokenOut].sort().join();
       let extra=explorerCandidates.get(candidateKey);
       if(!extra||extra.expires<Date.now()){
@@ -94,32 +108,38 @@ async function quoteArcTrade(wallet:Address,input:TradeInput){
         if(address!==zeroAddress)pools.push({protocol,address,currency0,currency1,fee});
       }));
       allPools.push(...pools);
-      routes.push(...findRoutes(tokenIn,tokenOut,pools).slice(0,32));
+      routes.push(...findRoutes(tokenIn,tokenOut,uniquePools(pools)).slice(0,32));
     }else{
       const pools:V4Pool[]=discoveries.map(d=>d.pool);
       const pairs:Array<[Address,Address]>=[[tokenIn,tokenOut]];
       if(!native(input.tokenIn)&&!native(input.tokenOut))for(const quote of [getAddress(ARC_USDC),zeroAddress]){
         pairs.push([tokenIn,quote],[quote,tokenOut]);
       }
+      for(const quote of quoteTokens)for(const currency of [getAddress(ARC_USDC),zeroAddress])pairs.push([quote,currency]);
       for(const [a,b] of pairs){
+        if(a.toLowerCase()===b.toLowerCase())continue;
         const [currency0,currency1]=[a,b].sort((x,y)=>BigInt(x)<BigInt(y)?-1:1);
         for(const [fee,tickSpacing] of [[100,1],[500,10],[2500,25],[3000,60],[10000,200]])
           pools.push({protocol:"v4",currency0,currency1,fee,tickSpacing,hooks:zeroAddress});
       }
       allPools.push(...pools);
-      const candidates=findRoutes(tokenIn,tokenOut,pools);
+      const candidates=(quoteTokens.length&&native(input.tokenIn)?[zeroAddress,getAddress(ARC_USDC)]:[tokenIn]).flatMap(a=>(quoteTokens.length&&native(input.tokenOut)?[zeroAddress,getAddress(ARC_USDC)]:[tokenOut]).flatMap(b=>findRoutes(a,b,uniquePools(pools))));
       const hooks=(r:Route)=>r.pools.filter(p=>p.protocol==="v4"&&p.hooks!==zeroAddress).length;
       candidates.sort((a,b)=>hooks(b)-hooks(a)||a.pools.length-b.pools.length);
       routes.push(...candidates.slice(0,32));
     }
-    if(routes.length)groups.push(...(await quoteRoutes(routes,amountIn,input.slippageBps,wallet,rpc,config,Date.now(),head)).quotes.filter(q=>!q.executionBlocker||q.route.pools.every(p=>p.protocol!=="v4"||p.hooks===zeroAddress||verifiedHookPoolIds.includes(poolId(p)))));
+    for(const currency of new Set(routes.map(r=>r.tokenIn))){
+      const units=currency===tokenIn?amountIn:exactAmount(input.amount,currency===zeroAddress?18:await rpc.decimals(currency,head.number));
+      groups.push(...(await quoteRoutes(routes.filter(r=>r.tokenIn===currency),units,input.slippageBps,wallet,rpc,config,Date.now(),head)).quotes.filter(q=>!q.executionBlocker||q.route.pools.every(p=>p.protocol!=="v4"||p.hooks===zeroAddress||verifiedHookPoolIds.includes(poolId(p)))));
+    }
 
   }
-  if (!native(input.tokenIn) && !native(input.tokenOut)) {
-    const routes = findRoutes(getAddress(input.tokenIn), getAddress(input.tokenOut), allPools).filter(mixedRouteSupported)
+  if(quoteTokens.length||!native(input.tokenIn)&&!native(input.tokenOut)){
+    const tokenIn=getAddress(native(input.tokenIn)?ARC_USDC:input.tokenIn),tokenOut=getAddress(native(input.tokenOut)?ARC_USDC:input.tokenOut);
+    const routes = findRoutes(tokenIn, tokenOut, uniquePools(allPools)).filter(mixedRouteSupported)
       .filter(r => r.pools.every(p => p.protocol !== "v4" || p.hooks === zeroAddress || verifiedHookPoolIds.includes(poolId(p))))
       .sort((a,b) => b.pools.filter(p => p.protocol === "v4" && p.hooks !== zeroAddress).length - a.pools.filter(p => p.protocol === "v4" && p.hooks !== zeroAddress).length).slice(0,32);
-    if (routes.length) groups.push(...(await quoteRoutes(routes, exactAmount(input.amount, await rpc.decimals(getAddress(input.tokenIn),head.number)), input.slippageBps, wallet, rpc, config,Date.now(),head)).quotes);
+    if (routes.length) groups.push(...(await quoteRoutes(routes, exactAmount(input.amount, await rpc.decimals(tokenIn,head.number)), input.slippageBps, wallet, rpc, config,Date.now(),head)).quotes);
   }
   if(!groups.length)throw new Error("No supported liquid Arc route found.");
   // USDC has 18 native decimals and 6 ERC-20 decimals, but is the same currency.

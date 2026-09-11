@@ -1,4 +1,5 @@
 import { retiredSocialRequest, retiredSocialKind } from "../lib/retired-social-commands";
+import {normalizeXCommandLanguage,completeXCommand} from "../lib/x-command-language";
 import {explicitArcSwap} from "../lib/arc-swap-command";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 import { tokenPattern } from "../lib/token-pattern";
@@ -73,7 +74,7 @@ export function conversationalWalletMessage() {
 }
 
 function explicitAuthority(text: string, command: WalletCommand) {
-  if (command.kind === "swap_token_for_token") return /\bswap\b/i.test(text) && /\b(?:for|to)\b/i.test(text);
+  if (command.kind === "swap_token_for_token") return /\bswap\b/i.test(text) && /\b(?:for|to|into)\b/i.test(text);
   if (command.kind === "buy_and_burn") return /\b(?:buy(?:\s*back)?|purchase)\b/i.test(text) && /\bburn\b/i.test(text);
   if (command.kind === "buy_and_send") return (/\b(?:buy(?:\s*back)?|purchase|grab|gimme|ape|swap|spend|compra|ach[eè]te)\b|\bget\s+me\b|\bput\s+\$?[0-9]/i.test(text))
     && /\b(?:send|transfer|give|pay|move|envoie)\b/i.test(text);
@@ -646,6 +647,12 @@ function hasPromptInjection(text: string) {
 
 function hasNonExecutableFraming(text: string) {
   text = withoutQuotedContent(text);
+  if(/\b(?:why|when)\s+did\s+you\s+(?:buy|sell|send|burn|swap)\b/i.test(text)
+    || /\b(?:i|we)\s+(?:already\s+)?(?:told|asked)\s+(?:someone|them|him|her)\s+to\b/i.test(text)
+    || /\b(?:buy|purchase|sell|send|burn|swap|convert|exchange|trade)\b[\s\S]*\b(?:if|when|unless)\b(?!\s+you\s+can\b)/i.test(text)
+    || /\b(?:buy|purchase|sell|send|burn|swap|convert|exchange|trade)\b[\s\S]*\b(?:or|not)\s+\$?[a-z0-9]/i.test(text))return true;
+  if(/\b(?:do\s+not|don['’]?t|dont|never)\s+(?:buy|purchase|grab|sell|dump|send|transfer|move|burn|swap|convert|exchange|trade|spend)\b/i.test(text)
+    || /\b(?:for\s+example|example\s+command|such\s+as|how\s+to)\b[\s\S]{0,100}\b(?:buy|purchase|sell|send|transfer|burn|swap|convert|exchange|trade)\b/i.test(text))return true;
   return /\b(?:do\s+not|don't|dont|never)\s+(?:buy|sell|send|transfer|give|burn|launch|deploy|create|claim)\b/i.test(text)
     || /\b(?:did\s+not|didn['’]?t|didnt|don['’]?t|dont)\s+(?:want|ask|tell)\b[\s\S]{0,55}\b(?:launch|deploy|create|buy|sell|send|burn|claim)\b/i.test(text)
     || /\bnot\s+(?:trying|asking|attempting|telling\s+you)\s+to\s+(?:buy|sell|send|transfer|burn|launch|deploy|create|claim)\b/i.test(text)
@@ -1032,7 +1039,8 @@ export async function parseXWalletIntent(text: string, hasImage: boolean, diagno
   // A direct attachment is already authoritative. Remove only the exact,
   // unquoted media instruction before AI and deterministic parsing so it
   // cannot be mistaken for a field or a separate request.
-  const operativeText = hasImage ? stripDirectLaunchImageInstruction(text) : text;
+  const originalText = hasImage ? stripDirectLaunchImageInstruction(text) : text;
+  const operativeText = normalizeXCommandLanguage(originalText);
   const finish = (intent: XWalletIntent, source: NonNullable<AiWorkflowDiagnostics["source"]>) => {
     if ((intent.kind === "command" && disabledCreationKind(intent.command.kind)) || (intent.kind === "help" && disabledCreationKind(intent.topic))) intent = { kind: "irrelevant" };
     if (diagnostics) { diagnostics.source = source; diagnostics.finalIntent = intent; }
@@ -1059,6 +1067,10 @@ export async function parseXWalletIntent(text: string, hasImage: boolean, diagno
   if (!hasPromptInjection(operativeText) && isDirectLaunchHelpRequest(operativeText))
     return finish({ kind: "help", topic: "launch" }, "deterministic_guard");
   if (hasNonExecutableFraming(operativeText)) return finish({ kind: "irrelevant" }, "deterministic_guard");
+  if(operativeText!==originalText&&completeXCommand(operativeText)&&!hasPromptInjection(operativeText)&&requestedOperations(operativeText).length===1){
+    const direct=groundedCanonicalCommand(operativeText);
+    if(direct&&["buy","sell","send","burn","swap_token_for_token","buy_and_send","buy_and_burn","show_wallet","show_balance"].includes(direct.kind))return finish({kind:"command",command:direct},"deterministic_guard");
+  }
   if (!hasPromptInjection(operativeText) && oversizedLaunchTicker(operativeText))
     return finish({ kind: "command", command: { kind: "unknown", reason: LAUNCH_TICKER_TOO_LONG } }, "deterministic_guard");
   if (!hasPromptInjection(operativeText) && isDirectCapabilitiesRequest(operativeText))

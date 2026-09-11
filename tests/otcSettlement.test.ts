@@ -1,6 +1,6 @@
 import { describe,it,expect,vi,beforeEach,afterEach } from "vitest";
 import { privateKeyToAccount } from "viem/accounts";
-import { encodeFunctionData,encodeAbiParameters,encodeEventTopics,keccak256,serializeTransaction,type Hex,parseAbi } from "viem";
+import { encodeFunctionData,encodeAbiParameters,encodeEventTopics,keccak256,serializeTransaction,parseTransaction,type Hex,parseAbi } from "viem";
 import { transferAbi } from "../lib/otc/token-delivery";
 import { PAYMENT_ABI,paymentCall,orderHash } from "../lib/otc/transactions";
 import { type Order,type Transaction,type Wallet,walletId } from "../lib/otc/model";
@@ -23,7 +23,7 @@ beforeEach(async()=>{
   const unsigned=serializeTransaction(tx),raw=await account.signTransaction(tx);
   record={kind:"transaction",id:"tx:order:test:payment",owner:"buyer",wallet:account.address,chainId:8453,orderId:order.id,leg:"payment",holdId:order.id,status:"submitted",unsigned,raw,hash:keccak256(raw),createdAt:Date.now(),updatedAt:Date.now()};
   wallet={kind:"wallet",id:walletId(8453,account.address),owner:"buyer",address:account.address,chainId:8453,holds:{[order.id]:(BigInt(order.totalWei)+BigInt(order.baseGasWei)).toString()},activeTx:record.id,updatedAt:Date.now()};
-  receipt={transactionHash:record.hash,status:"success",blockNumber:100n,blockHash:hash,logs:[{address:router,topics:encodeEventTopics({abi:PAYMENT_ABI,eventName:"Paid",args:{orderId:orderHash(order.id),buyer:account.address,seller}}),data:encodeAbiParameters([{type:"address"},{type:"uint256"},{type:"uint256"},{type:"uint256"}],[account.address,10000000n,BigInt(order.sellerWei),BigInt(order.feeWei)])}]};
+  receipt={transactionHash:record.hash,gasUsed:21000n,effectiveGasPrice:1n,status:"success",blockNumber:100n,blockHash:hash,logs:[{address:router,topics:encodeEventTopics({abi:PAYMENT_ABI,eventName:"Paid",args:{orderId:orderHash(order.id),buyer:account.address,seller}}),data:encodeAbiParameters([{type:"address"},{type:"uint256"},{type:"uint256"},{type:"uint256"}],[account.address,10000000n,BigInt(order.sellerWei),BigInt(order.feeWei)])}]};
   finalized=101n;nonce=1;extraFee=0n;
   mocks.read.mockImplementation(async({id}:{id:string})=>structuredClone(id===record.id?record:id===order.id?order:id===wallet.id?wallet:null));
   mocks.command.mockImplementation(async(command:string,input:{id:string})=>{if(command==="submitted")record.status="submitted";if(command==="settled")record.status="completed";return structuredClone(record);});
@@ -40,8 +40,8 @@ describe("OTC receipt verification and retry boundaries",()=>{
     const waiting={...order,updatedAt:10};
     expect(selectSettlementWork([fresh,waiting,record,expired]).map(r=>r.id)).toEqual(["expired",waiting.id]);
   });
-  it("authorizes a verified Base payment without waiting for finality",async()=>{finalized=99n;await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
-  it("only settles a canonical finalized split payment",async()=>{await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
+  it("authorizes a verified Base payment without waiting for finality",async()=>{finalized=99n;await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
+  it("only settles a canonical finalized split payment",async()=>{await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
   it("rejects missing payment event proof",async()=>{receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command).not.toHaveBeenCalled();});
   it("rejects the wrong actual transaction recipient",async()=>{(mocks.client.getTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({from:account.address,to:seller,value:BigInt(order.totalWei),input:paymentCall(order).data});await expect(advanceTransaction(record.id)).rejects.toThrow("does not match");});
   it("rejects a noncanonical receipt",async()=>{receipt!.blockHash=otherHash;await expect(advanceTransaction(record.id)).rejects.toThrow("not canonical");});
@@ -61,6 +61,31 @@ async function setupSend(chainId:5042|8453=8453,data:Hex="0x") {
   (mocks.client.getBalance as ReturnType<typeof vi.fn>).mockImplementation(async({address,blockNumber}:{address:string;blockNumber:bigint})=>address.toLowerCase()===seller.toLowerCase()?(blockNumber===99n?100n:110n):10n**18n);
   (mocks.client.getTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({from:account.address,to:seller,value:tx.value,input:data});
 }
+
+it('settles the original hash when it wins while a fee replacement is awaiting its signature',async()=>{
+ await setupSend(5042);const original={unsigned:record.unsigned,raw:record.raw!,hash:record.hash!,revision:0};
+ const previous=parseTransaction(record.unsigned as Hex);
+ record.previousSigned=[original];record.signingRevision=1;record.signingStartedAt=1;record.status='prepared';
+ record.unsigned=serializeTransaction({type:'eip1559',chainId:5042,to:seller,value:10n,data:'0x',nonce:previous.nonce,gas:previous.gas,maxFeePerGas:200n,maxPriorityFeePerGas:2n});delete record.raw;delete record.hash;
+ mocks.command.mockImplementation(async(command:string)=>{if(command==='select_mined_attempt')Object.assign(record,{unsigned:original.unsigned,raw:original.raw,hash:original.hash,status:'submitted'});if(command==='settled')record.status='completed';return structuredClone(record);});
+ await advanceTransaction(record.id);
+ expect(mocks.command).toHaveBeenCalledWith('select_mined_attempt',{id:record.id,hash:original.hash});
+ expect(record.status).toBe('completed');expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();
+});
+
+it.each(['valid','unfinalized','wrong-wallet','wrong-nonce','reorg'])('checks mined nonce-conflict evidence before releasing a request: %s',async mode=>{
+ await setupSend(5042);
+ const other={chainId:5042,type:'eip1559' as const,to:router as Hex,value:1n,data:'0x' as Hex,nonce:mode==='wrong-nonce'?1:0,gas:21000n,maxFeePerGas:200n,maxPriorityFeePerGas:2n};
+ const raw=await account.signTransaction(other),parsed=parseTransaction(raw),minedHash=keccak256(raw);
+ mocks.client.getTransaction=vi.fn(async()=>({...parsed,hash:minedHash,from:mode==='wrong-wallet'?seller:account.address,input:other.data,blockNumber:100n,blockHash:hash}));
+ receipt={transactionHash:minedHash,status:'success',blockNumber:100n,blockHash:mode==='reorg'?otherHash:hash,logs:[]};
+ if(mode==='unfinalized')finalized=99n;
+ mocks.command.mockImplementation(async command=>{if(command==='reconcile_mined_nonce')record.status='cancelled';return structuredClone(record);});
+ const {reconcileTransactionNonce}=await import('../lib/otc/recovery-runtime');
+ if(mode==='valid'){expect((await reconcileTransactionNonce(record.id,minedHash)).status).toBe('cancelled');expect(mocks.command).toHaveBeenCalledWith('reconcile_mined_nonce',expect.objectContaining({id:record.id,hash:minedHash,block:'100'}));}
+ else{await expect(reconcileTransactionNonce(record.id,minedHash)).rejects.toThrow();expect(mocks.command).not.toHaveBeenCalled();}
+ expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();
+});
 describe("Base ETH escrow arrival verification",()=>{
   async function escrowSend(){
     await setupSend();finalized=99n;record.escrowRef={listingId:"listing:test",orderId:order.id,step:"seller"};
@@ -69,12 +94,12 @@ describe("Base ETH escrow arrival verification",()=>{
   it.each(["gas","deposit","seller","fee","return_gas"])("completes %s on canonical success and balance delivery before finality",async step=>{
     await escrowSend();record.escrowRef!.step=step;
     await advanceTransaction(record.id,true);
-    expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});
+    expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
     expect(mocks.client.getBlock).not.toHaveBeenCalledWith({blockTag:"finalized"});
   });
   it("verifies a credited Base payment despite unrelated recipient spending",async()=>{
     await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);
-    await advanceTransaction(record.id,true);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});
+    await advanceTransaction(record.id,true);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
   });
   it("keeps funds locked when historical balances are unavailable",async()=>{
     await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("archive unavailable"));
@@ -86,14 +111,14 @@ describe("Base ETH escrow arrival verification",()=>{
   });
   it("records a canonical Base revert as failure without waiting for finality",async()=>{
     await escrowSend();receipt!.status="reverted";
-    await advanceTransaction(record.id,true);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:false});
+    await advanceTransaction(record.id,true);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:false});
   });
 });
 describe("independent wallet transfers and retained verification locks",()=>{
   it("completes a verified Base withdrawal before finality",async()=>{
     await setupSend();finalized=99n;
     expect(await advanceTransaction(record.id,true)).toMatchObject({status:"completed"});
-    expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});
+    expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
   });
   it("does not report Base inclusion for a mismatched transaction",async()=>{
     await setupSend();finalized=99n;
@@ -103,19 +128,20 @@ describe("independent wallet transfers and retained verification locks",()=>{
   it.each([5042,8453] as const)("settles chain %s sends with OTC disabled and the other chain unconfigured",async chain=>{
     await setupSend(chain);vi.stubEnv("OTC_ENABLED","false");vi.stubEnv("OTC_BASE_PAYMENT_ROUTER","");vi.stubEnv("OTC_FEE_WALLET","");vi.stubEnv("OTC_BASE_ROUTER_CODE_HASH","");
     vi.stubEnv(chain===5042?"BASE_MAINNET_RPC_URL":"ARC_MAINNET_RPC_URL","");
-    await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});
+    await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
   });
   it("retains Arc reservations until finality is verified",async()=>{await setupSend(5042);finalized=99n;await advanceTransaction(record.id);expect(mocks.command).not.toHaveBeenCalled();});
-  it("does not query Base finality even if that RPC method is unavailable",async()=>{await setupSend();(mocks.client.getBlock as ReturnType<typeof vi.fn>).mockImplementation(async(args:{blockTag?:string;blockNumber?:bigint})=>{if(args.blockTag==="finalized")throw Error("unavailable");return {number:args.blockNumber??200n,hash,timestamp:BigInt(Math.floor(Date.now()/1000))};});await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
-  it("completes a Base withdrawal using exact canonical transfer evidence",async()=>{await setupSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
+  it("does not query Base finality even if that RPC method is unavailable",async()=>{await setupSend();(mocks.client.getBlock as ReturnType<typeof vi.fn>).mockImplementation(async(args:{blockTag?:string;blockNumber?:bigint})=>{if(args.blockTag==="finalized")throw Error("unavailable");return {number:args.blockNumber??200n,hash,timestamp:BigInt(Math.floor(Date.now()/1000))};});await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
+  it("completes a Base withdrawal using exact canonical transfer evidence",async()=>{await setupSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
 });
 describe("ERC20 settlement locks",()=>{
   async function tokenSend(){
     await setupSend(5042,encodeFunctionData({abi:transferAbi,functionName:"transfer",args:[router,10n]}));
     receipt!.logs=[{address:seller,topics:encodeEventTopics({abi:transferAbi,eventName:"Transfer",args:{from:account.address,to:router}}),data:encodeAbiParameters([{type:"uint256"}],[10n])}];
-    (mocks.client.readContract as ReturnType<typeof vi.fn>).mockImplementation(async({blockNumber}:{blockNumber:bigint})=>blockNumber===99n?5n:15n);
+    (mocks.client.readContract as ReturnType<typeof vi.fn>).mockImplementation(async({blockNumber,functionName,args}:{blockNumber:bigint;functionName:string;args:string[]})=>functionName==='decimals'?0:args[0].toLowerCase()===account.address.toLowerCase()?(blockNumber===99n?20n:10n):(blockNumber===99n?5n:15n));
   }
-  it("completes only after finalized event and balance proof",async()=>{await tokenSend();await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
+  it("completes only after finalized event and balance proof",async()=>{await tokenSend();await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true,settlement:{gasWei:'21000',output:{raw:'10',decimals:0}}});});
+  it('settles a fee-on-transfer send with its actual delivered amount',async()=>{await tokenSend();receipt!.logs=[{address:seller,topics:encodeEventTopics({abi:transferAbi,eventName:'Transfer',args:{from:account.address,to:router}}),data:encodeAbiParameters([{type:'uint256'}],[9n])},{address:seller,topics:encodeEventTopics({abi:transferAbi,eventName:'Transfer',args:{from:account.address,to:seller}}),data:encodeAbiParameters([{type:'uint256'}],[1n])}];(mocks.client.readContract as ReturnType<typeof vi.fn>).mockImplementation(async({blockNumber,functionName,args}:{blockNumber:bigint;functionName:string;args:string[]})=>functionName==='decimals'?0:args[0].toLowerCase()===account.address.toLowerCase()?(blockNumber===99n?20n:10n):(blockNumber===99n?5n:14n));await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith('settled',expect.objectContaining({settlement:{gasWei:'21000',output:{raw:'9',decimals:0}}}));});
   it("retains reservations when a successful receipt has no transfer",async()=>{await tokenSend();receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command).not.toHaveBeenCalled();});
   it("retains reservations if recipient balance did not increase",async()=>{await tokenSend();(mocks.client.readContract as ReturnType<typeof vi.fn>).mockResolvedValue(5n);await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command).not.toHaveBeenCalled();});
   it("retains reservations if historical token state is unavailable",async()=>{await tokenSend();(mocks.client.readContract as ReturnType<typeof vi.fn>).mockRejectedValue(Error("pruned"));await expect(advanceTransaction(record.id)).rejects.toThrow("pruned");expect(mocks.command).not.toHaveBeenCalled();});
@@ -177,7 +203,7 @@ async function setupUsdc(approval=false){
   const paid={address:router,topics:encodeEventTopics({abi:PAYMENT_ABI,eventName:"PaidUsdc",args:{orderId:orderHash(order.id),buyer:account.address,seller}}),data:encodeAbiParameters([{type:"address"},{type:"uint256"},{type:"uint256"},{type:"uint256"}],[account.address,10000000n,10000000n,100000n])};
   const transfer=(value:bigint)=>({address:BASE_USDC,topics:encodeEventTopics({abi:baseUsdcAbi,eventName:"Transfer",args:{from:account.address,to:seller}}),data:encodeAbiParameters([{type:"uint256"}],[value])});
   const approved={address:BASE_USDC,topics:encodeEventTopics({abi:baseUsdcAbi,eventName:"Approval",args:{owner:account.address,spender:router}}),data:encodeAbiParameters([{type:"uint256"}],[10100000n])};
-  receipt={transactionHash:record.hash,status:"success",blockNumber:100n,blockHash:hash,logs:approval?[approved]:[paid,transfer(10000000n),transfer(100000n)]};
+  receipt={transactionHash:record.hash,gasUsed:21000n,effectiveGasPrice:1n,status:"success",blockNumber:100n,blockHash:hash,logs:approval?[approved]:[paid,transfer(10000000n),transfer(100000n)]};
   mocks.client.getTransaction=vi.fn(async()=>({from:account.address,to:call.to,value:call.value,input:call.data}));
   mocks.client.readContract=vi.fn(async({functionName,blockNumber}:{functionName:string;blockNumber:bigint})=>functionName==="allowance"?10100000n:functionName==="balanceOf"?(blockNumber===99n?0n:10100000n):0n);
 }
@@ -187,11 +213,11 @@ describe("Base USDC settlement evidence",()=>{
  it("rejects missing fee transfer",async()=>{await setupUsdc();receipt!.logs=(receipt!.logs as unknown[]).slice(0,2);await expect(advanceTransaction(record.id)).rejects.toThrow("delivery");});
  it("rejects transfers emitted by another token",async()=>{await setupUsdc();receipt!.logs=(receipt!.logs as Array<{address:string}>).map((l,i)=>i?{...l,address:router}:l);await expect(advanceTransaction(record.id)).rejects.toThrow("delivery");});
  it("rejects logs without the recipient balance increase",async()=>{await setupUsdc();mocks.client.readContract=vi.fn(async()=>0n);await expect(advanceTransaction(record.id)).rejects.toThrow("delivery");});
- it("completes verified legacy Base USDC payments before finality",async()=>{await setupUsdc();finalized=99n;await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
+ it("completes verified legacy Base USDC payments before finality",async()=>{await setupUsdc();finalized=99n;await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
  it("verifies exact approval event and allowance",async()=>{await setupUsdc(true);await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));});
  it("rejects successful receipt with no approval evidence",async()=>{await setupUsdc(true);receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("approval was not verified");});
  it("rejects mismatched allowance",async()=>{await setupUsdc(true);mocks.client.readContract=vi.fn(async()=>1n);await expect(advanceTransaction(record.id)).rejects.toThrow("approval was not verified");});
- it("completes verified Base approvals before finality",async()=>{await setupUsdc(true);finalized=99n;await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,block:"100",success:true});});
+ it("completes verified Base approvals before finality",async()=>{await setupUsdc(true);finalized=99n;await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
  it("retains signed transactions when USDC reservations are missing",async()=>{await setupUsdc();receipt=null;nonce=0;wallet.usdcHolds={};await expect(advanceTransaction(record.id)).rejects.toThrow("USDC reservation");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
 });
 

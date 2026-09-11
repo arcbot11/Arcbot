@@ -34,7 +34,7 @@ export function usdcPrice(amount: bigint, premiumBps: number, feeBps=100) {
   return {sellerWei: sellerWei.toString(), feeWei: feeWei.toString(), totalWei: (sellerWei + feeWei).toString()};
 }
 export type EscrowPosition = {settlementOrderId?:string;fundingExtraWei?:string;version:1;accountName:string;address?:string;fundingWei:string;feeRecipient:string;fundingGasWei:string;closeGasWei:string;closeReason?:"cancelled"|"filled";returnedWei?:string;gasRemainderWei?:string;attempts?:Record<string,number>;note?:string};
-export type EscrowOrder = {refundSkipped?:boolean;topupWei?:string;arcTopupWei?:string;version:1|2;address:string;gasBudgetWei:string;gasRemainderWei?:string;attempts?:Record<string,number>};
+export type EscrowOrder = {refundSkipped?:boolean;topupWei?:string;arcTopupWei?:string;topupSpentWei?:string;arcTopupSpentWei?:string;baseRecoveryLimitWei?:string;arcRecoveryLimitWei?:string;version:1|2;address:string;gasBudgetWei:string;gasRemainderWei?:string;attempts?:Record<string,number>};
 export type Listing = {
   kind: "listing"; id: string; owner: string; seller: string; premiumBps: number;
   originalAmount?: string; originalBudget?: string; available: string; held: string; pendingFills: number; gasPerFillWei: string;
@@ -59,7 +59,7 @@ export type Transaction = { kind: "transaction"; id: string; owner: string; wall
   /** Read-only observation; not a settled transaction or permission to release holds. */
   confirmation?: {status:"success"|"reverted";blockNumber:string};
   orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted" | "cancelled";
-  recoveryVersion?:1; signingStartedAt?:number;
+  recoveryVersion?:1; signingStartedAt?:number;signingRevision?:number;previousSigned?:import("./signed-recovery").SignedAttempt[];nonceConflict?:{hash:string;block:string};
   unsigned: string; raw?: string; hash?: string; blockNumber?: string; note?: string; createdAt: number; updatedAt: number };
 export type RecordValue = Listing | Order | Wallet | Transaction;
 export interface Store {

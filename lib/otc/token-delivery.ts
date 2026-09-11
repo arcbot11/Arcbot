@@ -18,7 +18,7 @@ export function verifyTransferReturn(data?: Hex) {
     throw new Error("Token transfer simulation did not return success.");
 }
 type DeliveryLog = {address:string;topics:readonly Hex[];data:Hex};
-export function verifyTransferDelivery(input:{token:string;sender:string;recipient:string;amount:bigint;before:bigint;after:bigint;logs:readonly DeliveryLog[];blockLogs?:readonly DeliveryLog[]}) {
+export function verifyTransferDelivery(input:{token:string;sender:string;recipient:string;amount:bigint;before:bigint;after:bigint;logs:readonly DeliveryLog[];blockLogs?:readonly DeliveryLog[];taxedSend?:{senderBefore:bigint;senderAfter:bigint}}) {
   if(input.blockLogs){
     const key=(log:DeliveryLog)=>`${log.address}:${log.topics.join(":")}:${log.data}`.toLowerCase();
     const counts=new Map<string,number>();
@@ -30,25 +30,33 @@ export function verifyTransferDelivery(input:{token:string;sender:string;recipie
       counts.set(key(log),n-1);
     }
   }
-  let delivered=0n;
+  let delivered=0n,senderDebit=0n;
   for(const log of input.logs){
     if(log.address.toLowerCase()!==input.token.toLowerCase())continue;
     try{
       const event=decodeEventLog({abi:transferAbi,eventName:"Transfer",topics:log.topics as [Hex,...Hex[]],data:log.data,strict:true});
       if(event.args.from.toLowerCase()===input.sender.toLowerCase()&&event.args.to.toLowerCase()===input.recipient.toLowerCase())delivered+=event.args.value;
+      if(event.args.from.toLowerCase()===input.sender.toLowerCase())senderDebit+=event.args.value;
+      if(event.args.to.toLowerCase()===input.sender.toLowerCase())senderDebit-=event.args.value;
     }catch{/* Other or malformed events are not delivery evidence. */}
   }
   // End-of-block balances include every transaction. Reconcile all transfers to
   // this recipient so a later spend cannot hide a successful delivery.
-  let blockDelta=0n;
+  let blockDelta=0n,senderBlockDelta=0n;
   if(input.blockLogs) for(const log of input.blockLogs){
     if(log.address.toLowerCase()!==input.token.toLowerCase())continue;
     try{
       const event=decodeEventLog({abi:transferAbi,eventName:"Transfer",topics:log.topics as [Hex,...Hex[]],data:log.data,strict:true});
       if(event.args.to.toLowerCase()===input.recipient.toLowerCase())blockDelta+=event.args.value;
       if(event.args.from.toLowerCase()===input.recipient.toLowerCase())blockDelta-=event.args.value;
+      if(event.args.to.toLowerCase()===input.sender.toLowerCase())senderBlockDelta+=event.args.value;
+      if(event.args.from.toLowerCase()===input.sender.toLowerCase())senderBlockDelta-=event.args.value;
     }catch{/* Non-transfer events do not affect the delta. */}
   }
-  if(delivered!==input.amount || (input.blockLogs ? input.after-input.before!==blockDelta : input.after-input.before<input.amount))
+  const taxed=input.taxedSend&&input.sender.toLowerCase()!==input.recipient.toLowerCase();
+  if(taxed&&(!input.blockLogs||input.taxedSend!.senderAfter-input.taxedSend!.senderBefore!==senderBlockDelta||senderDebit<input.amount))
+    throw new Error("Token debit is not verified. Funds remain reserved.");
+  if((taxed ? delivered<=0n||delivered>input.amount : delivered!==input.amount) || (input.blockLogs ? input.after-input.before!==blockDelta : input.after-input.before<input.amount))
     throw new Error("Exact token delivery is not verified. Funds remain reserved.");
+  return delivered;
 }

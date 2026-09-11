@@ -1,5 +1,5 @@
 import { decodeFunctionResult, encodeFunctionData, parseAbi, zeroAddress, type Address } from "viem";
-import { ARC_USDC } from "./config";
+import {ARC_USDC} from "./config";
 import type { ArcRpc } from "./rpc";
 import { poolId, type V4Pool } from "./routing";
 
@@ -36,8 +36,10 @@ export async function discoverArgusPool(token:Address,rpc:ArcRpc,block:bigint){
   const [hookToken,hookPortal,hookSplitter,hookManager,quote,fee,spacing,id]=await Promise.all(['token','portal','splitter','poolManager','quoteAsset','poolFee','tickSpacing','poolId'].map(name=>read(hook,name as Parameters<typeof read>[1])));
   if(!same(String(hookToken),token)||!same(String(hookPortal),portal.address)||!same(String(hookSplitter),splitter)||!same(String(hookManager),manager))throw new Error('Argus hook identity mismatch.');
   if(portal.words===11&&(typeof record[10]!=="string"||!same(record[10],String(quote))))throw new Error('Argus launch quote asset mismatch.');
-  // USDC may be the native or ERC-20 pool currency; never assume its representation.
-  if(typeof quote!=='string'||(!same(quote,ARC_USDC)&&quote!==zeroAddress)||fee!==10000||spacing!==200)throw new Error('Unsupported Argus pool configuration.');
+  // The deployed launch record and hook, not a global quote-currency default,
+  // determine this pool. New Portals also permit ERC-20 quoted launches.
+  if(typeof quote!=='string'||same(quote,token)||fee!==10000||spacing!==200)throw new Error('Unsupported Argus pool configuration.');
+  if(quote!==zeroAddress&&!same(quote,ARC_USDC)){const code=await rpc.code(quote as Address,block);if(!code||code==='0x')throw new Error('Argus quote token code missing.');}
   const [currency0,currency1]=[quote as Address,token].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1);
   const pool:V4Pool={protocol:'v4',currency0,currency1,fee:10000,tickSpacing:200,hooks:hook};
   if(poolId(pool)!==id)throw new Error('Argus pool ID mismatch.');
