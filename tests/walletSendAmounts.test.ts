@@ -11,7 +11,7 @@ vi.mock("../lib/arc/wallet-tokens",()=>({arcSelectedTokenBalance:m.balance}));
 import {POST} from "../app/api/wallet/send/route";
 const recipient="0x2222222222222222222222222222222222222222",token="0x3333333333333333333333333333333333333333";
 const body={action:"preview",chainId:5042,recipient,asset:token,amount:"10"};
-const request=(extra:object={})=>new NextRequest("https://www.arcchainbot.io/api/wallet/send",{method:"POST",body:JSON.stringify({...body,...extra})});
+const request=(extra:object={})=>new NextRequest("https://www.argosbot.io/api/wallet/send",{method:"POST",body:JSON.stringify({...body,...extra})});
 beforeEach(()=>{
  vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","test-secret");
  m.price.mockResolvedValue({ethUsdMicros:"2000000000",priceAt:Date.now()});m.baseBalance.mockResolvedValue("100000000");
@@ -41,7 +41,7 @@ it("rejects stale ETH prices and unsupported Base tokens",async()=>{
 afterEach(()=>vi.unstubAllEnvs());
 it("converts USD token sends on the server before encoding the transfer",async()=>{
  const response=await POST(request({amountUnit:"usd"}));expect(response.status).toBe(200);
- expect(m.convert).toHaveBeenCalledWith("0x1111111111111111111111111111111111111111",token,"10");
+ expect(m.convert).toHaveBeenCalledWith("0x1111111111111111111111111111111111111111",token,"10",undefined);
  const call=m.prepare.mock.calls[0][1];
  expect(decodeFunctionData({abi:parseAbi(["function transfer(address,uint256)"]),data:call.data}).args).toEqual([recipient,12500000n]);
  expect((await response.json()).amount).toBe("12.5");

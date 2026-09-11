@@ -21,11 +21,11 @@ References show up to two source files. A name referenced by a script does not i
 
 | Variable | Action | Reason | Source references |
 |---|---|---|---|
-| `X_API_KEY` | Replace / verify ownership | Configure the Argos Bot X app and authorize @ArctosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/xReplies.ts`, `scripts/authorize-x.mjs` |
-| `X_API_SECRET` | Replace / verify ownership | Configure the Argos Bot X app and authorize @ArctosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/xReplies.ts`, `scripts/authorize-x.mjs` |
-| `X_ACCESS_TOKEN` | Replace / verify ownership | Configure the Argos Bot X app and authorize @ArctosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/xReplies.ts`, `scripts/authorize-x.mjs` |
-| `X_ACCESS_TOKEN_SECRET` | Replace / verify ownership | Configure the Argos Bot X app and authorize @ArctosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/xReplies.ts`, `scripts/authorize-x.mjs` |
-| `X_BOT_USER_ID` | Replace / verify ownership | Configure the Argos Bot X app and authorize @ArctosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/automatedFeeClaimInfo.ts`, `convex/wallets.ts` |
+| `X_API_KEY` | Replace / verify ownership | Configure the Argos Bot X app and authorize @TheArgosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/xReplies.ts`, `scripts/authorize-x.mjs` |
+| `X_API_SECRET` | Replace / verify ownership | Configure the Argos Bot X app and authorize @TheArgosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/xReplies.ts`, `scripts/authorize-x.mjs` |
+| `X_ACCESS_TOKEN` | Replace / verify ownership | Configure the Argos Bot X app and authorize @TheArgosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/xReplies.ts`, `scripts/authorize-x.mjs` |
+| `X_ACCESS_TOKEN_SECRET` | Replace / verify ownership | Configure the Argos Bot X app and authorize @TheArgosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/xReplies.ts`, `scripts/authorize-x.mjs` |
+| `X_BOT_USER_ID` | Replace / verify ownership | Configure the Argos Bot X app and authorize @TheArgosBot; verify the numeric user ID. No online account ownership check was performed. | `convex/automatedFeeClaimInfo.ts`, `convex/wallets.ts` |
 | `X_REPLIES_ENABLED` | Set deliberately | Enable only against the dedicated bot/app and new backend. Archived Telegram was true; X replies were false. | `convex/graduationAnnouncements.ts`, `convex/xOperations.ts` |
 | `X_REPLY_USER_DAILY_LIMIT` | Keep / review | Operational policy, not project identity. Reader exists; review effective behavior before restoring rather than copying old limits blindly. | `convex/xReplies.ts` |
 | `X_REPLY_GLOBAL_DAILY_LIMIT` | Keep / review | Operational policy, not project identity. Reader exists; review effective behavior before restoring rather than copying old limits blindly. | `convex/xReplies.ts` |
@@ -103,7 +103,7 @@ References show up to two source files. A name referenced by a script does not i
 |---|---|
 | `X_OAUTH_CLIENT_ID`, `X_OAUTH_CLIENT_SECRET` | Website server. Dedicated X OAuth 2.0 application for wallet login; distinct from the posting credentials. Register the exact `/api/auth/x/callback` URL. |
 | `WEB_AUTH_SECRET` | New random shared secret in website and Convex for wallet sessions/authenticated provisioning. |
-| `X_BOT_USERNAME` | Set `ArctosBot` in the backend; default currently matches. Configure/verify `X_BOT_USER_ID` separately. |
+| `X_BOT_USERNAME` | Set `TheArgosBot` in the backend; default currently matches. Configure/verify `X_BOT_USER_ID` separately. |
 | `NEXT_PUBLIC_ARCBOT_X_URL`, `NEXT_PUBLIC_ARCBOT_TELEGRAM_URL` | Public links to Argos Bot accounts only. |
 | `TELEGRAM_BOT_USERNAME` | Dedicated Telegram identity, if Telegram is configured. |
 | `ARC_MAINNET_RPC_URL`, `ARC_CHECKPOINT_NUMBER`, `ARC_CHECKPOINT_HASH` | Arc mainnet 5042 endpoint and trusted block checkpoint; required by Arc transaction validation. Do not rename the old RPC key and reuse its endpoint. |

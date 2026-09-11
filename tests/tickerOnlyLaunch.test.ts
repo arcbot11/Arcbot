@@ -8,18 +8,18 @@ import { openRouter } from "../convex/llm";
 afterEach(() => vi.resetAllMocks());
 
 const tickerOnly = [
-  "@ArctosBot @ArctosBot launch my token ticker $RR",
+  "@TheArgosBot @TheArgosBot launch my token ticker $RR",
   "launch ticker RR",
   'Launch token ticker "rr"',
   "Deploy coin symbol ‘$rr’",
   "Create a token with symbol RR",
-  "hey @ArctosBot, launch my token ticker: $RR please",
-  "Launch my token, ticker $RR @ArctosBot",
+  "hey @TheArgosBot, launch my token ticker: $RR please",
+  "Launch my token, ticker $RR @TheArgosBot",
 ];
 
 describe("ticker-only launch names", () => {
   it.each(["ticker should be $TripleT", "symbol should be TripleT", "ticker will be ‘TripleT’"])("handles connector words: %s", label => {
-    const text = `@ArctosBot @ArctosBot launch token TripleT ${label}`;
+    const text = `@TheArgosBot @TheArgosBot launch token TripleT ${label}`;
     expect(parseWalletCommand(text)).toMatchObject({ kind: "launch", name: "TripleT", symbol: "TRIPLET" });
     expect(groundedCanonicalCommand(text)).toMatchObject({ kind: "launch", name: "TripleT", symbol: "TRIPLET" });
     expect(parseWalletCommand(`launch ${label}`)).toMatchObject({ kind: "launch", name: "TRIPLET", symbol: "TRIPLET" });

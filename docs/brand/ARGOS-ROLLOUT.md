@@ -2,13 +2,13 @@
 
 Website pages, metadata, social cards, app manifest, navigation, footer, legal pages, wallet responses, X replies, Telegram responses, setup scripts, license and package name now use Argos Bot. The approved full-body dog and text banner replace the bear. Retired public images are archived outside the web root. Favicons and compatibility image URLs are regenerated.
 
-Website URL remains https://www.arcchainbot.io. Account IDs, wallet mappings, signing identities, recipient addresses, service-fee recipient, support email and transaction configuration are unchanged.
+Website URL is https://www.argosbot.io. X account IDs, wallet mappings, signing identities, recipient addresses, service-fee recipient, support email and transaction configuration are unchanged.
 
 ## Live account check
 
-- X bot ID 2097696306135220226 still resolves to @ArctosBot, display name Arctos Bot. Local X user credentials resolve to the separate @Arctos_Arc account. Do not change that personal account's profile or use it to reauthorize the bot.
-- Telegram bot ID 8679508645 resolves to @TheArctosBot. Its live display name, description, short description , profile photo and 13 command descriptions were updated to Argos Bot. Webhook and pending updates were left untouched.
-- Existing handles remain in links, command examples and invocation parsing until the account handles are confirmed. Rename the actual accounts before changing these to avoid directing users to an unrelated account.
+- X bot ID 2097696306135220226 now resolves to @TheArgosBot, display name Argos Bot, verified through the X API after the user supplied the new handle. Local X user credentials resolve to the separate @0xTheOdysseus account. Bot posting credentials must be authorized as @TheArgosBot.
+- Telegram was replaced by @The_ArgosBot, verified bot ID 8280311402. Name, descriptions, dog profile image, 13 commands and the production webhook were configured. Existing pending Telegram updates were preserved.
+- X links, metadata, command examples and invocation parsing now use @TheArgosBot. Telegram links and addressed commands now use the verified @The_ArgosBot handle.
 - Website and Convex changes require their normal deployment. No production deployment was performed by this branding task.
 
 ## Validation

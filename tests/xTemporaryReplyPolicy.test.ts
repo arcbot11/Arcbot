@@ -26,7 +26,7 @@ describe("temporary X response suppression", () => {
   });
   it.each([
     "Confirmed: Launched Not Enough ETH (NEE) on Argus!",
-    "🚀 Post @ArctosBot launch NAME $TICKER to launch.",
+    "🚀 Post @TheArgosBot launch NAME $TICKER to launch.",
     "💰 Ask for your wallet and send ETH. Keep enough ETH available for gas!",
     "👛 Your Argos Bot wallet is ready!\nYour wallet: https://arcbot.invalid/wallet/0x123",
     "Confirmed: This request was already completed!\nYour TXN: https://explorer.test/tx/123",

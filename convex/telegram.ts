@@ -1,4 +1,5 @@
 import { suppressCreationReply } from "../lib/disabled-creation";
+import { ARC_BOT_TELEGRAM_USER_ID } from "../lib/project-config";
 import { internal } from "./_generated/api";
 import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
@@ -320,7 +321,7 @@ export const completeXLink = action({
     if (linked.status === "expired") throw new Error("Telegram link expired or was already used");
     try {
       const text = linked.status === "wallet_already_linked"
-        ? 'This wallet is already linked to another TG. Post "@ArctosBot unlink TG" on X to unlink the attached account.'
+        ? 'This wallet is already linked to another TG. Post "@TheArgosBot unlink TG" on X to unlink the attached account.'
         : linked.status === "telegram_already_linked"
           ? "This TG account is already linked to another Argos Bot wallet. Use /unlink before linking a different X account."
           : "Confirmed: X linked. Use /wallet, /balance or /help.";
@@ -346,7 +347,8 @@ export const acceptUpdate = action({
     const from = update.message?.from || update.callback_query?.from;
     const chatId = message?.chat?.id;
     const userId = from?.id;
-    const updateId = String(update.update_id);
+    // Telegram update numbers are unique per bot, not across replacement bots.
+    const updateId = `${ARC_BOT_TELEGRAM_USER_ID}_${update.update_id}`;
     const reserved = await ctx.runMutation(internal.telegram.reserveUpdate, {
       updateId,
       ...(Number.isSafeInteger(userId) ? { telegramUserId: String(userId) } : {}),
@@ -484,7 +486,7 @@ export const deliverDeferredWalletResult = internalAction({
   args: { requestId: v.string(), ownerXUserId: v.string(), telegramUserId: v.string(), telegramChatId: v.string(), attempt: v.number() },
   handler: async (ctx, args) => {
     // Migrate already-scheduled callbacks into the durable delivery queue too.
-    const updateId = args.requestId.match(/^telegram:\d+:(\d+):/)?.[1];
+    const updateId = args.requestId.match(/^telegram:\d+:(\d+(?:_\d+)?):/)?.[1];
     if (!updateId) return;
     await ctx.runMutation(internal.telegramDeliveries.enqueue, {
       requestId: args.requestId, ownerXUserId: args.ownerXUserId, telegramUserId: args.telegramUserId,

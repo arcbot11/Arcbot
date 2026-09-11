@@ -1,14 +1,15 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
 import {NextRequest} from "next/server";
-const m=vi.hoisted(()=>({auth:vi.fn(),read:vi.fn(),command:vi.fn(),advance:vi.fn(),prepare:vi.fn(),trade:vi.fn()}));
+const m=vi.hoisted(()=>({auth:vi.fn(),read:vi.fn(),command:vi.fn(),advance:vi.fn(),prepare:vi.fn(),trade:vi.fn(),balance:vi.fn(),convert:vi.fn(),contract:vi.fn()}));
 vi.mock("../lib/arc/social-authority",()=>({socialAuthority:m.auth}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.command})}));
-vi.mock("../lib/otc/runtime",()=>({advanceTransaction:m.advance,prepareCall:m.prepare,chainClient:vi.fn()}));
-vi.mock("../lib/arc/trading",()=>({previewArcTrade:m.trade}));
+vi.mock("../lib/otc/runtime",()=>({advanceTransaction:m.advance,prepareCall:m.prepare,chainClient:()=>({readContract:m.contract})}));
+vi.mock("../lib/arc/trading",()=>({previewArcTrade:m.trade,arcSellAmountForUsdc:m.convert}));
+vi.mock("../lib/arc/wallet-tokens",()=>({arcSelectedTokenBalance:m.balance}));
 import {POST} from "../app/api/arc/command/route";
 const wallet="0x1111111111111111111111111111111111111111",recipient="0x2222222222222222222222222222222222222222";
 let command:unknown;
-const request=(secret="secret")=>new NextRequest("https://www.arcchainbot.io/api/arc/command",{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:"x:123:send"})});
+const request=(secret="secret")=>new NextRequest("https://www.argosbot.io/api/arc/command",{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:"x:123:send"})});
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","secret");command={kind:"send",unit:"usd",amount:"10",recipient};m.auth.mockImplementation(async()=>({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()}));m.read.mockResolvedValue(null);m.prepare.mockResolvedValue({unsigned:"0x02",reserveWei:"10000000000000000100",snapshot:{balanceWei:"20000000000000000000",block:"1"}});m.command.mockImplementation(async(_kind,tx)=>({...tx,status:"prepared"}));m.advance.mockResolvedValue({status:"submitted",hash:"txhash"});});
 afterEach(()=>vi.unstubAllEnvs());
 describe("Arc social execution boundary",()=>{
@@ -47,4 +48,26 @@ describe("Arc social execution boundary",()=>{
    m.read.mockResolvedValue({status:"submitted",leg:"send"});m.advance.mockResolvedValue({status:"completed",leg:"send",hash:"verified"});
    expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"verified"});expect(m.prepare).not.toHaveBeenCalled();
  });
+});
+
+it.each([25,50,100])("uses the website tax-aware maximum for a %s percent social sell",async percentage=>{
+ command={kind:"sell",unit:"percent",amount:String(percentage),token:recipient,slippageBps:100};
+ m.balance.mockResolvedValue({maxSellRaw:"99000000",decimals:6});
+ m.trade.mockResolvedValue({unsigned:"0x02",leg:"swap",reserveWei:"100",snapshot:{balanceWei:"1000",block:"1"}});
+ expect(await(await POST(request())).json()).toMatchObject({pending:true});
+ expect(m.trade).toHaveBeenCalledWith(wallet,expect.objectContaining({amount:String(99*percentage/100)}),false);
+});
+it("uses website USD conversion for a token-to-token social swap",async()=>{
+ command={kind:"swap_token_for_token",unit:"usd",amount:"10",fromToken:recipient,toToken:"0x3333333333333333333333333333333333333333",slippageBps:100};
+ m.convert.mockResolvedValue("12.5");m.trade.mockResolvedValue({unsigned:"0x02",leg:"swap",reserveWei:"100",snapshot:{balanceWei:"1000",block:"1"}});
+ expect(await(await POST(request())).json()).toMatchObject({pending:true});
+ expect(m.trade).toHaveBeenCalledWith(wallet,expect.objectContaining({amount:"12.5",tokenIn:recipient}),false);
+});
+it("does not submit social sends against funds reserved on the website",async()=>{
+ m.read.mockImplementation(async({id})=>id.startsWith("wallet:")?{holds:{otc:"20000000000000000000"}}:null);
+ expect(await(await POST(request())).json()).toMatchObject({ok:false});expect(m.command).not.toHaveBeenCalled();
+});
+it("reports a newly verified send without another recovery round",async()=>{
+ m.advance.mockResolvedValue({status:"completed",leg:"send",hash:"verified"});
+ expect(await(await POST(request())).json()).toMatchObject({ok:true,hash:"verified"});
 });

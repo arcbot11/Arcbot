@@ -16,7 +16,7 @@ describe("X command-only policy", () => {
   it.each(["indexed token", "token in your wallet"])("keeps %s ambiguity", source => {
     const prompt = `Action needed: More than one ${source} uses that ticker. Enter the contract address.`;
     expect(duplicateTickerReply(prompt)).toBe(true);
-    expect(xCommandReply(prompt, true)).toContain("Reply with the contract address and tag @ArctosBot.");
+    expect(xCommandReply(prompt, true)).toContain("Reply with the contract address and tag @TheArgosBot.");
   });
   it("does not start a follow-up for missing or mismatched tokens", () => {
     expect(duplicateTickerReply("Action needed: This is not an Argos Bot token. Reply with a CA to buy this token.")).toBe(false);
@@ -30,7 +30,7 @@ describe("X command-only policy", () => {
     expect(retiredXPrompt("guided_execution", "guided_help")).toBe(false);
   });
   it("offers full command examples without a guided menu", () => {
-    expect(X_COMMAND_HELP).toContain("Tag @ArctosBot with a full command");
+    expect(X_COMMAND_HELP).toContain("Tag @TheArgosBot with a full command");
     expect(X_COMMAND_HELP).not.toMatch(/reply|choose|next|launch/i);
   });
 });

@@ -133,7 +133,7 @@ const scenarios: Scenario[] = [
   { post: "gm ArcBot", expected: { kind: "irrelevant" } },
   { post: "thanks for the wallet help", expected: { kind: "irrelevant" } },
   // Round two: noisier phrasing, boundaries, contracts, and deceptive context.
-  { post: "hey @ArctosBot — what all can u help me with?", expected: { kind: "help", topic: "capabilities" } },
+  { post: "hey @TheArgosBot — what all can u help me with?", expected: { kind: "help", topic: "capabilities" } },
   { post: "ELI5: how does my Arc wallet work", expected: { kind: "help", topic: "wallet" } },
   { post: "Do I need ETH in there for gas?", expected: { kind: "help", topic: "fund" } },
   { post: "How do I add money without buying anything yet?", expected: { kind: "help", topic: "fund" } },
@@ -184,7 +184,7 @@ const scenarios: Scenario[] = [
   { post: "My token launch went great yesterday!", expected: { kind: "irrelevant" } },
   { post: "hello from the coast 👋", expected: { kind: "irrelevant" } },
   // Round three: shorthand, conditional language, attribution, and launch-pair extraction.
-  { post: "yo what commands does @ArctosBot understand", expected: { kind: "help", topic: "capabilities" } },
+  { post: "yo what commands does @TheArgosBot understand", expected: { kind: "help", topic: "capabilities" } },
   { post: "can my wallet hold tokenized stocks?", expected: { kind: "help", topic: "wallet" } },
   { post: "where does the gas money come from?", expected: { kind: "help", topic: "fund" } },
   { post: "what happens when I send to an @username?", expected: { kind: "help", topic: "send" } },
@@ -221,7 +221,7 @@ const scenarios: Scenario[] = [
   { post: "Argus looks great today", expected: { kind: "irrelevant" } },
   // Automatic paired-asset funding: AI extracts the user's requested spend;
   // the wallet workflow performs the intermediate conversion after resolution.
-  { post: "@ArctosBot buy $100 of $ARCBOT", expected: { kind: "command", operation: "buy", fields: { amount: "100", unit: "usd", token: "ARCBOT" } } },
+  { post: "@TheArgosBot buy $100 of $ARCBOT", expected: { kind: "command", operation: "buy", fields: { amount: "100", unit: "usd", token: "ARCBOT" } } },
   { post: "buy 0.03 ETH worth of ARCBOT please", expected: { kind: "command", operation: "buy", fields: { amount: "0.03", unit: "eth", token: "ARCBOT" } } },
   { post: "spend $42 on ARCBOT even if its pair is MSFT", expected: { kind: "command", operation: "buy", fields: { amount: "42", unit: "usd", token: "ARCBOT" } } },
   { post: "use 0.015 ETH to buy the MSFT-paired ARCBOT token", expected: { kind: "command", operation: "buy", fields: { amount: "0.015", unit: "eth", token: "ARCBOT" } } },

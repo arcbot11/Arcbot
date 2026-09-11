@@ -22,7 +22,7 @@ const commands = [
   { command: "balance", description: "Show wallet balances" },
   { command: "buy", description: "Buy an Arc token" },
   { command: "sell", description: "Sell an Arc token" },
-  { command: "swap", description: "Swap a percentage of Arc tokens" },
+  { command: "swap", description: "Swap between Arc tokens" },
   { command: "send", description: "Send Arc USDC or tokens" },
   { command: "buyandsend", description: "Buy Arc tokens and send to a wallet" },
   { command: "buyandburn", description: "Buy Arc tokens and burn them" },
@@ -32,12 +32,15 @@ const commands = [
   { command: "unlink", description: "Unlink your X account" },
 ];
 
+const identity = await call("getMe", {});
+if (String(identity.id) !== "8280311402" || identity.username?.toLowerCase() !== "the_argosbot") throw new Error("Telegram bot identity does not match @The_ArgosBot");
+
 if (brandingOnly) {
   const bot = await call("getMe", {});
-  if (String(bot.id) !== "8679508645") throw new Error("Telegram bot identity does not match the configured project account");
+  if (String(bot.id) !== "8280311402") throw new Error("Telegram bot identity does not match the configured project account");
   await call("setMyName", { name: "Argos Bot" });
   await call("setMyDescription", { description: "Argos Bot. Your gateway to Arc Chain. Buy, sell, swap, send, and burn Arc tokens with buttons and /commands." });
-  await call("setMyShortDescription", { short_description: "Argos Bot — Your Arc Chain wallet. https://www.arcchainbot.io" });
+  await call("setMyShortDescription", { short_description: "Argos Bot — Your Arc Chain wallet. https://www.argosbot.io" });
   await call("setMyCommands", { commands });
   const verified = await call("getMe", {});
   console.log(JSON.stringify({ status: "branding updated", name: verified.first_name, username: verified.username, commands: commands.length }));
@@ -61,7 +64,7 @@ if (checkOnly) {
 
 await call("setMyName", { name: "Argos Bot" });
 await call("setMyDescription", { description: "Your gateway to Arc Chain. Buy, sell, swap, send, and burn Arc tokens with buttons and /commands." });
-await call("setMyShortDescription", { short_description: "Your Arc Chain wallet. https://www.arcchainbot.io" });
+await call("setMyShortDescription", { short_description: "Your Arc Chain wallet. https://www.argosbot.io" });
 await call("setMyCommands", { commands });
 await call("setChatMenuButton", { menu_button: { type: "commands" } });
 await call("setWebhook", {

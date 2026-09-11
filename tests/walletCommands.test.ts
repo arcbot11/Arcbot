@@ -64,7 +64,7 @@ describe("X wallet commands", () => {
   });
 
   it("treats trailing buy-worth language as a launch developer buy", () => {
-    const launch = 'Hey @ArctosBot, launch "Degen Labz", ticker "DLABZ", buy $20 worth';
+    const launch = 'Hey @TheArgosBot, launch "Degen Labz", ticker "DLABZ", buy $20 worth';
     expect(requestedOperations(launch)).toEqual(["launch"]);
     expect(parseWalletCommand(launch)).toMatchObject({
       kind: "launch", name: "Degen Labz", symbol: "DLABZ", devBuy: { amount: "20", unit: "usd" },
@@ -76,7 +76,7 @@ describe("X wallet commands", () => {
   });
 
   it("accepts only the two exact fee-reassignment forms", () => {
-    expect(parseWalletCommand("@ArctosBot Reassign $ARCBOT fees to @alice")).toEqual({ kind: "reassign_fees", token: "ARCBOT", recipient: "@alice" });
+    expect(parseWalletCommand("@TheArgosBot Reassign $ARCBOT fees to @alice")).toEqual({ kind: "reassign_fees", token: "ARCBOT", recipient: "@alice" });
     expect(parseWalletCommand("Reassign fees for 0x1111111111111111111111111111111111111111 to 0x2222222222222222222222222222222222222222")).toEqual({
       kind: "reassign_fees", token: "0x1111111111111111111111111111111111111111", recipient: "0x2222222222222222222222222222222222222222",
     });
@@ -91,7 +91,7 @@ describe("X wallet commands", () => {
     expect(isTerminalCommand({ kind: "reassign_fees", token: "ARCBOT", recipient: "holders" })).toBe(false);
   });
   it("accepts the short X-only upgrade phrase inside surrounding conversation", () => {
-    expect(parseWalletCommand("@ArctosBot Upgrade $ARCBOT to automated fees")).toEqual({
+    expect(parseWalletCommand("@TheArgosBot Upgrade $ARCBOT to automated fees")).toEqual({
       kind: "upgrade_fees", token: "ARCBOT",
     });
     expect(parseWalletCommand("Upgrade 0x1111111111111111111111111111111111111111 to automated fees.")).toEqual({
@@ -100,7 +100,7 @@ describe("X wallet commands", () => {
     expect(parseWalletCommand("please upgrade ARCBOT to automated fees")).toEqual({ kind: "upgrade_fees", token: "ARCBOT" });
     expect(parseWalletCommand("Hey, upgrade ARCBOT please. Thanks!")).toEqual({ kind: "upgrade_fees", token: "ARCBOT" });
     expect(isTerminalCommand({ kind: "upgrade_fees", token: "ARCBOT" })).toBe(false);
-    expect(requestedOperations("@ArctosBot Upgrade $ARCBOT to automated fees")).toEqual(["upgrade_fees"]);
+    expect(requestedOperations("@TheArgosBot Upgrade $ARCBOT to automated fees")).toEqual(["upgrade_fees"]);
   });
   it("accepts clear ETH sends using for and all-balance wording", () => {
     const recipient = "0x1111111111111111111111111111111111111111";
@@ -185,7 +185,7 @@ describe("X wallet commands", () => {
   it("normalizes Telegram launch links to canonical HTTPS t.me URLs", () => {
     expect(normalizeTelegramUrl("t.me/arcbot")).toBe("https://t.me/arcbot");
     expect(normalizeTelegramUrl("http://telegram.me/arcbot/")).toBe("https://t.me/arcbot");
-    expect(() => normalizeTelegramUrl("@ArctosBot")).toThrow("telegram link must use t.me/XXXXX");
+    expect(() => normalizeTelegramUrl("@TheArgosBot")).toThrow("telegram link must use t.me/XXXXX");
     expect(parseWalletCommand("launch Test ticker TEST tg t.me/test")).toMatchObject({ telegram: "https://t.me/test" });
     expect(validateStructuredWalletCommand({ kind: "launch", name: "Test", symbol: "TEST", telegram: "http://t.me/test" })).toMatchObject({ telegram: "https://t.me/test" });
   });
@@ -199,7 +199,7 @@ describe("X wallet commands", () => {
     expect(normalizeLaunchTelegram(parsed)).toEqual(parsed);
   });
   it("normalizes X handles and legacy links to canonical x.com URLs", () => {
-    expect(normalizeXUrl("@ArctosBot")).toBe("https://x.com/ArcBot");
+    expect(normalizeXUrl("@TheArgosBot")).toBe("https://x.com/ArcBot");
     expect(normalizeXUrl("www.x.com/ArcBot")).toBe("https://x.com/ArcBot");
     expect(normalizeXUrl("http://twitter.com/ArcBot")).toBe("https://x.com/ArcBot");
     expect(validateStructuredWalletCommand({ kind: "launch", name: "Test", symbol: "TEST", twitter: "twitter.com/test" })).toMatchObject({ twitter: "https://x.com/test" });

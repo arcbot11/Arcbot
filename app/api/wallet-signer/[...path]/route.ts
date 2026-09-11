@@ -265,10 +265,6 @@ export async function POST(request: NextRequest, context: { params: Promise<{ pa
       const input = tokenMetadataRequestSchema.parse(body);
       return NextResponse.json(await arcTokenInfo(input.token), { headers: { "cache-control": "no-store" } });
     }
-    if (path === "v1/tokens/burned") {
-      const input = tokenMetadataRequestSchema.parse(body);
-      return NextResponse.json(await arcTokenInfo(input.token, "0x000000000000000000000000000000000000dEaD"), { headers: { "cache-control": "no-store" } });
-    }
     if (path === "v1/wallets/spendable-eth") {
       const input = spendableEthRequestSchema.parse(body);
       await assertWalletOwner(input.ownerReference, input.walletRef, input.expectedAddress);

@@ -1,6 +1,7 @@
 import { arcPublicCommand, arcPublicSource } from "../lib/arc/public-policy";
 import {ARC_COMMAND_HTTP_TIMEOUT_MS,arcPendingRetryDelay,arcServiceResult} from "../lib/arc/social-timing";
 import { arcWalletUrl, arcCommandResponse } from "../lib/public-links";
+import { ARC_BOT_SITE_URL } from "../lib/project-config";
 import { isXBotAuthor } from "../lib/x-bot-identity";
 import { retiredFeatureEnabled } from "../lib/retired-features";
 import { canIndexArcToken, CANONICAL_ARC_USDC, isArcUsdcSymbol } from "../lib/arc/token-catalog";
@@ -55,7 +56,7 @@ import {
 } from "../lib/address-normalization";
 import { isTokenIndexExcluded } from "../lib/token-index-exclusions";
 import { assertBuyTarget, NON_INDEXED_BUY_TARGET_MESSAGE } from "../lib/buy-target-policy";
-import { BURNED_TOKEN_CA_MESSAGE, burnedTokenMessage } from "../lib/burned-token-inquiry";
+
 import { AUTOMATED_FEE_PAIR_ROUTES } from "../lib/automated-fee-pair-routes";
 import { nativeTokenOperationError } from "../lib/native-token-operation";
 import { confirmedAllEthDisplay } from "../lib/native-send-display";
@@ -171,7 +172,7 @@ function addressUrl(address: string) {
 }
 
 function argusBotTokenUrl(address: string) {
-  return `https://www.arcchainbot.io/guide?token=${encodeURIComponent(address)}`;
+  return `https://www.argosbot.io/guide?token=${encodeURIComponent(address)}`;
 }
 
 function destinationLabel(recipient: string) {
@@ -3659,6 +3660,7 @@ export const executeCommand = internalAction({
           JSON.parse(args.parsedCommandJson) as unknown,
         )
       : null;
+    if (args.source === "telegram" && !structured) return { ok: false, message: "Use a full /command. Open /help for formats." };
     let command = structured || parseWalletCommand(args.text);
     if (disabledCreationKind(command.kind)) return { ok: false, message: "Command not supported." };
     if (!arcPublicSource(args.source)) return { ok: false, message: "Use the wallet page controls." };
@@ -3740,34 +3742,6 @@ export const executeCommand = internalAction({
         ok: false,
         message: reservedTickerMessage,
       };
-    }
-    if (command.kind === "show_burned") {
-      try {
-        let token = await ctx.runQuery(internal.wallets.resolveKnownToken, { identifier: command.token, walletId: wallet._id });
-        if (!safeAddress(token)) {
-          const held = await ctx.runAction(internal.wallets.resolveHeldTokenTicker, { walletId: wallet._id, ownerXUserId: args.xUserId, identifier: command.token });
-          if (held.status === "ambiguous") throw new Error("WALLET_TICKER_AMBIGUOUS");
-          if (held.status !== "found") throw new Error("BURNED_TOKEN_UNRESOLVED");
-          token = held.tokenAddress;
-        }
-        if (command.expectedTicker) {
-          const identity = await ctx.runAction(internal.wallets.verifyTokenTickerContract, { ticker: command.expectedTicker, tokenAddress: token });
-          if (!identity.matches) throw new Error(`TOKEN_CONTRACT_TICKER_MISMATCH:${command.expectedTicker}`);
-        }
-        const result = await signerRequest<{ raw: string; decimals: number; symbol?: string; totalSupplyRaw: string; usdValue?: number }>("/v1/tokens/burned", { chainId: WALLET_HOME_CHAIN_ID, token });
-        if (args.source === "terminal" || args.source === "telegram")
-          await ctx.runMutation(internal.burnedLookups.save, { owner: args.xUserId, source: args.source, scope: args.terminalSessionId });
-        return { ok: true, message: burnedTokenMessage(token, result) };
-      } catch (error) {
-        const detail = error instanceof Error ? error.message : "";
-        const mismatch = detail.startsWith("TOKEN_CONTRACT_TICKER_MISMATCH:");
-        const message = mismatch
-          ? `Action needed: That contract address's onchain ticker does not match $${command.expectedTicker}. Double-check that you've got the right contract address, then reply with it.`
-          : detail === "BURNED_TOKEN_UNRESOLVED" ? BURNED_TOKEN_CA_MESSAGE : safeFailure(error, command.kind);
-        if ((args.source === "terminal" || args.source === "telegram") && (mismatch || detail === "BURNED_TOKEN_UNRESOLVED" || /ticker matches|WALLET_TICKER_AMBIGUOUS/.test(detail)))
-          await ctx.runMutation(internal.burnedLookups.save, { owner: args.xUserId, source: args.source, scope: args.terminalSessionId, ticker: command.expectedTicker || (safeAddress(command.token) ? undefined : command.token) });
-        return { ok: false, message };
-      }
     }
     if (command.kind === "create_wallet" || command.kind === "show_wallet") {
       if (args.source === "telegram" || (args.source ?? "x") === "x") return {
@@ -7038,7 +7012,7 @@ export const continueArcCommand=internalAction({args:{requestId:v.string(),attem
   if(["confirmed","failed","rejected"].includes(request.status))return {ok:request.status==="confirmed",message:responseMessage(request.finalMessage??"Check wallet history.", request.transactionHash)};
   let result:{ok?:boolean;pending?:boolean;message:string;hash?:string};
   try{
-    const response=await fetch("https://www.arcchainbot.io/api/arc/command",{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:args.requestId}),signal:AbortSignal.timeout(ARC_COMMAND_HTTP_TIMEOUT_MS)});
+    const response=await fetch(`${ARC_BOT_SITE_URL}/api/arc/command`,{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:args.requestId}),signal:AbortSignal.timeout(ARC_COMMAND_HTTP_TIMEOUT_MS)});
     if(!response.ok)throw new Error("Arc command service unavailable.");
     result=arcServiceResult(await response.json());
   }catch{result={pending:true,message:"Arc request is waiting for verification. Check wallet history."};}

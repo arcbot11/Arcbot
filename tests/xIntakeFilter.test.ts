@@ -7,8 +7,8 @@ it("ignores retired manual filters and automatic wallet exclusions", () => {
   vi.stubEnv("X_READ_EXCLUDED_COUNTRIES", "US,CA");
   expect(restrictedXIntakeEnabled()).toBe(false);
   expect(effectiveXIntakeFilters({ excludeWalletBalance: true, verifiedOnly: false })).toEqual({excludeWalletBalance:false,excludeShowMyWallet:false,verifiedOnly:false,countries:[],restricted:false});
-  vi.stubEnv("X_BOT_USERNAME", "ArctosBot");
-  expect(restrictedXSearchQuery(true, false, ["US"], true)).toBe("(@ArctosBot OR to:ArctosBot)");
+  vi.stubEnv("X_BOT_USERNAME", "TheArgosBot");
+  expect(restrictedXSearchQuery(true, false, ["US"], true)).toBe("(@TheArgosBot OR to:TheArgosBot)");
 });
 it("keeps the emergency overlay and releases it after expiry", () => {
   const now = Date.now();
@@ -17,8 +17,8 @@ it("keeps the emergency overlay and releases it after expiry", () => {
   expect(effectiveXIntakeFilters(guard.filters)).toMatchObject({verifiedOnly:true,excludeWalletBalance:false,restricted:true});
   const released = advanceXIntakeSpikeGuard(guard.state, now + X_INTAKE_SPIKE_HOLD_MS + 1, [], true, { excludeWalletBalance: false, verifiedOnly: false });
   expect(effectiveXIntakeFilters(released.filters).restricted).toBe(false);
-  vi.stubEnv("X_BOT_USERNAME", "ArctosBot");
-  expect(restrictedXSearchQuery(true, true, ["CA"], true)).toBe("(@ArctosBot OR to:ArctosBot) is:verified");
+  vi.stubEnv("X_BOT_USERNAME", "TheArgosBot");
+  expect(restrictedXSearchQuery(true, true, ["CA"], true)).toBe("(@TheArgosBot OR to:TheArgosBot) is:verified");
 });
 it("resets page tokens when entering or leaving emergency search", () => {
   const on = intakeSourceTransition("mentions", false, Date.now(), true)!;

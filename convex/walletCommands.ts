@@ -1,3 +1,4 @@
+import {explicitArcSwap} from "../lib/arc-swap-command";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 import { tokenPattern, tokenCharacterCount, sliceTokenText } from "../lib/token-pattern";
 import { launchIdentityTooLong, LAUNCH_METADATA_BYTE_MESSAGE } from "../lib/launch-metadata-limits";
@@ -20,7 +21,7 @@ export type WalletCommand =
   | { kind: "buy_and_send"; amount: string; unit: "eth" | "usd" | "pair" | "token"; token: string; pairAsset?: string; recipient: string; slippageBps: number }
   | { kind: "buy_and_burn"; amount: string; unit: "eth" | "usd" | "pair" | "token"; token: string; pairAsset?: string; slippageBps: number }
   | { kind: "buy_top_five"; amount: string; burn: boolean; slippageBps: number }
-  | { kind: "swap_token_for_token"; amount: string; unit: "usd" | "percent"; fromToken: string; toToken: string; slippageBps: number }
+  | { kind: "swap_token_for_token"; amount: string; unit: "usd" | "percent" | "token"; fromToken: string; toToken: string; slippageBps: number }
   | { kind: "sell"; amount: string; unit: "eth" | "usd" | "token" | "percent"; token: string; slippageBps: number }
   | { kind: "claim_fees"; token?: string }
   | { kind: "reassign_fees"; token: string; recipient: string; selfBurnBps?: number }
@@ -84,7 +85,7 @@ export function isTerminalCommand(command: WalletCommand) {
 
 /** A deliberately narrow, anchored command that is never advertised. */
 export function parseTopFiveBuyCommand(raw: string): Extract<WalletCommand, { kind: "buy_top_five" }> | null {
-  const text = raw.replace(/(?:^|\s)@ArctosBot\b/gi, " ").replace(/\s+/g, " ").trim();
+  const text = raw.replace(/(?:^|\s)@TheArgosBot\b/gi, " ").replace(/\s+/g, " ").trim();
   const match = text.match(/^buy(?:\s*back)?(\s+and\s+burn)?\s+\$((?:[0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+))\s+(?:of\s+)?each\s+of\s+the\s+top\s+5\s+arc\s+bot\s+tokens[.!?]*$/i);
   if (!match) return null;
   const amount = cleanAmount(match[2]);
@@ -97,7 +98,7 @@ function slippageBps(text: string) {
     || text.match(/\b([0-9]+(?:\.[0-9]+)?)\s*%\s+slippage\b/i);
   if (!match) return DEFAULT_SWAP_SLIPPAGE_BPS;
   const bps = Math.round(Number(match[1]) * 100);
-  return Number.isFinite(bps) && bps >= 10 && bps <= 2_000 ? bps : -1;
+  return Number.isFinite(bps) && bps >= 10 && bps <= 1_000 ? bps : -1;
 }
 
 function tradeToken(text: string, verb: "buy" | "sell") {
@@ -133,7 +134,7 @@ function cleanLaunchNameEdges(value: string) {
   let cleaned = stripWrappingQuotes(value).trim();
   // A repeated invocation at the name boundary is routing text, not metadata.
   // Match the complete handle only; never alter project socials/descriptions.
-  cleaned = cleaned.replace(/(?:[\s,;:]+@ArctosBot\b[\s,;:.!]*)+$/i, "").trim();
+  cleaned = cleaned.replace(/(?:[\s,;:]+@TheArgosBot\b[\s,;:.!]*)+$/i, "").trim();
   // A lone cashtag is common shorthand for both the launch name and ticker.
   // The contract name is human-readable metadata and should never retain the
   // ticker marker itself.
@@ -142,7 +143,7 @@ function cleanLaunchNameEdges(value: string) {
   while (cleaned !== previous) {
     previous = cleaned;
     cleaned = cleaned
-      .replace(/(?:[\s,;:]+@ArctosBot\b[\s,;:.!]*)+$/i, "")
+      .replace(/(?:[\s,;:]+@TheArgosBot\b[\s,;:.!]*)+$/i, "")
       .replace(/^(?:(?:and|with)\b[\s,;:\-]*)+/i, "")
       // These words commonly leak across the boundary before ticker, pair,
       // link, or description syntax. They may occur inside a real name, but
@@ -228,7 +229,7 @@ function textOutsideQuotedContent(text: string) {
 /** An unqualified final spend in a launch refers to that launch, not another asset. */
 export function trailingLaunchBuy(text: string) {
   const operative = textOutsideQuotedContent(text);
-  const match = /\b(?:and\s+)?(?:please\s+)?(?:buy(?:\s*back)?|purchase)\s+(?:\$([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)(?:\s+USD)?|([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)\s+ETH)(?:\s+worth)?(?:\s+please)?[\s.!?,;]*(?:@ArctosBot[\s.!?,;]*)?$/i.exec(operative);
+  const match = /\b(?:and\s+)?(?:please\s+)?(?:buy(?:\s*back)?|purchase)\s+(?:\$([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)(?:\s+USD)?|([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)\s+ETH)(?:\s+worth)?(?:\s+please)?[\s.!?,;]*(?:@TheArgosBot[\s.!?,;]*)?$/i.exec(operative);
   if (!match || /\b(?:dev|developer|initial)\s*$/i.test(operative.slice(0, match.index))) return undefined;
   return { index: match.index, amount: cleanAmount(match[1] || match[2]), unit: match[1] ? "usd" as const : "eth" as const };
 }
@@ -454,7 +455,7 @@ export function parseWalletCommand(raw: string): WalletCommand {
   if (burned) return burned;
   const topFive = parseTopFiveBuyCommand(raw);
   if (topFive) return topFive;
-  const reassignmentText = raw.replace(/(?:^|\s)@ArctosBot\b/gi, " ").trim();
+  const reassignmentText = raw.replace(/(?:^|\s)@TheArgosBot\b/gi, " ").trim();
   const upgrade = parseFeeUpgradePhrase(raw);
   if (upgrade) return upgrade;
   const exactReassignment = reassignmentText.match(tokenPattern(/^reassign\s+(?:\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\s+fees|fees\s+for\s+\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31}))\s+to\s+(@[a-zA-Z0-9_]{1,15}|0x[a-fA-F0-9]{40}|holders)[.!]?$/i));
@@ -469,23 +470,11 @@ export function parseWalletCommand(raw: string): WalletCommand {
     : undefined;
   let text = raw.replace(/@[a-zA-Z0-9_]{1,15}/g, " ").replace(/\s+/g, " ").trim();
   text = text.replace(/\bbuy\s*back\b/gi, "buy");
-  const swapMatch = text.match(tokenPattern(`\\bswap\\s+\\$${NUMBER}\\s+(?:worth\\s+)?of\\s+\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:for|to)\\s+\\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\\b`, "i"));
-  if (swapMatch) {
+  const swap = explicitArcSwap(text);
+  if (swap) {
     const slippage = slippageBps(text);
-    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 20%." };
-    const fromToken = cleanToken(swapMatch[2]);
-    const toToken = cleanToken(swapMatch[3]);
-    if (fromToken.toLowerCase() === toToken.toLowerCase()) return { kind: "unknown", reason: "A swap needs two different assets." };
-    return { kind: "swap_token_for_token", amount: cleanAmount(swapMatch[1]), unit: "usd", fromToken, toToken, slippageBps: slippage };
-  }
-  const allSwapMatch = text.match(tokenPattern(/\bswap\s+all(?:\s+of)?\s+(?:my\s+)?\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\s+(?:for|to)\s+\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\b/i));
-  if (allSwapMatch) {
-    const slippage = slippageBps(text);
-    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 20%." };
-    const fromToken = cleanToken(allSwapMatch[1]);
-    const toToken = cleanToken(allSwapMatch[2]);
-    if (fromToken.toLowerCase() === toToken.toLowerCase()) return { kind: "unknown", reason: "A swap needs two different assets." };
-    return { kind: "swap_token_for_token", amount: "100", unit: "percent", fromToken, toToken, slippageBps: slippage };
+    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 10%." };
+    return {kind:"swap_token_for_token",...swap,fromToken:cleanToken(swap.fromToken),toToken:cleanToken(swap.toToken),slippageBps:slippage};
   }
   if (/\b(?:buy|purchase)\b/i.test(text) && /\b(?:destroy|incinerate)\b/i.test(text) && !/\bburn\b/i.test(text)) {
     return { kind: "unknown", reason: "Buy and burn requires burn plus buy or purchase." };
@@ -500,9 +489,9 @@ export function parseWalletCommand(raw: string): WalletCommand {
     const pair = text.match(tokenPattern(`${NUMBER}\\s+((?!of\\b|worth\\b|usd\\b|dollars?\\b|eth\\b|weth\\b)[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:of\\s+)?\\$?(?:${token || "(?!)"})`, "i"));
     const tokenAmount = token ? text.match(new RegExp(`\\b(?:buy|purchase)\\s+${NUMBER}\\s+(?:of\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
     const slippage = slippageBps(text);
-    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 20%." };
+    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 10%." };
     if (!token || (!usd && !eth && !pair && !tokenAmount)) return { kind: "unknown", reason: "Buy and burn needs an amount and one token." };
-    return { kind: "buy_and_burn", amount: cleanAmount(usd ? usd[1] || usd[2] : eth ? eth[1] : pair ? pair[1] : tokenAmount![1]), unit: usd ? "usd" : eth ? "eth" : pair ? "pair" : "token", token, ...(pair ? { pairAsset: pair[2] } : {}), slippageBps: slippage };
+    return { kind: "buy_and_burn", amount: cleanAmount(usd ? usd[1] || usd[2] : eth ? eth[1] : pair ? pair[1] : tokenAmount![1]), unit: usd ? "usd" : eth ? "eth" : pair ? "pair" : "token", token, ...(pair && !usd && !eth ? { pairAsset: pair[2] } : {}), slippageBps: slippage };
   }
   if (/\b(?:buy|purchase)\b/i.test(text) && /\b(?:send|transfer|give)\b/i.test(raw)) {
     const buyText = text.replace(/\bpurchase\b/gi, "buy").replace(/\bbuy\s+and\s+(?:send|burn)\b/gi, "buy");
@@ -513,11 +502,11 @@ export function parseWalletCommand(raw: string): WalletCommand {
     const pair = token ? text.match(tokenPattern(`${NUMBER}\\s+((?!of\\b|worth\\b|usd\\b|dollars?\\b|eth\\b|weth\\b)[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:(?:worth\\s+of|of)\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
     const tokenAmount = token ? text.match(new RegExp(`\\b(?:buy|purchase)\\s+${NUMBER}\\s+(?:of\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
     const slippage = slippageBps(text);
-    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 20%." };
+    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 10%." };
     if (!recipient || !token || (!usd && !eth && !pair && !tokenAmount)) return { kind: "unknown", reason: "Buy and send needs an amount, one token, and a destination." };
     return {
       kind: "buy_and_send", amount: cleanAmount(usd ? usd[1] || usd[2] : eth ? eth[1] : pair ? pair[1] : tokenAmount![1]),
-      unit: usd ? "usd" : eth ? "eth" : pair ? "pair" : "token", token, ...(pair ? { pairAsset: cleanToken(pair[2]) } : {}), recipient, slippageBps: slippage,
+      unit: usd ? "usd" : eth ? "eth" : pair ? "pair" : "token", token, ...(pair && !usd && !eth ? { pairAsset: cleanToken(pair[2]) } : {}), recipient, slippageBps: slippage,
     };
   }
   if (/\bbuy\b/i.test(text)) {
@@ -527,11 +516,11 @@ export function parseWalletCommand(raw: string): WalletCommand {
     const pair = token ? text.match(tokenPattern(`${NUMBER}\\s+((?!of\\b|worth\\b|usd\\b|dollars?\\b|eth\\b|weth\\b)[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:(?:worth\\s+of|of)\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
     const tokenAmount = token ? text.match(new RegExp(`\\bbuy\\s+${NUMBER}\\s+(?:of\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
     const slippage = slippageBps(text);
-    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 20%." };
+    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 10%." };
     if (!token || (!usd && !eth && !pair && !tokenAmount)) return { kind: "unknown", reason: "A buy needs an amount and a token ticker or contract address." };
     return {
       kind: "buy", amount: cleanAmount(usd ? usd[1] || usd[2] : eth ? eth[1] : pair ? pair[1] : tokenAmount![1]),
-      unit: usd ? "usd" : eth ? "eth" : pair ? "pair" : "token", token, ...(pair ? { pairAsset: cleanToken(pair[2]) } : {}), slippageBps: slippage,
+      unit: usd ? "usd" : eth ? "eth" : pair ? "pair" : "token", token, ...(pair && !usd && !eth ? { pairAsset: cleanToken(pair[2]) } : {}), slippageBps: slippage,
     };
   }
   if (/\bsell\b/i.test(text)) {
@@ -543,7 +532,7 @@ export function parseWalletCommand(raw: string): WalletCommand {
       || text.match(new RegExp(`\\bsell\\s+${NUMBER}\\s*(?:usdc|usd|dollars?)\\s+(?:worth\\s+)?(?:of\\s+)?`, "i"))?.[1];
     const ethAmount = text.match(new RegExp(`\\bsell\\s+${NUMBER}\\s+(?:eth|weth)\\s+(?:worth\\s+)?(?:of\\s+)?`, "i"))?.[1];
     const slippage = slippageBps(text);
-    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 20%." };
+    if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 10%." };
     if (percentage) return { kind: "sell", amount: percentage.amount, unit: "percent", token: percentage.token, slippageBps: slippage };
     const selectedAmount = usdAmount || ethAmount || amount;
     if (!token || !selectedAmount) return { kind: "unknown", reason: "A sell needs a token amount and a token ticker or contract address." };
@@ -653,7 +642,7 @@ function launchPairIdentifier(value: unknown) {
 function structuredSlippageBps(value: unknown) {
   if (value === undefined) return DEFAULT_SWAP_SLIPPAGE_BPS;
   const numeric = Number(value);
-  return Number.isInteger(value) && numeric >= 10 && numeric <= 2_000 ? numeric : undefined;
+  return Number.isInteger(value) && numeric >= 10 && numeric <= 1_000 ? numeric : undefined;
 }
 
 /** Strictly validates untrusted structured output before it can reach execution. */
@@ -719,8 +708,8 @@ export function validateStructuredWalletCommand(value: unknown): WalletCommand |
     const fromToken = tokenIdentifier(item.fromToken);
     const toToken = tokenIdentifier(item.toToken);
     const slippageBps = structuredSlippageBps(item.slippageBps);
-    if (!amount || !["usd", "percent"].includes(String(item.unit)) || (item.unit === "percent" && Number(amount) !== 100) || !fromToken || !toToken || fromToken.toLowerCase() === toToken.toLowerCase() || slippageBps === undefined) return null;
-    return { kind, amount, unit: item.unit as "usd" | "percent", fromToken, toToken, slippageBps };
+    if (!amount || !["usd", "percent", "token"].includes(String(item.unit)) || (item.unit === "percent" && Number(amount) > 100) || !fromToken || !toToken || fromToken.toLowerCase() === toToken.toLowerCase() || slippageBps === undefined) return null;
+    return { kind, amount, unit: item.unit as "usd" | "percent" | "token", fromToken, toToken, slippageBps };
   }
   if (kind === "burn") {
     const amount = finitePositiveString(item.amount);

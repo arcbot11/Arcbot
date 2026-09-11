@@ -593,7 +593,7 @@ describe("upgrade incident: continuation, cancellation and fresh-post recovery",
       }
       throw new Error("Unexpected test-only endpoint " + path);
     }));
-    const args = { sourcePostId: "post", xUserId: "123", text: "@ArctosBot upgrade $TEST", parsedCommandJson: JSON.stringify({ kind: "upgrade_fees", token: "TEST" }) };
+    const args = { sourcePostId: "post", xUserId: "123", text: "@TheArgosBot upgrade $TEST", parsedCommandJson: JSON.stringify({ kind: "upgrade_fees", token: "TEST" }) };
     expect(await handler(wallets.executeCommand)(ctx, args)).toMatchObject({ deferred: true, pending: true, message: "" });
     expect(submits).toBe(0);
     Object.assign(ctx.rows.automatedFeePrograms[0], { deploymentTransactionHash: h(1), deploymentConfirmedAt: 1 });
@@ -607,7 +607,7 @@ describe("upgrade incident: continuation, cancellation and fresh-post recovery",
     const ctx = database();
     for (const key of ["X_REPLIES_ENABLED", "AUTOMATED_FEE_EXISTING_LAUNCH_UPGRADE_ENABLED", "AUTOMATED_FEE_BOT_COMMANDS_ENABLED"]) vi.stubEnv(key, "true");
     vi.stubEnv("X_STANDALONE_MENTIONS_ENABLED", "false");
-    ctx.rows.xReplyInteractions = [{ _id: "i", postId: "post", status: "received", text: "@ArctosBot upgrade $TEST",
+    ctx.rows.xReplyInteractions = [{ _id: "i", postId: "post", status: "received", text: "@TheArgosBot upgrade $TEST",
       parsedIntentJson: JSON.stringify({ kind: "command", command: { kind: "upgrade_fees", token: "TEST" } }) }];
     const invoke = ctx.runQuery;
     ctx.runQuery = async (ref: any, args: any) => getFunctionName(ref) === "xReplies:getRetryContext"

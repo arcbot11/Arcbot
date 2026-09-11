@@ -3,9 +3,9 @@ import { groundedCanonicalCommand } from '../convex/xWalletIntent';
 import { extractGroundedLaunchName, parseWalletCommand } from '../convex/walletCommands';
 
 it.each([
-  '@ArctosBot launch token Hermes name ticker Herman @ArctosBot',
+  '@TheArgosBot launch token Hermes name ticker Herman @TheArgosBot',
   'launch token Hermes name ticker Herman',
-  'launch token name Hermes ticker Herman @ArctosBot',
+  'launch token name Hermes ticker Herman @TheArgosBot',
   'launch token Hermes name: ticker: Herman',
   'launch coin Hermes name symbol Herman',
 ])('grounds the correct identity for %s', text => {
@@ -24,5 +24,5 @@ it('does not strip Name from explicitly quoted names', () => {
   expect(groundedCanonicalCommand('launch "My Name" ticker NAME')).toMatchObject({ name: 'My Name', symbol: 'NAME' });
 });
 it('keeps fee recipients and developer buys unchanged', () => {
-  expect(groundedCanonicalCommand('launch token Hermes name ticker Herman assign fees to @ArctosBot buy $20')).toMatchObject({ name: 'Hermes', symbol: 'HERMAN', devBuy: { amount: '20', unit: 'usd' } });
+  expect(groundedCanonicalCommand('launch token Hermes name ticker Herman assign fees to @TheArgosBot buy $20')).toMatchObject({ name: 'Hermes', symbol: 'HERMAN', devBuy: { amount: '20', unit: 'usd' } });
 });

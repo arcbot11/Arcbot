@@ -15,7 +15,7 @@ describe("creator self-burn commands", () => {
   it("routes an X percentage command as configuration rather than a wallet purchase", async () => {
     expect(
       await parseXWalletIntent(
-        "@ArctosBot Reassign 50% of $ARCBOT fees to buyback and burn",
+        "@TheArgosBot Reassign 50% of $ARCBOT fees to buyback and burn",
         false,
       ),
     ).toMatchObject({
@@ -25,7 +25,7 @@ describe("creator self-burn commands", () => {
   });
   it.each([
     "Reassign 50% of $ARCBOT fees to buyback and burn",
-    "@ArctosBot assign 50% of fees for ARCBOT to buy back and burn!",
+    "@TheArgosBot assign 50% of fees for ARCBOT to buy back and burn!",
     "Set 50% self-burn for ARCBOT.",
   ])("parses explicit percentage: %s", (text) =>
     expect(parseWalletCommand(text)).toMatchObject({
@@ -58,7 +58,7 @@ describe("creator self-burn commands", () => {
   it("keeps a launch fee option out of its name, ticker and dev buy", () =>
     expect(
       parseWalletCommand(
-        "@ArctosBot launch Test $TEST assign 50% of fees to buyback and burn",
+        "@TheArgosBot launch Test $TEST assign 50% of fees to buyback and burn",
       ),
     ).toMatchObject({
       kind: "launch",
@@ -69,7 +69,7 @@ describe("creator self-burn commands", () => {
   it("still accepts a separate dev buy", () =>
     expect(
       parseWalletCommand(
-        "@ArctosBot launch Test $TEST assign 50% of fees to buyback and burn buy $20",
+        "@TheArgosBot launch Test $TEST assign 50% of fees to buyback and burn buy $20",
       ),
     ).toMatchObject({
       kind: "launch",

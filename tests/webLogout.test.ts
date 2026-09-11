@@ -4,7 +4,7 @@ const m=vi.hoisted(()=>({action:vi.fn()}));
 vi.mock('convex/browser',()=>({ConvexHttpClient:class{action=m.action;}}));
 import {DELETE} from '../app/api/auth/x/session/route';
 import {createWebWalletSession,readWebWalletSession,webWalletCsrfToken,WEB_WALLET_SESSION_COOKIE} from '../lib/web-wallet-session';
-const secret='test-secret',site='https://www.arcchainbot.io';let cookie:string,csrf:string;
+const secret='test-secret',site='https://www.argosbot.io';let cookie:string,csrf:string;
 beforeEach(()=>{vi.clearAllMocks();m.action.mockResolvedValue(true);vi.stubEnv('WEB_AUTH_SECRET',secret);vi.stubEnv('NEXT_PUBLIC_SITE_URL',site);vi.stubEnv('NEXT_PUBLIC_CONVEX_URL','https://example.convex.cloud');cookie=createWebWalletSession('0x1111111111111111111111111111111111111111','123','tester',secret);csrf=webWalletCsrfToken(readWebWalletSession(cookie,secret)!.sessionId,secret);});
 afterEach(()=>vi.unstubAllEnvs());
 const req=(origin=site,token=csrf)=>new NextRequest(site+'/api/auth/x/session',{method:'DELETE',headers:{origin,'x-argus-csrf':token,cookie:`${WEB_WALLET_SESSION_COOKIE}=${cookie}`}});

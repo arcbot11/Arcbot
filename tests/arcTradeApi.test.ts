@@ -7,7 +7,7 @@ vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.com
 vi.mock("../lib/arc/trading",()=>({previewArcTrade:m.preview,estimateArcTrade:m.estimate,arcSellAmountForUsdc:m.convert}));
 vi.mock("../lib/otc/runtime",()=>({balanceSnapshot:m.balance,advanceTransaction:m.advance}));
 import {POST} from "../app/api/wallet/trade/route";
-const request=(body:unknown)=>new NextRequest("https://www.arcchainbot.io/api/wallet/trade",{method:"POST",body:JSON.stringify(body),headers:{"content-type":"application/json"}});
+const request=(body:unknown)=>new NextRequest("https://www.argosbot.io/api/wallet/trade",{method:"POST",body:JSON.stringify(body),headers:{"content-type":"application/json"}});
 const input={action:"preview",tokenIn:"native",tokenOut:"0x2222222222222222222222222222222222222222",amount:"10",slippageBps:100};
 beforeEach(()=>{vi.clearAllMocks();m.owner="alice";vi.stubEnv("WEB_AUTH_SECRET","test-secret");m.read.mockResolvedValue(null);m.preview.mockResolvedValue({unsigned:serializeTransaction({type:"eip1559",chainId:5042,nonce:0,gas:21000n,maxFeePerGas:1n,maxPriorityFeePerGas:0n,to:"0x2222222222222222222222222222222222222222",value:1n}),reserveWei:"110",gasWei:"10",expiresAt:Date.now()+30000,leg:"swap",stage:"swap",snapshot:{balanceWei:"1000"}});m.balance.mockResolvedValue({nonce:0,pendingNonce:0,balanceWei:"1000",block:"1"});});
 afterEach(()=>{vi.unstubAllEnvs();vi.useRealTimers();});

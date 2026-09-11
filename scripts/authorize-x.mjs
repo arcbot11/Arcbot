@@ -3,7 +3,7 @@ import fs from "node:fs";
 import readline from "node:readline/promises";
 import process from "node:process";
 
-const TARGET_USERNAME = "ArctosBot";
+const TARGET_USERNAME = "TheArgosBot";
 const REQUEST_TOKEN_URL = "https://api.x.com/oauth/request_token";
 const ACCESS_TOKEN_URL = "https://api.x.com/oauth/access_token";
 const OUTPUT_FILE = ".env.x-oauth";

@@ -5,7 +5,7 @@ export const NON_INDEXED_BUY_TARGET_MESSAGE = "Action needed: This is not an Arg
 /** Accept a contract-only clarification while allowing the labels users
  * naturally put before an address. No other command text is admitted. */
 export function buyTargetContractReply(text: string) {
-  const direct = text.replace(/@ArctosBot\b/gi, " ").trim();
+  const direct = text.replace(/@TheArgosBot\b/gi, " ").trim();
   return direct.match(/^(?:(?:ca|contract(?:\s+address)?|address)\s*(?:is|=|:)?\s*)?(0x[a-fA-F0-9]{40})[.!?]*$/i)?.[1];
 }
 

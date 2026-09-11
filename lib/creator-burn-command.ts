@@ -2,7 +2,7 @@ import { creatorBurnPercentageBps } from "./creator-burn-policy";
 const TOKEN = "(?:0x[a-fA-F0-9]{40}|[\\p{L}\\p{N}\\p{M}_ーｰ]{1,32})";
 const BURN = "(?:buy\\s*back|buyback)\\s+and\\s+burn";
 export function parseCreatorBurnCommand(raw: string) {
-  const text = raw.replace(/@ArctosBot\b/gi, " ").trim();
+  const text = raw.replace(/@TheArgosBot\b/gi, " ").trim();
   if (/^(?:reassign|assign|set)\b/i.test(text) && /\bfees\b/i.test(text)
     && /\b(?:buy\s*back|self[- ]burn)\b/i.test(text)
     && /\bholders\b|@[a-zA-Z0-9_]{1,15}\b/i.test(text)) {

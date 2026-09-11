@@ -18,8 +18,8 @@ it("rejects old-chain wallet, balance and metadata requests", () => {
   expect(walletRequestSchema.safeParse({ chainId: 4663, ownerReference: "x:123", idempotencyKey: "wallet:test" }).success).toBe(false);
 });
 it("uses the verified Telegram account", () => {
-  expect(ARC_BOT_TELEGRAM_USERNAME).toBe("TheArctosBot");
-  expect(ARC_BOT_TELEGRAM_URL).toBe("https://t.me/TheArctosBot");
+  expect(ARC_BOT_TELEGRAM_USERNAME).toBe("The_ArgosBot");
+  expect(ARC_BOT_TELEGRAM_URL).toBe("https://t.me/The_ArgosBot");
 });
 
 it("blocks the retired interactive execution source", () => {

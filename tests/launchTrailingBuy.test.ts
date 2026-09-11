@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { groundedCanonicalCommand, requestedOperations } from "../convex/xWalletIntent";
-it.each(["buy $20", "and buy $20", "and buy $20 please!", "purchase $20", "buy $20 worth", "and buy $20 @ArctosBot"])("accepts trailing %s", suffix => {
- const text = `@ArctosBot launch Ryuroobin ticker RRB ${suffix}`;
+it.each(["buy $20", "and buy $20", "and buy $20 please!", "purchase $20", "buy $20 worth", "and buy $20 @TheArgosBot"])("accepts trailing %s", suffix => {
+ const text = `@TheArgosBot launch Ryuroobin ticker RRB ${suffix}`;
  expect(requestedOperations(text)).toEqual(["launch"]);
  expect(groundedCanonicalCommand(text)).toMatchObject({ kind: "launch", name: "Ryuroobin", symbol: "RRB", devBuy: { amount: "20", unit: "usd" } });
 });

@@ -6,7 +6,7 @@ export type FeeOutcome = "upgrade" | "reassign" | "holders";
 
 export function automatedFeeOutcomeMessage(outcome: FeeOutcome, symbol: string, token: string, hash: string) {
   if (outcome === "upgrade") {
-    return feeUpgradeSuccessMessage(symbol, `https://www.arcchainbot.io/guide?token=${encodeURIComponent(token)}`);
+    return feeUpgradeSuccessMessage(symbol, `https://www.argosbot.io/guide?token=${encodeURIComponent(token)}`);
   }
   const label = /^[a-zA-Z0-9\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{M}ーｰ]{1,32}$/u.test(symbol.replace(/^\$/, "")) ? `$${symbol.replace(/^\$/, "")}` : "this token";
   return `Confirmed: Success. Reassigned future creator fees for ${label}${outcome === "holders" ? "to holders" : ""}.

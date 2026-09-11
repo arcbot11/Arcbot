@@ -5,12 +5,12 @@ import { parseXWalletIntentWithDiagnostics } from "../convex/xWalletIntent";
 loadEnvConfig(process.cwd());
 
 const prompts = [
-  '@ArctosBot launch "Blue Harbor" ticker $HARBOR assign fees to @alice',
-  "@ArctosBot launch Night Desk ticker $DESK website nightdesk.example assign fees to 0x1111111111111111111111111111111111111111",
-  "@ArctosBot launch Crowd Signal ticker $CROWD holder fee sharing",
-  '@ArctosBot launch Quiet Room ticker $QUIET description "holder fee sharing"',
-  "@ArctosBot launch Cedar Line ticker $CEDAR please give the fees to @alice",
-  "@ArctosBot launch Twin Path ticker $TWIN assign fees to @alice holder fee sharing",
+  '@TheArgosBot launch "Blue Harbor" ticker $HARBOR assign fees to @alice',
+  "@TheArgosBot launch Night Desk ticker $DESK website nightdesk.example assign fees to 0x1111111111111111111111111111111111111111",
+  "@TheArgosBot launch Crowd Signal ticker $CROWD holder fee sharing",
+  '@TheArgosBot launch Quiet Room ticker $QUIET description "holder fee sharing"',
+  "@TheArgosBot launch Cedar Line ticker $CEDAR please give the fees to @alice",
+  "@TheArgosBot launch Twin Path ticker $TWIN assign fees to @alice holder fee sharing",
 ] as const;
 
 describe.runIf(process.env.LIVE_AI_TESTS === "true")("live AI launch fee options", () => {

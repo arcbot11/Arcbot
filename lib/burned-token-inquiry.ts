@@ -14,7 +14,7 @@ export function burnedTokenMessage(token: string, result: { raw: string; decimal
 }
 export const BURNED_TOKEN_CA_MESSAGE = "Action needed: Could not identify that token in the index or your wallet. Reply with its contract address to check how much has been burned.";
 export function parseBurnedTokenInquiry(text: string) {
-  const clean = directPostCommandText(text).replace(/@ArctosBot\b/gi, " ").replace(/[’‘]/g, "'").replace(/\s+/g, " ").trim()
+  const clean = directPostCommandText(text).replace(/@TheArgosBot\b/gi, " ").replace(/[’‘]/g, "'").replace(/\s+/g, " ").trim()
     .replace(/^(?:hey|hi|hello)[,!\s]+/i, "")
     .replace(/^(?:(?:please|(?:can|could|would) you|I'd like to know|I want to know)\s+)+/i, "")
     .replace(/^(?:tell|show) me\s+(?=how\b|what\b)/i, "")

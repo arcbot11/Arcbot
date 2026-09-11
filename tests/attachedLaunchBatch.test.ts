@@ -9,7 +9,7 @@ const sourcePath = process.env.ATTACHED_LAUNCH_FILE;
 
 function launchBlocks(source: string) {
   const lines = source.replace(/\r/g, "").split("\n").map((line) => line.trim()).filter(Boolean);
-  const begins = /^(?:launch\b|launch\s+token\b|create\b|deploy\b|new\s+(?:launch|token|one)\b|i\s+(?:want|need)\b|need\b|can\b|argus\b|token\s*:|token\s+(?:launch|request|name)\b|pls\b|make\b|name\b|ticker\b|\$[A-Z]|attached\b|use\s+the\s+image|hey\s+argus|@ArctosBot|“[^”]+”|'[^']+'|NAME:|TOKEN LAUNCH REQUEST)/i;
+  const begins = /^(?:launch\b|launch\s+token\b|create\b|deploy\b|new\s+(?:launch|token|one)\b|i\s+(?:want|need)\b|need\b|can\b|argus\b|token\s*:|token\s+(?:launch|request|name)\b|pls\b|make\b|name\b|ticker\b|\$[A-Z]|attached\b|use\s+the\s+image|hey\s+argus|@TheArgosBot|“[^”]+”|'[^']+'|NAME:|TOKEN LAUNCH REQUEST)/i;
   const blocks: string[] = [];
   let current: string[] = [];
   for (const line of lines) {
@@ -54,7 +54,7 @@ describe.runIf(process.env.LIVE_AI_TESTS === "true" && Boolean(sourcePath))("att
     const results: unknown[] = [];
     for (let offset = 0; offset < posts.length; offset += 4) {
       const batch = posts.slice(offset, offset + 4);
-      const intents = await Promise.all(batch.map((post) => parseXWalletIntent(`@ArctosBot ${post}`, /attach(?:ed|ment)|\bartwork\b|\bimage\b|\blogo\b|\bpic\b/i.test(post))));
+      const intents = await Promise.all(batch.map((post) => parseXWalletIntent(`@TheArgosBot ${post}`, /attach(?:ed|ment)|\bartwork\b|\bimage\b|\blogo\b|\bpic\b/i.test(post))));
       intents.forEach((intent, index) => results.push({ number: offset + index + 1, post: batch[index], intent, validLaunch: intent.kind === "command" && intent.command.kind === "launch" }));
     }
     console.log(`ATTACHED_LAUNCH_BATCH=${JSON.stringify({ count: posts.length, results })}`);

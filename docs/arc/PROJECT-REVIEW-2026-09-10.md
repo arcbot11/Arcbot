@@ -20,7 +20,7 @@ app/api/wallet/trade/route.ts persists a transaction and activeTx before advance
 
 Both deployed wallets have chainId:4663 and launchEnabled:true. convex/wallets.ts finishWalletProvisioning writes these defaults and checks existing bindings against the legacy chain. Current Arc transaction APIs explicitly use 5042, so this is not evidence that the deposited Arc funds went to another chain. Fix provisioning and migrate existing metadata together, preserving addresses, owner links and signer references. Launch workflows must remain blocked.
 
-The addresses match their CDP accounts. @ArctosBot has 46 native Arc USDC; @Arctos_Arc has zero. Both had zero Base ETH and Base USDC and nonce zero in the preceding live check. CDP account names contain arcbot-rh-. Do not rename/rederive deterministic account identities without a migration strategy.
+The addresses match their CDP accounts. @TheArgosBot has 46 native Arc USDC; @Arctos_Arc has zero. Both had zero Base ETH and Base USDC and nonce zero in the preceding live check. CDP account names contain arcbot-rh-. Do not rename/rederive deterministic account identities without a migration strategy.
 
 ### P2 — X and Telegram operation is not ready
 

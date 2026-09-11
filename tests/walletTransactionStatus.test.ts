@@ -6,7 +6,7 @@ vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read})}));
 vi.mock("../lib/otc/runtime",()=>({advanceTransaction:m.advance}));
 import {GET} from "../app/api/wallet/transaction/route";
 const address="0x1111111111111111111111111111111111111111";
-const request=()=>new NextRequest("https://www.arcchainbot.io/api/wallet/transaction?id=trade:test");
+const request=()=>new NextRequest("https://www.argosbot.io/api/wallet/transaction?id=trade:test");
 beforeEach(()=>{vi.clearAllMocks();m.advance.mockImplementation(()=>m.read());m.session.mockResolvedValue({xUserId:"alice",walletAddress:address});m.read.mockResolvedValue({kind:"transaction",id:"trade:test",owner:"alice",wallet:address,status:"submitted",leg:"swap",raw:"secret raw bytes",unsigned:"unsigned bytes"});});
 it("returns only safe status fields for the authenticated wallet",async()=>{
   const response=await GET(request());expect(response.status).toBe(200);

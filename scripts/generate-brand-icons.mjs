@@ -30,6 +30,11 @@ await sharp(path.join(root, "public", "brand", "argos-social-banner.jpg")).png()
 const sizes = new Map();
 for (const size of [16, 32, 48, 180, 192, 512]) sizes.set(size, await icon(size));
 await Promise.all([
+  writeFile(path.join(root, "public", "brand", "argos-favicon.ico"), ico([16, 32, 48].map((size) => ({ size, buffer: sizes.get(size) })))),
+  writeFile(path.join(root, "public", "brand", "argos-icon-32.png"), sizes.get(32)),
+  writeFile(path.join(root, "public", "brand", "argos-icon-192.png"), sizes.get(192)),
+  writeFile(path.join(root, "public", "brand", "argos-icon-512.png"), sizes.get(512)),
+  writeFile(path.join(root, "public", "brand", "argos-apple-icon.png"), sizes.get(180)),
   writeFile(path.join(root, "public", "favicon.png"), sizes.get(32)),
   writeFile(path.join(root, "public", "faviconlarge.png"), sizes.get(192)),
   writeFile(path.join(root, "public", "favicon.ico"), ico([16, 32, 48].map((size) => ({ size, buffer: sizes.get(size) })))),

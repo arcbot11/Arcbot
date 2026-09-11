@@ -1,7 +1,7 @@
 import { expect, it } from "vitest";
 import { groundedCanonicalCommand, requestedOperations, straightforwardCommandOperation } from "../convex/xWalletIntent";
 it.each(["Use the image on below", "use this logo on the token", "use the picture below", "use ETH as the pair"])("does not interpret %s as a buy", instruction => {
- const text = `@ArctosBot launch HoodFi Ticker: $HDFI ${instruction}`;
+ const text = `@TheArgosBot launch HoodFi Ticker: $HDFI ${instruction}`;
  expect(requestedOperations(text)).toEqual(["launch"]);
  expect(straightforwardCommandOperation(text)).toBe("launch");
  expect(groundedCanonicalCommand(text)).toMatchObject({ kind: "launch", name: "HoodFi", symbol: "HDFI" });

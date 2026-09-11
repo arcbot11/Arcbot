@@ -6,16 +6,16 @@ import { nativeTokenOperationError } from "../lib/native-token-operation";
 
 describe("launch mention boundaries", () => {
   it.each(["danfo", "ICKER", "TORINOTE"])("does not include the repeated bot mention in %s metadata", name => {
-    const text = `@ArctosBot Launch token ${name} @ArctosBot`;
-    const ai = { kind: "launch", name: `${name} @ArctosBot`, symbol: name.toUpperCase() };
+    const text = `@TheArgosBot Launch token ${name} @TheArgosBot`;
+    const ai = { kind: "launch", name: `${name} @TheArgosBot`, symbol: name.toUpperCase() };
     expect(validateStructuredWalletCommand(ai)).toMatchObject({ name, symbol: name.toUpperCase() });
     expect(parseWalletCommand(text)).toMatchObject({ kind: "launch", name, symbol: name.toUpperCase() });
     expect(groundedCanonicalCommand(text)).toMatchObject({ name, symbol: name.toUpperCase() });
   });
   it("strips complete mentions before truncation while preserving project socials and description", () => {
     const name = "A".repeat(42);
-    expect(validateStructuredWalletCommand({ kind: "launch", name: `${name} @ArctosBot!`, symbol: "TEST",
-      twitter: "@ArctosBot", description: "Join @ArctosBot" })).toMatchObject({ name, twitter: "https://x.com/ArcBot", description: "Join @ArctosBot" });
+    expect(validateStructuredWalletCommand({ kind: "launch", name: `${name} @TheArgosBot!`, symbol: "TEST",
+      twitter: "@TheArgosBot", description: "Join @TheArgosBot" })).toMatchObject({ name, twitter: "https://x.com/ArcBot", description: "Join @TheArgosBot" });
   });
   it("does not strip a different handle with the same prefix", () => {
     expect(validateStructuredWalletCommand({ kind: "launch", name: "Test @arcbot2", symbol: "TEST" })).toMatchObject({ name: "Test @arcbot2" });

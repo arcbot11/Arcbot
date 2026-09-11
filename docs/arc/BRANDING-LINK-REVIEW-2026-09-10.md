@@ -4,7 +4,7 @@ Local source review, September 10, 2026. Deployment is separate.
 
 ## Fixed
 
-- Public links use `https://www.arcchainbot.io`, `https://x.com/ArctosBot`, and the new Telegram account supplied by the owner: `https://t.me/TheArctosBot`. Telegram consent redirects use that same account. This replaces the account checked in the earlier audit; the new bot token and webhook must target the new account.
+- Public links use `https://www.arcchainbot.io`, `https://x.com/TheArgosBot`, and the new Telegram account supplied by the owner: `https://t.me/The_ArgosBot`. Telegram consent redirects use that same account. This replaces the account checked in the earlier audit; the new bot token and webhook must target the new account.
 - Arc command results include validated Arc Explorer transaction links and Argos Bot wallet links, including recovered results. Arc Explorer is `https://www.arcexplorer.org`. Base receipts retain Base Explorer links.
 - X and Telegram balance requests use chain 5042, native USDC units, and verified Arc token balances. Arbitrary contract metadata and burned balances use pinned Arc block reads with a block-hash recheck.
 - Held-token discovery reads Arc Explorer's current API and verifies candidates through Arc RPC balance reads. Public wallet holdings no longer use the inherited stock-price, explorer or chain-4663 RPC paths.

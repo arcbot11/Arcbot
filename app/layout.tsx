@@ -18,12 +18,12 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   icons: {
     icon: [
-      { url: "/favicon.ico", type: "image/x-icon" },
-      { url: "/favicon.png", type: "image/png", sizes: "32x32" },
-      { url: "/faviconlarge.png", type: "image/png", sizes: "192x192" },
+      { url: "/brand/argos-favicon.ico", type: "image/x-icon" },
+      { url: "/brand/argos-icon-32.png", type: "image/png", sizes: "32x32" },
+      { url: "/brand/argos-icon-192.png", type: "image/png", sizes: "192x192" },
     ],
-    shortcut: "/favicon.ico",
-    apple: [{ url: "/apple-icon.png", type: "image/png", sizes: "180x180" }],
+    shortcut: "/brand/argos-favicon.ico",
+    apple: [{ url: "/brand/argos-apple-icon.png", type: "image/png", sizes: "180x180" }],
   },
   manifest: "/manifest.webmanifest",
 };

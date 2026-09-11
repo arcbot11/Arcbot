@@ -8,7 +8,7 @@ function escapeRegExp(value: string) {
 /**
  * Identifies replies where the bot is only an automatically carried member of
  * a leading participant block (or is absent from the direct text entirely).
- * A sole @ArctosBot invocation, or another direct mention later in the
+ * A sole @TheArgosBot invocation, or another direct mention later in the
  * post, remains explicit.
  */
 export function isPassiveBotChainReply(text: string, references: XReference[] | undefined, botUsername = xBotUsername()) {

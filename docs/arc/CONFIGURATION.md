@@ -7,8 +7,8 @@ Public configuration lives in `lib/project-config.ts`. The eight legacy executio
 | `X_OAUTH_CLIENT_ID` | Keep in environment. Nonsecret but not configured locally; must match the actual X application. Can move to public configuration after that app is established. |
 | `X_OAUTH_CLIENT_SECRET` | Environment only; secret. |
 | `WEB_AUTH_SECRET` | Environment only; shared signing/authentication secret. |
-| `X_BOT_USERNAME` | Removed. Fixed to `ArctosBot`, including the authorization script. |
-| `NEXT_PUBLIC_ARCBOT_X_URL` | Removed. Fixed to `https://x.com/ArctosBot`. |
+| `X_BOT_USERNAME` | Removed. Fixed to `TheArgosBot`, including the authorization script. |
+| `NEXT_PUBLIC_ARCBOT_X_URL` | Removed. Fixed to `https://x.com/TheArgosBot`. |
 | `NEXT_PUBLIC_ARCBOT_TELEGRAM_URL` | Environment for now; Argos Bot Telegram identity has not been provided. |
 | `TELEGRAM_BOT_USERNAME` | Removed; no current application reader. The public Telegram URL is the remaining display setting. |
 | `ARC_MAINNET_RPC_URL` | Environment; owned provider endpoint not configured, and endpoint URLs may contain API credentials. |
@@ -23,7 +23,7 @@ Public configuration lives in `lib/project-config.ts`. The eight legacy executio
 | `BASE_MAX_FEE_PER_GAS` | Removed. Fixed at 1,000,000,000,000 wei per gas. |
 | `BASE_MAX_TOTAL_FEE_WEI` | Removed. Fixed at 1,000,000,000,000,000 wei (0.001 ETH) per transaction. |
 | `OTC_SERVICE_SECRET` | Environment only; shared private service secret. |
-| `OTC_WORKER_URL` | Removed. Fixed production site plus `/api/otc/worker`: `https://www.arcchainbot.io/api/otc/worker`. Website-origin/old worker environment values cannot redirect it. |
+| `OTC_WORKER_URL` | Removed. Fixed production site plus `/api/otc/worker`: `https://www.argosbot.io/api/otc/worker`. Website-origin/old worker environment values cannot redirect it. |
 | `OTC_BASE_PAYMENT_ROUTER` | Legacy positions only; deployed Base payment contract address. New CDP escrow positions do not use it. |
 | `OTC_BASE_ROUTER_CODE_HASH` | Legacy positions only; must match their payment contract runtime bytecode. |
 | `OTC_FEE_WALLET` | Legacy payment contracts only. New escrow positions use the pinned @arctos_arc address in lib/project-config.ts and a 1.5% service fee. |

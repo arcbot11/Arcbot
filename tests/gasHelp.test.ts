@@ -9,8 +9,8 @@ beforeEach(() => ai.mockReset());
 
 describe("gas-cost help (no external actions)", () => {
   it.each([
-    "@ArctosBot how much gas is needed?",
-    "Hey @ArctosBot, how much gas do I need to launch?",
+    "@TheArgosBot how much gas is needed?",
+    "Hey @TheArgosBot, how much gas do I need to launch?",
     "How much ETH should I keep for gas?",
     "How much ETH does a launch need?",
     "How much does it cost to launch a token?",
@@ -49,7 +49,7 @@ describe("gas-cost help (no external actions)", () => {
     "how much more do I need?",
     "what amount should I add?",
     "what do you recommend?",
-    "@ArctosBot how much should I fund it with?",
+    "@TheArgosBot how much should I fund it with?",
   ])("accepts a narrow contextual follow-up to an insufficient-ETH response: %s", text => {
     expect(isContextualGasCostFollowup(text)).toBe(true);
   });

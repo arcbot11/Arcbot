@@ -10,7 +10,7 @@ The approved full-body silver outline dog is the Argos Bot logo. The helmeted Od
 | Social preview, 1500 x 500 | public/brand/argos-social-banner.jpg |
 | Circular favicon | public/brand/argos-dog-favicon.png |
 
-Header and footer use the circular dog; the home hero uses the clean transparent dog. Local edge cleanup was explicitly approved and uses scripts/clean-dog-alpha.mjs. All pages share the Argos Bot social preview and metadata. The website remains https://www.arcchainbot.io.
+Header and footer use the circular dog; the home hero uses the clean transparent dog. Local edge cleanup was explicitly approved and uses scripts/clean-dog-alpha.mjs. All pages share the Argos Bot social preview and metadata. The website is https://www.argosbot.io.
 
 Run node scripts/generate-brand-icons.mjs to resize and package favicons, app icons, and compatibility image URLs. Artwork used built-in image generation. Original art remains in the parent folder; older artwork in docs/brand is archival.
 

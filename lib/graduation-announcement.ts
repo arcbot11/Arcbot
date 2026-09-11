@@ -11,7 +11,7 @@ export function graduationNextCheckAt(createdAt: number, now: number) {
 
 export function graduationTokenPageUrl(address: string, siteUrl?: string) {
   void siteUrl;
-  return `https://www.arcchainbot.io/guide?token=${encodeURIComponent(address)}`;
+  return `https://www.argosbot.io/guide?token=${encodeURIComponent(address)}`;
 }
 
 export function graduationAnnouncementText(symbol: string, tokenUrl: string) {

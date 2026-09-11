@@ -17,7 +17,7 @@ async function request(method, body) {
   return result.result;
 }
 const bot = await request("getMe");
-if (String(bot.id) !== "8679508645") throw new Error("Telegram bot identity does not match this project");
+if (String(bot.id) !== "8280311402") throw new Error("Telegram bot identity does not match this project");
 const photo = await sharp("public/brand/argos-dog-logo.png").resize(1024, 1024).jpeg({ quality: 95 }).toBuffer();
 const form = new FormData();
 form.set("photo", JSON.stringify({ type: "static", photo: "attach://avatar" }));

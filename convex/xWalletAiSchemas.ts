@@ -2,7 +2,7 @@ import type { JsonSchemaResponseFormat } from "./llm";
 
 const nullableString = (description: string) => ({ type: ["string", "null"], description });
 const nullableSlippage = (description: string) => ({
-  type: ["integer", "null"], minimum: 10, maximum: 2_000, description,
+  type: ["integer", "null"], minimum: 10, maximum: 1_000, description,
 });
 
 export const walletIntentSchema: JsonSchemaResponseFormat = {
@@ -66,7 +66,7 @@ const operationProperties: Record<string, Record<string, unknown>> = {
   },
   swap_token_for_token: {
     amount: nullableString("Dollar amount without commas, or 100 for an explicit all-balance swap; null when missing."),
-    unit: { type: ["string", "null"], enum: [null, "usd", "percent"] },
+    unit: { type: ["string", "null"], enum: [null, "usd", "percent", "token"] },
     fromToken: nullableString("Explicit source ticker or contract address, or null when missing."),
     toToken: nullableString("Explicit destination ticker or contract address, or null when missing."),
     slippageBps: nullableSlippage("Slippage in integer basis points; normally 250."),

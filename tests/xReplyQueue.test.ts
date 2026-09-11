@@ -1,3 +1,4 @@
+vi.mock("../lib/x-posting-identity",()=>({verifyXPostingIdentity:vi.fn(async()=>{})}));
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { getFunctionName } from "convex/server";
 import { readFileSync } from "node:fs";
@@ -5,6 +6,7 @@ import * as queue from "../convex/xReplyQueue";
 import * as replies from "../convex/xReplies";
 import { replyQueueExpiresAt, replyQueuePriority, replyQueueWaitMs } from "../lib/x-reply-queue-policy";
 import { feeUpgradeSuccessMessage } from "../lib/fee-upgrade-command";
+import { verifyXPostingIdentity } from "../lib/x-posting-identity";
 
 // Real Convex handlers with an index-aware in-memory DB; no live X, AI or wallets.
 type Row = Record<string, any>;
@@ -64,7 +66,7 @@ const state = (ctx: ReturnType<typeof fixture>) => ctx.rows.xReplyQueueState[0];
 const row = (ctx: ReturnType<typeof fixture>, key: string) => ctx.rows.xReplyQueue.find((r: Row) => r.key === key)!;
 async function source(ctx: ReturnType<typeof fixture>, id: string, kind = "buy", extra: Row = {}) {
   await ctx.db.insert("xReplyUsers", { xUserId: id, username: `user${id}` });
-  return ctx.db.insert("xReplyInteractions", { postId: id, authorXUserId: id, text: "@ArctosBot user request", commandKind: kind,
+  return ctx.db.insert("xReplyInteractions", { postId: id, authorXUserId: id, text: "@TheArgosBot user request", commandKind: kind,
     status: "processing", createdAt: Date.now(), updatedAt: Date.now(), ...extra });
 }
 async function add(ctx: ReturnType<typeof fixture>, key: string, priority: "A" | "B" | "C", extra: Row = {}) {
@@ -77,7 +79,7 @@ describe("bot-authored posts",()=>{
   const botId="2097696306135220226";
   it("silently rejects the bot's own incoming tweet",async()=>{
     const ctx=fixture();
-    expect(await invoke(replies.reserveInteraction,ctx,{postId:"self",authorXUserId:botId,text:"@ArctosBot buy 10 ARGUS"})).toBe(false);
+    expect(await invoke(replies.reserveInteraction,ctx,{postId:"self",authorXUserId:botId,text:"@TheArgosBot buy 10 ARGUS"})).toBe(false);
     expect(ctx.rows.xReplyInteractions).toBeUndefined();expect(ctx.scheduler.runAfter).not.toHaveBeenCalled();
   });
   it("does not enqueue replies to the bot's own post",async()=>{
@@ -92,7 +94,7 @@ describe("bot-authored posts",()=>{
   });
   it("allows another user to issue a command in reply to a bot post",async()=>{
     const ctx=fixture();await source(ctx,"bot-post","help",{authorXUserId:botId,responsePostId:"bot-parent"});
-    await source(ctx,"human-reply","buy",{authorXUserId:"human",parentPostId:"bot-parent",text:"@ArctosBot buy 10 ARGUS"});
+    await source(ctx,"human-reply","buy",{authorXUserId:"human",parentPostId:"bot-parent",text:"@TheArgosBot buy 10 ARGUS"});
     expect(await invoke(queue.enqueue,ctx,{key:"human-reply",postId:"human-reply",kind:"reply",text:"Result"})).toMatchObject({status:"queued"});
     expect((await take(ctx))?.row.postId).toBe("human-reply");
   });
@@ -183,7 +185,7 @@ describe("priority categories", () => {
     ["Action needed: The MSFT sale completed, but the purchase of ARCBOT failed.", "swap", "A"],
     ["Action needed: The holder distributor was created, but future fees were not reassigned.", "reassign_fees", "A"],
     ["Pending: An upgrade is already being processed for that token. Wait for the result.", "upgrade_fees", "A"],
-    ["There's an issue with this token's upgrade - DM @ArctosBot for help", "upgrade_fees", "A"],
+    ["There's an issue with this token's upgrade - DM @TheArgosBot for help", "upgrade_fees", "A"],
     ["The MSFT purchase completed, but the final launch did not.", "launch", "A"],
     ["Failed: I couldn't complete that wallet request. Check the details and give it another try!", "buy", "A"],
     ["🌐 The network couldn't submit that transaction.", "send", "A"],
@@ -418,6 +420,14 @@ describe("queue-owned completion bindings", () => {
 });
 
 describe("actual publisher using a mocked X transport", () => {
+  it("blocks posting when credentials belong to another account", async () => {
+    const ctx = fixture(); await add(ctx, "a", "A");
+    vi.mocked(verifyXPostingIdentity).mockRejectedValueOnce(new Error("Wrong posting account"));
+    await invoke(replies.drainReplyQueue, ctx, { wakeToken: state(ctx).wakeToken });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(ctx.runAction).not.toHaveBeenCalled();
+    expect(row(ctx, "a").status).toBe("blocked");
+  });
   it("posts the frozen text once and records headers", async () => {
     const ctx = fixture(); await add(ctx, "a", "A"); const text = row(ctx, "a").text;
     vi.mocked(fetch).mockResolvedValue(new Response(JSON.stringify({ data: { id: "published-id" } }), { status: 201, headers: { "x-rate-limit-remaining": "91", "x-rate-limit-reset": String(Date.now() / 1000 + 900) } }));
@@ -480,6 +490,6 @@ describe("command-only X rollout", () => {
   it("publishes duplicate contract prompts with the explicit tag requirement", async () => {
     const ctx = fixture(); await source(ctx, "dup", "ambiguous_token", { guidedHelpStateJson: clarification });
     expect(await invoke(queue.enqueue, ctx, { key: "dup", postId: "dup", kind: "reply", ok: false, text: "Action needed: More than one indexed token uses that ticker. Enter the contract address." })).toMatchObject({ status: "queued" });
-    expect((await take(ctx)).row.text).toContain("tag @ArctosBot");
+    expect((await take(ctx)).row.text).toContain("tag @TheArgosBot");
   });
 });

@@ -20,7 +20,7 @@ describe("buy target validation", () => {
     "0xb128cAb0842d5725D1eAC657Acd2dDd023c86b07",
     "CA: 0xb128cAb0842d5725D1eAC657Acd2dDd023c86b07",
     "contract address 0xb128cAb0842d5725D1eAC657Acd2dDd023c86b07",
-    "@ArctosBot address: 0xb128cAb0842d5725D1eAC657Acd2dDd023c86b07!",
+    "@TheArgosBot address: 0xb128cAb0842d5725D1eAC657Acd2dDd023c86b07!",
   ])("accepts a contract-only buy clarification: %s", (reply) => {
     expect(buyTargetContractReply(reply)).toBe("0xb128cAb0842d5725D1eAC657Acd2dDd023c86b07");
   });

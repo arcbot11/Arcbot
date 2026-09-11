@@ -5,8 +5,8 @@ export const TELEGRAM_HELP = "Argos Bot\nYour Arc Chain wallet.\n\nUse the butto
 export const TELEGRAM_FORMATS: Record<string, string> = {
   buy: "Buy with Arc USDC:\n/buy 10 USDC ARGUS\n/buy $10 ARGUS",
   sell: "Sell for Arc USDC:\n/sell 100 ARGUS\n/sell $10 ARGUS\n/sell 50% ARGUS\n/sell all ARGUS",
-  swap: "Swap Arc tokens by balance percentage:\n/swap 50% ARGUS for TOKEN\n/swap all ARGUS for TOKEN",
-  send: "Send Arc tokens:\n/send 10 USDC to ADDRESS\n/send 100 ARGUS to ADDRESS\nReplace ADDRESS with a full 0x wallet address.",
+  swap: "Swap Arc tokens:\n/swap 100 ARGUS for TOKEN\n/swap $10 ARGUS for TOKEN\n/swap 50% ARGUS for TOKEN\n/swap all ARGUS for TOKEN",
+  send: "Send Arc tokens:\n/send 10 USDC to ADDRESS\n/send 100 ARGUS to ADDRESS\n/send $10 ARGUS to ADDRESS\n/send 50% ARGUS to ADDRESS\nReplace ADDRESS with a full 0x wallet address.",
   burn: "Burn Arc tokens. Burns are permanent.\n/burn 100 ARGUS",
   buyandsend: "Buy with Arc USDC and send the tokens:\n/buyandsend 10 USDC ARGUS to ADDRESS\nReplace ADDRESS with a full 0x wallet address.",
   buyandburn: "Buy with Arc USDC and burn the tokens. Burns are permanent.\n/buyandburn 10 USDC ARGUS",
@@ -53,8 +53,7 @@ export function telegramWalletCommand(name: string, args: string): WalletCommand
   const all = match[2].toLowerCase() === "all", amount = all ? "100" : match[2];
   const unit = match[1] ? "usd" : all || match[3] ? "percent" : "token";
   if ((match[1] && (all || match[3])) || !(Number(amount) > 0) || !Number.isFinite(Number(amount)) || (unit === "percent" && Number(amount) > 100)) return null;
-  if (name === "swap") return unit !== "percent" ? null : { kind: "swap_token_for_token", amount, unit, fromToken: match[4], toToken: match[5], slippageBps };
-  if (["send", "burn"].includes(name) && (unit === "percent" || (unit === "usd" && match[4].toUpperCase() !== "USDC"))) return null;
+  if (name === "swap") return { kind: "swap_token_for_token", amount, unit, fromToken: match[4], toToken: match[5], slippageBps };
   if (name === "send") return { kind: "send", amount, unit, token: match[4], recipient: match[5] };
   if (name === "burn") return { kind: "burn", amount, unit, token: match[4] };
   return { kind: "sell", amount, unit, token: match[4], slippageBps };

@@ -21,10 +21,10 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("deterministically gates fee reassignment to exact syntax", async () => {
-    await expect(parseXWalletIntent("@ArctosBot Reassign $ARCBOT fees to @alice", false)).resolves.toEqual({
+    await expect(parseXWalletIntent("@TheArgosBot Reassign $ARCBOT fees to @alice", false)).resolves.toEqual({
       kind: "command", command: { kind: "reassign_fees", token: "ARCBOT", recipient: "@alice" },
     });
-    await expect(parseXWalletIntent("@ArctosBot Reassign $ARCBOT fees to holders", false)).resolves.toEqual({
+    await expect(parseXWalletIntent("@TheArgosBot Reassign $ARCBOT fees to holders", false)).resolves.toEqual({
       kind: "command", command: { kind: "reassign_fees", token: "ARCBOT", recipient: "holders" },
     });
     expect(straightforwardCommandOperation("Reassign $ARCBOT fees to @alice")).toBe("reassign_fees");
@@ -32,7 +32,7 @@ describe("deterministic X wallet replies", () => {
     expect(walletHelpMessage("fees")).toContain("Argus fee integration is pending");
   });
   it("deterministically recognizes the contained upgrade phrase", async () => {
-    await expect(parseXWalletIntent("@ArctosBot Upgrade $ARCBOT to automated fees", false)).resolves.toEqual({
+    await expect(parseXWalletIntent("@TheArgosBot Upgrade $ARCBOT to automated fees", false)).resolves.toEqual({
       kind: "command", command: { kind: "upgrade_fees", token: "ARCBOT" },
     });
     expect(straightforwardCommandOperation("Upgrade $ARCBOT to automated fees")).toBe("upgrade_fees");
@@ -124,16 +124,16 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("keeps launch fee instructions out of names and grounds the bot recipient", () => {
-    expect(groundedCanonicalCommand("@ArctosBot launch SeptemberBullRun ticker $SBR assign fees to @ArctosBot"))
-      .toMatchObject({ kind: "launch", name: "SeptemberBullRun", symbol: "SBR", feeRecipient: "@ArctosBot" });
-    expect(groundedCanonicalCommand("@ArctosBot launch token named Aurora Signal assign fees to @ArctosBot"))
-      .toMatchObject({ kind: "launch", name: "Aurora Signal", symbol: "AURORASIGNAL", feeRecipient: "@ArctosBot" });
-    expect(groundedCanonicalCommand("@ArctosBot launch $SBR assign fees to @ArctosBot"))
-      .toMatchObject({ kind: "launch", name: "SBR", symbol: "SBR", feeRecipient: "@ArctosBot" });
+    expect(groundedCanonicalCommand("@TheArgosBot launch SeptemberBullRun ticker $SBR assign fees to @TheArgosBot"))
+      .toMatchObject({ kind: "launch", name: "SeptemberBullRun", symbol: "SBR", feeRecipient: "@TheArgosBot" });
+    expect(groundedCanonicalCommand("@TheArgosBot launch token named Aurora Signal assign fees to @TheArgosBot"))
+      .toMatchObject({ kind: "launch", name: "Aurora Signal", symbol: "AURORASIGNAL", feeRecipient: "@TheArgosBot" });
+    expect(groundedCanonicalCommand("@TheArgosBot launch $SBR assign fees to @TheArgosBot"))
+      .toMatchObject({ kind: "launch", name: "SBR", symbol: "SBR", feeRecipient: "@TheArgosBot" });
   });
 
   it("accepts a direct contract address as the buy target", () => {
-    expect(parseWalletCommand("@ArctosBot buy $20 of 0x1111111111111111111111111111111111111111")).toMatchObject({
+    expect(parseWalletCommand("@TheArgosBot buy $20 of 0x1111111111111111111111111111111111111111")).toMatchObject({
       kind: "buy", amount: "20", unit: "usd", token: "0x1111111111111111111111111111111111111111",
     });
   });
@@ -187,22 +187,22 @@ describe("deterministic X wallet replies", () => {
 
   it("returns launch help for natural launch questions and incomplete requests", async () => {
     for (const text of [
-      "@ArctosBot how do I launch?",
+      "@TheArgosBot how do I launch?",
       "How can I launch a token?",
       "how to launch on Argus",
-      "@ArctosBot I want to launch",
+      "@TheArgosBot I want to launch",
       "I'd like to launch a token",
       "Can you show me how to launch a coin?",
     ]) {
       await expect(parseXWalletIntent(text, false), text).resolves.toEqual({ kind: "help", topic: "launch" });
     }
-    await expect(parseXWalletIntent("@ArctosBot I want to launch Clawpump ticker CLAWPUMP", false))
+    await expect(parseXWalletIntent("@TheArgosBot I want to launch Clawpump ticker CLAWPUMP", false))
       .resolves.toMatchObject({ kind: "command", command: { kind: "launch", name: "Clawpump", symbol: "CLAWPUMP" } });
   });
 
   it.each([
-    "@ArctosBot how do I launch?",
-    "@ArctosBot how do I launch",
+    "@TheArgosBot how do I launch?",
+    "@TheArgosBot how do I launch",
   ])("deterministically recognizes the public guided-launch entry phrase: %s", async text => {
     expect(isDirectLaunchHelpRequest(text)).toBe(true);
     await expect(parseXWalletIntent(text, false)).resolves.toEqual({ kind: "help", topic: "launch" });
@@ -255,79 +255,79 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("does not execute launch examples, corrections, translations, or explicit negations", async () => {
-    await expect(parseXWalletIntent("@ArctosBot I only translated the Morse, not trying to launch anything", false)).resolves.toEqual({ kind: "irrelevant" });
-    await expect(parseXWalletIntent("@ArctosBot can you correct this: launch Example ticker EXAMPLE", false)).resolves.toEqual({ kind: "irrelevant" });
-    await expect(parseXWalletIntent("@ArctosBot this supports natural language such as: deploy Cedar ticker CDR", false)).resolves.toEqual({ kind: "irrelevant" });
-    await expect(parseXWalletIntent("@ArctosBot Your an idiot lol I didn't want you to launch another one", false)).resolves.toEqual({ kind: "irrelevant" });
+    await expect(parseXWalletIntent("@TheArgosBot I only translated the Morse, not trying to launch anything", false)).resolves.toEqual({ kind: "irrelevant" });
+    await expect(parseXWalletIntent("@TheArgosBot can you correct this: launch Example ticker EXAMPLE", false)).resolves.toEqual({ kind: "irrelevant" });
+    await expect(parseXWalletIntent("@TheArgosBot this supports natural language such as: deploy Cedar ticker CDR", false)).resolves.toEqual({ kind: "irrelevant" });
+    await expect(parseXWalletIntent("@TheArgosBot Your an idiot lol I didn't want you to launch another one", false)).resolves.toEqual({ kind: "irrelevant" });
   });
 
   it("does not treat promotional launch announcements as launch authority", async () => {
-    const featureComparison = "Soft reminder for anyone sleeping: ATH $BNKR = 120M MC And that was in a bear market. Same type of infra: AI bot + trade in natural language + launch tokens straight from the timeline. Now look at @ArctosBot $ARCBOT sitting at ~400K. One difference: BNKR had to walk alone.";
-    for (const text of [featureComparison, "Check this out: @ArctosBot platform features trade + launch coins from the timeline."]) {
+    const featureComparison = "Soft reminder for anyone sleeping: ATH $BNKR = 120M MC And that was in a bear market. Same type of infra: AI bot + trade in natural language + launch tokens straight from the timeline. Now look at @TheArgosBot $ARCBOT sitting at ~400K. One difference: BNKR had to walk alone.";
+    for (const text of [featureComparison, "Check this out: @TheArgosBot platform features trade + launch coins from the timeline."]) {
       expect(isPromotionalLaunchReference(text)).toBe(true);
       expect(straightforwardCommandOperation(text)).toBeNull();
       await expect(parseXWalletIntent(text, false)).resolves.toEqual({ kind: "irrelevant" });
       await expect(parseXWalletIntent(text, true)).resolves.toEqual({ kind: "irrelevant" });
     }
     for (const text of [
-      `${featureComparison}\n@ArctosBot launch Fresh Dog ticker $FDOG`,
-      `@ArctosBot launch Fresh Dog ticker $FDOG. ${featureComparison}`,
+      `${featureComparison}\n@TheArgosBot launch Fresh Dog ticker $FDOG`,
+      `@TheArgosBot launch Fresh Dog ticker $FDOG. ${featureComparison}`,
     ]) {
       expect(isPromotionalLaunchReference(text)).toBe(false);
       expect(straightforwardCommandOperation(text)).toBe("launch");
     }
-    const pdog = "$Pdog fresh launch from the $ArcBot @ArctosBot @MEADGod Dex is paid sitting around 25k Bonding is inevitable!!!!! $argus #argus @argusdotfamily Ca : 0x75074C8ca03CC2afB855A4DAbCa33f15031B9B07 Tg : https://t.me/argusdoghood";
+    const pdog = "$Pdog fresh launch from the $ArcBot @TheArgosBot @MEADGod Dex is paid sitting around 25k Bonding is inevitable!!!!! $argus #argus @argusdotfamily Ca : 0x75074C8ca03CC2afB855A4DAbCa33f15031B9B07 Tg : https://t.me/argusdoghood";
     expect(isPromotionalLaunchReference(pdog)).toBe(true);
     expect(straightforwardCommandOperation(pdog)).toBeNull();
     await expect(parseXWalletIntent(pdog, true)).resolves.toEqual({ kind: "irrelevant" });
 
-    const capabilityPromotion = "trader! check out @ArctosBot, basically another trading bot for Argus/Arc. swap integration for token swaps and can launch stock backed token assets with the bot as well!";
+    const capabilityPromotion = "trader! check out @TheArgosBot, basically another trading bot for Argus/Arc. swap integration for token swaps and can launch stock backed token assets with the bot as well!";
     expect(isPromotionalLaunchReference(capabilityPromotion)).toBe(true);
     expect(straightforwardCommandOperation(capabilityPromotion)).toBeNull();
     await expect(parseXWalletIntent(capabilityPromotion, false)).resolves.toEqual({ kind: "irrelevant" });
 
-    expect(isPromotionalLaunchReference("@ArctosBot launch stock backed token named Equity Dog ticker EDOG")).toBe(false);
-    expect(isPromotionalLaunchReference("@ArctosBot can you launch Equity Dog ticker EDOG?")).toBe(false);
+    expect(isPromotionalLaunchReference("@TheArgosBot launch stock backed token named Equity Dog ticker EDOG")).toBe(false);
+    expect(isPromotionalLaunchReference("@TheArgosBot can you launch Equity Dog ticker EDOG?")).toBe(false);
 
-    const legitimate = "@ArctosBot launch Market Dog ticker MDOG pair with 0x1111111111111111111111111111111111111111 description market launch with strong liquidity";
+    const legitimate = "@TheArgosBot launch Market Dog ticker MDOG pair with 0x1111111111111111111111111111111111111111 description market launch with strong liquidity";
     expect(isPromotionalLaunchReference(legitimate)).toBe(false);
     expect(straightforwardCommandOperation(legitimate)).toBe("launch");
 
-    const clawpump = "Backed by the community, yet Examplecoin decided to launch the meme $EXAMPLE via @ArctosBot Reprice is imminent https://x.com/exampleproject/status/1234567890123456789";
+    const clawpump = "Backed by the community, yet Examplecoin decided to launch the meme $EXAMPLE via @TheArgosBot Reprice is imminent https://x.com/exampleproject/status/1234567890123456789";
     expect(isPromotionalLaunchReference(clawpump)).toBe(true);
     await expect(parseXWalletIntent(clawpump, false)).resolves.toEqual({ kind: "irrelevant" });
 
-    const directLaunch = "Hey @ArctosBot launch Clawpump ticker CLAWPUMP, backed by the community";
+    const directLaunch = "Hey @TheArgosBot launch Clawpump ticker CLAWPUMP, backed by the community";
     expect(isPromotionalLaunchReference(directLaunch)).toBe(false);
     expect(straightforwardCommandOperation(directLaunch)).toBe("launch");
 
-    const firstPersonLaunch = "@ArctosBot I want to launch Clawpump ticker CLAWPUMP";
+    const firstPersonLaunch = "@TheArgosBot I want to launch Clawpump ticker CLAWPUMP";
     expect(isPromotionalLaunchReference(firstPersonLaunch)).toBe(false);
     expect(straightforwardCommandOperation(firstPersonLaunch)).toBe("launch");
 
-    const promotionalDiscussion = "Argus is doing $900k a day revenue and the best way to launch a project using a bot is with $ARCBOT, now near 400k mcap. Hold with conviction; its ATH can be much higher. @ArctosBot";
+    const promotionalDiscussion = "Argus is doing $900k a day revenue and the best way to launch a project using a bot is with $ARCBOT, now near 400k mcap. Hold with conviction; its ATH can be much higher. @TheArgosBot";
     expect(isPromotionalLaunchReference(promotionalDiscussion)).toBe(true);
     expect(straightforwardCommandOperation(promotionalDiscussion)).toBeNull();
 
-    const storyThenCommand = "I have been building this community for months and wanted to explain why it matters. There is a long story behind the art and the people supporting it. @ArctosBot launch Story Dog ticker $STORY description \"A community token\"";
+    const storyThenCommand = "I have been building this community for months and wanted to explain why it matters. There is a long story behind the art and the people supporting it. @TheArgosBot launch Story Dog ticker $STORY description \"A community token\"";
     expect(isPromotionalLaunchReference(storyThenCommand)).toBe(false);
     expect(groundedCanonicalCommand("launch Story Dog ticker $STORY description \"A community token\"")).toMatchObject({ kind: "launch", name: "Story Dog", symbol: "STORY" });
     expect(straightforwardCommandOperation(storyThenCommand)).toBe("launch");
 
-    const commandThenStory = "@ArctosBot launch Story Dog ticker $STORY. I have been building this community for months, and here is the long story of why it matters to us.";
+    const commandThenStory = "@TheArgosBot launch Story Dog ticker $STORY. I have been building this community for months, and here is the long story of why it matters to us.";
     expect(isPromotionalLaunchReference(commandThenStory)).toBe(false);
     expect(straightforwardCommandOperation(commandThenStory)).toBe("launch");
 
-    const embeddedExampleQuestion = "Can you explain whether @ArctosBot launch Story Dog ticker $STORY would work?";
+    const embeddedExampleQuestion = "Can you explain whether @TheArgosBot launch Story Dog ticker $STORY would work?";
     expect(straightforwardCommandOperation(embeddedExampleQuestion)).toBeNull();
   });
 
   it("rejects targetless buyback-and-burn wording instead of treating ETH as a burn token", async () => {
-    await expect(parseXWalletIntent("@ArctosBot Can you now buyback 0.05 ETH and burn it?", false)).resolves.toEqual({ kind: "unknown_wallet" });
+    await expect(parseXWalletIntent("@TheArgosBot Can you now buyback 0.05 ETH and burn it?", false)).resolves.toEqual({ kind: "unknown_wallet" });
   });
 
   it("accepts ticker labels with optional dollars and wrapping quotes", () => {
-    const exactPost = 'Hey @ArctosBot, launch "Argos Bot", ticker "ARCBOT", X: www.x.com/arcbot, website: arcbot.invalid, dev buy: $100, description "Swap, sell, and launch on Argus with just one X post."';
+    const exactPost = 'Hey @TheArgosBot, launch "Argos Bot", ticker "ARCBOT", X: www.x.com/arcbot, website: arcbot.invalid, dev buy: $100, description "Swap, sell, and launch on Argus with just one X post."';
     expect(groundedCanonicalCommand(exactPost)).toMatchObject({
       kind: "launch", name: "Argos Bot", symbol: "ARCBOT",
       description: "Swap, sell, and launch on Argus with just one X post.",
@@ -374,25 +374,25 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("distinguishes the bot invocation from an explicit bot recipient", () => {
-    expect(groundedCanonicalCommand("@ArctosBot send 10 SNDK")).toBeNull();
-    expect(groundedCanonicalCommand("Hey @ArctosBot send @ArctosBot 10 SNDK")).toMatchObject({
-      kind: "send", amount: "10", unit: "token", token: "SNDK", recipient: "@ArctosBot",
+    expect(groundedCanonicalCommand("@TheArgosBot send 10 SNDK")).toBeNull();
+    expect(groundedCanonicalCommand("Hey @TheArgosBot send @TheArgosBot 10 SNDK")).toMatchObject({
+      kind: "send", amount: "10", unit: "token", token: "SNDK", recipient: "@TheArgosBot",
     });
-    expect(groundedCanonicalCommand("@ArctosBot send @charlie 0.01 ETH please")).toMatchObject({
+    expect(groundedCanonicalCommand("@TheArgosBot send @charlie 0.01 ETH please")).toMatchObject({
       kind: "send", amount: "0.01", unit: "eth", recipient: "@charlie",
     });
   });
 
   it("requires explicit compound action words and ignores a lone bot invocation as recipient", () => {
-    expect(requestedOperations("@ArctosBot spend 3 GME on GOBLIN.")).toEqual(["buy"]);
-    expect(groundedCanonicalCommand("@ArctosBot spend 3 GME on GOBLIN.")).toMatchObject({
+    expect(requestedOperations("@TheArgosBot spend 3 GME on GOBLIN.")).toEqual(["buy"]);
+    expect(groundedCanonicalCommand("@TheArgosBot spend 3 GME on GOBLIN.")).toMatchObject({
       kind: "buy", amount: "3", unit: "pair", pairAsset: "GME", token: "GOBLIN",
     });
-    expect(requestedOperations("Buy 2 AAPL worth of TCAT @ArctosBot")).toEqual(["buy"]);
+    expect(requestedOperations("Buy 2 AAPL worth of TCAT @TheArgosBot")).toEqual(["buy"]);
     expect(parseWalletCommand("Buy 2 AAPL worth of TCAT")).toMatchObject({
       kind: "buy", amount: "2", unit: "pair", pairAsset: "AAPL", token: "TCAT",
     });
-    expect(groundedCanonicalCommand("Buy 2 AAPL worth of TCAT @ArctosBot")).toMatchObject({
+    expect(groundedCanonicalCommand("Buy 2 AAPL worth of TCAT @TheArgosBot")).toMatchObject({
       kind: "buy", amount: "2", unit: "pair", pairAsset: "AAPL", token: "TCAT",
     });
   });
@@ -404,16 +404,16 @@ describe("deterministic X wallet replies", () => {
 
   it("normalizes approved trading slang into grounded commands", () => {
     const examples = [
-      ["put $100 into SNDK @ArctosBot", "buy"],
-      ["@ArctosBot gimme $5 of SNDK", "buy"],
-      ["@ArctosBot I want twenty dollars worth of SNDK", "buy"],
-      ["send it: $200 into SNDK @ArctosBot", "buy"],
-      ["dump all my SNDK @ArctosBot", "sell"],
-      ["@ArctosBot get rid of 5.5 SNDK", "sell"],
-      ["Buy me 50 bucks of SNDK @ArctosBot", "buy"],
-      ["market buy $75 SNDK @ArctosBot", "buy"],
-      ["@ArctosBot swap $35 for SNDK", "buy"],
-      ["swap .025 ETH for SNDK @ArctosBot", "buy"],
+      ["put $100 into SNDK @TheArgosBot", "buy"],
+      ["@TheArgosBot gimme $5 of SNDK", "buy"],
+      ["@TheArgosBot I want twenty dollars worth of SNDK", "buy"],
+      ["send it: $200 into SNDK @TheArgosBot", "buy"],
+      ["dump all my SNDK @TheArgosBot", "sell"],
+      ["@TheArgosBot get rid of 5.5 SNDK", "sell"],
+      ["Buy me 50 bucks of SNDK @TheArgosBot", "buy"],
+      ["market buy $75 SNDK @TheArgosBot", "buy"],
+      ["@TheArgosBot swap $35 for SNDK", "buy"],
+      ["swap .025 ETH for SNDK @TheArgosBot", "buy"],
     ] as const;
     for (const [text, kind] of examples) {
       expect(parseWalletCommand(canonicalCommandText(text)).kind, text).toBe(kind);
@@ -422,8 +422,8 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("grounds normalized launch links from labeled bare values", () => {
-    const post = `Hey @ArctosBot launch Argos Bot ticker $ARCBOT
-Website: arcbot.invalid X: @ArctosBot Dev buy $100`;
+    const post = `Hey @TheArgosBot launch Argos Bot ticker $ARCBOT
+Website: arcbot.invalid X: @TheArgosBot Dev buy $100`;
     expect(groundedCanonicalCommand(post)).toEqual({
       kind: "launch",
       launchMode: "argus",
@@ -436,11 +436,11 @@ Website: arcbot.invalid X: @ArctosBot Dev buy $100`;
   });
 
   it("supports explicit make-token wording and rejects unsafe ambiguities", () => {
-    expect(groundedCanonicalCommand("@ArctosBot make a token named Robot Juice symbol BOT")).toMatchObject({
+    expect(groundedCanonicalCommand("@TheArgosBot make a token named Robot Juice symbol BOT")).toMatchObject({
       kind: "launch", name: "Robot Juice", symbol: "BOT",
     });
     expect(groundedCanonicalCommand("launch Secret Name ticker")).toBeNull();
-    expect(groundedCanonicalCommand("@ArctosBot buy $25 of $SNDK CA 0xA11CE000000000000000000000000000000000499")).toBeNull();
+    expect(groundedCanonicalCommand("@TheArgosBot buy $25 of $SNDK CA 0xA11CE000000000000000000000000000000000499")).toBeNull();
   });
 
   it("normalizes varied launch pair labels and leading decimals", () => {

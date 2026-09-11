@@ -22,7 +22,7 @@ it.each(["@someone", other])("silently rejects the actual X handler for external
   const current = {
     user: { username: "grok", xUserId: "trusted-author-id" },
     interaction: { postId: "123", status: "processing", createdAt: Date.now(),
-      text: `@ArctosBot launch Example $EXAMPLE assign fees to ${recipient}`,
+      text: `@TheArgosBot launch Example $EXAMPLE assign fees to ${recipient}`,
       parsedIntentJson: JSON.stringify({ kind: "command", command: { ...launch, feeRecipient: recipient } }) },
   };
   const ctx = {

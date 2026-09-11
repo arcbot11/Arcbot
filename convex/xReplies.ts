@@ -1,3 +1,4 @@
+import {verifyXPostingIdentity} from "../lib/x-posting-identity";
 import { isXBotAuthor, xBotUserId } from "../lib/x-bot-identity";
 import {ARC_WALLET_PENDING,arcPendingRetryDelay} from "../lib/arc/social-timing";
 import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
@@ -6,8 +7,8 @@ import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-c
 
 import { v } from "convex/values";
 import { parseContextualBuy, resolveContextualBuyToken } from "../lib/contextual-buy";
-import { api, internal } from "./_generated/api";
-import { isFeeAssignmentQuestion, feeQuestionToken, feeAssignmentMessage } from "../lib/fee-assignment-question";
+import { internal } from "./_generated/api";
+import { retiredSocialRequest, retiredSocialKind } from "../lib/retired-social-commands";
 
 import { unverifiedReplyDay, UNVERIFIED_REPLY_LIMIT, admitUnverifiedContinuation } from "./lib/xUnverifiedReplyLimit";
 import {
@@ -183,8 +184,8 @@ async function helpReply(
   topic: Parameters<typeof walletHelpMessage>[0],
 ) {
   if (topic === "capabilities") return X_COMMAND_HELP;
-  if (topic === "buy_sell") return "Tag @ArctosBot with a full command: buy 10 USDC of TICKER; sell 100 TICKER; swap 50% TOKEN for OTHER. Use a contract address for an unlisted token.";
-  if (topic === "send") return "Tag @ArctosBot with the amount, token and recipient: send 10 USDC to @user or a full wallet address.";
+  if (topic === "buy_sell") return "Tag @TheArgosBot with a full command: buy 10 USDC of TICKER; sell 100 TICKER; swap 50% TOKEN for OTHER. Use a contract address for an unlisted token.";
+  if (topic === "send") return "Tag @TheArgosBot with the amount, token and recipient: send 10 USDC to @user or a full wallet address.";
   return walletHelpMessage(topic);
 }
 
@@ -275,6 +276,11 @@ class ReplyPublicationRejectedError extends Error {
   }
 }
 
+async function checkPostingAccount() {
+  const credentials=[process.env.X_API_KEY,process.env.X_API_SECRET,process.env.X_ACCESS_TOKEN,process.env.X_ACCESS_TOKEN_SECRET].join("\0");
+  await verifyXPostingIdentity(credentials,()=>xGet<{data?:{id?:string}}>("/users/me",new URLSearchParams()));
+}
+
 class ReplyPublicationDeferredError extends Error {
   constructor(readonly waitMs: number) {
     super("X publication pacing required");
@@ -329,6 +335,7 @@ export const drainReplyQueue = internalAction({
       if (!repliesEnabled()) {
         outcome = { outcome: "retry", error: "X publishing is disabled", retryAfterMs: 60_000 };
       } else {
+        await checkPostingAccount();
         attempted = true;
         const response = await fetch(url, {
           method: "POST",
@@ -1492,7 +1499,7 @@ export const retryInteraction = internalAction({
     // X can prepend every participant in a reply chain. Strip only that leading
     // invocation block; never read or append parent/quoted post text.
     const directText = directPostCommandText(current.interaction.text);
-    if (disabledCreationRequest(directText) || disabledCreationKind(current.interaction.commandKind)) {
+    if (retiredSocialRequest(directText) || retiredSocialKind(current.interaction.commandKind) || disabledCreationRequest(directText) || disabledCreationKind(current.interaction.commandKind)) {
       await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "rejected", safeError: "Unsupported operation" });
       return;
     }
@@ -1598,30 +1605,6 @@ export const retryInteraction = internalAction({
       commandKind: current.interaction.commandKind,
     });
     try {
-      // Read-only questions must precede claim and transaction parsing.
-      if (isFeeAssignmentQuestion(directText)) {
-        let identifier = feeQuestionToken(directText);
-        if (identifier === undefined && current.interaction.parentPostId) {
-          const parentText = await ctx.runQuery(internal.xReplies.feeQuestionParentText, { postId: current.interaction.parentPostId });
-          if (parentText) identifier = feeQuestionToken(parentText);
-        }
-        let message = "Which token? Include one ticker or contract address in your question.";
-        if (identifier) {
-          try {
-            const tokenAddress = await ctx.runQuery(internal.wallets.resolveKnownToken, { identifier });
-            const launch = await ctx.runQuery(api.site.getLaunch, { tokenAddress });
-            message = launch ? feeAssignmentMessage(launch) : "Could not find an Argos Bot launch for that token. Include its contract address in your question.";
-          } catch (error) {
-            message = String(error).includes("more than one token")
-              ? "More than one token uses that ticker. Include the contract address in your question."
-              : "Could not verify the fee assignment just now. Ask again shortly.";
-          }
-        }
-        await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "processing", commandKind: "fee_assignment_info" });
-        const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, false, { ok: true, kind: "reply" });
-        await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", responsePostId });
-        return;
-      }
       let workflowText = directText;
       const contextualBuy = !current.interaction.parsedIntentJson ? parseContextualBuy(directText) : undefined;
       let contextualBuyIntent: XWalletIntent | undefined;
@@ -1745,7 +1728,7 @@ export const retryInteraction = internalAction({
           postId,
           status: "rejected",
           commandKind: "launch_missing_direct_mention",
-          safeError: "launch post did not explicitly mention @ArctosBot",
+          safeError: "launch post did not explicitly mention @TheArgosBot",
         });
         return;
       }
@@ -1768,7 +1751,7 @@ export const retryInteraction = internalAction({
       } else if (intent.kind === "help") {
         reply = await helpReply(ctx, intent.topic);
       } else if (intent.kind === "unknown_wallet") {
-        reply = "Include the full command, token, amount and recipient where required. See https://www.arcchainbot.io/guide";
+        reply = "Include the full command, token, amount and recipient where required. See https://www.argosbot.io/guide";
         ok = false;
       } else {
         const preparedMedia = await prepareReferencedLaunchImage(ctx, {
@@ -2442,6 +2425,7 @@ export const pollMentions = internalAction({
     backlogRemaining?: boolean;
   }> => {
     if (!repliesEnabled()) return { enabled: false, processed: 0 };
+    await checkPostingAccount();
     const acquired = await ctx.runMutation(
       internal.xReplies.acquirePollLease,
       {},

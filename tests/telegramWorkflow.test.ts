@@ -1,14 +1,15 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
+import {validateStructuredWalletCommand} from "../convex/walletCommands";
 import { getFunctionName } from "convex/server";
-import { isTelegramUnlinkCommand, processUpdate } from "../convex/telegram";
+import { isTelegramUnlinkCommand, processUpdate, acceptUpdate } from "../convex/telegram";
 import { TELEGRAM_MENU, TELEGRAM_FORMATS, telegramInput, telegramWalletCommand, telegramResponse } from "../lib/telegram-commands";
 
 const address = "0x1111111111111111111111111111111111111111";
 describe("Telegram command-only interface", () => {
   it.each(["hello", "buy 10 ARGUS", "resume", "10 USDC ARGUS", "guide:buy", "/fees", "/positions", "/launch", "/cancel"])("rejects chat and retired actions: %s", text => expect(telegramInput(text)).toBeNull());
   it("checks command addressing and callback payloads", () => {
-    expect(telegramInput("/wallet@ArctosBot", false, "ArctosBot")?.name).toBe("wallet");
-    expect(telegramInput("/wallet@other", false, "ArctosBot")).toBeNull();
+    expect(telegramInput("/wallet@TheArgosBot", false, "TheArgosBot")?.name).toBe("wallet");
+    expect(telegramInput("/wallet@other", false, "TheArgosBot")).toBeNull();
     expect(telegramInput("/buy 10 USDC ARGUS", true)).toBeNull();
     expect(telegramInput("/buy", true)?.name).toBe("buy");
   });
@@ -24,13 +25,17 @@ describe("Telegram command-only interface", () => {
     ["burn", "100 ARGUS", {kind:"burn",token:"ARGUS",amount:"100"}],
     ["buyandsend", `10 USDC ARGUS to ${address}`, {kind:"buy_and_send",recipient:address}],
     ["buyandburn", "10 USDC ARGUS", {kind:"buy_and_burn",token:"ARGUS"}],
+    ["swap", "$10 ARGUS for TOKEN", {kind:"swap_token_for_token",unit:"usd",amount:"10"}],
+    ["swap", "100 ARGUS for TOKEN", {kind:"swap_token_for_token",unit:"token",amount:"100"}],
+    ["burn", "50% ARGUS", {kind:"burn",unit:"percent",amount:"50"}],
+    ["send", `$10 ARGUS to ${address}`, {kind:"send",unit:"usd",amount:"10"}],
     ["wallet", "", {kind:"show_wallet"}],
     ["balance", "USDC", {kind:"show_balance",token:"USDC"}],
-  ] as const)("parses /%s %s without AI", (name,args,expected) => expect(telegramWalletCommand(name,args)).toMatchObject(expected));
+  ] as const)("parses /%s %s without AI", (name,args,expected) => {const command=telegramWalletCommand(name,args);expect(command).toMatchObject(expected);expect(validateStructuredWalletCommand(command)).toMatchObject(expected);});
   it.each([
     ["buy", "10 ETH ARGUS"], ["buy", "10 USDC ARGUS then sell all"], ["buy", "-1 USDC ARGUS"],
     ["sell", "101% ARGUS"], ["sell", "$all ARGUS"], ["send", "10 USDC to @alice"],
-    ["swap", "$10 ARGUS for TOKEN"], ["burn", "50% ARGUS"], ["send", "$10 ARGUS to " + address],
+    ["swap", "101% ARGUS for TOKEN"], ["burn", "101% ARGUS"],
     ["fees", "ARGUS"], ["wallet", "another person's wallet"],
   ])("rejects unsupported or incomplete /%s %s", (name,args) => expect(telegramWalletCommand(name,args)).toBeNull());
   it("has no retired feature buttons and every action button has a format", () => {
@@ -72,4 +77,14 @@ describe("Telegram update execution boundary", () => {
     const call=ctx.runAction.mock.calls.find(c=>getFunctionName(c[0])==="wallets:executeCommand");
     expect(call?.[1]).toMatchObject({xUserId:"99",source:"telegram",telegramUpdateId:"42",parsedCommandJson:expect.stringContaining('"unit":"usd"')});
   });
+});
+
+it("namespaces incoming updates for the replacement bot",async()=>{
+ vi.stubEnv("TELEGRAM_ENABLED","true");vi.stubEnv("TELEGRAM_WEBHOOK_SECRET","secret");
+ try{
+ const ctx={runMutation:vi.fn(async()=>true),scheduler:{runAfter:vi.fn()}};
+ await (acceptUpdate as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<boolean>})._handler(ctx,{secret:"secret",updateJson:JSON.stringify({update_id:42})});
+ expect(ctx.runMutation).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({updateId:"8280311402_42"}));
+ expect(ctx.scheduler.runAfter).toHaveBeenCalledWith(0,expect.anything(),expect.objectContaining({updateId:"8280311402_42"}));
+ }finally{vi.unstubAllEnvs();}
 });

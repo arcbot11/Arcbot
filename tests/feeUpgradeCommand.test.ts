@@ -13,9 +13,9 @@ afterEach(() => vi.clearAllMocks());
 describe("explicit upgrade phrase", () => {
   it.each([
     ["Upgrade $ARCBOT", "ARCBOT"], ["upgrade arcbot", "ARCBOT"],
-    ["HEY @ArctosBot, UpGrAdE $arcbot please", "ARCBOT"],
+    ["HEY @TheArgosBot, UpGrAdE $arcbot please", "ARCBOT"],
     ["Been looking forward to this! Upgrade ARCBOT. Thanks for everything!", "ARCBOT"],
-    ["@ArctosBot could you Upgrade $ARCBOT when you get a chance?", "ARCBOT"],
+    ["@TheArgosBot could you Upgrade $ARCBOT when you get a chance?", "ARCBOT"],
     ["I'd like to Upgrade ARCBOT and keep my existing wallet.", "ARCBOT"],
     ["Upgrade ARCBOT to automated fees", "ARCBOT"],
     ["Upgrade $THE", "THE"],
@@ -99,7 +99,7 @@ ${tokenPage}`);
   });
   it("directs problem vaults to support", () => {
     expect(safeFailure(new Error("FEE_UPGRADE_REVIEW"), "upgrade_fees"))
-      .toBe("There's an issue with this token's upgrade - DM @ArctosBot for help");
+      .toBe("There's an issue with this token's upgrade - DM @TheArgosBot for help");
   });
 });
 

@@ -1,9 +1,10 @@
+import {arcActionAmount} from "@/lib/arc/wallet-actions";
 import {transactionStatus} from "@/lib/otc/transaction-history";
 import { randomUUID,createHmac } from "node:crypto";
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { getAddress, parseTransaction, zeroAddress } from "viem";
-import { previewArcTrade, estimateArcTrade, arcSellAmountForUsdc } from "@/lib/arc/trading";
+import { previewArcTrade, estimateArcTrade } from "@/lib/arc/trading";
 import { boundedJson } from "@/lib/bounded-json";
 import { websiteSession,json,webFailure,sameSecret,WebError } from "@/lib/otc/http";
 import { repository } from "@/lib/otc/repository";
@@ -23,7 +24,7 @@ export async function POST(request:NextRequest){
     const session=await websiteSession(request,true),input=schema.parse(await boundedJson(request,18000)),repo=repository();
     if(input.action!=="confirm"&&input.amountUnit==="usd"){
       const native=(asset:string)=>["native",zeroAddress,"0x3600000000000000000000000000000000000000"].includes(asset.toLowerCase());
-      if(!native(input.tokenIn))input.amount=await arcSellAmountForUsdc(session.walletAddress,getAddress(input.tokenIn),input.amount,input.routeHint);
+      if(!native(input.tokenIn))input.amount=await arcActionAmount(session.walletAddress,getAddress(input.tokenIn),input.amount,"usd",input.routeHint);
     }
     if(input.action==="estimate")return json(await estimateArcTrade(session.walletAddress,input));
     if(input.action==="preview"){

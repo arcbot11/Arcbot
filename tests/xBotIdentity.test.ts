@@ -8,7 +8,7 @@ describe("X bot author identity",()=>{
     vi.stubEnv("X_BOT_USER_ID","");expect(isXBotAuthor("2097696306135220226")).toBe(true);
     vi.stubEnv("X_BOT_USER_ID","old-account");expect(isXBotAuthor(xBotUserId())).toBe(true);
     expect(isXBotAuthor("old-account","another_user")).toBe(false);
-    expect(isXBotAuthor(undefined,"@ArctosBot")).toBe(true);expect(isXBotAuthor("another-user","arctos_arc")).toBe(false);
+    expect(isXBotAuthor(undefined,"@TheArgosBot")).toBe(true);expect(isXBotAuthor("another-user","arctos_arc")).toBe(false);
   });
   it("rejects all self-authored commands before parsing, lookups, or wallet work",async()=>{
     const handler=(executeCommand as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<{ok:boolean}>})._handler;

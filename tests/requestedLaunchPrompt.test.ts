@@ -4,8 +4,8 @@ import { parseXWalletIntent } from "../convex/xWalletIntent";
 
 loadEnvConfig(process.cwd());
 
-const post = `Hey @ArctosBot launch Argos Bot ticker $ARCBOT
-Website: arcbot.invalid X: @ArctosBot Dev buy $100`;
+const post = `Hey @TheArgosBot launch Argos Bot ticker $ARCBOT
+Website: arcbot.invalid X: @TheArgosBot Dev buy $100`;
 
 describe.runIf(process.env.LIVE_AI_TESTS === "true")("requested Argos Bot launch prompt", () => {
   it("classifies and extracts the exact multiline post", async () => {

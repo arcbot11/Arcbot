@@ -91,6 +91,7 @@ export const enqueue = internalMutation({
     if (!prior && interaction?.publicationAttempted && args.key === args.postId) return { status: "uncertain" };
     if (interaction && args.key === args.postId && ["completed", "rejected"].includes(interaction.status)) return { status: "cancelled" };
     let safeText = xCashtagSafeText(xCommandReply(args.text, interaction?.commandKind === "ambiguous_token"));
+    if (!safeText.trim()) return { status: "cancelled" };
     const suppressedReason = temporaryXReplySuppressionReason(safeText);
     if (suppressedReason) {
       if (interaction) await ctx.db.patch(interaction._id, { status: "rejected", publicationStatus: "suppressed", replySuppressedReason: suppressedReason,
@@ -234,6 +235,10 @@ export const takeNext = internalMutation({
       await ctx.db.patch(row._id, { status: "paused", updatedAt: now }); await wake(ctx, state); return null;
     }
     const commandText = xCommandReply(row.text, interaction?.commandKind === "ambiguous_token");
+    if (!commandText.trim()) {
+      await ctx.db.patch(row._id, { status: "cancelled", lastError: "Retired response", updatedAt: now });
+      await wake(ctx, state); return null;
+    }
     if (commandText !== row.text) { await ctx.db.patch(row._id, { text: commandText }); row = { ...row, text: commandText }; }
     if (wait > 0) { await wake(ctx, state, now + wait); return null; }
     const leaseToken = crypto.randomUUID();

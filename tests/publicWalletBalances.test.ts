@@ -4,7 +4,7 @@ vi.mock("../lib/arc/wallet-balance", () => ({ arcWalletBalance: m.native }));
 vi.mock("../lib/arc/wallet-tokens", () => ({ arcTokenBalances: m.tokens }));
 import { GET } from "../app/api/wallet/public/[address]/route";
 const address = "0x1111111111111111111111111111111111111111";
-const request = (owner = address) => GET(new Request(`https://www.arcchainbot.io/api/wallet/public/${owner}`), { params: Promise.resolve({ address: owner }) });
+const request = (owner = address) => GET(new Request(`https://www.argosbot.io/api/wallet/public/${owner}`), { params: Promise.resolve({ address: owner }) });
 beforeEach(() => { vi.clearAllMocks(); m.native.mockResolvedValue({ balanceWei: "10000000000000000000", block: "1" }); m.tokens.mockResolvedValue({ tokens: [], partial: false, block: "1" }); });
 it("returns public chain balances without authentication or private records", async () => {
   const response = await request();

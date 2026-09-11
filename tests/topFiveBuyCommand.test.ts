@@ -7,8 +7,8 @@ describe("private top-five Argos Bot buy command", () => {
     const buy = { kind: "buy_top_five", amount: "25", burn: false, slippageBps: 500 } as const;
     const burn = { kind: "buy_top_five", amount: "12.50", burn: true, slippageBps: 500 } as const;
     expect(parseWalletCommand("Buy $25 each of the top 5 Argos Bot tokens.")).toEqual(buy);
-    expect(parseWalletCommand("@ArctosBot BUY AND BURN $12.50 OF EACH OF THE TOP 5 ARGOS BOT TOKENS!!!")).toEqual(burn);
-    await expect(parseXWalletIntent("@ArctosBot buy and burn $12.50 each of the top 5 Argos Bot tokens", false))
+    expect(parseWalletCommand("@TheArgosBot BUY AND BURN $12.50 OF EACH OF THE TOP 5 ARGOS BOT TOKENS!!!")).toEqual(burn);
+    await expect(parseXWalletIntent("@TheArgosBot buy and burn $12.50 each of the top 5 Argos Bot tokens", false))
       .resolves.toEqual({ kind: "command", command: burn });
     expect(isTerminalCommand(buy)).toBe(true);
     expect(validateStructuredWalletCommand(burn)).toEqual(burn);
