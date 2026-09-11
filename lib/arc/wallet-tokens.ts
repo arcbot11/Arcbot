@@ -57,7 +57,8 @@ async function readBalances(owner:`0x${string}`,known:string[]):Promise<Result>{
         const balance=await rpc.tokenBalance(token,owner,head.number);if(balance===0n)continue;
         const [decimals,symbol]=await Promise.all([rpc.decimals(token,head.number),metadata.symbol?Promise.resolve(metadata.symbol):client.readContract({address:token,abi:metadataAbi,functionName:"symbol",blockNumber:head.number})]);
         if(isArcUsdcSymbol(symbol))continue;
-        tokens.push({address:token,symbol:symbol.trim().replace(/^\$+/,""),name:metadata.name??symbol,balance:formatUnits(balance,decimals),...await tokenUsdEstimate(token,formatUnits(balance,decimals))});
+        const value=await tokenUsdEstimate(token,formatUnits(balance,decimals)).catch(()=>({usdValue:null,pricedAt:null}));
+        tokens.push({address:token,symbol:symbol.trim().replace(/^\$+/,""),name:metadata.name??symbol,balance:formatUnits(balance,decimals),...value});
       }catch{partial=true;}
     }
   }));

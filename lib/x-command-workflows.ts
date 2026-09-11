@@ -37,6 +37,13 @@ export function xCommandReply(text: string, contractClarification = false) {
     .replace(/Gas paid: [0-9.,]+ USDC\.?\s*/g, "")
     .replace(/Arc Explorer:/g, "Transaction:")
     .replace(/More than one indexed token uses that ticker/g, "More than one token uses that ticker");
+  const buy = /^Buy confirmed\. Input: ([0-9.,]+) USDC\. Received: ([0-9.,]+) ([^\r\n]+?)\.(?:\s|$)/.exec(result);
+  const transaction = /Transaction:\s*(https:\/\/www\.arcexplorer\.org\/tx\/0x[0-9a-f]{64})(?![0-9a-f])/i.exec(result);
+  if (buy && transaction) {
+    return socialAddressLinks(`Bought ${buy[2]} ${buy[3]} for ${buy[1]} USDC.\n\nTransaction: ${transaction[1]}`);
+  }
+  const burn = /^(Burned [^\r\n]+)(?:\r?\n|$)/.exec(result);
+  if (burn && transaction) return socialAddressLinks(`${burn[1]}\n\nTransaction: ${transaction[1]}`);
   result = result.replace(/reply\s+[“"']resume[”"']/gi, "submit the full command again");
   if (contractClarification && tokenClarificationReply(result)) {
     return socialAddressLinks(result.replace(/Enter (?:the|its) contract address\./, "Reply with the contract address and tag @TheArgosBot."));

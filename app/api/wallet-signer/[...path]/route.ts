@@ -259,7 +259,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ pa
       if (input.walletRef.toLowerCase() !== input.expectedAddress.toLowerCase()) throw new Error("wallet reference mismatch");
       const expected = await provisionWallet(input.ownerReference);
       if (expected.address.toLowerCase() !== input.expectedAddress.toLowerCase()) throw new Error("wallet owner mismatch");
-      return NextResponse.json(await arcSocialBalance(input.expectedAddress as `0x${string}`, input.token));
+      return NextResponse.json(await arcSocialBalance(input.expectedAddress as `0x${string}`, input.token, input.knownTokens));
     }
     if (path === "v1/tokens/metadata") {
       const input = tokenMetadataRequestSchema.parse(body);

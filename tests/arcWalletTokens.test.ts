@@ -1,16 +1,20 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-const m=vi.hoisted(()=>({balance:vi.fn(),decimals:vi.fn(),block:vi.fn(),fetch:vi.fn()}));
+const m=vi.hoisted(()=>({balance:vi.fn(),decimals:vi.fn(),block:vi.fn(),fetch:vi.fn(),value:vi.fn()}));
 vi.mock("../lib/arc/wallet-balance",()=>({arcDisplayConfig:()=>({})}));
 vi.mock("../lib/arc/transport",()=>({arcTransport:()=>()=>({})}));
 vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>({code:async()=>"0x",tokenBalance:m.balance,decimals:m.decimals,block:m.block}),checkArcRpc:async()=>({number:100n,hash:"canonical"})}));
-vi.mock("../lib/arc/token-value",()=>({tokenUsdEstimate:async()=>({usdValue:24.69,pricedAt:null})}));
+vi.mock("../lib/arc/token-value",()=>({tokenUsdEstimate:m.value}));
 import { arcTokenBalances, arcSelectedTokenBalance } from "../lib/arc/wallet-tokens";
 const token="0xece5ca8bf9220718e5727754026757512212cb3c";
 let counter=1;
 const owner=()=>`0x${(counter++).toString(16).padStart(40,"0")}`;
-beforeEach(()=>{vi.clearAllMocks();vi.stubGlobal("fetch",m.fetch);m.fetch.mockResolvedValue({ok:true,json:async()=>({items:[{address:token,symbol:"ARGUS",name:"Argus",balance:"999"}]})});m.balance.mockResolvedValue(12345n);m.decimals.mockResolvedValue(3);m.block.mockResolvedValue({hash:"canonical"});});
+beforeEach(()=>{vi.clearAllMocks();m.value.mockResolvedValue({usdValue:24.69,pricedAt:null});vi.stubGlobal("fetch",m.fetch);m.fetch.mockResolvedValue({ok:true,json:async()=>({items:[{address:token,symbol:"ARGUS",name:"Argus",balance:"999"}]})});m.balance.mockResolvedValue(12345n);m.decimals.mockResolvedValue(3);m.block.mockResolvedValue({hash:"canonical"});});
 afterEach(()=>vi.unstubAllGlobals());
 describe("Arc token balance display",()=>{
+  it("keeps verified holdings visible when the price service fails",async()=>{
+    m.value.mockRejectedValue(Error("Price unavailable"));
+    expect((await arcTokenBalances(owner())).tokens[0]).toMatchObject({symbol:"ARGUS",balance:"12.345",usdValue:null});
+  });
   it("bypasses pre-transaction cached holdings after confirmation",async()=>{
     const address=owner();
     expect((await arcTokenBalances(address)).tokens[0].balance).toBe("12.345");

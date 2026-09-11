@@ -2,6 +2,21 @@ import { expect, it } from "vitest";
 import { xCommandReply, duplicateTickerReply, retiredXWorkflow } from "../lib/x-command-workflows";
 import { arcPublicCommand, arcSignerPath } from "../lib/arc/public-policy";
 import { parseXWalletIntent } from "../convex/xWalletIntent";
+it("keeps only the burn amount, USD estimate and transaction link",()=>{
+  const url="https://www.arcexplorer.org/tx/0x"+"a".repeat(64);
+  expect(xCommandReply(`Burned 1,000 ARGOS ($29.00)\nTransaction: ${url}\nYour wallet: https://www.argosbot.io/wallet/0x${"1".repeat(40)}`)).toBe(`Burned 1,000 ARGOS ($29.00)\n\nTransaction: ${url}`);
+});
+
+it("formats X buys with the received amount, USDC spent and transaction only", () => {
+  const url="https://www.arcexplorer.org/tx/0x"+"a".repeat(64);
+  const reply=xCommandReply(`Buy confirmed. Input: 20.00 USDC. Received: 659,762 ARGOS. Route: V4. Gas paid: 0.0034 USDC. Transaction: ${url}\nYour wallet: https://www.argosbot.io/wallet/0x${"1".repeat(40)}`);
+  expect(reply).toBe(`Bought 659,762 ARGOS for 20.00 USDC.\n\nTransaction: ${url}`);
+});
+it("does not label incomplete or combined buy-and-burn receipts as a simple buy", () => {
+  const incomplete="Buy confirmed. Input: 20.00 USDC. Received: 659,762 ARGOS.";
+  expect(xCommandReply(incomplete)).toBe(incomplete);
+  expect(xCommandReply(incomplete.replace("Buy confirmed", "Buy and burn confirmed"))).toContain("Buy and burn confirmed");
+});
 
 it("cleans current and persisted X wallet receipts", () => {
   const result = xCommandReply("Your Argos Bot wallet\nArc mainnet (5042)\n0x123\nBuy confirmed. Received: 10 ARGUS. Gas paid: 0.001 USDC.\nArc Explorer: https://www.arcexplorer.org/tx/abc\nYour wallet: link");

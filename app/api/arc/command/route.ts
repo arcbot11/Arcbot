@@ -1,4 +1,5 @@
 import {prepareBaseWithdrawal} from "@/lib/base/wallet-actions";
+import {xBurnReceipt} from "@/lib/arc/burn-reply";
 import {transactionHistory} from "@/lib/otc/transaction-history";
 import {createHash} from "node:crypto";
 import {NextRequest} from "next/server";
@@ -34,8 +35,10 @@ const preparationFailures=new Set([
   "Invalid output or slippage (maximum 10%)",
   "V4 amount exceeds uint128",
 ]);
-function completedMessage(command:WalletCommand,tx:Transaction){
+async function completedMessage(command:WalletCommand,tx:Transaction,xReply=false){
   const details=transactionHistory(tx).details.filter(d=>["Input","Received","Amount","To","Burn destination","Gas paid","Route"].includes(d.label));
+  const burnedAmount=details.find(d=>d.label==="Amount")?.value;
+  if(xReply&&command.kind==="burn"&&burnedAmount)return xBurnReceipt(tx,burnedAmount);
   const title=command.kind==="send"&&command.chainId===8453?"Base withdrawal":command.kind==="buy_and_burn"?"Buy and burn":command.kind==="buy_and_send"?"Buy and send":command.kind==="swap_token_for_token"?"Swap":command.kind[0].toUpperCase()+command.kind.slice(1);
   return [title+" confirmed.",...details.map(d=>d.label+": "+d.value+".")].join(" ");
 }
@@ -62,7 +65,7 @@ export async function POST(request:NextRequest){
         if(tx.status==="cancelled")return json({ok:false,message:tx.nonceConflict?"Request replaced by another transaction. Check wallet history.":"Request cancelled before signing. Funds released. Submit a new command."});
         if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
         if(tx.status!=="completed")return json({pending:true,message:"Arc transaction pending. Check wallet history.",hash:tx.hash});
-        if(tx.leg!=="allowance")return json({ok:true,message:completedMessage(command,tx),hash:tx.hash});
+        if(tx.leg!=="allowance")return json({ok:true,message:await completedMessage(command,tx,auth.source==="x"),hash:tx.hash});
         continue;
       }
       preparing=true;
@@ -93,7 +96,7 @@ export async function POST(request:NextRequest){
       try{tx=await advanceTransaction(record.id);}catch{return json({pending:true,message:"Arc request recorded. Funds remain reserved for verification."});}
       if(tx.status==="cancelled")return json({ok:false,message:tx.nonceConflict?"Request replaced by another transaction. Check wallet history.":"Request cancelled before signing. Funds released. Submit a new command."});
         if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
-      if(tx.status==="completed"&&tx.leg!=="allowance")return json({ok:true,message:completedMessage(command,tx),hash:tx.hash});
+      if(tx.status==="completed"&&tx.leg!=="allowance")return json({ok:true,message:await completedMessage(command,tx,auth.source==="x"),hash:tx.hash});
       return json({pending:true,message:"Arc request recorded. Check wallet history.",hash:tx.hash});
     }
     return json({ok:false,message:"Approval steps exceeded the request limit. Check wallet history."});

@@ -37,6 +37,10 @@ it("includes discovered token balances and marks incomplete discovery", async ()
   expect(result.display).toContain("Some token balances are unavailable");
   expect(result.display).not.toContain("ETH");
 });
+it("passes wallet-known and pinned ARGOS contracts to discovery even when the explorer omits them", async () => {
+  await arcSocialBalance(owner, undefined, [owner]);
+  expect(mocks.tokens).toHaveBeenCalledWith(owner, expect.arrayContaining([owner,"0xe86688530c456e099732f953ed7aa7c583026680"]));
+});
 it("rejects an unverified chain or changed balance block", async () => {
   mocks.block.mockResolvedValue({ hash: "0xchanged" });
   await expect(arcSocialBalance(owner, "USDC")).rejects.toThrow("block changed");
