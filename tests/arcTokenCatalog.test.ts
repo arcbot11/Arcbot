@@ -7,10 +7,10 @@ import { seedArcTokenCatalog } from "../convex/arcTokenCatalog";
 import type { MutationCtx } from "../convex/_generated/server";
 
 describe("Arc snapshot index selection", () => {
-  it("keeps 95 unique tickers including 20 Argus tokens, with no retired addresses", () => {
-    expect(ARC_TOKEN_CATALOG).toHaveLength(95);
-    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol)).size).toBe(95);
-    expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(20);
+  it("keeps 96 unique tickers including 21 Argus tokens, with no retired addresses", () => {
+    expect(ARC_TOKEN_CATALOG).toHaveLength(96);
+    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol)).size).toBe(96);
+    expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(21);
     for (const t of ARC_TOKEN_CATALOG) {
       expect(t.chainId).toBe(5042);
       expect(Number.isInteger(t.decimals)).toBe(true);
@@ -21,7 +21,7 @@ describe("Arc snapshot index selection", () => {
     const contracts = new Map<string, { address: string; symbol: string; marketCapUsd: number }>();
     // Use ranking-source valuations for addresses also present on the Argus board.
     for (const t of [...snapshot.top100, ...snapshot.argusTokens]) if (!contracts.has(t.address.toLowerCase())) contracts.set(t.address.toLowerCase(), t);
-    for (const selected of ARC_TOKEN_CATALOG.filter(t => t.symbol !== "USDC")) {
+    for (const selected of ARC_TOKEN_CATALOG.filter(t => t.symbol !== "USDC" && t.symbol !== "ARGOS")) {
       const candidates = [...contracts.values()].filter(t => t.symbol.toUpperCase() === selected.symbol);
       expect(selected.marketCapUsd).toBe(Math.max(...candidates.map(t => t.marketCapUsd)));
     }
@@ -61,7 +61,7 @@ describe("Arc snapshot index selection", () => {
     } } as unknown as MutationCtx;
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
-    expect(tables.tokenRegistry).toHaveLength(95);
+    expect(tables.tokenRegistry).toHaveLength(96);
     expect(tables.walletTokenIndex).toEqual([]);
     expect(tables.walletTransactions).toHaveLength(1);
     for (const token of tables.tokenRegistry) expect(token).toMatchObject({ chainId: 5042, active: true, pairCandidate: false, pairApproved: false });

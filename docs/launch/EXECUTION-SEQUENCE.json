@@ -22,12 +22,19 @@
       "action": "buy",
       "accountName": "Personal4",
       "expectedAddress": "0xa94e1073F745Ea47402d3EC83BAe23054c83eEc2",
-      "spendPercent": 95,
+      "spendPercent": 50,
       "dispatch": "After Personal2 broadcast acknowledgement; do not await Personal2 receipt."
     },
     {
+      "action": "buy",
+      "accountName": "Personal5",
+      "expectedAddress": "0xCE8B64362BEc4540e7DaF649054BD56470F01F46",
+      "spendPercent": 52,
+      "dispatch": "After Personal4 broadcast acknowledgement; do not await earlier buy receipts."
+    },
+    {
       "action": "report-token-address",
-      "required": "Return actual launch receipt token address and both buy submission hashes/statuses. Do not imply pending buys are confirmed."
+      "required": "Return actual launch receipt token address and all three buy submission hashes/statuses. Do not imply pending buys are confirmed."
     },
     {
       "action": "index",
@@ -35,13 +42,13 @@
     },
     {
       "action": "reconcile-buys",
-      "required": "Track both receipts and delivered balances independently. Never blindly resubmit after an ambiguous broadcast or signing response."
+      "required": "Track all three receipts and delivered balances independently. Never blindly resubmit after an ambiguous broadcast or signing response."
     }
   ],
   "budgetPolicy": {
     "source": "Fresh verified available native USDC balance, excluding existing reservations",
-    "calculation": "floor(available native atomic units * 95 / 100 / 1e12) in ERC-20 USDC atomic units",
-    "gas": "Remaining 5% must cover all approvals and swap gas. Stop before signing if insufficient; do not exceed the requested 95% trade budget.",
+    "calculation": "For each buy, floor(available native atomic units * spendPercent / 100 / 1e12) in ERC-20 USDC atomic units: Personal2 95%, Personal4 50%, Personal5 52%.",
+    "gas": "The unspent balance (Personal2 5%, Personal4 50%, Personal5 48%) must cover all approvals and swap gas. Stop before signing if insufficient; do not exceed each wallet's requested percentage trade budget.",
     "lastObserved": {
       "Personal2": {
         "balanceUSDC": "46",
@@ -49,23 +56,23 @@
       },
       "Personal4": {
         "balanceUSDC": "49",
-        "exampleBuyUSDC": "46.55"
+        "exampleBuyUSDC": "24.50"
       }
     }
   },
   "executionConstraints": [
     "No transactions, approvals, signing or broadcasts before the later go-ahead.",
     "Use the actual confirmed token address, not ticker resolution or a prediction alone.",
-    "Reuse verified pool identity; refresh price and simulation. Account for Personal2 price impact when preparing Personal4.",
+    "Reuse verified pool identity; refresh price and simulation. Account for earlier buy price impact when preparing Personal4 and Personal5.",
     "Submission order is controlled; block execution order across independent wallets is not guaranteed.",
     "Required router/Permit2 allowances must be verified before each dependent swap. Approval requirements can prevent immediate back-to-back swap broadcasts; establish the preparation path beforehand.",
-    "Keep quote minimum output and slippage bounds. Do not silently raise slippage to force Personal4 through.",
+    "Keep quote minimum output and slippage bounds. Do not silently raise slippage to force any buy through.",
     "Use durable per-wallet jobs and idempotent signing/broadcast recovery."
   ],
   "readiness": {
     "launchSimulation": "passed; refresh required before execution",
     "personalBuySimulation": "not yet performed against the simulated new pool",
-    "combinedOperatorRunner": "not yet implemented or tested",
-    "indexChange": "planned; do not publish a nonexistent token"
+    "combinedOperatorRunner": "scripts/launch-argos.ps1 implemented; read-only live launch preview, syntax/type checks and mocked lock tests passed. Funded execution remains untested. Deploy operator lock commands before user-run execution.",
+    "indexChange": "runner adds and pins the verified deployed token locally after buy submissions; normal website/backend deployment is still required for the live catalog"
   }
 }

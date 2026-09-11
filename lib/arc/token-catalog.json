@@ -1,6 +1,16 @@
 [
   {
     "chainId": 5042,
+    "address": "0xe86688530c456e099732f953ed7aa7c583026680",
+    "symbol": "ARGOS",
+    "name": "Argos Bot",
+    "decimals": 18,
+    "marketCapUsd": 0,
+    "snapshotAt": "2026-09-11",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
     "address": "0x3600000000000000000000000000000000000000",
     "symbol": "USDC",
     "name": "USDC",

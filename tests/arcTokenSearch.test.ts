@@ -1,10 +1,10 @@
 import { expect, it } from "vitest";
-import { ARC_TOKEN_CATALOG, ARGUS_TOKEN_ADDRESS, CANONICAL_ARC_USDC } from "../lib/arc/token-catalog";
+import { ARC_TOKEN_CATALOG, ARGOS_TOKEN_ADDRESS, CANONICAL_ARC_USDC } from "../lib/arc/token-catalog";
 import { searchArcTokens } from "../lib/arc/token-search";
-it("pins ARGUS first while preserving exact ticker matches", () => {
-  expect(ARC_TOKEN_CATALOG[0].address).toBe(ARGUS_TOKEN_ADDRESS);
+it("pins ARGOS first while preserving exact ticker matches", () => {
+  expect(ARC_TOKEN_CATALOG[0].address).toBe(ARGOS_TOKEN_ADDRESS);
   const tokens = [...ARC_TOKEN_CATALOG].reverse();
-  expect(searchArcTokens(tokens, "")[0].address).toBe(ARGUS_TOKEN_ADDRESS);
+  expect(searchArcTokens(tokens, "")[0].address).toBe(ARGOS_TOKEN_ADDRESS);
   const arc = { chainId: 5042, address: "0x1111111111111111111111111111111111111111", symbol: "ARG", name: "Arg" };
   expect(searchArcTokens([...tokens, arc], "ARG")[0].address).toBe(arc.address);
 });

@@ -1,4 +1,5 @@
 import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement,authorizeGasRecovery} from "../lib/otc/gas-recovery";
+import {acquireOperatorLease,releaseOperatorLease} from "../lib/otc/operator-lease";
 import {beginSigning,cancelUnsignedTrade} from "../lib/otc/unsigned-recovery";
 import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce} from "../lib/otc/signed-recovery";
 import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
@@ -36,6 +37,8 @@ export const command = mutation({
       },
     };
     switch(args.command) {
+      case "operator_acquire": return acquireOperatorLease(store,input,now);
+      case "operator_release": return releaseOperatorLease(store,input,now);
       case "escrow_arc_dust": return retainArcDust(store,input.listingId,input.balanceWei,input.block,now);
       case "escrow_funding_gas": return repriceFunding(store,input.listingId,input.gasWei,now);
       case "escrow_claim": return claimSettlement(store,input.listingId,input.orderId,now);
