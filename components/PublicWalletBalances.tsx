@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { WalletSignInButton } from "./WalletSignInButton";
 import { formatUnits } from "viem";
 import { displayUsdc } from "@/lib/amount-display";
 import type { ArcTokenBalance } from "@/lib/arc/wallet-tokens";
@@ -34,7 +35,7 @@ export function PublicWalletBalances({ address }: { address: string }) {
   }, [address, notify]);
   return <div className="wallet-dashboard">
     <div className="otc-wallet-balances"><article><p className="arc-kicker">ARC / USDC</p><h2>{data?.balanceWei == null ? "—" : displayUsdc(formatUnits(BigInt(data.balanceWei), 18))} <small>USDC</small></h2><span>Total balance</span><p className="otc-fine">Fund this address with Arc USDC for trading and gas.</p></article></div>
-    <div className="wallet-connection-slot">{session?.authenticated ? <><p>Sign in with the account that owns this wallet to use its controls.</p><Link className="arc-button" href="/wallet">Open your wallet ↗</Link></> : <Link className="arc-button" href={`/wallet/sign-in?returnTo=${encodeURIComponent(`/wallet/${address}`)}`}>Sign in with X or Telegram</Link>}</div>
+    <div className="wallet-connection-slot">{session?.authenticated ? <><p>Sign in with the account that owns this wallet to use its controls.</p><Link className="arc-button" href="/wallet">Open your wallet ↗</Link></> : <WalletSignInButton className="arc-button" destination={`/wallet/${address}`}>Sign in with X or Telegram</WalletSignInButton>}</div>
     <p className="otc-fine">Balances are public. The owner can buy, sell, swap, and send after signing in.</p>
     <PersistentNotices notices={notices} dismiss={dismiss}/>
     <section className="otc-history"><h2>Arc tokens</h2><div className="arc-holdings-grid">{data?.tokens.map(token => <HoldingCard key={token.address} token={token} onError={notify} busy={false}/>)}</div>

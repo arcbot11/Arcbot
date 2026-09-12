@@ -1,5 +1,5 @@
 "use client";
-import Link from "next/link";
+import { WalletSignInButton } from "./WalletSignInButton";
 import { useCallback, useState, type ReactNode } from "react";
 
 export function usePersistentNotices() {
@@ -13,7 +13,7 @@ export function usePersistentNotices() {
 
 export function PersistentNotices({ notices, dismiss, renderMessage }: { notices: string[]; dismiss: (message: string) => void; renderMessage?: (message: string) => ReactNode }) {
   return <div aria-live="polite">{notices.map(message => <div className="otc-notice persistent-notice" key={message}>
-    <span>{renderMessage?renderMessage(message):message} {/^Reconnect/.test(message) && <Link href="/wallet/sign-in?returnTo=/wallet">Reconnect</Link>}</span>
+    <span>{renderMessage?renderMessage(message):message} {/^Reconnect/.test(message) && <WalletSignInButton className="arc-text-link">Reconnect</WalletSignInButton>}</span>
     <button type="button" className="otc-inline-button" aria-label="Dismiss message" onClick={() => dismiss(message)}>×</button>
   </div>)}</div>;
 }
