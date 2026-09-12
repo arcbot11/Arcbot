@@ -17,3 +17,21 @@ it.each([false,true])("routes website sign-in through the real bot handler (call
  const sent=fetcher.mock.calls.map(c=>JSON.parse((c as unknown as [string,{body:string}])[1].body));
  expect(sent.some(b=>b.text?.includes(callback?"Website sign-in approved":"ABCDEF12"))).toBe(true);
 });
+it("keeps the original website link available while a new user creates a TG wallet",async()=>{
+ vi.stubEnv("TELEGRAM_BOT_TOKEN","mock-only");
+ const fetcher=vi.fn(async()=>Response.json({ok:true}));vi.stubGlobal("fetch",fetcher);
+ const ctx={runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>{
+  const name=getFunctionName(ref);if(name==="telegram:consumeRateLimit")return true;
+  if(name==="telegramWebAuth:respond")return {status:"no_wallet"};
+ }),runAction:vi.fn()};
+ const token="a".repeat(32);
+ await (processUpdate as unknown as {_handler:(ctx:unknown,a:unknown)=>Promise<void>})._handler(ctx,{updateId:"tg-web",updateJson:JSON.stringify({message:{chat:{id:123,type:"private"},from:{id:123},text:`/start web_${token}`}})});
+ const sent=fetcher.mock.calls.map(c=>JSON.parse((c as unknown as [string,{body:string}])[1].body));
+ const message=sent.find(b=>b.reply_markup);
+ expect(message.text).toContain("permanently linked");
+ expect(message.reply_markup.inline_keyboard.flat()).toEqual(expect.arrayContaining([
+  {text:"Create TG wallet",callback_data:"/createtg"},
+  {text:"Continue website sign-in",url:`https://t.me/The_ArgosBot?start=web_${token}`},
+ ]));
+ expect(ctx.runAction).not.toHaveBeenCalled();
+});

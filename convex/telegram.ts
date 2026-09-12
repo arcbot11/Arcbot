@@ -1,6 +1,6 @@
 import { suppressCreationReply } from "../lib/disabled-creation";
 import { socialAddressLinks } from "../lib/social-address-links";
-import { ARC_BOT_TELEGRAM_USER_ID } from "../lib/project-config";
+import { ARC_BOT_TELEGRAM_USER_ID, ARC_BOT_TELEGRAM_USERNAME } from "../lib/project-config";
 import { internal } from "./_generated/api";
 import { action, internalAction, internalMutation, internalQuery, type ActionCtx } from "./_generated/server";
 import { baseConfigFromEnv } from "../lib/base/config";
@@ -494,8 +494,13 @@ export const processUpdate = internalAction({
         const result = await ctx.runMutation(internal.telegramWebAuth.respond, { updateId: args.updateId, tokenHash: await sha256(webLogin[1]), approve: Boolean(callback) });
         if (result.status === "confirm") {
           await sendMessage(chatId, `Sign in to www.argosbot.io with your TG linked wallet?\n\nCode: ${result.code}\n\nApprove only if you started this sign-in and this code matches your browser. This gives that browser access to your wallet and transactions. Never approve a link someone sent you.`, { inline_keyboard: [[{ text: "Approve website sign-in", callback_data: `webok_${webLogin[1]}` }]] });
+        } else if (result.status === "no_wallet") {
+          await sendMessage(chatId, "Create a TG wallet first. It will be permanently linked to this Telegram account. Then tap Continue website sign-in below. To use your X wallet instead, choose Sign in with X on the website.", { inline_keyboard: [
+            [{ text: "Create TG wallet", callback_data: "/createtg" }],
+            [{ text: "Continue website sign-in", url: `https://t.me/${ARC_BOT_TELEGRAM_USERNAME.replace(/^@/, "")}?start=web_${webLogin[1]}` }],
+          ] });
         } else {
-          await sendMessage(chatId, result.status === "approved" ? "Website sign-in approved. Return to the browser where you started." : result.status === "no_wallet" ? "Create your TG linked wallet with /createtg first. Then open the website sign-in link again. To use your X wallet, sign in with X on the website." : "Sign-in expired or is unavailable. Start again on www.argosbot.io.");
+          await sendMessage(chatId, result.status === "approved" ? "Website sign-in approved. Return to the browser where you started. It will sign in automatically; you do not need a new link." : "Sign-in expired or is unavailable. Return to the website and try again.");
         }
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "completed" });
         return;

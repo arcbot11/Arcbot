@@ -7,7 +7,7 @@ const m=vi.hoisted(()=>({mutation:vi.fn(),action:vi.fn()}));
 vi.mock("convex/browser",()=>({ConvexHttpClient:class{mutation=m.mutation;action=m.action;}}));
 import { POST } from "../app/api/auth/telegram/route";
 const site="https://www.argosbot.io", secret="offline-test-only", wallet="0x1111111111111111111111111111111111111111";
-const request=(action:string,cookie="",origin=site)=>new NextRequest(`${site}/api/auth/telegram`,{method:"POST",headers:{origin,cookie:`${BROWSER_COOKIE}=${browserValue(secret)}; ${cookie}`,"content-type":"application/json"},body:JSON.stringify({action})});
+const request=(action:string,cookie="",origin=site,extra:Record<string,unknown>={})=>new NextRequest(`${site}/api/auth/telegram`,{method:"POST",headers:{origin,cookie:`${BROWSER_COOKIE}=${browserValue(secret)}; ${cookie}`,"content-type":"application/json"},body:JSON.stringify({action,...extra})});
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET",secret);vi.stubEnv("NEXT_PUBLIC_CONVEX_URL","https://example.convex.cloud");vi.stubEnv("NEXT_PUBLIC_SITE_URL",site);m.mutation.mockResolvedValue({status:"pending"});m.action.mockResolvedValue(true);});
 afterEach(()=>vi.unstubAllEnvs());
 it("rejects cross-origin initiation and exchange before using backend authority",async()=>{
@@ -43,4 +43,49 @@ it("does not issue access when replacing the old session cannot be confirmed",as
   m.mutation.mockRejectedValue(Error("unavailable"));
   const cookie=`argos_tg_web_login=${"a".repeat(32)}.${"b".repeat(64)}; ${WEB_WALLET_SESSION_COOKIE}=${createWebWalletSession(wallet,"456","alice",secret)}`;
   const r=await POST(request("check",cookie));expect(r.status).toBe(503);expect(r.cookies.get(WEB_WALLET_SESSION_COOKIE)).toBeUndefined();
+});
+
+const savedProof=`argos_tg_web_login=${"a".repeat(32)}.${"b".repeat(64)}`;
+it("reuses a pending approval when Telegram sign-in is clicked again",async()=>{
+  m.mutation.mockResolvedValue({status:"pending",code:"ABCDEF12",expiresAt:Date.now()+60000,returnTo:"/otc"});
+  const response=await POST(request("start",savedProof,site,{returnTo:"/wallet"}));
+  expect(await response.json()).toMatchObject({status:"pending",code:"ABCDEF12",returnTo:"/otc",url:`https://t.me/The_ArgosBot?start=web_${"a".repeat(32)}`});
+  expect(m.mutation).toHaveBeenCalledTimes(1);
+  expect(getFunctionName(m.mutation.mock.calls[0][0])).toBe("telegramWebAuth:exchange");
+  expect(response.cookies.get("argos_tg_web_login")).toBeUndefined();
+});
+it("finishes an approved saved attempt instead of replacing its authorization",async()=>{
+  m.mutation.mockResolvedValue({status:"approved",telegramUserId:"123",walletAddress:wallet,authenticatedAt:Math.floor(Date.now()/1000),returnTo:"/otc"});
+  const response=await POST(request("start",savedProof));
+  expect(await response.json()).toEqual({status:"approved",returnTo:"/otc"});
+  expect(response.cookies.get(WEB_WALLET_SESSION_COOKIE)).toBeDefined();
+  expect(m.mutation).toHaveBeenCalledTimes(1);
+});
+it("only replaces a pending challenge after an explicit account-change request",async()=>{
+  const response=await POST(request("start",savedProof,site,{restart:true}));
+  expect(response.cookies.get("argos_tg_web_login")!.value).not.toBe(savedProof.split("=")[1]);
+  expect(getFunctionName(m.mutation.mock.calls[0][0])).toBe("telegramWebAuth:start");
+});
+it("creates a fresh challenge when the saved browser proof is expired or invalidated",async()=>{
+  m.mutation.mockResolvedValueOnce({status:"expired"}).mockResolvedValueOnce(undefined);
+  const response=await POST(request("start",savedProof));
+  expect((await response.json()).status).toBe("pending");
+  expect(m.mutation.mock.calls.map(c=>getFunctionName(c[0]))).toEqual(["telegramWebAuth:exchange","telegramWebAuth:start"]);
+});
+it("keeps a pending challenge intact when its recovery response fails",async()=>{
+  m.mutation.mockRejectedValue(Error("transport failed"));
+  const response=await POST(request("start",savedProof));
+  expect(response.status).toBe(503);
+  expect(response.cookies.get("argos_tg_web_login")).toBeUndefined();
+  expect(m.mutation).toHaveBeenCalledTimes(1);
+});
+it("requires a fresh challenge when the same TG session is already signed in",async()=>{
+  m.mutation.mockResolvedValue({status:"approved",telegramUserId:"123",walletAddress:wallet,authenticatedAt:Math.floor(Date.now()/1000)});
+  const signedIn=await POST(request("check",savedProof));
+  const session=signedIn.cookies.get(WEB_WALLET_SESSION_COOKIE)!.value;
+  m.mutation.mockClear();m.mutation.mockResolvedValue(undefined);
+  const restarted=await POST(request("start",`${savedProof}; ${WEB_WALLET_SESSION_COOKIE}=${session}`));
+  expect((await restarted.json()).status).toBe("pending");
+  expect(getFunctionName(m.mutation.mock.calls[0][0])).toBe("telegramWebAuth:start");
+  expect(restarted.cookies.get(WEB_WALLET_SESSION_COOKIE)).toBeUndefined();
 });

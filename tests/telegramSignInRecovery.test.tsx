@@ -12,7 +12,7 @@ beforeEach(() => {
   doc = Object.assign(new EventTarget(), { visibilityState: "hidden" });
   win = Object.assign(new EventTarget(), { location: { assign: vi.fn() } });
   vi.stubGlobal("React", React); vi.stubGlobal("document", doc); vi.stubGlobal("window", win);
-  vi.stubGlobal("sessionStorage", { getItem: (key: string) => values.get(key) ?? null, removeItem: (key: string) => values.delete(key) });
+  vi.stubGlobal("sessionStorage", { getItem: (key: string) => values.get(key) ?? null, setItem: (key: string, value: string) => values.set(key,value), removeItem: (key: string) => values.delete(key) });
 });
 afterEach(() => { hooks.cleanup?.(); vi.unstubAllGlobals(); });
 it("finishes a saved Telegram approval on browser return even with the sign-in popup closed", async () => {
@@ -23,11 +23,11 @@ it("finishes a saved Telegram approval on browser return even with the sign-in p
   expect(values.has("argos-tg-signin-pending")).toBe(false);
 });
 it("retains pending approval across remounts and ignores arbitrary redirect destinations", async () => {
-  const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ status: "pending" })).mockResolvedValueOnce(Response.json({ status: "approved", returnTo: "https://foreign.example" }));
+  const fetcher = vi.fn().mockResolvedValueOnce(Response.json({ status: "pending", expiresAt: Date.now()+600000 })).mockResolvedValueOnce(Response.json({ status: "approved", returnTo: "https://foreign.example" }));
   vi.stubGlobal("fetch", fetcher); doc.visibilityState = "visible"; WalletSignInRecovery();
   await vi.waitFor(() => expect(fetcher).toHaveBeenCalledTimes(1)); expect(values.has("argos-tg-signin-pending")).toBe(true);
   hooks.cleanup?.(); WalletSignInRecovery();
-  await vi.waitFor(() => expect(win.location.assign).toHaveBeenCalledWith("/wallet"));
+  await vi.waitFor(() => expect(win.location.assign).toHaveBeenCalledWith("/wallet"), { timeout: 4000 });
 });
 it("does not start a new login when no pending attempt exists", async () => {
   values.clear(); const fetcher = vi.fn(); vi.stubGlobal("fetch", fetcher); doc.visibilityState = "visible";

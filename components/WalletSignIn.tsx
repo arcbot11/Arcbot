@@ -1,64 +1,87 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { walletReturnPath } from "@/lib/wallet-return-path";
+import { clearTelegramSignIn, prepareSignInBrowser, readTelegramSignIn, startTelegramSignIn, type TelegramSignInAttempt } from "@/lib/telegram-web-signin";
 
 export function WalletSignIn({ destination }: { destination?: string } = {}) {
   const returnTo = walletReturnPath(destination);
-  const [attempt, setAttempt] = useState<{ code: string; url: string; expiresAt: number; returnTo?: string } | null>(null);
+  const [attempt, setAttempt] = useState<TelegramSignInAttempt | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
-  const [ready, setReady] = useState(false);
+  const [ready, setReady] = useState(false), [initialization, setInitialization] = useState(0);
+  const starting = useRef(false), mounted = useRef(false);
   useEffect(() => {
-    const controller = new AbortController();
-    void fetch("/api/auth/browser", { method: "POST", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(15000)]) }).then(async r => {
-      if (!r.ok) throw Error(); setReady(true);
-      const resumed = await fetch("/api/auth/telegram", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "resume" }), signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]) });
-      if (!resumed.ok) throw Error();
-      const data = await resumed.json();
-      if (controller.signal.aborted) return;
-      if (data.status === "approved") { try { sessionStorage.removeItem("argos-tg-signin-pending"); } catch { /* Optional browser storage. */ } window.location.assign(walletReturnPath(data.returnTo)); return; }
+    let stopped = false;
+    mounted.current = true;
+    setReady(false); setError("");
+    void (async () => {
+      await prepareSignInBrowser();
+      const data = await readTelegramSignIn();
+      if (stopped) return;
+      if (data.status === "approved") { clearTelegramSignIn(); window.location.assign(walletReturnPath(data.returnTo)); return; }
       if (data.status === "pending") setAttempt(data);
       setReady(true);
-    }).catch(() => { if (!controller.signal.aborted) setError("Sign-in unavailable. Refresh this page to retry."); });
-    return () => controller.abort();
-  }, []);
-  async function start() {
-    if (busy) return;
-    setBusy(true); setError(""); setAttempt(null);
+    })().catch(() => { if (!stopped) setError("Sign-in could not load. Try again."); });
+    return () => { stopped = true; mounted.current = false; };
+  }, [initialization]);
+
+  async function start(restart = false) {
+    if (starting.current || !ready) return;
+    starting.current = true;
+    setBusy(true); setError("");
+    // Open during the click so mobile/desktop popup protection does not discard
+    // the Telegram handoff after the asynchronous challenge request finishes.
+    let telegram: Window | null = null;
     try {
-      const r = await fetch("/api/auth/telegram", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "start", returnTo }), signal: AbortSignal.timeout(30000) });
-      const data = await r.json();
-      if (!r.ok) throw Error(data.error || "Sign-in unavailable.");
-      setAttempt({ ...data, returnTo });
-      try { sessionStorage.setItem("argos-tg-signin-pending", String(data.expiresAt)); } catch { /* Optional browser storage. */ }
-    } catch (e) { setError(e instanceof Error ? e.message : "Sign-in unavailable."); }
-    finally { setBusy(false); }
+      telegram = window.open("about:blank", "_blank");
+      if (telegram) { telegram.opener = null; telegram.document.title = "Opening Telegram"; telegram.document.body.textContent = "Opening Telegram… Return to your original browser after approving sign-in."; }
+    } catch { /* The persistent link below also works when popups are blocked. */ }
+    try {
+      const data = await startTelegramSignIn(returnTo, restart);
+      if (data.status === "approved") { telegram?.close(); clearTelegramSignIn(); window.location.assign(walletReturnPath(data.returnTo)); return; }
+      if (data.status !== "pending") throw Error("Sign-in expired. Try again.");
+      if (mounted.current) setAttempt(data);
+      if (telegram && !telegram.closed) telegram.location.replace(data.url);
+    } catch (e) {
+      telegram?.close();
+      if (mounted.current) setError(e instanceof Error ? e.message : "Sign-in unavailable.");
+    } finally { starting.current = false; if (mounted.current) setBusy(false); }
   }
+
   useEffect(() => {
     if (!attempt) return;
-    let cancelled = false, timer: ReturnType<typeof setTimeout>;
-    const controller = new AbortController();
+    let cancelled = false, checking = false;
     async function check() {
-      if (cancelled) return;
-      if (Date.now() >= attempt!.expiresAt) { setError("Sign-in expired. Start again."); setAttempt(null); return; }
+      if (cancelled || checking || starting.current || document.visibilityState !== "visible") return;
+      if (Date.now() >= attempt!.expiresAt) { clearTelegramSignIn(); setError("Sign-in expired. Try again."); setAttempt(null); return; }
+      checking = true;
       try {
-        const r = await fetch("/api/auth/telegram", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "check" }), signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) });
-        const data = await r.json();
+        const data = await readTelegramSignIn();
         if (cancelled) return;
-        if (!r.ok) { setError("Sign-in check interrupted. Retrying…"); }
-        else if (data.status === "approved") { try { sessionStorage.removeItem("argos-tg-signin-pending"); } catch { /* Optional browser storage. */ } window.location.assign(walletReturnPath(data.returnTo ?? attempt?.returnTo ?? returnTo)); return; }
-        else if (data.status === "expired") { setError("Sign-in expired. Start again."); setAttempt(null); return; }
-        else setError("");
-      } catch { if (!cancelled) setError("Sign-in check interrupted. Retrying…"); }
-      if (!cancelled) timer = setTimeout(() => void check(), 2500);
+        if (data.status === "approved") { clearTelegramSignIn(); window.location.assign(walletReturnPath(data.returnTo ?? attempt?.returnTo ?? returnTo)); return; }
+        if (data.status === "expired") { clearTelegramSignIn(); setError("Sign-in expired. Try again."); setAttempt(null); return; }
+        setError("");
+      } catch { if (!cancelled) setError("Connection interrupted. Your sign-in is saved. Retrying…"); }
+      finally { checking = false; }
     }
     void check();
-    return () => { cancelled = true; controller.abort(); clearTimeout(timer); };
+    const timer = setInterval(() => void check(), 2500);
+    window.addEventListener("pageshow", check); window.addEventListener("focus", check); document.addEventListener("visibilitychange", check);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener("pageshow", check); window.removeEventListener("focus", check); document.removeEventListener("visibilitychange", check); };
   }, [attempt, returnTo]);
+
   return <div className="wallet-signin-form">
     <p>Choose your wallet.</p>
-    {ready ? <a className="arc-button" onClick={() => { try { sessionStorage.removeItem("argos-tg-signin-pending"); } catch { /* Optional browser storage. */ } }} href={`/api/auth/x/start?returnTo=${encodeURIComponent(returnTo)}`}>Sign in with X</a> : <button className="arc-button" disabled>Sign in with X</button>}
-    <button className="arc-button" onClick={() => void start()} disabled={busy || !ready}>{busy ? "Preparing…" : attempt ? "Restart Telegram sign-in" : "Sign in with Telegram"}</button>
-    {attempt && <div className="otc-notice"><p>Match this code in Telegram: <strong>{attempt.code}</strong></p><a className="arc-button" href={attempt.url} target="_blank" rel="noopener noreferrer">Open Telegram to approve</a><p>Approve in the bot, then return here. Waiting for approval…</p><p>This opens your TG linked wallet. If you haven’t created one, use /createtg in the bot first.</p></div>}
+    {ready && !busy ? <a className="arc-button" onClick={clearTelegramSignIn} href={`/api/auth/x/start?returnTo=${encodeURIComponent(returnTo)}`}>Sign in with X</a> : <button className="arc-button" disabled>Sign in with X</button>}
+    {!attempt && <button className="arc-button" onClick={() => void start()} disabled={busy || !ready}>{busy ? "Opening Telegram…" : "Sign in with Telegram"}</button>}
+    {attempt && <div className="otc-notice">
+      <p>Match this code in Telegram: <strong>{attempt.code}</strong></p>
+      {busy ? <button className="arc-button" disabled>Opening Telegram…</button> : <a className="arc-button" href={attempt.url} target="_blank" rel="noopener noreferrer">Open Telegram</a>}
+      <p>Tap Start in Telegram if shown, then approve the matching code. Return to this browser to finish signing in.</p>
+      <p role="status">Waiting for Telegram approval…</p>
+      <p>No TG wallet yet? The bot will show you how to create one.</p>
+      <button type="button" className="arc-text-link" disabled={busy} onClick={() => void start(true)}>Use another Telegram account</button>
+    </div>}
     {error && <p role="alert">{error}</p>}
+    {!ready && error && <button type="button" className="arc-button" onClick={() => setInitialization(value => value + 1)}>Retry sign-in</button>}
   </div>;
 }
