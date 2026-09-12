@@ -138,6 +138,11 @@ export const work = internalAction({ args: { requestId: v.string() }, handler: a
         if (!response.ok) throw new TelegramServiceError([401,403].includes(response.status) ? "SERVICE_AUTHORIZATION" : [400,404].includes(response.status) ? "SERVICE_CONFIGURATION" : "SERVICE_UNAVAILABLE");
         const reply = arcServiceResult(await response.json());
         if (!reply.pending) result = arcCommandResponse(reply.message, wallet.address, reply.hash, command.kind === "send" && command.chainId === 8453 ? 8453 : 5042);
+        else if (reply.processing) {
+          const action = command.kind === "send" && command.chainId === 8453 ? "Base withdrawal" : command.kind === "swap_token_for_token" ? "Swap" : command.kind[0].toUpperCase() + command.kind.slice(1);
+          try { await ctx.runAction(internal.telegram.deliverNativeWalletMessage, { walletId: wallet._id, requestId: `telegram-processing:${row.requestId}`, text: `${action} processing.` }); }
+          catch { /* A progress notice failure must not change transaction recovery. */ }
+        }
       }
       } catch (error) {
         const readOnly = ["show_wallet", "show_balance"].includes(command.kind);

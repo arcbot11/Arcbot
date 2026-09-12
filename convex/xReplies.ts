@@ -1755,6 +1755,9 @@ export const retryInteraction = internalAction({
       } else if (intent.kind === "unknown_wallet") {
         reply = "Include the full command, token, amount and recipient where required. See https://www.argosbot.io/guide";
         ok = false;
+      } else if (intent.command.kind === "unknown") {
+        reply = intent.command.reason;
+        ok = false;
       } else {
         const preparedMedia = await prepareReferencedLaunchImage(ctx, {
               postId,

@@ -1,5 +1,6 @@
 import { retiredSocialKind, retiredSocialRequest } from "./retired-social-commands";
 import { socialAddressLinks } from "./social-address-links";
+import { tokenClarificationWithoutWallet } from "./public-links";
 export const X_CONTRACT_CLARIFICATION_TTL_MS = 10 * 60_000;
 
 export const X_COMMAND_HELP = "Tag @TheArgosBot with a full command.\n\nshow my wallet\nbuy 10 USDC of TICKER\nsell 100 TICKER\nswap 50% TOKEN for OTHER\nsend 10 USDC to @user\nburn 100 TICKER\n\nGuide: https://www.argosbot.io/guide";
@@ -31,6 +32,7 @@ export function retiredXWorkflow(commandKind?: string, stateJson?: string) {
 
 /** Shared wallet errors must not invite an X conversation to execute a command. */
 export function xCommandReply(text: string, contractClarification = false) {
+  text = tokenClarificationWithoutWallet(text) ?? text;
   let result = text.replace(/\s*(?:Next command\.?|Anything else\?)\s*$/i, "");
   if (retiredSocialRequest(text) || /^Fees are assigned to |^Could not verify who fees are assigned|^Could not verify the fee assignment/.test(text)) return "";
   result = result.replace(/^Arc mainnet \(5042\)\r?\n/gm, "")

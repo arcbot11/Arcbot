@@ -548,10 +548,6 @@ export const processUpdate = internalAction({
         else if (!parsed || !telegramRecipientAllowed(parsed)) await sendMessage(chatId, `${label}\n\n${TELEGRAM_FORMATS[input.name] || "Use /wallet or /balance [TICKER or contract]."}`);
         else {
           await ctx.runMutation(internal.telegramWallets.enqueue, { updateId: args.updateId, name: input.name, args: input.args });
-          if (!["show_wallet", "show_balance"].includes(parsed.kind)) {
-            const action = parsed.kind === "send" && parsed.chainId === 8453 ? "Base withdrawal" : parsed.kind === "swap_token_for_token" ? "Swap" : parsed.kind[0].toUpperCase() + parsed.kind.slice(1);
-            await sendMessage(chatId, `${label}\n\n${action} processing.`);
-          }
         }
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "completed" });
         return;
@@ -588,8 +584,10 @@ export const processUpdate = internalAction({
             ...(recipientAddress ? { recipientAddress } : {}),
           });
           if (result.pending || result.deferred) {
-            const action = parsedCommand.kind === "send" && parsedCommand.chainId === 8453 ? "Base withdrawal" : parsedCommand.kind === "swap_token_for_token" ? "Swap" : parsedCommand.kind[0].toUpperCase() + parsedCommand.kind.slice(1);
-            await sendMessage(chatId, `${telegramWalletLabel("x",state.xUsername,Boolean(state.native && state.link))}\n\n${action} processing.`);
+            if (result.processing) {
+              const action = parsedCommand.kind === "send" && parsedCommand.chainId === 8453 ? "Base withdrawal" : parsedCommand.kind === "swap_token_for_token" ? "Swap" : parsedCommand.kind[0].toUpperCase() + parsedCommand.kind.slice(1);
+              await ctx.runAction(internal.telegram.deliverWalletMessage, { telegramUserId, telegramChatId: chatId, ownerXUserId: link.ownerXUserId, requestId: `telegram-processing:${requestId}`, text: `${action} processing.` });
+            }
           } else {
             await ctx.runMutation(internal.telegramDeliveries.setText, { requestId, text: telegramResponse(result.message) });
             await ctx.runAction(internal.telegramDeliveries.deliver, { requestId });
@@ -653,8 +651,9 @@ export const deliverNativeWalletMessage = internalAction({
     const identity = { telegramUserId: wallet.telegramUserId, telegramChatId: wallet.telegramChatId, requestId: args.requestId };
     if (await ctx.runQuery(internal.telegram.deliveredMessage, identity)) return true;
     const state = await ctx.runQuery(internal.telegramWallets.context, { telegramUserId: wallet.telegramUserId, telegramChatId: wallet.telegramChatId });
-    await sendMessage(wallet.telegramChatId, [telegramWalletLabel("tg", null, Boolean(state.native && state.link)), args.text].filter(Boolean).join("\n\n"));
-    await ctx.runMutation(internal.telegram.recordMessage, { ...identity, role: "assistant", text: args.text });
+    const text = telegramResponse(args.text);
+    await sendMessage(wallet.telegramChatId, [telegramWalletLabel("tg", null, Boolean(state.native && state.link)), text].filter(Boolean).join("\n\n"));
+    await ctx.runMutation(internal.telegram.recordMessage, { ...identity, role: "assistant", text });
     return true;
   },
 });

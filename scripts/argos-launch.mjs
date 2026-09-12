@@ -9,19 +9,21 @@ const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const args=process.argv.slice(2);
 const crankFees=args.length===2&&args[1]==='--crank-fees';
 const creatorFees=args.length===2&&(args[1]==='--creator-fees'||crankFees);
+const creatorFeeRun=process.env.ARGOS_CREATOR_FEE_RUN_ID;
+if(creatorFeeRun&&!/^[a-zA-Z0-9-]{1,48}$/.test(creatorFeeRun))throw Error('Invalid creator fee run ID.');
 const crankRun=process.env.ARGOS_CRANK_RUN_ID??'first';
 if(crankFees&&!/^[a-zA-Z0-9-]{1,48}$/.test(crankRun))throw Error('Invalid crank run ID.');
 const personalSell=args[1]==='--personal-sell';
 const validPersonalArgs=args.length===5||(args.length===7&&!personalSell&&args[5]==='--percent'&&['45','50','95'].includes(args[6]));
 const personalPercent=personalSell?50:args.length===7?Number(args[6]):95;
-const personal=validPersonalArgs&&['--personal','--personal-sell'].includes(args[1])&&/^Personal[1-8]$/.test(args[2])&&args[3]==='--token'&&/^0x[0-9a-fA-F]{40}$/.test(args[4])?args[2]:null;
+const personal=validPersonalArgs&&['--personal','--personal-sell'].includes(args[1])&&/^Personal[1-9]$/.test(args[2])&&args[3]==='--token'&&/^0x[0-9a-fA-F]{40}$/.test(args[4])?args[2]:null;
 if(args[0]==='--help'||(args.length!==1&&!personal&&!creatorFees)||!['--preview','--execute','--resume','--status','--abort'].includes(args[0])){
-  console.log('Usage: node --use-system-ca --env-file-if-exists=.env.local --import ./scripts/register-typescript.mjs scripts/argos-launch.mjs --preview|--execute|--resume|--status|--abort [--personal Personal1..Personal8 --token ACTUAL_ARGOS_ADDRESS --percent 45|50|95]');
+  console.log('Usage: node --use-system-ca --env-file-if-exists=.env.local --import ./scripts/register-typescript.mjs scripts/argos-launch.mjs --preview|--execute|--resume|--status|--abort [--personal Personal1..Personal9 --token ACTUAL_ARGOS_ADDRESS --percent 45|50|95]');
   process.exit(args[0]==='--help'?0:1);
 }
 const batchId=process.env.ARGOS_PERSONAL_BATCH_ID;
 if(batchId&&(!personal||personalSell||!/^[a-z0-9-]{1,64}$/.test(batchId)))throw Error('Invalid personal buy batch ID.');
-const mode=args[0],privateDir=path.join(root,'.deployment-private'),journalPath=path.join(privateDir,crankFees?`argos-crank-${crankRun}-v1.json`:creatorFees?'argos-creator-fees-20260911-v1.json':personal?`argos-${personalSell?'sell50':personalPercent===95?'buy':`buy${personalPercent}`}-${personal.toLowerCase()}-${args[4].toLowerCase()}${batchId?`-${batchId}`:''}-v1.json`:'argos-launch-v1.json');
+const mode=args[0],privateDir=path.join(root,'.deployment-private'),journalPath=path.join(privateDir,crankFees?`argos-crank-${crankRun}-v1.json`:creatorFees?`argos-creator-fees-${creatorFeeRun??'20260911'}-v1.json`:personal?`argos-${personalSell?'sell50':personalPercent===95?'buy':`buy${personalPercent}`}-${personal.toLowerCase()}-${args[4].toLowerCase()}${batchId?`-${batchId}`:''}-v1.json`:'argos-launch-v1.json');
 const readJson=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 const serial=x=>JSON.stringify(x,(_,v)=>typeof v==='bigint'?v.toString():v,2);
 const same=(a,b)=>a.toLowerCase()===b.toLowerCase();
@@ -34,7 +36,7 @@ const sequence=await readJson(path.join(root,'docs/launch/EXECUTION-SEQUENCE.jso
 const bundle=await readJson(path.join(root,'docs/launch/argus-bundle-2026-09-11.json'));
 const abi=bundle.contracts.ArgusV4Portal6.abi;
 const erc=parseAbi(['function approve(address,uint256) returns(bool)','function allowance(address,address) view returns(uint256)','function balanceOf(address) view returns(uint256)','function symbol() view returns(string)','function name() view returns(string)','function decimals() view returns(uint8)','event Transfer(address indexed from,address indexed to,uint256 value)']);
-const digest=createHash('sha256').update(serial(creatorFees?{purpose:crankFees?'collect-crank-claim':'creator-fees',...(crankFees?{run:crankRun}:{}),token:draft.predictedToken,creator:draft.creatorWallet,chainId:5042}:personal?{personal,token:args[4].toLowerCase(),percent:personalPercent,chainId:5042}: {draft,sequence})).digest('hex');
+const digest=createHash('sha256').update(serial(creatorFees?{purpose:crankFees?'collect-crank-claim':'creator-fees',...(crankFees?{run:crankRun}:creatorFeeRun?{run:creatorFeeRun}:{}),token:draft.predictedToken,creator:draft.creatorWallet,chainId:5042}:personal?{personal,token:args[4].toLowerCase(),percent:personalPercent,chainId:5042}: {draft,sequence})).digest('hex');
 let journal,lock;
 try{journal=await readJson(journalPath);}catch(e){if(e.code!=='ENOENT')throw e;}
 if(mode==='--status'){

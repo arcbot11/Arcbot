@@ -66,7 +66,7 @@ export async function POST(request:NextRequest){
         if(!["completed","reverted"].includes(tx.status))tx=await advanceTransaction(id);
         if(tx.status==="cancelled")return json({ok:false,message:tx.nonceConflict?"Request replaced by another transaction. Check wallet history.":"Request cancelled before signing. Funds released. Submit a new command."});
         if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
-        if(tx.status!=="completed")return json({pending:true,message:"Arc transaction pending. Check wallet history.",hash:tx.hash});
+        if(tx.status!=="completed")return json({pending:true,processing:true,message:"Arc transaction pending. Check wallet history.",hash:tx.hash});
         if(tx.leg!=="allowance")return json({ok:true,message:await completedMessage(command,tx,auth.source==="x"),hash:tx.hash});
         continue;
       }
@@ -96,11 +96,11 @@ export async function POST(request:NextRequest){
       // the durable transaction rather than declaring a preparation failure.
       preparing=false;
       const record=await repo.command<Transaction>("prepare",{id,owner:auth.owner,wallet,chainId,leg:prepared.leg,...(prepared.swapOutput?{swapOutput:prepared.swapOutput}:{}),sourceRequestId:requestId,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
-      try{tx=await advanceTransaction(record.id);}catch{return json({pending:true,message:"Arc request recorded. Funds remain reserved for verification."});}
+      try{tx=await advanceTransaction(record.id);}catch{return json({pending:true,processing:true,message:"Arc request recorded. Funds remain reserved for verification."});}
       if(tx.status==="cancelled")return json({ok:false,message:tx.nonceConflict?"Request replaced by another transaction. Check wallet history.":"Request cancelled before signing. Funds released. Submit a new command."});
         if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
       if(tx.status==="completed"&&tx.leg!=="allowance")return json({ok:true,message:await completedMessage(command,tx,auth.source==="x"),hash:tx.hash});
-      return json({pending:true,message:"Arc request recorded. Check wallet history.",hash:tx.hash});
+      return json({pending:true,processing:true,message:"Arc request recorded. Check wallet history.",hash:tx.hash});
     }
     return json({ok:false,message:"Approval steps exceeded the request limit. Check wallet history."});
   }catch(e){

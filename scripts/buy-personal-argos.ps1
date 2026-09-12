@@ -1,6 +1,6 @@
 param(
     [Parameter(Mandatory=$true)]
-    [ValidateSet('Personal1','Personal2','Personal3','Personal4','Personal5','Personal6','Personal7','Personal8')]
+    [ValidateSet('Personal1','Personal2','Personal3','Personal4','Personal5','Personal6','Personal7','Personal8','Personal9')]
     [string]$Wallet,
     [ValidateSet(45,50,95)]
     [int]$Percent = 95,

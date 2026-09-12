@@ -1,4 +1,5 @@
 import { ARC_BOT_TELEGRAM_USERNAME } from "./project-config";
+import { tokenClarificationWithoutWallet } from "./public-links";
 import type { WalletCommand } from "../convex/walletCommands";
 
 export const TELEGRAM_HELP = "Argos Bot\nYour Arc Chain wallet.\n\nUse the buttons or a full /command. Arc gas is paid in USDC. Token names accept a ticker or contract address. Sends require a full wallet address.";
@@ -78,6 +79,7 @@ export function telegramWalletCommand(name: string, args: string): WalletCommand
 }
 
 export function telegramResponse(text: string) {
+  text = tokenClarificationWithoutWallet(text) ?? text;
   return text.replace(/^(?:Confirmed: |Action needed: |Pending: )/, "")
     .replace(/reply\s+[“"']?resume[”"']?/gi, "submit the full /command again")
     .replace(/Reply with a CA to buy this token\./gi, "Use its contract address in a full /buy command.")

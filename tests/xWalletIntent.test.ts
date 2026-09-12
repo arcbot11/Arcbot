@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { canonicalCommandText, conversationalWalletMessage, decodePersistedXWalletIntent, explicitInformationalTopic, groundedCanonicalCommand, intentClassifierPrompt, isDirectLaunchHelpRequest, isPromotionalLaunchReference, parameterExtractorPrompt, parseXWalletIntent, requestedOperations, straightforwardCommandOperation, unknownWalletMessage, walletHelpMessage } from "../convex/xWalletIntent";
-import { parseWalletCommand } from "../convex/walletCommands";
+import { BUY_BURN_MISSING_TOKEN, parseWalletCommand } from "../convex/walletCommands";
 
 describe("deterministic X wallet replies", () => {
   it("grounds every supported cbBTC launch-pair synonym", () => {
@@ -323,7 +323,7 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("rejects targetless buyback-and-burn wording instead of treating ETH as a burn token", async () => {
-    await expect(parseXWalletIntent("@TheArgosBot Can you now buyback 0.05 ETH and burn it?", false)).resolves.toEqual({ kind: "unknown_wallet" });
+    await expect(parseXWalletIntent("@TheArgosBot Can you now buyback 0.05 ETH and burn it?", false)).resolves.toEqual({ kind: "command", command: { kind: "unknown", reason: BUY_BURN_MISSING_TOKEN } });
   });
 
   it("accepts ticker labels with optional dollars and wrapping quotes", () => {

@@ -96,7 +96,9 @@ export async function POST(request:NextRequest) {
       const prior=await repo.read<Listing|null>({id:`listing:${session.owner}:${body.requestId}`});
       if(prior){assertListingRetry(prior,body.amount,body.premium,session.walletAddress);return json(prior);}
       const preview=await listingPreview(session.walletAddress,body.amount,body.premium);
-      if(BigInt(preview.gasReserveWei)>BigInt(body.maxGasReserveWei))throw new WebError("Gas changed. Review the listing again.");
+      // Accept ordinary gas movement using the fresh, budget-checked preview.
+      // Ask for another review only when the total reserve doubles or more.
+      if(BigInt(preview.gasReserveWei)>=2n*BigInt(body.maxGasReserveWei))throw new WebError("Gas changed. Review the listing again.");
       const snapshot=preview.snapshot;
       if(snapshot.nonce!==snapshot.pendingNonce)throw new WebError("Wallet has a pending transaction.");
       const listing=await repo.command<Listing>("escrow_listing",{id:`listing:${session.owner}:${body.requestId}`,owner:session.owner,seller:session.walletAddress,

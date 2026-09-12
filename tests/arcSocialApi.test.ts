@@ -64,7 +64,8 @@ describe("Arc social execution boundary",()=>{
  it.each(["RPC timed out","Malformed RPC response"])("keeps transient preparation failures retryable: %s",async message=>{
    command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:100};
    m.trade.mockRejectedValue(Error(message));
-   expect(await(await POST(request())).json()).toMatchObject({pending:true});
+   const result=await(await POST(request())).json();
+   expect(result).toMatchObject({pending:true});expect(result.processing).not.toBe(true);
    expect(m.command).not.toHaveBeenCalled();
  });
  it.each(["Unsupported Argus pool configuration.","Not enough gas"])("does not finalize uncertain recovery from error wording: %s",async message=>{

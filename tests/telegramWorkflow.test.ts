@@ -53,7 +53,7 @@ describe("Telegram command-only interface", () => {
 describe("Telegram update execution boundary", () => {
   beforeEach(()=>{vi.stubEnv("TELEGRAM_BOT_TOKEN","offline"); vi.stubGlobal("fetch",vi.fn(async()=>new Response(JSON.stringify({ok:true}),{status:200})));});
   afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
-  async function run(text:string,callback=false,result: {ok:boolean;message:string;pending?:boolean;deferred?:boolean}={ok:true,message:"Arc transaction confirmed."}) {
+  async function run(text:string,callback=false,result: {ok:boolean;message:string;pending?:boolean;deferred?:boolean;processing?:boolean}={ok:true,message:"Arc transaction confirmed."}) {
     const ctx={
       runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegram:consumeRateLimit"?true:getFunctionName(ref)==="telegram:consumeLinkNonce"?{status:"linked"}:null),
       runQuery:vi.fn(async()=>({valid:true,link:{_id:"link1",ownerXUserId:"99"}})),
@@ -107,18 +107,34 @@ describe("Telegram update execution boundary", () => {
     expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("telegram:setConversation");
     expect(vi.mocked(fetch).mock.calls.some(c=>String(c[1]?.body).includes("/buy 10 USDC ARGOS"))).toBe(true);
   });
+  it("does not announce native processing merely because a buy is queued",async()=>{
+    const ctx={runMutation:vi.fn(async()=>true),runQuery:vi.fn(async()=>({valid:true,native:{_id:"native"},selected:"tg"})),runAction:vi.fn()};
+    await (processUpdate as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{updateId:"native-buy",updateJson:JSON.stringify({message:{message_id:2,text:"/buy 10 USDC UNKNOWN",from:{id:1},chat:{id:1,type:"private"}}})});
+    expect(ctx.runMutation.mock.calls.length).toBeGreaterThan(0);
+    expect(ctx.runAction).not.toHaveBeenCalled();
+    expect(vi.mocked(fetch).mock.calls.some(c=>String(c[1]?.body).includes("processing."))).toBe(false);
+  });
   it("executes a persisted switch even when Telegram rejects its callback acknowledgement",async()=>{
     vi.mocked(fetch).mockImplementation(async url=>new Response(JSON.stringify(String(url).endsWith("answerCallbackQuery")?{ok:false,description:"query is too old"}:{ok:true})));
     const ctx=await run("/usetg",true);
     expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).toContain("telegramWallets:select");
   });
   it.each(["buy", "sell"])("keeps pending %s replies out of the final delivery queue",async kind=>{
-    const ctx=await run(kind==="buy"?"/buy 10 USDC ARGOS":"/sell 100 ARGOS",false,{ok:false,pending:true,message:"Arc request recorded. Check wallet history."});
+    const ctx=await run(kind==="buy"?"/buy 10 USDC ARGOS":"/sell 100 ARGOS",false,{ok:false,pending:true,processing:true,message:"Arc request recorded. Check wallet history."});
     expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("telegramDeliveries:setText");
     expect(ctx.runAction.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("telegramDeliveries:deliver");
     const bodies=vi.mocked(fetch).mock.calls.map(c=>String(c[1]?.body)).join("\n");
-    expect(bodies).toContain(kind==="buy"?"Buy processing.":"Sell processing.");
+    expect(ctx.runAction).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({requestId:expect.stringContaining("telegram-processing:"),text:kind==="buy"?"Buy processing.":"Sell processing."}));
     expect(bodies).not.toContain("request recorded");
+  });
+  it.each([
+    {ok:false,pending:true,message:"Waiting for service."},
+    {ok:false,message:"Token UNKNOWN is not in the index. Enter its contract address."},
+    {ok:false,message:"More than one token uses SAME. Enter its contract address."},
+  ])("does not announce processing before execution: $message",async result=>{
+    const ctx=await run("/buy 10 USDC UNKNOWN",false,result);
+    expect(ctx.runAction.mock.calls.some(c=>getFunctionName(c[0])==="telegram:deliverWalletMessage")).toBe(false);
+    expect(vi.mocked(fetch).mock.calls.some(c=>String(c[1]?.body).includes("processing."))).toBe(false);
   });
   it("sends only a parsed Arc command through the authorized wallet path",async()=>{
     const ctx=await run("/buy 10 USDC ARGOS");

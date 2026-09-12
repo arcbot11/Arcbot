@@ -9,7 +9,7 @@ import { walletExtractionSchema, walletIntentSchema } from "./xWalletAiSchemas";
 import { stripDirectLaunchImageInstruction } from "../lib/x-launch-image-policy";
 import { parseFeeUpgradePhrase } from "../lib/fee-upgrade-command";
 import { GENERAL_GUIDED_HELP_MESSAGE } from "../lib/guided-help-workflow";
-import { oversizedLaunchTicker, LAUNCH_TICKER_TOO_LONG } from "./walletCommands";
+import { oversizedLaunchTicker, LAUNCH_TICKER_TOO_LONG, BUY_BURN_MISSING_TOKEN } from "./walletCommands";
 
 export type WalletHelpTopic = "capabilities" | "wallet" | "fund" | "gas" | "balance" | "send" | "buy_sell" | "burn" | "launch" | "pairs" | "fees";
 export type XWalletIntent =
@@ -39,8 +39,8 @@ export function decodePersistedXWalletIntent(value: string): XWalletIntent {
   }
   if (parsed.kind === "command") {
     const rejection = parsed.command as { kind?: unknown; reason?: unknown } | undefined;
-    if (rejection?.kind === "unknown" && rejection.reason === LAUNCH_TICKER_TOO_LONG)
-      return { kind: "command", command: { kind: "unknown", reason: LAUNCH_TICKER_TOO_LONG } };
+    if (rejection?.kind === "unknown" && (rejection.reason === LAUNCH_TICKER_TOO_LONG || rejection.reason === BUY_BURN_MISSING_TOKEN))
+      return { kind: "command", command: { kind: "unknown", reason: rejection.reason } };
     const command = validateStructuredWalletCommand(parsed.command);
     if (command && command.kind !== "unknown") return { kind: "command", command };
   }
@@ -1069,6 +1069,9 @@ export async function parseXWalletIntent(text: string, hasImage: boolean, diagno
   if (!hasPromptInjection(operativeText) && isDirectLaunchHelpRequest(operativeText))
     return finish({ kind: "help", topic: "launch" }, "deterministic_guard");
   if (hasNonExecutableFraming(operativeText)) return finish({ kind: "irrelevant" }, "deterministic_guard");
+  if (!hasPromptInjection(operativeText) && strictReassignment.kind === "unknown"
+    && strictReassignment.reason === BUY_BURN_MISSING_TOKEN && requestedOperations(operativeText).length === 1)
+    return finish({ kind: "command", command: strictReassignment }, "deterministic_guard");
   if(operativeText!==originalText&&completeXCommand(operativeText)&&!hasPromptInjection(operativeText)&&requestedOperations(operativeText).length===1){
     const direct=groundedCanonicalCommand(operativeText);
     if(direct&&["buy","sell","send","burn","swap_token_for_token","buy_and_send","buy_and_burn","show_wallet","show_balance"].includes(direct.kind))return finish({kind:"command",command:direct},"deterministic_guard");

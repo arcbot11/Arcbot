@@ -9,6 +9,7 @@ import { TOP_FIVE_SLIPPAGE_BPS } from "../lib/top-five-recovery";
 import { stripDirectLaunchImageInstruction } from "../lib/x-launch-image-policy";
 
 export type AmountUnit = "eth" | "usd" | "token" | "percent";
+export const BUY_BURN_MISSING_TOKEN = "Specify the token to buy and burn. Example: buy $20 of ARGOS and burn.";
 
 export type WalletCommand =
   | { kind: "create_wallet" }
@@ -481,9 +482,15 @@ export function parseWalletCommand(raw: string): WalletCommand {
   }
   if (/\b(?:buy|purchase)\b/i.test(text) && /\bburn\b/i.test(text)) {
     const buyText = text.replace(/\bpurchase\b/gi, "buy").replace(/\bbuy\s+and\s+(?:send|burn)\b/gi, "buy");
-    const token = tradeToken(buyText, "buy")
-      || text.match(tokenPattern(/\bburn\s+(?:all\s+(?:of\s+)?|the\s+)?\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\b/i))?.[1]
-      || text.match(tokenPattern(/\$(?![0-9])([a-zA-Z][a-zA-Z0-9]{0,31})\b/))?.[1];
+    const candidates = [tradeToken(buyText, "buy"),
+      text.match(tokenPattern(/\bburn\s+(?:all\s+(?:of\s+)?|the\s+)?\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\b/i))?.[1],
+      text.match(tokenPattern(/\$(?![0-9])([a-zA-Z][a-zA-Z0-9]{0,31})\b/))?.[1]];
+    // A connector, spend currency, or pronoun is not a missing token's ticker.
+    // An explicit cashtag still permits real tokens named e.g. $AND or $IT.
+    const token = candidates.find(candidate => candidate && (
+      !/^(?:and|then|burn|it|them|that|those|the|all|of|my|tokens?|please|usdc|usd|dollars?|eth|weth)$/i.test(candidate)
+      || new RegExp(`\\$${candidate}\\b`, "i").test(text)));
+    if (!token) return { kind: "unknown", reason: BUY_BURN_MISSING_TOKEN };
     const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usdc|usd|dollars?)\\b`, "i"));
     const eth = text.match(new RegExp(`${NUMBER}\\s*(?:eth|weth)\\b`, "i"));
     const pair = text.match(tokenPattern(`${NUMBER}\\s+((?!of\\b|worth\\b|usd\\b|dollars?\\b|eth\\b|weth\\b)[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:of\\s+)?\\$?(?:${token || "(?!)"})`, "i"));

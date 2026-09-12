@@ -119,6 +119,7 @@ type CommandResult = {
   transactionHash?: string;
   deferred?: boolean;
   pending?: boolean;
+  processing?: boolean;
 };
 type RuntimeRegistry = {
   contracts: Record<string, string>;
@@ -7022,7 +7023,7 @@ export const continueArcCommand=internalAction({args:{requestId:v.string(),attem
   const savedCommand=JSON.parse(request.normalizedJson??"{}");
   const responseMessage = (message: string, hash?: string) => walletContext?.wallet?.address ? arcCommandResponse(message, walletContext.wallet.address, hash, savedCommand.kind==="send"&&savedCommand.chainId===8453?8453:5042) : message;
   if(["confirmed","failed","rejected"].includes(request.status))return {ok:request.status==="confirmed",message:responseMessage(request.finalMessage??"Check wallet history.", request.transactionHash)};
-  let result:{ok?:boolean;pending?:boolean;message:string;hash?:string};
+  let result:{ok?:boolean;pending?:boolean;processing?:boolean;message:string;hash?:string};
   try{
     const response=await fetch(`${ARC_BOT_SITE_URL}/api/arc/command`,{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:args.requestId}),signal:AbortSignal.timeout(ARC_COMMAND_HTTP_TIMEOUT_MS)});
     if(!response.ok)throw new Error("Arc command service unavailable.");
@@ -7033,7 +7034,7 @@ export const continueArcCommand=internalAction({args:{requestId:v.string(),attem
     // X owns one interaction retry chain, which also publishes the final reply.
     // Do not create a second self-scheduling chain on every X poll.
     if(request.source==="telegram")await ctx.scheduler.runAfter(arcPendingRetryDelay(request._creationTime),internal.wallets.continueArcCommand,{requestId:args.requestId,attempt:(args.attempt??0)+1});
-    return {ok:false,pending:true,deferred:true,message:"",...(result.hash?{transactionHash:result.hash}:{})};
+    return {ok:false,pending:true,deferred:true,...(result.processing?{processing:true}:{}),message:"",...(result.hash?{transactionHash:result.hash}:{})};
   }
   await ctx.runMutation(internal.wallets.updateWalletRequest,{requestId:args.requestId,status:result.ok?"confirmed":"failed",finalMessage:result.message,...(result.hash?{transactionHash:result.hash}:{})});
   return {ok:!!result.ok,message:result.message,...(result.hash?{transactionHash:result.hash}:{})};

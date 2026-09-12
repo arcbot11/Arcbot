@@ -160,6 +160,22 @@ describe("permanent TG wallets without changing X identities", () => {
   });
 });
 describe("menus and shared transaction service", () => {
+  it.each([
+    {ok:false,message:"Token UNKNOWN is not in the index. Enter its contract address."},
+    {ok:false,message:"More than one token uses SAME. Enter its contract address."},
+    {pending:true,message:"Waiting for service."},
+    {pending:true,processing:true,message:"Transaction pending."},
+  ])("announces native processing only after transaction preparation: $message",async reply=>{
+    vi.stubEnv("WEB_AUTH_SECRET","secret");
+    vi.stubGlobal("fetch",vi.fn(async()=>new Response(JSON.stringify(reply))));
+    const row={requestId:"telegram-native:progress",command:JSON.stringify({kind:"buy",amount:"10",unit:"usd",token:"UNKNOWN"}),createdAt:Date.now()};
+    const wallet={_id:"native",address,telegramUserId:"123",telegramChatId:"123"};
+    const ctx={runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegramWallets:claim"?{row,wallet}:true),runAction:vi.fn(async()=>true)};
+    await handler(work)(ctx,{requestId:row.requestId});
+    const notices=ctx.runAction.mock.calls as unknown as [unknown,{text:string;requestId:string}][];
+    expect(notices.some(([,a])=>a.text==="Buy processing.")).toBe("processing" in reply);
+    if("ok" in reply)expect(notices[0][1].text).toBe(reply.message);
+  });
   it.each(["missing", "401", "403", "404"])("reports service failure %s without completing or releasing a financial request",async mode=>{
     vi.stubEnv("WEB_AUTH_SECRET",mode==="missing"?"":"secret");
     vi.stubGlobal("fetch",vi.fn(async()=>new Response("",{status:Number(mode)||401})));
