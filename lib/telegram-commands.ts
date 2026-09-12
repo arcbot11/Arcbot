@@ -6,10 +6,10 @@ export const TELEGRAM_HELP = "Argos Bot\nYour Arc Chain wallet.\n\nUse the butto
 export const TELEGRAM_FORMATS: Record<string, string> = {
   buy: "Buy with Arc USDC:\n/buy 10 USDC ARGOS\n/buy $10 ARGOS",
   sell: "Sell for Arc USDC:\n/sell 100 ARGOS\n/sell $10 ARGOS\n/sell 50% ARGOS\n/sell all ARGOS",
-  swap: "Swap Arc tokens:\n/swap 100 ARGUS for TOKEN\n/swap $10 ARGUS for TOKEN\n/swap 50% ARGUS for TOKEN\n/swap all ARGUS for TOKEN",
-  send: "Send Arc tokens:\n/send 10 USDC to ADDRESS\n/send 100 ARGUS to ADDRESS\n/send $10 ARGUS to ADDRESS\n/send 50% ARGUS to ADDRESS\nReplace ADDRESS with a full 0x wallet address.",
+  swap: "Swap Arc tokens:\n/swap 100 ARGOS for TOKEN\n/swap $10 ARGOS for TOKEN\n/swap 50% ARGOS for TOKEN\n/swap all ARGOS for TOKEN",
+  send: "Send Arc tokens:\n/send 10 USDC to ADDRESS\n/send 100 ARGOS to ADDRESS\n/send $10 ARGOS to ADDRESS\n/send 50% ARGOS to ADDRESS\nReplace ADDRESS with a full 0x wallet address.",
   withdraw: "Withdraw Base ETH:\n/withdraw 0.001 ETH to ADDRESS\n/withdraw $10 to ADDRESS\nReplace ADDRESS with a full 0x wallet address. Base gas is paid in ETH.",
-  burn: "Burn Arc tokens. Burns are permanent.\n/burn 100 ARGUS",
+  burn: "Burn Arc tokens. Burns are permanent.\n/burn 100 ARGOS",
 };
 export const TELEGRAM_MENU = { inline_keyboard: [
   [{ text: "Wallet", callback_data: "/wallet" }, { text: "Balances", callback_data: "/balance" }],
