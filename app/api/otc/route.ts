@@ -1,3 +1,4 @@
+import { settlementFailure } from "@/lib/otc/settlement-error";
 import { getAddress, zeroAddress } from "viem";
 import { settlementSteps } from "@/lib/otc/escrow-model";
 import {neverSigned} from "@/lib/otc/unsigned-recovery";
@@ -55,7 +56,17 @@ export async function GET(request:NextRequest) {
         return !next||neverSigned(next)||Boolean(next.status==="reverted"&&next.hash&&next.blockNumber)||Boolean(next.status==="cancelled"&&next.nonceConflict);
       };
       const orders=await Promise.all(records.filter(r=>r.kind==="order"&&r.status!=="expired"&&r.status!=="quoted").map(async r=>{
-        const o=r as Order; return {received:arcOrderReceived(o,records.filter((r):r is Transaction=>r.kind==="transaction")),listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,updatedAt:o.updatedAt,side:o.owner===session.owner?"buy":"sell"};
+        const o=r as Order;
+        const evidence=records.filter((r):r is Transaction=>r.kind==="transaction");
+        if(o.escrow&&o.status!=="completed"){
+          const missing=["deposit","arc","seller","fee"].map(step=>'escrow:'+o.id+':'+step+':'+(o.escrow!.attempts?.[step]??0)).filter(id=>!evidence.some(tx=>tx.id===id));
+          for(const tx of await Promise.all(missing.map(id=>repo.read<Transaction|null>({id}))))if(tx?.kind==="transaction"&&tx.escrowRef?.orderId===o.id)evidence.push(tx);
+        }
+        const received=arcOrderReceived(o,evidence);
+        const stepTx=(step:string)=>evidence.find(tx=>tx.escrowRef?.orderId===o.id&&tx.escrowRef.step===step&&tx.status==="completed"&&tx.hash&&tx.blockNumber);
+        const remainingStep=!stepTx("seller")?"Seller payment":!stepTx("fee")?"Service fee transfer":"Remaining gas";
+        const note=o.status==="completed"?undefined:received?(o.note?remainingStep+": "+o.note:remainingStep+" is pending."):o.note;
+        return {received,listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash??stepTx("deposit")?.hash,payoutHash:o.payoutHash??stepTx("arc")?.hash,note,createdAt:o.createdAt,updatedAt:o.updatedAt,side:o.owner===session.owner?"buy":"sell"};
       }));
       const transactions=records.filter((r):r is Transaction=>r.kind==="transaction"&&r.leg!=="allowance"&&r.leg!=="approval").map(transactionHistory);
       const listings=await Promise.all(records.filter((r):r is Listing=>r.kind==="listing").map(async listing=>({...positionHistory(listing,
@@ -71,8 +82,10 @@ export async function GET(request:NextRequest) {
   }catch{return json({listings:[],stats:{count:0,available:"0",lowestBps:null,averageBps:null},available:false,enabled:false});}
 }
 export async function POST(request:NextRequest) {
+  let operation:"quote"|undefined;
   try{
     const session=await websiteSession(request,true),body=bodySchema.parse(await boundedJson(request,4096));
+    if(body.action==="quote"||body.action==="quote_preview")operation="quote";
     const repo=repository();
     if(body.action==="retry_escrow"){const r=await repo.command("escrow_retry",{listingId:body.listingId,orderId:body.orderId,owner:session.owner});return json(r);}
     if(body.action==="cancel"){const r=await repo.command("cancel",{id:body.listingId,owner:session.owner});return json(r);}
@@ -109,11 +122,12 @@ export async function POST(request:NextRequest) {
     if(body.action==="quote"||body.action==="quote_preview"){
       const listing=await repo.read<Listing|null>({id:body.listingId});
       if(!listing||listing.kind!=="listing")throw new WebError("Listing not found.",404);
+      if(listing.pendingFills>0||BigInt(listing.held??"0")>0n||listing.escrow?.settlementOrderId)throw new WebError("Listing is settling another order. Try again shortly.");
       const amount=usdc(body.amount);
       if(listing.status!=="active"||amount>BigInt(listing.available))throw new WebError("This listing no longer has that much USDC available. Enter a smaller amount.");
-      const rate=await ethPrice();
+      let rate=await ethPrice();
       if(!listing.escrow?.address||listing.escrow.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new WebError("Listing escrow configuration changed.");
-      const cost=price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros),SERVICE_FEE_BPS);
+      let cost=price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros),SERVICE_FEE_BPS);
       const from=getAddress(session.walletAddress),to=getAddress(listing.escrow.address);
       // One validated native-transfer estimate includes Base L1/operator fees.
       // All settlement recipients must be EOAs; there is no calldata or contract execution.
@@ -125,10 +139,17 @@ export async function POST(request:NextRequest) {
       const estimate=BigInt(payment.gasWei),gas=escrowBaseGasBudget([estimate,estimate,estimate],config.base.maxTotalFeeWei);
       const perTransfer=gas.perTransferWei;
       const funding=await repo.read<Wallet|null>({id:walletId(8453,session.walletAddress)});
+      // RPC and storage checks can outlast the price's validity. Refresh before
+      // quoting and recheck affordability against the updated payment amount.
+      // These are verified EOA transfers; changing value does not change gas.
+      if(Date.now()-rate.priceAt>15_000){
+        rate=await ethPrice();
+        cost=price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros),SERVICE_FEE_BPS);
+      }
       const required=BigInt(cost.totalWei)+gas.settlementWei+perTransfer;
       if(BigInt(payment.snapshot.balanceWei)-(funding?locked(funding):0n)<required)throw new WebError("Not enough available Base ETH for the amount, premium, 1.5% fee, and gas.");
       if(body.action==="quote_preview")return json({totalCostWei:required.toString()});
-      // Durable quote reservation checks payment + settlement gas + deposit gas together.
+      // Save quote terms only. Confirmation reserves inventory and buyer funds.
       return json(publicOrder(await repo.command<Order>("quote",{id:`order:${randomUUID()}`,owner:session.owner,buyer:session.walletAddress,listingId:listing.id,amount:body.amount,paymentAsset:"ETH",...rate,baseGasWei:perTransfer.toString(),escrowGasBudgetWei:gas.settlementWei.toString(),baseBalanceWei:payment.snapshot.balanceWei,baseBlock:payment.snapshot.block,router:listing.escrow.address,feeRecipient:listing.escrow.feeRecipient})));
     }
     const order=await repo.read<Order|null>({id:body.orderId});
@@ -140,7 +161,7 @@ export async function POST(request:NextRequest) {
       const [base,arc]=await Promise.all([balanceSnapshot(8453,session.walletAddress),balanceSnapshot(5042,order.escrow.address)]);
       if(base.nonce!==base.pendingNonce||arc.nonce!==arc.pendingNonce)throw new WebError("Wallet has a pending transaction.");
       await repo.command("accept",{id:order.id,owner:session.owner,snapshot:{baseBalanceWei:base.balanceWei,baseBlock:base.block,arcBalanceWei:arc.balanceWei,arcBlock:arc.block,...(paymentAsset(order)==="USDC"?{baseUsdcBalance:await baseUsdcBalance(session.walletAddress,base.block)}:{})}});
-      try{await advanceOrder(order.id);}catch{await repo.command("note",{id:order.id,note:"Escrow settlement is waiting for verification. Funds remain held."});}
+      try{await advanceOrder(order.id);}catch(error){await repo.command("note",{id:order.id,note:settlementFailure(error)});}
       return json(publicOrder(await repo.read<Order>({id:order.id})));
     }
     const [base,arc]=await Promise.all([balanceSnapshot(8453,session.walletAddress),prepareCall(5042,payoutCall(order))]);
@@ -150,7 +171,7 @@ export async function POST(request:NextRequest) {
     // A failure after acceptance does not undo the durable order or release its inventory.
     try{await advanceOrder(order.id);}catch{await repo.command("note",{id:order.id,note:"Order accepted. Settlement is waiting for verification. Funds remain reserved."});}
     return json(publicOrder(await repo.read<Order>({id:accepted.id})));
-  }catch(error){return webFailure(error);}
+  }catch(error){return webFailure(error,operation);}
 }
 
 function publicOrder(order:Order){

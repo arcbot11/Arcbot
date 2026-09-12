@@ -36,6 +36,7 @@ export async function provisionEscrow(listing:Listing){
 async function runStep(listing:Listing,step:EscrowStep,order?:Order){
   const repo=repository();
   if(order)order=await repo.read<Order>({id:order.id});
+  if(order?.status==="payment_failed")return false;
   const id=escrowTxId(listing,step,order);let record=await repo.read<Transaction|null>({id});
   if(record?.status==="reverted")throw new Error("Escrow transaction reverted. Retry settlement after checking balances.");
   if(!record){
@@ -122,7 +123,7 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
     // Continue a promptly mined payout in this worker pass instead of waiting a minute per leg.
     const receipt=await chainClient(latest.chainId).waitForTransactionReceipt({hash:latest.hash as Hex,timeout:8000,pollingInterval:1000}).catch(()=>null);
     if(receipt){
-      if(step==="deposit"&&receipt.status==="success"){
+      if(step==="deposit"){
         const block=await chainClient(8453).getBlock({blockNumber:receipt.blockNumber});
         // Keep this live worker pass through the short deposit window, avoiding
         // an extra minute waiting for the next scheduled recovery pass.
@@ -133,7 +134,10 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
       await advanceTransaction(id,true);latest=await repo.read<Transaction>({id});
     }
   }
-  if(latest.status==="reverted")throw new Error("Escrow transaction reverted. Retry settlement after checking balances.");
+  if(latest.status==="reverted"){
+    if(step==="deposit"&&order&&(await repo.read<Order>({id:order.id})).status==="payment_failed")return false;
+    throw new Error("Escrow transaction reverted. Retry settlement after checking balances.");
+  }
   return latest.status==="completed";
 }
 export async function advanceEscrowPosition(id:string){
@@ -166,6 +170,7 @@ export async function advanceEscrowOrder(order:Order){
       await repo.command("escrow_advance",{listingId:listing.id,orderId:order.id});
       return;
     }
+    if(step!=="return_gas")await repo.command("escrow_advance",{listingId:listing.id,orderId:order.id,progressOnly:true});
   }
   // A resumed order may already have every receipt, including its refund.
   // Finalize once with the balance evidence; an intermediate advance without it throws.

@@ -42,6 +42,8 @@ export type Listing = {
 };
 export type OrderStatus = "quoted" | "payment_pending" | "payment_submitted" | "payment_finalized" | "payout_submitted" | "payout_failed" | "completed" | "expired" | "payment_failed";
 export type Order = {
+  /** Missing on legacy orders, whose inventory was reserved at quote time. */
+  listingReserved?: boolean;
   kind: "order"; id: string; owner: string; buyer: string; seller: string; sellerOwner: string; listingId: string;
   escrow?: EscrowOrder; paymentAsset?: PaymentAsset; approvalGasWei?: string; approvalHash?: string; approvalFinalized?: boolean;
   amount: string; premiumBps: number; ethUsdMicros: string; priceAt: number;
@@ -130,8 +132,10 @@ export async function createQuote(store: Store, input: { id: string; owner: stri
   if (existing) { if (existing.owner !== input.owner) throw new Error("Quote owner mismatch."); return existing; }
   const listing = await store.get<Listing>(input.listingId);
   if (!listing || listing.kind !== "listing" || listing.status !== "active") throw new Error("Listing is not available.");
-  if(listing.escrow&&(!listing.escrow.address||listing.pendingFills>0))throw new Error("Listing is settling another order. Try again shortly.");
-  if (listing.owner === input.owner || listing.seller.toLowerCase() === input.buyer.toLowerCase()) throw new Error("You cannot buy your own listing.");
+  if(listing.pendingFills>0||BigInt(listing.held)>0n||listing.escrow&&(!listing.escrow.address||listing.escrow.settlementOrderId))throw new Error("Listing is settling another order. Try again shortly.");
+  // Escrow keeps payment and delivery separate even when both parties share a
+  // wallet. Legacy direct-payment listings do not support that verification.
+  if (!listing.escrow && (listing.owner === input.owner || listing.seller.toLowerCase() === input.buyer.toLowerCase())) throw new Error("You cannot buy your own legacy listing.");
   const amount = usdc(input.amount);
   if (amount > BigInt(listing.available)) throw new Error("Listing amount changed. Request a new quote.");
   if (now - input.priceAt > QUOTE_MS || input.priceAt > now || BigInt(input.baseGasWei) <= 0n) throw new Error("Price or gas estimate expired.");
@@ -149,10 +153,8 @@ export async function createQuote(store: Store, input: { id: string; owner: stri
     paymentAsset: asset, ...(asset === "USDC" ? {approvalGasWei: input.approvalGasWei} : {}),
     amount: amount.toString(), premiumBps: listing.premiumBps, ethUsdMicros: input.ethUsdMicros, priceAt: input.priceAt, ...quote,
     baseGasWei: input.baseGasWei, arcGasWei: listing.gasPerFillWei, router: input.router, feeRecipient: input.feeRecipient,serviceFeeBps,
-    expiresAt: now + QUOTE_MS, status: "quoted", createdAt: now, updatedAt: now };
-  listing.available = (BigInt(listing.available) - amount).toString();
-  listing.held = (BigInt(listing.held) + amount).toString(); listing.pendingFills++;
-  await updateListingHold(store, listing, now); await store.put(order); return order;
+    expiresAt: now + QUOTE_MS, status: "quoted", listingReserved:false, createdAt: now, updatedAt: now };
+  await store.put(order); return order;
 }
 export async function acceptQuote(store: Store, id: string, owner: string, snapshot: { baseBalanceWei: string; baseBlock: string; baseUsdcBalance?: string; arcBalanceWei: string; arcBlock: string }, now: number) {
   const order = await store.get<Order>(id);
@@ -160,6 +162,15 @@ export async function acceptQuote(store: Store, id: string, owner: string, snaps
   if (order.status !== "quoted") return order;
   if(paymentAsset(order)!=="ETH"||order.escrow&&order.escrow.version!==2)throw new Error("Payment options changed. Request a new ETH quote.");
   if (now >= order.expiresAt) throw new Error("Quote expired. Request a new quote.");
+  const listing = await store.get<Listing>(order.listingId);
+  if (!listing || listing.status !== "active") throw new Error("Listing is not available.");
+  const reserveListing = order.listingReserved === false;
+  if (reserveListing && (listing.pendingFills > 0 || BigInt(listing.held) > 0n || listing.escrow?.settlementOrderId))
+    throw new Error("Listing is settling another order. Try again shortly.");
+  if (reserveListing && BigInt(order.amount) > BigInt(listing.available)) throw new Error("Listing amount changed. Request a new quote.");
+  if (listing.premiumBps !== order.premiumBps || listing.seller.toLowerCase() !== order.seller.toLowerCase()
+    || listing.owner !== order.sellerOwner || (listing.escrow && (listing.escrow.address?.toLowerCase() !== order.escrow?.address.toLowerCase()
+      || listing.escrow.feeRecipient.toLowerCase() !== order.feeRecipient.toLowerCase()))) throw new Error("Listing terms changed. Request a new quote.");
   const seller = await wallet(store, 5042, order.escrow?.address??order.seller, order.sellerOwner, now);
   checkSnapshot(seller, snapshot.arcBlock);
   if (BigInt(snapshot.arcBalanceWei) < locked(seller)) throw new Error("Seller balance or gas reserve is insufficient. No Base payment was sent.");
@@ -171,6 +182,14 @@ export async function acceptQuote(store: Store, id: string, owner: string, snaps
     if (BigInt(snapshot.baseUsdcBalance ?? "0") - lockedBaseUsdc(buyer) < BigInt(order.totalWei)) throw new Error("Not enough available Base USDC.");
     buyer.usdcHolds = {...buyer.usdcHolds, [order.id]: order.totalWei};
   }
+  if (reserveListing) {
+    listing.available = (BigInt(listing.available) - BigInt(order.amount)).toString();
+    listing.held = (BigInt(listing.held) + BigInt(order.amount)).toString();
+    listing.pendingFills++;
+    if (listing.escrow) listing.escrow.settlementOrderId = order.id;
+    await updateListingHold(store, listing, now);
+  }
+  order.listingReserved = true;
   order.status = "payment_pending"; order.updatedAt = now;
   await store.put(buyer); await store.put(order); return order;
 }
@@ -187,7 +206,7 @@ export async function cancelListing(store: Store, id: string, owner: string, now
   if (listing.status !== "active") return listing;
   const seller = await wallet(store, 5042, listing.escrow?.address??listing.seller, listing.owner, now);
   // pendingFills spans the Base payment AND Arc payout, including failed payouts.
-  // A quote also holds this lock until it expires, so accept/cancel cannot race.
+  // Confirmation and cancellation mutate the same listing atomically.
   if (listing.pendingFills !== 0 || BigInt(listing.held) !== 0n || seller.activeTx)
     throw new Error("Position is locked by a pending quote or transaction. Wait for settlement.");
   if(listing.escrow){listing.status="closing";listing.escrow.closeReason="cancelled";}else{listing.status = "cancelled"; listing.available = "0";}
@@ -196,6 +215,11 @@ export async function cancelListing(store: Store, id: string, owner: string, now
 export async function finishOrder(store: Store, order: Order, outcome: "completed" | "expired" | "payment_failed", now: number) {
   if (["completed", "expired", "payment_failed"].includes(order.status)) return order;
   if (outcome === "expired" && (order.status !== "quoted" || now < order.expiresAt)) throw new Error("Only unsigned expired quotes can be released.");
+  if (order.listingReserved === false) {
+    if (outcome !== "expired" || order.status !== "quoted") throw new Error("Unconfirmed quote cannot settle.");
+    order.status = "expired"; order.updatedAt = now; delete order.note;
+    await store.put(order); return order;
+  }
   const listing = await store.get<Listing>(order.listingId);
   if (!listing) throw new Error("Listing record missing.");
   if(listing.escrow?.settlementOrderId===order.id)delete listing.escrow.settlementOrderId;
@@ -209,7 +233,7 @@ export async function finishOrder(store: Store, order: Order, outcome: "complete
   await updateListingHold(store, listing, now); await store.put(order); return order;
 }
 export function marketStats(listings: Listing[]) {
-  const open = listings.filter(l => l.status === "active" && BigInt(l.available) >= MIN_USDC);
+  const open = listings.filter(l => l.status === "active" && l.pendingFills === 0 && BigInt(l.held) === 0n && BigInt(l.available) >= MIN_USDC);
   const units = open.reduce((sum,l) => sum + BigInt(l.available), 0n);
   return { count: open.length, available: units.toString(), lowestBps: open.length ? Math.min(...open.map(l=>l.premiumBps)) : null,
     averageBps: units ? Number(open.reduce((sum,l) => sum + BigInt(l.available) * BigInt(l.premiumBps), 0n) / units) : null };

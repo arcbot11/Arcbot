@@ -36,3 +36,8 @@ describe("OTC incoming Base confirmation window", () => {
   it("propagates RPC failures",async()=>{const f=fixture();f.client.getTransactionReceipt.mockRejectedValue(new Error("offline"));await expect(f.check()).rejects.toThrow("offline");});
   it("does not authorize a different transaction type",async()=>{const f=fixture();f.deposit.escrowRef!.step="seller";expect(await f.check()).toBe(false);expect(f.client.getTransactionReceipt).not.toHaveBeenCalled();});
 });
+
+it.each([29,30])("waits through the same window before accepting a failed deposit: %s",async age=>{
+ const f=fixture(age);f.receipt.status="reverted";
+ expect(await otcDepositConfirmed(f.client as unknown as Parameters<typeof otcDepositConfirmed>[0],f.deposit,1_000_000,"reverted")).toBe(age===30);
+});

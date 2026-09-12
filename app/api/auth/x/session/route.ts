@@ -13,7 +13,13 @@ export async function GET(request: NextRequest) {
   const secret = process.env.WEB_AUTH_SECRET;
   const session = secret ? readWebWalletSession(request.cookies.get(WEB_WALLET_SESSION_COOKIE)?.value, secret) : null;
   const convexUrl = process.env.NEXT_PUBLIC_CONVEX_URL;
-  const active = session && convexUrl ? await checkWebSession(new ConvexHttpClient(convexUrl), secret!, session, false, browserHash(request, secret!)).catch(() => false) : false;
+  let active = false;
+  try {
+    active = session && convexUrl ? await checkWebSession(new ConvexHttpClient(convexUrl), secret!, session, false, browserHash(request, secret!)) : false;
+  } catch {
+    // A temporary backend failure is not evidence that the account signed out.
+    return NextResponse.json({error:"Session check unavailable."},{status:503,headers:{"cache-control":"no-store"}});
+  }
   return NextResponse.json(active && session ? {
     authenticated: true,
     provider: session.provider ?? "x",

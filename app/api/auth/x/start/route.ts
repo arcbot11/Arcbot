@@ -1,5 +1,5 @@
 import { createHash, randomBytes } from "node:crypto";
-import {oauthCookieName,sealOAuthAttempt,readTelegramRetry} from "@/lib/x-oauth-attempt";
+import {oauthCookieName,sealOAuthAttempt,readTelegramRetry,oauthBrowserHint} from "@/lib/x-oauth-attempt";
 import { walletReturnPath } from "@/lib/wallet-return-path";
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
@@ -55,7 +55,7 @@ export async function GET(request: NextRequest) {
     const valid=await new ConvexHttpClient(convexUrl).action(api.telegram.previewLink,{secret:webSecret,nonce:validTelegramLink}).catch(()=>undefined);
     if(!valid){const target=new URL("/wallet/sign-in-error",siteUrl);target.searchParams.set("reason",valid===undefined?"link_check":"telegram_expired");target.searchParams.set("telegram","1");return NextResponse.redirect(target);}
   }
-  const state = "v2_"+base64url(randomBytes(32));
+  const state = "v3_"+oauthBrowserHint(request.headers.get("user-agent")??"")+"_"+base64url(randomBytes(32));
   let family: string | null = null, generation: number | undefined;
   if (!validTelegramLink) {
     family = browserHash(request, webSecret);

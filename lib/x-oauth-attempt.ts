@@ -1,7 +1,14 @@
 import {createHmac,timingSafeEqual} from "node:crypto";
 
 export type OAuthAttempt={verifier:string;returnTo:string;telegramLink?:string;expiresAt:number;browserFamily?:string;generation?:number};
-export const oauthCookieName=(state:string)=>/^v2_[A-Za-z0-9_-]{43}$/.test(state)?`argos_oauth_${state}`:null;
+export const oauthCookieName=(state:string)=>/^(?:v2_|v3_(?:ff|ch|other)_)[A-Za-z0-9_-]{43}$/.test(state)?`argos_oauth_${state}`:null;
+// This hint selects a browser link only. The full random state still requires
+// its matching HttpOnly cookie and PKCE verifier before any authorization.
+export function oauthBrowserHint(userAgent:string):"ff"|"ch"|"other" {
+  if(/Firefox\/|FxiOS\//i.test(userAgent))return "ff";
+  if(!/Edg|OPR|SamsungBrowser|; wv\)|Twitter|X\/|FBAN|FBAV/i.test(userAgent)&&/Chrome\/|CriOS\//i.test(userAgent))return "ch";
+  return "other";
+}
 function seal(value:unknown,secret:string,purpose:string){const data=Buffer.from(JSON.stringify(value)).toString("base64url");return `${data}.${createHmac("sha256",secret).update(`${purpose}:${data}`).digest("base64url")}`;}
 function unseal(value:string|undefined,secret:string,purpose:string):unknown{
   try{const [data,signature,extra]=(value??"").split(".");const expected=createHmac("sha256",secret).update(`${purpose}:${data}`).digest("base64url");

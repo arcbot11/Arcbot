@@ -25,11 +25,13 @@ export async function websiteSession(request:NextRequest,write=false) {
   return {...session,owner:webSessionOwner(session),walletAddress:getAddress(session.walletAddress)};
 }
 export const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{"cache-control":"no-store"}});
-export function webFailure(error:unknown) {
+export function webFailure(error:unknown,operation?:"quote") {
   if(error instanceof WebError) return json({error:error.message},error.status);
   const original=error instanceof Error?error.message:"";
   const message=(/Uncaught Error: ([^\n]+)/.exec(original)?.[1] ?? original).trim();
   console.error("otc_request_failed",message);
+  if(operation==="quote"&&message==="Price or gas estimate expired.")
+    return json({error:"The quote expired while loading. Get a new quote. No payment was sent."},400);
   // Fixed messages identify operational failures without exposing credentials or provider URLs.
   if (message.startsWith("Configure ARC_MAINNET_RPC_URL, ARC_CHECKPOINT_NUMBER and ARC_CHECKPOINT_HASH"))
     return json({error:"Arc transaction settings are missing on the website server. Contact Argos Bot support."},503);
@@ -38,9 +40,9 @@ export function webFailure(error:unknown) {
   if (message === "OTC storage is not configured." || message === "OTC service authorization failed.")
     return json({error:"Wallet reservation service is unavailable. Contact Argos Bot support."},503);
   if (message.includes("No healthy Arc RPC supports this request"))
-    return json({error:"Arc network request failed. Check transaction history before retrying."},503);
+    return json({error:operation==="quote"?"Could not get a quote because the Arc network request failed. Try again. No payment was sent.":"Arc network request failed. Check transaction history before retrying."},503);
   if (message === "No supported liquid Arc route found.")
     return json({error:"No supported trading route has liquidity for this token pair."},400);
   const safe=/^(Minimum |Maximum |Enter a premium|Use a positive|Amount |You |Not enough |Listing |Quote |Order not found|Wallet has |A wallet transaction|Balance snapshot|Seller |Gas exceeded|Transaction exceeds|Not enough available|OTC trading is not enabled)/.test(message)&&!message.includes("http");
-  return json({error:safe?message.slice(0,240):"Request could not be confirmed. Check order or transaction history before retrying."},400);
+  return json({error:safe?message.slice(0,240):operation==="quote"?"Could not get an exact quote. Try again. No payment was sent.":"Request could not be confirmed. Check order or transaction history before retrying."},400);
 }

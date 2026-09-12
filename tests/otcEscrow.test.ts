@@ -35,6 +35,32 @@ async function complete(store:Memory,listing:Listing,step:EscrowStep,order?:Orde
   await signTransactionRecord(store,tx.id,"test-raw","test-hash",now);await settled(store,tx.id,"100",success,now);return tx;
 }
 async function funded(){const f=await setup();await complete(f.store,f.listing,"fund");f.listing=await advanceEscrowState(f.store,f.listing.id,undefined,now) as Listing;return f;}
+it("settles a self-purchase through the separate escrow, charges the fee, and unlocks once",async()=>{
+ const {store,listing}=await funded();
+ const quote=await createQuote(store,{id:"order:self",owner:"seller",buyer:seller,listingId:listing.id,amount:"10",ethUsdMicros:"2000000000",priceAt:now,baseGasWei:G.toString(),baseBalanceWei:(100n*W).toString(),baseBlock:"100",escrowGasBudgetWei:(3n*G).toString(),router:escrow,feeRecipient:fee},now);
+ expect((await store.get<Listing>(listing.id))!.available).toBe(listing.available);
+ const order=await acceptQuote(store,quote.id,"seller",{baseBalanceWei:(100n*W).toString(),baseBlock:"100",arcBalanceWei:(100n*W).toString(),arcBlock:"100"},now);
+ expect(order.buyer).toBe(order.seller);expect(order.owner).toBe(order.sellerOwner);
+ expect(order.serviceFeeBps).toBe(150);expect(BigInt(order.feeWei)).toBe((BigInt(order.sellerWei)*150n+9999n)/10000n);
+ await expect(cancelListing(store,listing.id,"seller",now)).rejects.toThrow("locked");
+ for(const step of settlementSteps(order)){
+   const call=await escrowCall(store,listing,step,order,100n);
+   expect(call.from.toLowerCase()).not.toBe(call.to.toLowerCase());
+   if(step==="deposit")expect(call.from.toLowerCase()).toBe(seller);
+   if(step==="arc"||step==="seller"||step==="return_gas")expect(call.to.toLowerCase()).toBe(seller);
+   if(step==="fee")expect(call.to.toLowerCase()).toBe(fee);
+   await complete(store,listing,step,order,100n);
+   if(step!=="return_gas")await advanceEscrowState(store,listing.id,order.id,now);
+ }
+ await advanceEscrowState(store,listing.id,order.id,now,"500","100");
+ const after=(await store.get<Listing>(listing.id))!;
+ expect((await store.get<Order>(order.id))!.status).toBe("completed");
+ expect(after.available).toBe((BigInt(listing.available)-10000000n).toString());expect(after.held).toBe("0");expect(after.pendingFills).toBe(0);
+ expect((await store.get<Wallet>(walletId(8453,seller)))!.holds[order.id]).toBeUndefined();
+ await advanceEscrowState(store,listing.id,order.id,now,"500","100");
+ expect((await store.get<Listing>(listing.id))!.available).toBe(after.available);
+ expect((await cancelListing(store,listing.id,"seller",now)).status).toBe("closing");
+});
 it("deducts a small return gas shortfall while retaining the lock until verification",async()=>{
   const {store,listing}=await funded(),closing=await cancelListing(store,listing.id,"seller",now);
   const principal=BigInt(closing.available)*10n**12n,gas=5n*G,value=principal-gas;
@@ -189,4 +215,25 @@ describe("position CDP escrow",()=>{
     expect(escrowTxId(retried,"fund")).not.toBe(escrowTxId(listing,"fund"));
     expect((await store.get<Transaction>(escrowTxId(listing,"fund")))!.status).toBe("reverted");
   });
+});
+
+it("a verified reverted combined deposit releases the listing and buyer holds exactly once",async()=>{
+ const {store,listing}=await funded(),order=await orderFor(store,listing);
+ const original=listing.available;
+ await complete(store,listing,"deposit",order,undefined,false);
+ expect(await store.get<Order>(order.id)).toMatchObject({status:"payment_failed"});
+ expect(await store.get<Listing>(listing.id)).toMatchObject({available:original,held:"0",pendingFills:0});
+ expect((await store.get<Listing>(listing.id))!.escrow!.settlementOrderId).toBeUndefined();
+ expect(locked((await store.get<Wallet>(walletId(8453,buyer)))!)).toBe(0n);
+ const tx=(await store.get<Transaction>(escrowTxId(listing,"deposit",order)))!;
+ await settled(store,tx.id,"100",false,now+1);
+ expect((await store.get<Listing>(listing.id))!.available).toBe(original);
+ await expect(orderFor(store,listing,"ETH","10","order:after-failure")).resolves.toMatchObject({status:"payment_pending"});
+});
+it("Arc payout failure after a successful deposit retains listing protection",async()=>{
+ const {store,listing}=await funded(),order=await orderFor(store,listing);
+ await complete(store,listing,"deposit",order);
+ await complete(store,listing,"arc",order,undefined,false);
+ expect(await store.get<Listing>(listing.id)).toMatchObject({held:order.amount,pendingFills:1});
+ await expect(cancelListing(store,listing.id,"seller",now)).rejects.toThrow("locked");
 });

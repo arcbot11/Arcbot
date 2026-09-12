@@ -84,9 +84,10 @@ it.each([1,2] as const)('finalizes a resumed v%s order with balance evidence aft
     records.set(id,{...arcPayout(),id,status:'completed',hash:'receipt-hash',blockNumber:'100'});
   }
   m.balance.mockResolvedValue({balanceWei:'500',block:'101'});
-  m.command.mockImplementation(async(action:string,input:{baseBalanceWei?:string;baseBlock?:string})=>{
+  m.command.mockImplementation(async(action:string,input:{baseBalanceWei?:string;baseBlock?:string;progressOnly?:boolean})=>{
     if(action==='escrow_claim')return true;
     expect(action).toBe('escrow_advance');
+    if(input.progressOnly)return order;
     if(!input.baseBalanceWei||!input.baseBlock)throw new Error('Final escrow balance is not verified.');
     return {...order,status:'completed'};
   });
@@ -153,4 +154,14 @@ it("retains a paid order's uneconomic refund above the fixed dust threshold",asy
  expect(m.command).toHaveBeenCalledWith("escrow_dust",{listingId:listing.id,orderId:order.id,balanceWei:"1500000000000",block:"101",refundGasWei:"1000000000000"});
  expect(m.advance).not.toHaveBeenCalled();
  expect(m.command).toHaveBeenCalledWith("escrow_advance",expect.objectContaining({orderId:order.id}));
+});
+
+it("preserves a verified payment failure instead of replacing it with a generic processing error",async()=>{
+ order.escrow!.version=2;records.set(order.id,order);verifyDeposits();
+ const id=escrowTxId(listing,"deposit",order);
+ records.set(id,{...arcPayout(),id,chainId:8453,status:"submitted",hash:"deposit-hash"});
+ m.advance.mockImplementation(async txId=>{if(txId===id){records.set(id,{...records.get(id) as Transaction,status:"reverted",blockNumber:"101"});records.set(order.id,{...order,status:"payment_failed"});}});
+ await expect(advanceEscrowOrder(order)).resolves.toBeUndefined();
+ expect(m.command).toHaveBeenCalledWith("escrow_advance",{listingId:listing.id,orderId:order.id});
+ expect(m.prepare).not.toHaveBeenCalled();
 });

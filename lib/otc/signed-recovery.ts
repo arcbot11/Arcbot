@@ -1,8 +1,30 @@
 import {parseTransaction,type Hex} from "viem";
-import {type Store,type Transaction,wallet,locked,checkSnapshot} from "./model";
+import {type Store,type Transaction,type Order,type Listing,wallet,locked,checkSnapshot} from "./model";
+import { BASE_RECOVERY_WEI } from "./gas-recovery";
+import { BASE_GAS_POLICY } from "../project-config";
 import {nativeSpend} from "./native-spend";
 
 export type SignedAttempt={unsigned:string;raw:string;hash:string;revision:number};
+/** Increase only the gas hold; preserve the signed bytes, nonce, amount and recipient. */
+export async function extendEscrowBaseGas(store:Store,input:{id:string;expectedHash:string;gasWei:string;balanceWei:string;block:string},now:number){
+  const tx=await store.get<Transaction>(input.id);
+  if(!tx?.raw||tx.hash!==input.expectedHash||tx.chainId!==8453||!["signed","submitted"].includes(tx.status)
+    ||!tx.escrowRef?.orderId||!["deposit","seller","fee"].includes(tx.escrowRef.step))throw Error("Escrow gas recovery transaction changed.");
+  const order=await store.get<Order>(tx.escrowRef.orderId),listing=await store.get<Listing>(tx.escrowRef.listingId);
+  if(!order?.escrow||!listing?.escrow||order.listingId!==listing.id||["quoted","expired","completed","payment_failed"].includes(order.status))throw Error("Escrow order is not settling.");
+  if(listing.escrow.settlementOrderId!==order.id)throw Error("Escrow settlement lock changed.");
+  const parsed=parseTransaction(tx.unsigned as Hex),gas=BigInt(input.gasWei);
+  const limit=BigInt(order.baseGasWei)+BigInt(order.escrow.baseRecoveryLimitWei??BASE_RECOVERY_WEI.toString());
+  if(gas<=0n||gas>limit||gas>BigInt(BASE_GAS_POLICY.maxTotalFeeWei))throw Error("Gas exceeds the escrow allowance.");
+  const w=await wallet(store,8453,tx.wallet,tx.owner,now);checkSnapshot({...w,activeTx:undefined},input.block);
+  if(w.activeTx!==tx.id)throw Error("Wallet transaction lease mismatch.");
+  const old=BigInt(w.holds[tx.holdId]??"0"),required=(parsed.value??0n)+gas;
+  if(required<=old)return tx;
+  if(BigInt(input.balanceWei)<locked(w)-old+required)throw Error("Not enough funds for the amount and gas.");
+  w.holds[tx.holdId]=required.toString();w.updatedAt=now;
+  tx.updatedAt=now;delete tx.note;
+  await store.put(w);await store.put(tx);return tx;
+}
 export function sameCall(a:string,b:string){const x=parseTransaction(a as Hex),y=parseTransaction(b as Hex);return x.type==="eip1559"&&y.type==="eip1559"&&x.chainId===y.chainId&&x.nonce===y.nonce&&x.to?.toLowerCase()===y.to?.toLowerCase()&&(x.data??"0x")===(y.data??"0x")&&(x.value??0n)===(y.value??0n);}
 export function sameIntent(a:string,b:string){
   const x=parseTransaction(a as Hex),y=parseTransaction(b as Hex);

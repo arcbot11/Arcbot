@@ -310,7 +310,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     // All Base operations use canonical receipt verification and the delivery checks above.
     // Reverted receipts are recorded as failures, never delivery. Arc still requires finality.
     if(record.chainId===8453){
-      if(receipt.status==="success"&&record.escrowRef?.step==="deposit"&&!await otcDepositConfirmed(client,record))return record;
+      if(record.escrowRef?.step==="deposit"&&!await otcDepositConfirmed(client,record,Date.now(),receipt.status))return record;
       return repo.command<Transaction>("settled",{id,expectedHash:record.hash,block:receipt.blockNumber.toString(),success:receipt.status==="success"});
     }
     const finalized=await client.getBlock({blockTag:"finalized"});
@@ -333,7 +333,18 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     if(extra.l1FeeUpperBoundWei<0n||extra.operatorFeeWei<0n)throw new Error("Invalid Base fee estimate.");
     const worst=(tx.gas??0n)*(tx.maxFeePerGas??0n)+2n*(extra.l1FeeUpperBoundWei+extra.operatorFeeWei);
     const allowance=BigInt(reserved.holds[record.holdId]??"0")-(tx.value??0n);
-    if(worst>allowance || worst>baseConfigFromEnv().maxTotalFeeWei)throw new Error("Base fees exceeded the reserved allowance. Signature retained for recovery.");
+    if(worst>baseConfigFromEnv().maxTotalFeeWei)throw new Error("Base fees exceed the configured cap.");
+    if(worst>allowance){
+      if(!record.escrowRef?.orderId||!["deposit","seller","fee"].includes(record.escrowRef.step))throw new Error("Base fees exceeded the reserved allowance. Signature retained for recovery.");
+      const order=await repo.read<Order>({id:record.escrowRef.orderId});
+      const {BASE_RECOVERY_WEI}=await import("./gas-recovery");
+      const limit=BigInt(order.baseGasWei)+BigInt(order.escrow?.baseRecoveryLimitWei??BASE_RECOVERY_WEI.toString());
+      const available=BigInt(snapshot.balanceWei)-locked(reserved)+allowance;
+      const cap=[limit,available,baseConfigFromEnv().maxTotalFeeWei].reduce((a,b)=>a<b?a:b);
+      const gasWei=worst*2n<cap?worst*2n:cap;
+      if(gasWei<worst)throw new Error("Gas exceeds the escrow allowance.");
+      record=await repo.command<Transaction>("extend_escrow_base_gas",{id,expectedHash:record.hash,gasWei:gasWei.toString(),balanceWei:snapshot.balanceWei,block:snapshot.block});
+    }
   }
   if (!await escrowDepositReadyForPayout(record)) return record;
   record=await repo.command<Transaction>("submitted",{id});

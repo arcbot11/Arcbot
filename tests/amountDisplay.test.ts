@@ -1,5 +1,6 @@
 import {expect,it} from "vitest";
-import {displayAmount,displayUsdc,displayTokenAmount} from "../lib/amount-display";
+import {displayAmount,displayUsdc,displayTokenAmount,displayEth} from "../lib/amount-display";
+it.each([["0.007217278805415923","0.007217"],["1.234567","1.234"],["12.3456","12.34"],["12345.6","12340"],["0.000000228436438788","0.0000002284"],["0.000000000000000001","0.000000000000000001"],["0","0"],["0.1000","0.1"]])("shows ETH %s with at most four significant figures",(input,expected)=>expect(displayEth(input)).toBe(expected));
 it("truncates tokens and USDC without rounding up balances or minimum quotes",()=>{
  expect(displayAmount("9876.999999",0)).toBe("9,876");
  expect(displayUsdc("19.999999999999999999")).toBe("19.99");

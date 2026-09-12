@@ -83,6 +83,13 @@ it("requires the browser cookie as well as the wallet cookie for new sessions",a
   const proof=await beginTg(),r=await telegram(req("check",proof)),value=r.cookies.get(COOKIE)!.value;
   const response=await sessionInfo(new NextRequest(site+"/api/auth/x/session",{headers:{cookie:`${COOKIE}=${value}`}}));expect(await response.json()).toEqual({authenticated:false});
 });
+it("reports a temporary verification outage without declaring the browser signed out",async()=>{
+ const value=createWebWalletSession(address,"456","alice",secret);
+ mocks.action.mockRejectedValueOnce(Error("Temporary backend failure"));
+ const response=await sessionInfo(new NextRequest(site+"/api/auth/x/session",{headers:{cookie:cookie(`${COOKIE}=${value}`)}}));
+ expect(response.status).toBe(503);expect(await response.json()).toEqual({error:"Session check unavailable."});
+ expect(response.cookies.get(COOKIE)).toBeUndefined();
+});
 it("only one session can activate per generation; retries of that session remain idempotent",async()=>{
   const {generation}=await mutate("webAuth:begin",{secret,browserHash:family,sourceHash:"1".repeat(64)}) as {generation:number};
   const a={secret,browserHash:family,generation,sessionIdHash:"a".repeat(64),expiresAt:Date.now()+7200000};

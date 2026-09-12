@@ -8,7 +8,7 @@ import { ARC_USDC } from "./config";
 import { arcTokenBalances } from "./wallet-tokens";
 import catalog from "./token-catalog.json";
 import pinned from "./pinned-token-addresses.json";
-import { displayAmount, displayUsdc } from "../amount-display";
+import { displayAmount, displayUsdc, displayEth } from "../amount-display";
 import { balanceWithUsd } from "../balance-display";
 import { tokenUsdEstimate } from "./token-value";
 
@@ -35,7 +35,7 @@ export async function arcSocialBalance(wallet: `0x${string}`, identifier?: strin
       if(BigInt(snapshot.balanceWei)===0n)return null;
       const rate=await ethPrice().catch(()=>null);
       const usd=ethUsdDisplay(snapshot.balanceWei,undefined,rate?.ethUsdMicros??null);
-      return `${formatUnits(BigInt(snapshot.balanceWei),18)} Base ETH${usd?` (${usd})`:""}`;
+      return `${displayEth(formatUnits(BigInt(snapshot.balanceWei),18))} Base ETH${usd?` (${usd})`:""}`;
     } catch { return "Base balance unavailable."; }
   })()]);
   return { display: [usdc, ...holdings.tokens.map(t => `${balanceWithUsd(`${displayAmount(t.balance, 0)} ${t.symbol}`, t.usdValue ?? undefined)}\nhttps://www.arcexplorer.org/token/${t.address}`), ...(base?[base]:[]), ...(holdings.partial ? ["Some token balances are unavailable. Check the balance using a contract address."] : [])].join("\n\n") };

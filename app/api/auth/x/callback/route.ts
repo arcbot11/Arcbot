@@ -2,6 +2,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { walletReturnPath } from "@/lib/wallet-return-path";
 import { checkWebSession } from "@/lib/web-session-authority";
 import { browserHash, hashAuth } from "@/lib/web-browser-auth";
+import { xBrowserReturn } from "@/lib/x-browser-return";
 import type { OAuthAttempt } from "@/lib/x-oauth-attempt";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
@@ -59,6 +60,7 @@ export async function GET(request: NextRequest) {
   const state = request.nextUrl.searchParams.get("state");
   const context=attemptContext(request),verifier=context?.verifier;
   if(request.nextUrl.searchParams.has("error"))return errorRedirect(request,"denied");
+  if(!verifier){const handoff=xBrowserReturn(request,siteUrl);if(handoff)return handoff;}
   if (!code || !state || !verifier) return errorRedirect(request, "invalid_state");
 
   let stage="token_exchange";
@@ -157,7 +159,7 @@ export async function GET(request: NextRequest) {
     });
     return clearAttempt(response,request);
   } catch (error) {
-    console.error("x_wallet_sign_in_failed",{stage:"provision_or_link",errorType:error instanceof Error?error.name:"unknown",telegram:Boolean(context?.telegramLink)});
+    console.error("x_wallet_sign_in_failed",{stage,errorType:error instanceof Error?error.name:"unknown",telegram:Boolean(context?.telegramLink)});
     return errorRedirect(request, stage);
   }
 }

@@ -1,9 +1,12 @@
 import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement,authorizeGasRecovery} from "../lib/otc/gas-recovery";
 import {acquireOperatorLease,releaseOperatorLease} from "../lib/otc/operator-lease";
 import {beginSigning,cancelUnsignedTrade} from "../lib/otc/unsigned-recovery";
-import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce} from "../lib/otc/signed-recovery";
+import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce,extendEscrowBaseGas} from "../lib/otc/signed-recovery";
 import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
 import { publicMarket } from "../lib/otc/public-market";
+import { soldTotal } from "../lib/otc/sold-total";
+import type { QueryCtx } from "./_generated/server";
+import type { Transaction } from "../lib/otc/model";
 import { otcWorkerUrl } from "../lib/project-config";
 import { mutation, query, action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
@@ -65,12 +68,13 @@ export const command = mutation({
         return beginSigning(store,input.id,now);
       }
       case "replace_fees": return prepareReplacement(store,input,now);
+      case "extend_escrow_base_gas": return extendEscrowBaseGas(store,input,now);
       case "select_mined_attempt": return selectMinedAttempt(store,input.id,input.hash,now);
       case "reconcile_mined_nonce": return reconcileMinedNonce(store,input,now);
       case "cancel_unsigned_trade": return cancelUnsignedTrade(store,input.id,now,input.owner);
       case "escrow_bind": return bindEscrow(store,input.id,input.address,now,input.accountName);
       case "escrow_prepare": return prepareEscrowStep(store,input,now);
-      case "escrow_advance": return advanceEscrowState(store,input.listingId,input.orderId,now,input.baseBalanceWei,input.baseBlock,input.arcBalanceWei,input.arcBlock);
+      case "escrow_advance": return advanceEscrowState(store,input.listingId,input.orderId,now,input.baseBalanceWei,input.baseBlock,input.arcBalanceWei,input.arcBlock,input.progressOnly===true);
       case "escrow_retry": return retryEscrow(store,input.listingId,input.orderId,input.owner,now);
       case "escrow_listing": {
         if (!input.escrow?.accountName || !input.escrow?.feeRecipient || input.amountIncludesGas !== true) throw new Error("Escrow listing configuration missing.");
@@ -82,6 +86,10 @@ export const command = mutation({
         for (const row of open) {
           const order = JSON.parse(row.json) as Order;
           if (order.id === input.id) return order;
+          if (order.listingReserved === false) {
+            order.status = "expired"; order.updatedAt = now; delete order.note;
+            await store.put(order); continue;
+          }
           if (order.expiresAt > now) throw new Error("You already have a quote. Confirm it or wait for it to expire.");
           await finishOrder(store,order,"expired",now);
         }
@@ -113,6 +121,17 @@ export const command = mutation({
   },
 });
 
+async function readMarket(ctx:QueryCtx){
+  const [listings,orders]=await Promise.all([
+    ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","listing").eq("status","active")).collect(),
+    ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","order")).filter(q=>q.and(q.neq(q.field("status"),"quoted"),q.neq(q.field("status"),"expired"),q.neq(q.field("status"),"payment_failed"))).collect(),
+  ]);
+  const sold=await soldTotal(orders.map(row=>JSON.parse(row.json) as Order),async id=>{
+    const row=await ctx.db.query("otcRecords").withIndex("by_key",q=>q.eq("key",id)).unique();
+    return row?JSON.parse(row.json) as Transaction:null;
+  });
+  return publicMarket(listings.map(row=>JSON.parse(row.json) as Listing),sold);
+}
 export const read = query({
   args: { secret: v.string(), id: v.optional(v.string()), owner: v.optional(v.string()), work: v.optional(v.boolean()) },
   handler: async (ctx,args) => {
@@ -135,15 +154,13 @@ export const read = query({
       const positions=(await Promise.all(["funding","closing"].map(status=>ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","listing").eq("status",status)).take(50)))).flat();
       return [...rows,...txs,...positions].map(r=>JSON.parse(r.json));
     }
-    const rows = await ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","listing").eq("status","active")).collect();
-    return publicMarket(rows.map(r=>JSON.parse(r.json) as Listing));
+    return readMarket(ctx);
   },
 });
 
 // Browsers subscribe only to this public projection. Private queries still require the service secret.
 export const market = query({args:{},handler:async(ctx)=>{
-  const rows=await ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","listing").eq("status","active")).collect();
-  return publicMarket(rows.map(r=>JSON.parse(r.json) as Listing));
+  return readMarket(ctx);
 }});
 
 // Schedule this internal service endpoint in the deployment's scheduler. It does not depend on a browser remaining open.

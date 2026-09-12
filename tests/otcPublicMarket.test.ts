@@ -13,4 +13,9 @@ describe("public OTC book",()=>{
   it("only publishes order-book fields",()=>{
     expect(Object.keys(publicMarket([listing("public",100)]).listings[0]).sort()).toEqual(["available","createdAt","id","premiumBps","seller"]);
   });
+  it("hides the whole listing while a confirmed fill settles",()=>{
+    const active={...listing("busy",0),available:"50000000",held:"10000000",pendingFills:1};
+    expect(publicMarket([active]).listings).toEqual([]);
+    expect(publicMarket([{...active,held:"0",pendingFills:0}]).listings).toHaveLength(1);
+  });
 });

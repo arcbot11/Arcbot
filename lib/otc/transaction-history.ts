@@ -2,7 +2,7 @@ import { decodeAbiParameters, decodeFunctionData, formatUnits, parseAbi, parseAb
 import { ARC_TOKEN_CATALOG } from "../arc/token-catalog";
 import { BASE_USDC } from "../base/usdc";
 import type { Transaction } from "./model";
-import {displayAmount} from "../amount-display";
+import {displayAmount,displayEth} from "../amount-display";
 
 const abi=parseAbi(["function transfer(address recipient,uint256 amount)","function approve(address spender,uint256 amount)","function approve(address token,address spender,uint160 amount,uint48 expiration)","function execute(bytes commands,bytes[] inputs,uint256 deadline)"]);
 function amount(chain:number,address:string,raw:bigint,verifiedDecimals?:number,gas=false){
@@ -12,7 +12,7 @@ function amount(chain:number,address:string,raw:bigint,verifiedDecimals?:number,
   const symbol=native?(chain===5042?"USDC":"ETH"):chain===8453&&address.toLowerCase()===BASE_USDC.toLowerCase()?"USDC":token?.symbol.replace(/^\$+/,"");
   if(decimals===undefined)return `${raw} base units · ${address}`;
   const exact=formatUnits(raw,decimals);
-  return `${gas||native&&chain===8453?exact:displayAmount(exact,symbol==="USDC"?2:0)} ${symbol??address}`;
+  return `${native&&chain===8453?displayEth(exact):gas?exact:displayAmount(exact,symbol==="USDC"?2:0)} ${symbol??address}`;
 }
 const labels:Record<string,string>={topup:"Base gas recovery",arc_topup:"Arc gas recovery",send:"Send",swap:"Swap",allowance:"Token approval",approval:"Payment approval",payment:"OTC payment",payout:"OTC payout",fund:"Fund OTC position",return_arc:"Return remaining USDC",gas:"Deposit settlement gas",deposit:"Deposit OTC payment",arc:"Deliver Arc USDC",seller:"Pay seller",fee:"Service fee",return_gas:"Return unused gas"};
 

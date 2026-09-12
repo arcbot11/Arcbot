@@ -99,7 +99,7 @@ export async function bindEscrow(store:Store,id:string,address:string,now:number
   }
   listing.escrow!.address=normalized;listing.updatedAt=now;await store.put(listing);return listing;
 }
-export async function advanceEscrowState(store:Store,listingId:string,orderId:string|undefined,now:number,baseBalanceWei?:string,baseBlock?:string,arcBalanceWei?:string,arcBlock?:string){
+export async function advanceEscrowState(store:Store,listingId:string,orderId:string|undefined,now:number,baseBalanceWei?:string,baseBlock?:string,arcBalanceWei?:string,arcBlock?:string,progressOnly=false){
   const {listing,order}=await escrowRecords(store,listingId,orderId);
   if(order&&["completed","expired","payment_failed"].includes(order.status))return order;
   if(!order){
@@ -118,14 +118,17 @@ export async function advanceEscrowState(store:Store,listingId:string,orderId:st
     }
     return listing;
   }
+  const previousEvidence=[order.paymentHash,order.payoutHash,order.sellerPaymentHash,order.serviceFeeHash].join(":");
   const deposit=await completedStep(store,listing,"deposit",order),arc=await completedStep(store,listing,"arc",order),seller=await completedStep(store,listing,"seller",order),fee=await completedStep(store,listing,"fee",order);
   if(deposit){order.paymentHash=deposit.hash;order.status=arc?"payout_submitted":"payment_finalized";}
   if(arc)order.payoutHash=arc.hash;
   if(seller)order.sellerPaymentHash=seller.hash;
   if(fee)order.serviceFeeHash=fee.hash;
+  if(previousEvidence!==[order.paymentHash,order.payoutHash,order.sellerPaymentHash,order.serviceFeeHash].join(":"))delete order.note;
   order.updatedAt=now;await store.put(order);
   const refund=await completedStep(store,listing,"return_gas",order);
   if(deposit&&arc&&seller&&fee&&(refund||order.escrow!.refundSkipped)){
+    if(progressOnly)return order;
     if(!baseBalanceWei||!baseBlock)throw new Error("Final escrow balance is not verified.");
     const w=await wallet(store,8453,order.escrow!.address,listing.owner,now);
     if(w.activeTx||(w.lastSettledBlock&&BigInt(baseBlock)<BigInt(w.lastSettledBlock)))throw new Error("Escrow gas balance is pending verification.");

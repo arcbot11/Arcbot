@@ -47,7 +47,7 @@ describe("OTC receipt verification and retry boundaries",()=>{
   it("rejects a noncanonical receipt",async()=>{receipt!.blockHash=otherHash;await expect(advanceTransaction(record.id)).rejects.toThrow("not canonical");});
   it("keeps an unknown nonce consumption reserved",async()=>{receipt=null;nonce=1;await expect(advanceTransaction(record.id)).rejects.toThrow("Nonce consumed");expect(mocks.command).not.toHaveBeenCalled();});
   it("persists submitted state before rebroadcasting identical bytes after timeout",async()=>{receipt=null;nonce=0;(mocks.client.sendRawTransaction as ReturnType<typeof vi.fn>).mockImplementation(async()=>{expect(mocks.command).toHaveBeenCalledWith("submitted",{id:record.id});throw new Error("network timeout");});await expect(advanceTransaction(record.id)).rejects.toThrow("network timeout");await expect(advanceTransaction(record.id)).rejects.toThrow("network timeout");expect(mocks.client.sendRawTransaction).toHaveBeenCalledTimes(2);expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:record.raw});expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
-  it("does not rebroadcast if Base extra fees outgrow the allowance",async()=>{receipt=null;nonce=0;extraFee=10n**18n;await expect(advanceTransaction(record.id)).rejects.toThrow("fees exceeded");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
+  it("does not rebroadcast if Base extra fees outgrow the allowance",async()=>{receipt=null;nonce=0;extraFee=10n**18n;await expect(advanceTransaction(record.id)).rejects.toThrow("configured cap");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
   it("does not broadcast if other wallet reservations are no longer covered",async()=>{receipt=null;nonce=0;wallet.holds.other=(10n**20n).toString();await expect(advanceTransaction(record.id)).rejects.toThrow("no longer covered");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
 });
 
@@ -297,4 +297,15 @@ it.each(["mined revert","awaiting receipt","CDP unavailable","wrong signature"])
  expect(mocks.sign).toHaveBeenCalledWith(expect.objectContaining({transaction:record.unsigned}));
  expect(mocks.client.call).not.toHaveBeenCalled();
  expect(mocks.command.mock.calls.some(c=>c[0]==="cancel_unsigned_trade")).toBe(false);
+});
+
+it("extends a tiny escrow gas shortfall before rebroadcasting the identical signed payment",async()=>{
+ await setupSend();record.escrowRef={listingId:order.listingId,orderId:order.id,step:"fee"};
+ receipt=null;nonce=0;wallet.holds[record.id]="10000010";extraFee=1000n;
+ const raw=record.raw,hashBefore=record.hash;
+ await advanceTransaction(record.id);
+ expect(mocks.command).toHaveBeenCalledWith("extend_escrow_base_gas",expect.objectContaining({id:record.id,expectedHash:hashBefore,gasWei:"20008000"}));
+ expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:raw});
+ expect(mocks.sign).not.toHaveBeenCalled();
+ expect(mocks.command.mock.calls.findIndex(c=>c[0]==="extend_escrow_base_gas")).toBeLessThan(mocks.command.mock.calls.findIndex(c=>c[0]==="submitted"));
 });

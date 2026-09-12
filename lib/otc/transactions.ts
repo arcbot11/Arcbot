@@ -120,6 +120,16 @@ export async function settled(store: Store, id: string, block: string, success: 
   await store.put(w);
   delete tx.note;
   tx.status = success ? "completed" : "reverted"; tx.blockNumber = block; tx.updatedAt = now; await store.put(tx);
+  // A verified reverted combined deposit delivered no Base funds. No payout may
+  // exist before releasing its listing; timeouts and later payout failures stay locked.
+  if (!success && tx.chainId===8453 && tx.escrowRef?.step==="deposit" && tx.escrowRef.orderId) {
+    const order=await store.get<Order>(tx.escrowRef.orderId);
+    if(order?.escrow?.version===2 && order.listingId===tx.escrowRef.listingId && order.buyer.toLowerCase()===tx.wallet.toLowerCase()
+      && tx.id===`escrow:${order.id}:deposit:${order.escrow.attempts?.deposit??0}`) {
+      const payout=await store.get<Transaction>(`escrow:${order.id}:arc:${order.escrow.attempts?.arc??0}`);
+      if(!payout)await finishOrder(store,order,"payment_failed",now);
+    }
+  }
   if (tx.orderId) {
     const order = await store.get<Order>(tx.orderId);
     if (!order) throw new Error("Order missing.");

@@ -25,6 +25,22 @@ it("replaces a Telegram browser session with X and invalidates the pending TG ex
  expect(r.cookies.get("argos_tg_web_login")?.value).toBe("");
 });
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();});
+it("returns a mobile callback to Firefox before exchanging its code, then signs in only with the original browser cookies",async()=>{
+ const browser=browserValue("test-secret"),family=hashAuth(browser.split(".")[0]),state="v2_"+"z".repeat(43);
+ const attempt=sealOAuthAttempt({verifier:"original-pkce",returnTo:"/otc",browserFamily:family,generation:1,expiresAt:Date.now()+600000},"test-secret");
+ const url=`https://www.argosbot.io/api/auth/x/callback?code=unused-code&state=${state}`;
+ const handoff=await callback(new NextRequest(url,{headers:{"user-agent":"Android X in-app browser"}}));
+ expect(handoff.status).toBe(200);expect(await handoff.text()).toContain("package=org.mozilla.firefox");
+ expect(handoff.cookies.get(WEB_WALLET_SESSION_COOKIE)).toBeUndefined();expect(fetch).not.toHaveBeenCalled();expect(m.action).not.toHaveBeenCalled();
+ const finished=await callback(new NextRequest(url+"&browserReturn=1",{headers:{cookie:`${oauthCookieName(state)}=${attempt}; ${BROWSER_COOKIE}=${browser}`}}));
+ expect(finished.headers.get("location")).toBe("https://www.argosbot.io/otc");
+ expect(readWebWalletSession(finished.cookies.get(WEB_WALLET_SESSION_COOKIE)!.value,"test-secret")?.browserFamily).toBe(family);
+ expect(new URLSearchParams(vi.mocked(fetch).mock.calls[0][1]!.body as URLSearchParams).get("code_verifier")).toBe("original-pkce");
+});
+it("does not loop or exchange a mobile return without the original cookies",async()=>{
+ const r=await callback(new NextRequest("https://www.argosbot.io/api/auth/x/callback?code=test&state=v2_"+"a".repeat(43)+"&browserReturn=1",{headers:{"user-agent":"Android"}}));
+ expect(r.headers.get("location")).toContain("invalid_state");expect(fetch).not.toHaveBeenCalled();expect(r.cookies.get(WEB_WALLET_SESSION_COOKIE)).toBeUndefined();
+});
 it("returns directly to Telegram without a web confirmation or website session",async()=>{
  const r=await callback(new NextRequest("https://www.argosbot.io/api/auth/x/callback?code=test&state=test-state",{headers:{cookie:"argus_x_oauth_state=test-state; argus_x_oauth_verifier=test-verifier; argus_telegram_link="+"a".repeat(64)}}));
  const target=new URL(r.headers.get("location")!);expect(target.origin+target.pathname).toBe("https://t.me/The_ArgosBot");expect(target.searchParams.get("start")).toMatch(/^link_[a-f0-9]{32}$/);

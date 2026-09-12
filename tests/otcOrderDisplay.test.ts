@@ -18,3 +18,9 @@ it("retains failures and completed legacy results",()=>{
   expect(otcOrderStatus({status:"payout_failed"})).toBe("Payout failed");
   expect(otcOrderStatus({status:"completed"})).toBe("Received");
 });
+it("distinguishes blocked settlement from active waiting without hiding verified delivery",()=>{
+  const note="Settlement blocked: insufficient funds for gas.";
+  expect(otcOrderStatus({status:"payment_pending",note})).toBe("Needs attention");
+  expect(otcOrderStatus({status:"payout_submitted",note,received:true})).toBe("Received");
+  expect(otcOrderStatus({status:"payment_submitted",note:"Pending verification"})).toBe("Pending");
+});

@@ -106,7 +106,9 @@ describe("OTC reservations",()=>{
   });
   it("does not oversell concurrent partial fills",async()=>{
     const s=new Memory();await createListing(s,listingInput({amount:"15"}),now);
-    const results=await Promise.allSettled([1,2].map(i=>s.atomic(()=>createQuote(s,quoteInput({id:`order:${i}`}),now))));
+    await Promise.all([1,2].map(i=>s.atomic(()=>createQuote(s,quoteInput({id:`order:${i}`}),now))));
+    expect((await s.get<Listing>("listing:1"))?.available).toBe("15000000");
+    const results=await Promise.allSettled([1,2].map(i=>s.atomic(()=>acceptQuote(s,`order:${i}`,"buyer",snapshot,now))));
     expect(results.filter(r=>r.status==="fulfilled")).toHaveLength(1);
     expect((await s.get<Listing>("listing:1"))?.held).toBe("10000000");
   });
@@ -118,7 +120,7 @@ describe("OTC reservations",()=>{
     expect((await s.get<Listing>("listing:1"))?.available).toBe("25000000");
     expect(locked((await s.get<Wallet>(walletId(5042,seller)))!)).toBe(25n*W+2n*gas);
   });
-  it("rejects a self trade",async()=>{const s=new Memory();await createListing(s,listingInput(),now);await expect(createQuote(s,quoteInput({buyer:seller}),now)).rejects.toThrow("own listing");});
+  it("rejects a self trade on legacy direct-payment listings",async()=>{const s=new Memory();await createListing(s,listingInput(),now);await expect(createQuote(s,quoteInput({buyer:seller}),now)).rejects.toThrow("own legacy listing");});
   it("rejects stale prices and insufficient Base ETH including gas",async()=>{
     const{store}=await fixture();await expect(createQuote(store,quoteInput({id:"order:2",priceAt:now-30_001}),now)).rejects.toThrow("expired");
     await expect(store.atomic(()=>acceptQuote(store,"order:1","buyer",{...snapshot,baseBalanceWei:"5555000000000000"},now))).rejects.toThrow("including gas");
@@ -212,8 +214,12 @@ describe("OTC position closure and history",()=>{
   const s=new Memory();await createListing(s,listingInput(),now);const l=await cancelListing(s,"listing:1","seller",now);await cancelListing(s,l.id,"seller",now);
   expect(locked((await s.get<Wallet>(walletId(5042,seller)))!)).toBe(0n);expect(positionHistory(l,[])).toMatchObject({sold:"0",returnedUsdc:"50000000",canCancel:false});
  });
- it("blocks cancellation during a quoted fill and allows it after expiry",async()=>{
-  const {store,order}=await fixture();await expect(cancelListing(store,"listing:1","seller",now)).rejects.toThrow("locked");await finishOrder(store,order,"expired",now+60000);await cancelListing(store,"listing:1","seller",now+60000);expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(0n);
+ it("allows cancellation before confirmation and expiry cannot restore inventory",async()=>{
+  const {store,order}=await fixture();await cancelListing(store,"listing:1","seller",now);
+  await expect(accept(store)).rejects.toThrow("not available");
+  await finishOrder(store,order,"expired",now+60000);
+  expect((await store.get<Listing>("listing:1"))?.available).toBe("0");
+  expect(locked((await store.get<Wallet>(walletId(5042,seller)))!)).toBe(0n);
  });
  it("retains dust and the settlement lock after payout failure",async()=>{
   const store=new Memory();await createListing(store,listingInput({amount:"15"}),now);await createQuote(store,quoteInput(),now);await accept(store);await leg(store,"payment");await settled(store,"tx:payment","101",true,now);await leg(store,"payout");await settled(store,"tx:payout","102",false,now);
@@ -246,4 +252,40 @@ describe("OTC total listing budgets",()=>{
       expect(next*10n**12n+next/10_000_000n*(gas+1n)).toBeGreaterThan(budget*10n**12n);
     }
   });
+});
+
+it("expiring an unconfirmed competing quote cannot release an accepted order",async()=>{
+ const {store}=await fixture();const other=await createQuote(store,quoteInput({id:"order:other"}),now);
+ await accept(store);const before=await store.get<Listing>("listing:1");
+ await finishOrder(store,other,"expired",now+60000);
+ expect(await store.get<Listing>("listing:1")).toEqual(before);
+ expect((await store.get<Wallet>(walletId(8453,buyer)))!.holds["order:1"]).toBeDefined();
+});
+it("a failed confirmation leaves listing inventory unchanged",async()=>{
+ const {store}=await fixture();const before=await store.get<Listing>("listing:1");
+ await expect(store.atomic(()=>acceptQuote(store,"order:1","buyer",{...snapshot,baseBalanceWei:"0"},now))).rejects.toThrow();
+ expect(await store.get<Listing>("listing:1")).toEqual(before);
+});
+it("expires legacy reserved quotes without losing their inventory",async()=>{
+ const {store,order}=await fixture();delete order.listingReserved;await store.put(order);
+ const l=(await store.get<Listing>("listing:1"))!;l.available="40000000";l.held="10000000";l.pendingFills=1;await store.put(l);
+ await finishOrder(store,order,"expired",now+60000);
+ expect(await store.get<Listing>(l.id)).toMatchObject({available:"50000000",held:"0",pendingFills:0});
+});
+
+it("two different buyers can review quotes but only one can confirm even with spare inventory",async()=>{
+ const s=new Memory();await createListing(s,listingInput(),now);
+ const other="0x5555555555555555555555555555555555555555";
+ const before=await s.get<Listing>("listing:1");
+ await s.atomic(()=>createQuote(s,quoteInput(),now));
+ await s.atomic(()=>createQuote(s,quoteInput({id:"order:2",owner:"other",buyer:other}),now));
+ expect(await s.get<Listing>("listing:1")).toEqual(before);
+ const outcomes=await Promise.allSettled([
+  s.atomic(()=>acceptQuote(s,"order:1","buyer",snapshot,now)),
+  s.atomic(()=>acceptQuote(s,"order:2","other",snapshot,now))
+ ]);
+ expect(outcomes.filter(r=>r.status==="fulfilled")).toHaveLength(1);
+ expect(await s.get<Listing>("listing:1")).toMatchObject({available:"40000000",held:"10000000",pendingFills:1});
+ await expect(createQuote(s,quoteInput({id:"order:3",owner:"third",buyer:other}),now)).rejects.toThrow("settling another order");
+ expect(await s.get<Wallet>(walletId(8453,other))).toBeNull();
 });

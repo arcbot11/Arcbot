@@ -12,14 +12,16 @@ export function WalletSessionProvider({ children }: { children: ReactNode }) {
     let active = true;
     let request: AbortController | null = null;
     let expiry: ReturnType<typeof setTimeout> | undefined;
+    let retry: ReturnType<typeof setTimeout> | undefined;
     const refresh = async () => {
       if (request) return;
       const controller = new AbortController(); request = controller;
+      clearTimeout(retry);
       try {
         const response = await fetch("/api/auth/x/session", { cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) });
         if (!response.ok) throw new Error("Session check unavailable");
         const next = await response.json() as WalletSession;
-        if (!active) return;
+        if (!active || controller.signal.aborted) return;
         clearTimeout(expiry);
         if (next.authenticated && (!next.expiresAt || next.expiresAt * 1000 <= Date.now())) { setSession({ authenticated: false }); return; }
         setSession(next);
@@ -29,13 +31,21 @@ export function WalletSessionProvider({ children }: { children: ReactNode }) {
         if (next.authenticated) expiry = setTimeout(() => setSession({ authenticated: false }), Math.max(0, next.expiresAt! * 1000 - Date.now()));
       } catch {
         // Keep the last checked session until its expiry; server authorization still gates every action.
-        if (active) setSession(previous => previous ?? { authenticated: false });
+        if (active && !controller.signal.aborted) {
+          setSession(previous => previous ?? { authenticated: false });
+          retry = setTimeout(() => void refresh(), 5000);
+        }
       } finally { if (request === controller) request = null; }
     };
     const sync = (event: StorageEvent) => { if (event.key === "arc-bot-signout" || event.key === "argos-wallet-account") { setSession({ authenticated: false }); window.location.reload(); } };
+    // Mobile browsers may restore a frozen page without remounting React or
+    // emitting focus. Discard its old request before checking the current cookie.
+    const resume = () => { request?.abort(); request = null; void refresh(); };
+    const visible = () => { if (document.visibilityState === "visible") resume(); };
     void refresh(); const timer = setInterval(() => void refresh(), 60000);
     window.addEventListener("focus", refresh); window.addEventListener("storage", sync);
-    return () => { active = false; request?.abort(); clearTimeout(expiry); clearInterval(timer); window.removeEventListener("focus", refresh); window.removeEventListener("storage", sync); };
+    window.addEventListener("pageshow", resume); document.addEventListener("visibilitychange", visible);
+    return () => { active = false; request?.abort(); clearTimeout(expiry); clearTimeout(retry); clearInterval(timer); window.removeEventListener("focus", refresh); window.removeEventListener("storage", sync); window.removeEventListener("pageshow", resume); document.removeEventListener("visibilitychange", visible); };
   }, []);
   return <Context.Provider value={session}>{children}</Context.Provider>;
 }
