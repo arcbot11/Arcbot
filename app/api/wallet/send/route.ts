@@ -28,21 +28,21 @@ export async function POST(request:NextRequest){
       if(recipient===from||/^0x0{40}$/i.test(recipient))throw new WebError("Use a different, nonzero recipient.");
       if(input.chainId===5042){
         const prepared=await prepareArcSend(from,input);
-        const quote={id:`send:${randomUUID()}`,owner:session.xUserId,wallet:from,chainId:5042,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,expiresAt:Date.now()+30_000};
+        const quote={id:`send:${randomUUID()}`,owner:session.owner,wallet:from,chainId:5042,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,expiresAt:Date.now()+30_000};
         const payload=Buffer.from(JSON.stringify(quote)).toString("base64url");
         return json({quote:`${payload}.${signature(payload)}`,amount:prepared.amount,recipient:prepared.recipient,asset:prepared.asset,gasWei:prepared.gasWei,expiresAt:quote.expiresAt});
       }
       if(input.asset!=="native")throw new WebError("Base withdrawals support ETH only.");
       if(input.percentage!==undefined)throw new WebError("Enter an amount for Base withdrawals.");
       const prepared=await prepareBaseWithdrawal(from,input);
-      const quote={id:`send:${randomUUID()}`,owner:session.xUserId,wallet:from,chainId:input.chainId,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,expiresAt:Date.now()+30_000};
+      const quote={id:`send:${randomUUID()}`,owner:session.owner,wallet:from,chainId:input.chainId,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,expiresAt:Date.now()+30_000};
       const payload=Buffer.from(JSON.stringify(quote)).toString("base64url");
       return json({quote:`${payload}.${signature(payload)}`,amount:prepared.amount,recipient,asset:"ETH",gasWei:prepared.gasWei,expiresAt:quote.expiresAt});
     }
     const [payload,mac,extra]=input.quote.split(".");
     if(!payload||!mac||extra||!sameSecret(mac,signature(payload)))throw new WebError("Invalid send quote.");
     const quote=JSON.parse(Buffer.from(payload,"base64url").toString("utf8"));
-    if(quote.owner!==session.xUserId||quote.wallet.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Quote owner mismatch.",403);
+    if(quote.owner!==session.owner||quote.wallet.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Quote owner mismatch.",403);
     const existing=await repo.read<Transaction|null>({id:quote.id});
     if(existing)return json({id:existing.id,status:existing.status,hash:existing.hash});
     if(Date.now()>=quote.expiresAt)throw new WebError("Quote expired. Check the amount again.");

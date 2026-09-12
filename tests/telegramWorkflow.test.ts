@@ -83,6 +83,25 @@ describe("Telegram update execution boundary", () => {
     await run("/start");
     expect(vi.mocked(fetch).mock.calls.some(call=>JSON.parse(String(call[1]?.body)).reply_markup?.inline_keyboard)).toBe(true);
   });
+  it.each([false,true])("shows the current start menu after unlink (TG wallet=%s)",async hasTg=>{
+    let revoked=false;
+    const ctx={
+      runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>{
+        const name=getFunctionName(ref);
+        if(name==="telegram:consumeRateLimit")return true;
+        if(name==="telegram:unlinkUpdate"){revoked=true;return true;}
+        return null;
+      }),
+      runQuery:vi.fn(async()=>({native:hasTg?{_id:"tg"}:null,link:revoked?null:{_id:"x"},selected:revoked?(hasTg?"tg":null):"x"})),
+    };
+    await (processUpdate as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{updateId:"unlink",updateJson:JSON.stringify({callback_query:{id:"cb",data:"/unlink",from:{id:1},message:{chat:{id:1,type:"private"}}}})});
+    const messages=vi.mocked(fetch).mock.calls.map(c=>JSON.parse(String(c[1]?.body)));
+    const reply=messages.find(m=>m.text?.includes("X unlinked"));
+    const buttons=reply.reply_markup.inline_keyboard.flat().map((b:{text:string})=>b.text);
+    expect(buttons).toContain("Link X");expect(buttons).not.toContain("Unlink X");
+    if(hasTg){expect(buttons).toContain("Balances");expect(reply.text).toContain("Your Arc Chain wallet.");}
+    else expect(buttons).toEqual(["Create TG Linked Wallet","Link X"]);
+  });
   it("buttons show formats without executing or creating conversation state",async()=>{
     const ctx=await run("/buy",true);expect(ctx.runAction).not.toHaveBeenCalled();
     expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("telegram:setConversation");

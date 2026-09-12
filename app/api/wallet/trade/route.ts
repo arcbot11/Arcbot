@@ -31,14 +31,14 @@ export async function POST(request:NextRequest){
       const p=await previewArcTrade(session.walletAddress,input);
       const w=await repo.read<Wallet|null>({id:walletId(5042,session.walletAddress)});
       if(w?.activeTx||BigInt(p.snapshot.balanceWei)-(w?locked(w):0n)<BigInt(p.reserveWei))throw new WebError("Not enough available funds or a wallet transaction is pending.");
-      const quote={id:`trade:${randomUUID()}`,owner:session.xUserId,wallet:session.walletAddress,chainId:5042,leg:p.leg,swapOutput:p.swapOutput,unsigned:p.unsigned,reserveWei:p.reserveWei,expiresAt:p.expiresAt};
+      const quote={id:`trade:${randomUUID()}`,owner:session.owner,wallet:session.walletAddress,chainId:5042,leg:p.leg,swapOutput:p.swapOutput,unsigned:p.unsigned,reserveWei:p.reserveWei,expiresAt:p.expiresAt};
       const payload=Buffer.from(JSON.stringify(quote)).toString("base64url");
       return json({quote:`${payload}.${mac(payload)}`,routeHint:p.routeHint,stage:p.stage,amountIn:p.amountIn,amountOut:p.amountOut,minimumOut:p.minimumOut,protocol:p.protocol,gasWei:p.gasWei,tradeGasBudgetWei:p.tradeGasBudgetWei,expiresAt:p.expiresAt});
     }
     const [payload,signature,extra]=input.quote.split(".");
     if(!payload||!signature||extra||!sameSecret(signature,mac(payload)))throw new WebError("Invalid trade quote.");
     const q=JSON.parse(Buffer.from(payload,"base64url").toString());
-    if(q.owner!==session.xUserId||q.wallet.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Quote owner mismatch.",403);
+    if(q.owner!==session.owner||q.wallet.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Quote owner mismatch.",403);
     const existing=await repo.read<Transaction|null>({id:q.id});
     if(existing)return json(transactionStatus(existing));
     if(Date.now()>=q.expiresAt)throw new WebError("Quote expired. Review the trade again.");

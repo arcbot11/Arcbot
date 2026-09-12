@@ -3,7 +3,7 @@ import {NextRequest} from "next/server";
 import {decodeFunctionData,parseAbi} from "viem";
 import { BASE_USDC } from "../lib/base/usdc";
 const m=vi.hoisted(()=>({prepare:vi.fn(),read:vi.fn(),convert:vi.fn(),balance:vi.fn(),contract:vi.fn(),price:vi.fn(),baseBalance:vi.fn()}));
-vi.mock("../lib/otc/http",async original=>({...await original<typeof import("../lib/otc/http")>(),websiteSession:async()=>({xUserId:"owner",walletAddress:"0x1111111111111111111111111111111111111111"})}));
+vi.mock("../lib/otc/http",async original=>({...await original<typeof import("../lib/otc/http")>(),websiteSession:async()=>({owner:"owner",walletAddress:"0x1111111111111111111111111111111111111111"})}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read})}));
 vi.mock("../lib/otc/runtime",()=>({walletTransferConfiguration:()=>{},prepareCall:m.prepare,chainClient:()=>({readContract:m.contract}),ethPrice:m.price,baseUsdcBalance:m.baseBalance}));
 vi.mock("../lib/arc/trading",()=>({arcSellAmountForUsdc:m.convert}));

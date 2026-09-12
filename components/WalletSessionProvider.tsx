@@ -1,7 +1,7 @@
 "use client";
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 
-export type WalletSession = { authenticated: boolean; walletAddress?: string; username?: string; csrfToken?: string; expiresAt?: number };
+export type WalletSession = { authenticated: boolean; provider?: "x" | "telegram"; walletAddress?: string; username?: string; csrfToken?: string; expiresAt?: number };
 const Context = createContext<WalletSession | null>(null);
 export const useWalletSession = () => useContext(Context);
 
@@ -23,13 +23,16 @@ export function WalletSessionProvider({ children }: { children: ReactNode }) {
         clearTimeout(expiry);
         if (next.authenticated && (!next.expiresAt || next.expiresAt * 1000 <= Date.now())) { setSession({ authenticated: false }); return; }
         setSession(next);
+        if (next.authenticated) {
+          try { localStorage.setItem("argos-wallet-account", JSON.stringify([next.provider ?? "x", next.walletAddress])); } catch { /* Storage is optional; cookies remain authoritative. */ }
+        }
         if (next.authenticated) expiry = setTimeout(() => setSession({ authenticated: false }), Math.max(0, next.expiresAt! * 1000 - Date.now()));
       } catch {
         // Keep the last checked session until its expiry; server authorization still gates every action.
         if (active) setSession(previous => previous ?? { authenticated: false });
       } finally { if (request === controller) request = null; }
     };
-    const sync = (event: StorageEvent) => { if (event.key === "arc-bot-signout") { setSession({ authenticated: false }); window.location.reload(); } };
+    const sync = (event: StorageEvent) => { if (event.key === "arc-bot-signout" || event.key === "argos-wallet-account") { setSession({ authenticated: false }); window.location.reload(); } };
     void refresh(); const timer = setInterval(() => void refresh(), 60000);
     window.addEventListener("focus", refresh); window.addEventListener("storage", sync);
     return () => { active = false; request?.abort(); clearTimeout(expiry); clearInterval(timer); window.removeEventListener("focus", refresh); window.removeEventListener("storage", sync); };

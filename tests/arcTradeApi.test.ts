@@ -2,7 +2,7 @@ import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
 import {NextRequest} from "next/server";
 import {serializeTransaction} from "viem";
 const m=vi.hoisted(()=>({owner:"alice",read:vi.fn(),command:vi.fn(),preview:vi.fn(),estimate:vi.fn(),convert:vi.fn(),advance:vi.fn(),balance:vi.fn()}));
-vi.mock("../lib/otc/http",async original=>({...await original<typeof import("../lib/otc/http")>(),websiteSession:vi.fn(async()=>({xUserId:m.owner,walletAddress:"0x1111111111111111111111111111111111111111"}))}));
+vi.mock("../lib/otc/http",async original=>({...await original<typeof import("../lib/otc/http")>(),websiteSession:vi.fn(async()=>({owner:m.owner,walletAddress:"0x1111111111111111111111111111111111111111"}))}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.command})}));
 vi.mock("../lib/arc/trading",()=>({previewArcTrade:m.preview,estimateArcTrade:m.estimate,arcSellAmountForUsdc:m.convert}));
 vi.mock("../lib/otc/runtime",()=>({balanceSnapshot:m.balance,advanceTransaction:m.advance}));

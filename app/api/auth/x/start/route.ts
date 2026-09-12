@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
   // Telegram account linking must always pass through X authorization. Reusing
   // a website session here can bind the Telegram nonce to a stale or different
   // X identity, and can make relinking fail before the nonce is consumed.
-  if (session && !validTelegramLink) {
+  if (session && session.provider !== "telegram" && !validTelegramLink) {
     const active = await new ConvexHttpClient(convexUrl).action(api.wallets.verifyWebSession, {
       secret: webSecret, sessionId: session.sessionId, ownerXUserId: session.xUserId,
     }).catch(() => false);

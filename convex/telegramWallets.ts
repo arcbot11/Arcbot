@@ -156,7 +156,7 @@ export const work = internalAction({ args: { requestId: v.string() }, handler: a
       // Persist completion before sending. A delivery failure never repeats execution.
       const stored = await ctx.runMutation(internal.telegramWallets.storeResult, { ...a, lease, result });
       if (stored === false) return;
-      try { delivered = await ctx.runAction(internal.telegram.deliverNativeWalletMessage, { walletId: wallet._id, requestId: `telegram-result:${row.requestId}`, text: `You are using your TG linked wallet\n\n${result}` }); }
+      try { delivered = await ctx.runAction(internal.telegram.deliverNativeWalletMessage, { walletId: wallet._id, requestId: `telegram-result:${row.requestId}`, text: result }); }
       catch { diagnosticCode = "DELIVERY_UNAVAILABLE"; retryDelayMs = 60_000; }
     }
   } catch {

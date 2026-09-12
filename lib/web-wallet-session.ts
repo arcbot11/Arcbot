@@ -8,14 +8,17 @@ export function terminalReauthAt(authenticatedAt: number) {
   return authenticatedAt + TERMINAL_RECENT_AUTH_SECONDS;
 }
 
-export type WebWalletSession = {
+type SessionFields = {
   walletAddress: string;
-  xUserId: string;
   username: string;
   sessionId: string;
   authenticatedAt: number;
   expiresAt: number;
 };
+export type WebWalletSession = SessionFields & ({ provider?: "x"; xUserId: string; telegramUserId?: never } | { provider: "telegram"; telegramUserId: string; xUserId?: never });
+export function webSessionOwner(session: WebWalletSession) {
+  return session.provider === "telegram" ? `tg:${session.telegramUserId}` : session.xUserId;
+}
 
 function signature(payload: string, secret: string) {
   return createHmac("sha256", secret).update(`argus-web-wallet:${payload}`).digest("base64url");
@@ -39,6 +42,12 @@ export function createWebWalletSession(walletAddress: string, xUserId: string, u
   return `${payload}.${signature(payload, secret)}`;
 }
 
+export function createTelegramWebSession(walletAddress: string, telegramUserId: string, sessionId: string, authenticatedAt: number, secret: string) {
+  const session: WebWalletSession = { provider: "telegram", walletAddress, telegramUserId, username: "Telegram", sessionId, authenticatedAt, expiresAt: authenticatedAt + WEB_WALLET_SESSION_SECONDS };
+  const payload = Buffer.from(JSON.stringify(session)).toString("base64url");
+  return `${payload}.${signature(payload, secret)}`;
+}
+
 export function readWebWalletSession(value: string | undefined, secret: string): WebWalletSession | null {
   if (!value) return null;
   const [payload, suppliedSignature, extra] = value.split(".");
@@ -51,7 +60,9 @@ export function readWebWalletSession(value: string | undefined, secret: string):
   try {
     const session = JSON.parse(Buffer.from(payload, "base64url").toString("utf8")) as Partial<WebWalletSession>;
     if (!/^0x[a-fA-F0-9]{40}$/.test(session.walletAddress ?? "")) return null;
-    if (!/^\d{1,30}$/.test(session.xUserId ?? "")) return null;
+    if (session.provider === "telegram") {
+      if (!/^\d{1,30}$/.test(session.telegramUserId ?? "") || session.xUserId !== undefined) return null;
+    } else if ((session.provider !== undefined && session.provider !== "x") || !/^\d{1,30}$/.test(session.xUserId ?? "") || session.telegramUserId !== undefined) return null;
     if (!/^[A-Za-z0-9_]{1,15}$/.test(session.username ?? "")) return null;
     if (!/^web_[a-zA-Z0-9_-]{16,80}$/.test(session.sessionId ?? "")) return null;
     if (!Number.isSafeInteger(session.authenticatedAt) || (session.authenticatedAt ?? 0) > Math.floor(Date.now() / 1000) + 60) return null;

@@ -15,7 +15,7 @@ export async function GET(request:NextRequest){
       if(!isAddress(token))throw new WebError("Choose a valid token contract.");
       return json({walletAddress:session.walletAddress,token:await arcSelectedTokenBalance(session.walletAddress,token)});
     }
-    const records=await repository().read<RecordValue[]>({owner:session.xUserId});
+    const records=await repository().read<RecordValue[]>({owner:session.owner});
     const known=records.flatMap(r=>r.kind==="transaction"&&r.chainId===5042&&r.swapOutput?[r.swapOutput.token]:[]);
     return json({walletAddress:session.walletAddress,...await arcTokenBalances(session.walletAddress,[...new Set(known)],request.nextUrl.searchParams.get("refresh")==="1")});
   }catch(error){return webFailure(error);}

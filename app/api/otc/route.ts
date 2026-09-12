@@ -37,8 +37,8 @@ export async function GET(request:NextRequest) {
   if(request.nextUrl.searchParams.get("scope")==="wallet"){
     try {
       const session=await websiteSession(request),repo=repository();
-      const records=await repo.read<RecordValue[]>({owner:session.xUserId});
-      const listingReservedWei=records.reduce((sum,r)=>r.kind==="listing"&&r.owner===session.xUserId&&r.seller.toLowerCase()===session.walletAddress.toLowerCase()
+      const records=await repo.read<RecordValue[]>({owner:session.owner});
+      const listingReservedWei=records.reduce((sum,r)=>r.kind==="listing"&&r.owner===session.owner&&r.seller.toLowerCase()===session.walletAddress.toLowerCase()
         ?sum+(BigInt(r.available)+BigInt(r.held))*10n**12n:sum,0n).toString();
       const snapshots=await Promise.allSettled([arcWalletBalance(session.walletAddress),balanceSnapshot(8453,session.walletAddress)]);
       const balances=[5042,8453].map((chain,index)=>{
@@ -55,7 +55,7 @@ export async function GET(request:NextRequest) {
         return !next||neverSigned(next)||Boolean(next.status==="reverted"&&next.hash&&next.blockNumber)||Boolean(next.status==="cancelled"&&next.nonceConflict);
       };
       const orders=await Promise.all(records.filter(r=>r.kind==="order"&&r.status!=="expired"&&r.status!=="quoted").map(async r=>{
-        const o=r as Order; return {received:arcOrderReceived(o,records.filter((r):r is Transaction=>r.kind==="transaction")),listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.xUserId?"buy":"sell"};
+        const o=r as Order; return {received:arcOrderReceived(o,records.filter((r):r is Transaction=>r.kind==="transaction")),listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash,payoutHash:o.payoutHash,note:o.note,createdAt:o.createdAt,side:o.owner===session.owner?"buy":"sell"};
       }));
       const transactions=records.filter((r):r is Transaction=>r.kind==="transaction"&&r.leg!=="allowance"&&r.leg!=="approval").map(transactionHistory);
       const listings=await Promise.all(records.filter((r):r is Listing=>r.kind==="listing").map(async listing=>({...positionHistory(listing,
@@ -74,33 +74,33 @@ export async function POST(request:NextRequest) {
   try{
     const session=await websiteSession(request,true),body=bodySchema.parse(await boundedJson(request,4096));
     const repo=repository();
-    if(body.action==="retry_escrow"){const r=await repo.command("escrow_retry",{listingId:body.listingId,orderId:body.orderId,owner:session.xUserId});return json(r);}
-    if(body.action==="cancel"){const r=await repo.command("cancel",{id:body.listingId,owner:session.xUserId});return json(r);}
+    if(body.action==="retry_escrow"){const r=await repo.command("escrow_retry",{listingId:body.listingId,orderId:body.orderId,owner:session.owner});return json(r);}
+    if(body.action==="cancel"){const r=await repo.command("cancel",{id:body.listingId,owner:session.owner});return json(r);}
     if(body.action==="retry_payout"){
       const order=await repo.read<Order|null>({id:body.orderId});
-      if(!order||order.sellerOwner!==session.xUserId||order.seller.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Order not found.",404);
+      if(!order||order.sellerOwner!==session.owner||order.seller.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Order not found.",404);
       const prepared=await prepareCall(5042,payoutCall(order));
       if(BigInt(prepared.gasWei)>BigInt(order.arcGasWei))throw new WebError("Gas exceeded the original payout allowance. Retry when fees fall.");
-      const result=await repo.command<Order>("retry_payout",{id:order.id,owner:session.xUserId,attempt:body.attempt,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
+      const result=await repo.command<Order>("retry_payout",{id:order.id,owner:session.owner,attempt:body.attempt,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
       try{await advanceOrder(order.id);}catch{/* Durable retry is picked up by the worker. */}
       return json(publicOrder(result));
     }
     if(body.action==="list"){
-      const prior=await repo.read<Listing|null>({id:`listing:${session.xUserId}:${body.requestId}`});
+      const prior=await repo.read<Listing|null>({id:`listing:${session.owner}:${body.requestId}`});
       if(prior){assertListingRetry(prior,body.amount,body.premium,session.walletAddress);return json(prior);}
     }
     const context=body.action==="quote"||body.action==="quote_preview"?await repo.read<Listing|null>({id:body.listingId}):body.action==="accept"?await repo.read<Order|null>({id:body.orderId}):null;
     const config=context?.escrow||body.action==="list"||body.action==="list_preview"?{...escrowConfiguration(),router:context?.escrow?.address?getAddress(context.escrow.address):zeroAddress}:await verifyRouter();
     if(body.action==="list_preview") return json(await listingPreview(session.walletAddress,body.amount,body.premium));
     if(body.action==="list"){
-      const prior=await repo.read<Listing|null>({id:`listing:${session.xUserId}:${body.requestId}`});
+      const prior=await repo.read<Listing|null>({id:`listing:${session.owner}:${body.requestId}`});
       if(prior){assertListingRetry(prior,body.amount,body.premium,session.walletAddress);return json(prior);}
       const preview=await listingPreview(session.walletAddress,body.amount,body.premium);
       if(BigInt(preview.gasReserveWei)>BigInt(body.maxGasReserveWei))throw new WebError("Gas changed. Review the listing again.");
       const snapshot=preview.snapshot;
       if(snapshot.nonce!==snapshot.pendingNonce)throw new WebError("Wallet has a pending transaction.");
-      const listing=await repo.command<Listing>("escrow_listing",{id:`listing:${session.xUserId}:${body.requestId}`,owner:session.xUserId,seller:session.walletAddress,
-        amount:body.amount,amountIncludesGas:true,escrow:{accountName:escrowAccountName(`listing:${session.xUserId}:${body.requestId}`),feeRecipient:config.feeRecipient},premium:body.premium,gasPerFillWei:preview.gasPerFillWei,balanceWei:snapshot.balanceWei,block:snapshot.block});
+      const listing=await repo.command<Listing>("escrow_listing",{id:`listing:${session.owner}:${body.requestId}`,owner:session.owner,seller:session.walletAddress,
+        amount:body.amount,amountIncludesGas:true,escrow:{accountName:escrowAccountName(`listing:${session.owner}:${body.requestId}`),feeRecipient:config.feeRecipient},premium:body.premium,gasPerFillWei:preview.gasPerFillWei,balanceWei:snapshot.balanceWei,block:snapshot.block});
       try{await advanceEscrowPosition(listing.id);}catch{/* The worker resumes the durable funding request. */}
       return json(await repo.read<Listing>({id:listing.id}));
     }
@@ -127,24 +127,24 @@ export async function POST(request:NextRequest) {
       if(BigInt(payment.snapshot.balanceWei)-(funding?locked(funding):0n)<required)throw new WebError("Not enough available Base ETH for the amount, premium, 1.5% fee, and gas.");
       if(body.action==="quote_preview")return json({totalCostWei:required.toString()});
       // Durable quote reservation checks payment + settlement gas + deposit gas together.
-      return json(publicOrder(await repo.command<Order>("quote",{id:`order:${randomUUID()}`,owner:session.xUserId,buyer:session.walletAddress,listingId:listing.id,amount:body.amount,paymentAsset:"ETH",...rate,baseGasWei:perTransfer.toString(),escrowGasBudgetWei:gas.settlementWei.toString(),baseBalanceWei:payment.snapshot.balanceWei,baseBlock:payment.snapshot.block,router:listing.escrow.address,feeRecipient:listing.escrow.feeRecipient})));
+      return json(publicOrder(await repo.command<Order>("quote",{id:`order:${randomUUID()}`,owner:session.owner,buyer:session.walletAddress,listingId:listing.id,amount:body.amount,paymentAsset:"ETH",...rate,baseGasWei:perTransfer.toString(),escrowGasBudgetWei:gas.settlementWei.toString(),baseBalanceWei:payment.snapshot.balanceWei,baseBlock:payment.snapshot.block,router:listing.escrow.address,feeRecipient:listing.escrow.feeRecipient})));
     }
     const order=await repo.read<Order|null>({id:body.orderId});
-    if(!order||order.kind!=="order"||order.owner!==session.xUserId)throw new WebError("Order not found.",404);
+    if(!order||order.kind!=="order"||order.owner!==session.owner)throw new WebError("Order not found.",404);
     if(order.status!=="quoted")return json(publicOrder(order));
     if(paymentAsset(order)!=="ETH"||order.escrow&&order.escrow.version!==2)throw new WebError("Payment options changed. Request a new ETH quote.");
     if(order.router.toLowerCase()!==config.router.toLowerCase()||order.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new WebError("Quote configuration changed. Request a new quote.");
     if(order.escrow){
       const [base,arc]=await Promise.all([balanceSnapshot(8453,session.walletAddress),balanceSnapshot(5042,order.escrow.address)]);
       if(base.nonce!==base.pendingNonce||arc.nonce!==arc.pendingNonce)throw new WebError("Wallet has a pending transaction.");
-      await repo.command("accept",{id:order.id,owner:session.xUserId,snapshot:{baseBalanceWei:base.balanceWei,baseBlock:base.block,arcBalanceWei:arc.balanceWei,arcBlock:arc.block,...(paymentAsset(order)==="USDC"?{baseUsdcBalance:await baseUsdcBalance(session.walletAddress,base.block)}:{})}});
+      await repo.command("accept",{id:order.id,owner:session.owner,snapshot:{baseBalanceWei:base.balanceWei,baseBlock:base.block,arcBalanceWei:arc.balanceWei,arcBlock:arc.block,...(paymentAsset(order)==="USDC"?{baseUsdcBalance:await baseUsdcBalance(session.walletAddress,base.block)}:{})}});
       try{await advanceOrder(order.id);}catch{await repo.command("note",{id:order.id,note:"Escrow settlement is waiting for verification. Funds remain held."});}
       return json(publicOrder(await repo.read<Order>({id:order.id})));
     }
     const [base,arc]=await Promise.all([balanceSnapshot(8453,session.walletAddress),prepareCall(5042,payoutCall(order))]);
     if(base.nonce!==base.pendingNonce||BigInt(arc.gasWei)>BigInt(order.arcGasWei))throw new WebError("Wallet has a pending transaction or insufficient gas reserve.");
     const funding = paymentAsset(order) === "USDC" ? {baseUsdcBalance: await baseUsdcBalance(session.walletAddress,base.block)} : {};
-    const accepted=await repo.command<Order>("accept",{id:order.id,owner:session.xUserId,snapshot:{...funding,baseBalanceWei:base.balanceWei,baseBlock:base.block,arcBalanceWei:arc.snapshot.balanceWei,arcBlock:arc.snapshot.block}});
+    const accepted=await repo.command<Order>("accept",{id:order.id,owner:session.owner,snapshot:{...funding,baseBalanceWei:base.balanceWei,baseBlock:base.block,arcBalanceWei:arc.snapshot.balanceWei,arcBlock:arc.snapshot.block}});
     // A failure after acceptance does not undo the durable order or release its inventory.
     try{await advanceOrder(order.id);}catch{await repo.command("note",{id:order.id,note:"Order accepted. Settlement is waiting for verification. Funds remain reserved."});}
     return json(publicOrder(await repo.read<Order>({id:accepted.id})));

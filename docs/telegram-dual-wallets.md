@@ -13,7 +13,7 @@ Implemented locally. No live account creation, trading, or Telegram messages wer
 - `/unlink` removes Telegram's access to X only. TG remains available, and the X wallet remains accessible through X and website login.
 - Menus, instructions, and results identify the selected or executing wallet. Results for queued work identify the wallet originally selected, even after a switch.
 - TG wallets support balances, wallet lookup, buy, sell, swap, send, burn, and Base ETH withdrawal. Financial commands use the same `/api/arc/command`, reservation store, RPC routing, signing, and receipt verification as website/X commands.
-- TG-only wallets do not gain website sign-in. Their public wallet page is a balance view; Telegram operates that wallet.
+- TG-linked wallets can now sign in on the website using browser-bound approval inside the bot. See telegram-web-sign-in.md. X and TG identities remain separate; one wallet is active per browser.
 
 ## Ownership and recovery
 

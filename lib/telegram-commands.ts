@@ -26,8 +26,9 @@ export function telegramMenu(state: { native: unknown; link: unknown; selected: 
   if (state.link) rows.push([{ text: "Unlink X", callback_data: "/unlink" }]);
   return { inline_keyboard: rows };
 }
-export function telegramWalletLabel(selected: string | null, username?: string | null) {
-  return selected === "tg" ? "You are using your TG linked wallet" : selected === "x" ? `You are using your X linked wallet${username ? ` for @${username.replace(/^@/, "")}` : ""}` : "Choose a wallet for Telegram. A TG wallet is permanently linked to your Telegram account.";
+export function telegramWalletLabel(selected: string | null, username?: string | null, hasBothWallets = false) {
+  if (selected && !hasBothWallets) return "";
+  return selected === "tg" ? "You are using your TG linked wallet" : selected === "x" ? `You are using your X linked wallet${username ? ` for @${username.replace(/^@/, "")}` : ""}` : "Choose a wallet for Telegram. A TG wallet is permanently linked to your Telegram account. You can also use an X-linked wallet later.";
 }
 const commands = new Set(["start", "help", "link", "unlink", "wallet", "balance", ...walletNavigation, ...Object.keys(TELEGRAM_FORMATS)]);
 export function telegramInput(text: string, callback = false, username = ARC_BOT_TELEGRAM_USERNAME) {

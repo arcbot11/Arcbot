@@ -5,7 +5,7 @@ const m=vi.hoisted(()=>({read:vi.fn(),command:vi.fn(),rate:vi.fn(),prepare:vi.fn
 const buyer="0x2222222222222222222222222222222222222222",seller="0x1111111111111111111111111111111111111111",router="0x3333333333333333333333333333333333333333",fees="0x4444444444444444444444444444444444444444";
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.command})}));
 vi.mock("../lib/otc/escrow-runtime",()=>({escrowConfiguration:()=>({feeRecipient:"0x4444444444444444444444444444444444444444",base:{maxTotalFeeWei:1000n}}),escrowAccountName:()=>"position-test",advanceEscrowPosition:vi.fn()}));
-vi.mock("../lib/otc/http",async original=>({...await original<typeof import("../lib/otc/http")>(),websiteSession:vi.fn(async()=>({xUserId:"buyer",walletAddress:"0x2222222222222222222222222222222222222222"}))}));
+vi.mock("../lib/otc/http",async original=>({...await original<typeof import("../lib/otc/http")>(),websiteSession:vi.fn(async()=>({owner:"buyer",walletAddress:"0x2222222222222222222222222222222222222222"}))}));
 vi.mock("../lib/otc/runtime",()=>({otcConfiguration:vi.fn(),verifyRouter:vi.fn(async()=>({router:"0x3333333333333333333333333333333333333333",feeRecipient:"0x4444444444444444444444444444444444444444",base:{maxTotalFeeWei:1000n}})),ethPrice:m.rate,prepareCall:m.prepare,balanceSnapshot:m.balance,baseUsdcBalance:m.usdc,verifyUsdcRouter:m.verify,advanceOrder:m.advance,chainClient:()=>({getCode:m.code})}));
 import {POST} from "../app/api/otc/route";
 const request=(body:unknown)=>new NextRequest("https://arc.invalid/api/otc",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});

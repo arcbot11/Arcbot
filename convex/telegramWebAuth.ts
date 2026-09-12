@@ -1,0 +1,56 @@
+import { v } from "convex/values";
+import { mutation, internalMutation } from "./_generated/server";
+
+function authorize(secret: string) {
+  if (!process.env.WEB_AUTH_SECRET || secret !== process.env.WEB_AUTH_SECRET) throw Error("Unauthorized.");
+}
+const digest = (s: string) => /^[a-f0-9]{64}$/.test(s);
+export const start = mutation({ args: { secret: v.string(), tokenHash: v.string(), browserHash: v.string(), code: v.string() }, handler: async (ctx, a) => {
+  authorize(a.secret);
+  if (!digest(a.tokenHash) || !digest(a.browserHash) || !/^[A-F0-9]{8}$/.test(a.code)) throw Error("Invalid challenge.");
+  const existing = await ctx.db.query("telegramWebLogins").withIndex("by_token", q => q.eq("tokenHash", a.tokenHash)).unique();
+  if (existing) throw Error("Challenge already exists.");
+  await ctx.db.insert("telegramWebLogins", { tokenHash: a.tokenHash, browserHash: a.browserHash, code: a.code, expiresAt: Date.now() + 600_000 });
+} });
+
+// Called only by the authenticated bot webhook, using its durably recorded private-chat update.
+export const respond = internalMutation({ args: { updateId: v.string(), tokenHash: v.string(), approve: v.boolean() }, handler: async (ctx, a) => {
+  const update = await ctx.db.query("telegramUpdates").withIndex("by_update_id", q => q.eq("updateId", a.updateId)).unique();
+  if (!update?.telegramUserId || update.telegramChatId !== update.telegramUserId || update.walletTransitionBlocked) return { status: "invalid" as const };
+  const row = await ctx.db.query("telegramWebLogins").withIndex("by_token", q => q.eq("tokenHash", a.tokenHash)).unique();
+  if (!row || row.expiresAt <= Date.now() || row.revokedAt) return { status: "expired" as const };
+  const wallet = await ctx.db.query("telegramNativeWallets").withIndex("by_user", q => q.eq("telegramUserId", update.telegramUserId!)).unique();
+  if (!wallet || wallet.telegramChatId !== update.telegramChatId) return { status: "no_wallet" as const };
+  if (row.walletId && row.walletId !== wallet._id) return { status: "invalid" as const };
+  if (a.approve && row.walletId !== wallet._id) return { status: "invalid" as const };
+  if (a.approve) {
+    if (!row.approvedAt) await ctx.db.patch(row._id, { approvedAt: Date.now() });
+    return { status: "approved" as const };
+  }
+  if (!row.walletId) await ctx.db.patch(row._id, { walletId: wallet._id });
+  return { status: "confirm" as const, code: row.code };
+} });
+
+// Exchange is idempotent only for the original browser. A retry cannot create another session.
+export const exchange = mutation({ args: { secret: v.string(), tokenHash: v.string(), browserHash: v.string(), sessionIdHash: v.string() }, handler: async (ctx, a) => {
+  authorize(a.secret);
+  if (![a.tokenHash,a.browserHash,a.sessionIdHash].every(digest)) throw Error("Invalid challenge.");
+  const row = await ctx.db.query("telegramWebLogins").withIndex("by_token", q => q.eq("tokenHash", a.tokenHash)).unique();
+  if (!row || row.browserHash !== a.browserHash || row.expiresAt <= Date.now() || row.revokedAt) return { status: "expired" as const };
+  if (!row.approvedAt || !row.walletId) return { status: "pending" as const };
+  if (row.sessionIdHash && row.sessionIdHash !== a.sessionIdHash) return { status: "expired" as const };
+  const wallet = await ctx.db.get(row.walletId);
+  if (!wallet || wallet.telegramUserId !== wallet.telegramChatId) return { status: "expired" as const };
+  if (!row.sessionIdHash) await ctx.db.patch(row._id, { sessionIdHash: a.sessionIdHash });
+  return { status: "approved" as const, walletAddress: wallet.address, telegramUserId: wallet.telegramUserId, authenticatedAt: Math.floor(row.approvedAt / 1000) };
+} });
+
+export const session = mutation({ args: { secret: v.string(), sessionIdHash: v.string(), telegramUserId: v.string(), revoke: v.boolean() }, handler: async (ctx, a) => {
+  authorize(a.secret);
+  const row = await ctx.db.query("telegramWebLogins").withIndex("by_session", q => q.eq("sessionIdHash", a.sessionIdHash)).unique();
+  if (!row?.walletId || !row.approvedAt || row.revokedAt || row.approvedAt + 7_200_000 <= Date.now()) return false;
+  const wallet = await ctx.db.get(row.walletId);
+  if (!wallet || wallet.telegramUserId !== a.telegramUserId || wallet.telegramChatId !== a.telegramUserId) return false;
+  if (a.revoke) await ctx.db.patch(row._id, { revokedAt: Date.now() });
+  return true;
+} });

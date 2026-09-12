@@ -1,5 +1,6 @@
 import { ConvexHttpClient } from "convex/browser";
 import { walletReturnPath } from "@/lib/wallet-return-path";
+import { checkWebSession } from "@/lib/web-session-authority";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
 import {oauthCookieName,readOAuthAttempt,telegramRetryToken,telegramReturnToken} from "@/lib/x-oauth-attempt";
@@ -121,11 +122,14 @@ export async function GET(request: NextRequest) {
     const returnTo = walletReturnPath(requestedReturn);
     const sessionCookie = createWebWalletSession(wallet.address, identity.id, identity.username, webSecret);
     const session = readWebWalletSession(sessionCookie, webSecret);
-    if (!session) return errorRedirect(request, "session");
+    if (!session || session.provider === "telegram") return errorRedirect(request, "session");
     await new ConvexHttpClient(convexUrl).action(api.wallets.registerWebSession, {
       secret: webSecret, sessionId: session.sessionId, ownerXUserId: session.xUserId, expiresAt: session.expiresAt,
     });
+    const previous = readWebWalletSession(request.cookies.get(WEB_WALLET_SESSION_COOKIE)?.value, webSecret);
+    if (previous) await checkWebSession(new ConvexHttpClient(convexUrl), webSecret, previous, true);
     const response = NextResponse.redirect(new URL(returnTo, siteUrl));
+    response.cookies.set("argos_tg_web_login", "", { httpOnly: true, path: "/api/auth/telegram", maxAge: 0 });
     response.cookies.set("argus_x_oauth_state", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
     response.cookies.set("argus_x_oauth_verifier", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
     response.cookies.set("argus_x_oauth_return", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });

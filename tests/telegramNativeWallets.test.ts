@@ -199,8 +199,10 @@ describe("menus and shared transaction service", () => {
     expect(actions).not.toContain("/unlinktg");
   });
   it("labels the selected identity", () => {
-    expect(telegramWalletLabel("tg")).toBe("You are using your TG linked wallet");
-    expect(telegramWalletLabel("x","existing")).toBe("You are using your X linked wallet for @existing");
+    expect(telegramWalletLabel("tg",null,true)).toBe("You are using your TG linked wallet");
+    expect(telegramWalletLabel("x","existing",true)).toBe("You are using your X linked wallet for @existing");
+    expect(telegramWalletLabel("tg")).toBe("");
+    expect(telegramWalletLabel("x","existing")).toBe("");
   });
   it.each(["tg:123","x:123"])("accepts real signer owner namespace %s", ownerReference => {
     expect(walletRequestSchema.safeParse({ ownerReference, chainId:5042, idempotencyKey:"wallet" }).success).toBe(true);
@@ -214,7 +216,7 @@ describe("menus and shared transaction service", () => {
     const ctx={runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegramWallets:claim"?{row,wallet}:null),runAction:vi.fn(async()=>true)};
     await handler(work)(ctx,{requestId:row.requestId});
     expect(String(fetcher.mock.calls[0][0])).toContain("/api/arc/command");
-    expect(ctx.runAction).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({walletId:"native",text:expect.stringContaining("TG linked wallet")}));
+    expect(ctx.runAction).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({walletId:"native",text:expect.stringContaining("Buy confirmed.")}));
     fetcher.mockClear(); Object.assign(row,{result:"Buy confirmed."});
     await handler(work)(ctx,{requestId:row.requestId}); expect(fetcher).not.toHaveBeenCalled();
   });

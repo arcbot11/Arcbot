@@ -681,6 +681,12 @@ export default defineSchema({
     .index("by_session_hash", ["sessionIdHash"])
     .index("by_owner", ["ownerXUserId"]),
 
+  telegramWebLogins: defineTable({
+    tokenHash: v.string(), browserHash: v.string(), code: v.string(), expiresAt: v.number(),
+    walletId: v.optional(v.id("telegramNativeWallets")), approvedAt: v.optional(v.number()),
+    sessionIdHash: v.optional(v.string()), revokedAt: v.optional(v.number()),
+  }).index("by_token", ["tokenHash"]).index("by_session", ["sessionIdHash"]),
+
   telegramAccountLinks: defineTable({
     telegramUserId: v.string(),
     telegramChatId: v.string(),

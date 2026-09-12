@@ -1,15 +1,25 @@
 import {it,expect,vi,beforeEach,afterEach} from "vitest";
 import {NextRequest} from "next/server";
 import {getFunctionName} from "convex/server";
-const m=vi.hoisted(()=>({action:vi.fn()}));
-vi.mock("convex/browser",()=>({ConvexHttpClient:class{action=m.action;}}));
+const m=vi.hoisted(()=>({action:vi.fn(),mutation:vi.fn()}));
+vi.mock("convex/browser",()=>({ConvexHttpClient:class{action=m.action;mutation=m.mutation;}}));
+import {createTelegramWebSession,readWebWalletSession,WEB_WALLET_SESSION_COOKIE} from "../lib/web-wallet-session";
 import {GET as callback} from "../app/api/auth/x/callback/route";
 import {GET as start} from "../app/api/auth/x/start/route";
 import {oauthCookieName,readTelegramRetry,telegramReturnToken} from "../lib/x-oauth-attempt";
 beforeEach(()=>{
+ m.mutation.mockReset().mockResolvedValue(true);
  for(const [k,v]of Object.entries({X_OAUTH_CLIENT_ID:"client",X_OAUTH_CLIENT_SECRET:"secret",WEB_AUTH_SECRET:"test-secret",NEXT_PUBLIC_SITE_URL:"https://www.argosbot.io",NEXT_PUBLIC_CONVEX_URL:"https://example.convex.cloud"}))vi.stubEnv(k,v);
  m.action.mockReset().mockResolvedValue({address:"0x1111111111111111111111111111111111111111"});
  vi.stubGlobal("fetch",vi.fn().mockResolvedValueOnce(Response.json({access_token:"test"})).mockResolvedValueOnce(Response.json({data:{id:"123",username:"owner"}})));
+});
+it("replaces a Telegram browser session with X and invalidates the pending TG exchange cookie",async()=>{
+ const tg=createTelegramWebSession("0x1111111111111111111111111111111111111111","456","web_abcdefghijklmnop",Math.floor(Date.now()/1000),"test-secret");
+ const r=await callback(new NextRequest("https://www.argosbot.io/api/auth/x/callback?code=test&state=test-state",{headers:{cookie:`argus_x_oauth_state=test-state; argus_x_oauth_verifier=test-verifier; ${WEB_WALLET_SESSION_COOKIE}=${tg}`}}));
+ expect(r.headers.get("location")).toBe("https://www.argosbot.io/wallet");
+ expect(readWebWalletSession(r.cookies.get(WEB_WALLET_SESSION_COOKIE)!.value,"test-secret")).toMatchObject({xUserId:"123"});
+ expect(m.mutation.mock.calls[0][1]).toMatchObject({telegramUserId:"456",revoke:true});
+ expect(r.cookies.get("argos_tg_web_login")?.value).toBe("");
 });
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();});
 it("returns directly to Telegram without a web confirmation or website session",async()=>{
