@@ -9,7 +9,13 @@ export function unpaidPurchaseCandidate(order:Order,transactions:Transaction[]){
 }
 
 /** Must run in the same database transaction as prepare and begin_signing. */
-export async function cancelUnpaidPurchase(store:Store,id:string,owner:string,now:number){
+export async function canCancelUnpaidPurchase(store:Store,id:string,owner:string,now:number){
+  const order=await store.get<Order>(id);
+  if(order?.status!=="payment_pending")return false;
+  try{await cancelUnpaidPurchase(store,id,owner,now,true);return true;}catch{return false;}
+}
+
+export async function cancelUnpaidPurchase(store:Store,id:string,owner:string,now:number,validateOnly=false){
   const order=await store.get<Order>(id);
   if(!order?.escrow||order.escrow.version!==2||![order.owner,order.sellerOwner].includes(owner))throw Error('Purchase cannot be cancelled by this account.');
   if(order.status==='payment_failed')return order;
@@ -33,10 +39,12 @@ export async function cancelUnpaidPurchase(store:Store,id:string,owner:string,no
   for(const tx of txs){
     const w=await wallet(store,8453,tx.wallet,tx.owner,now);
     if(w.activeTx!==tx.id)throw Error('Wallet transaction lease mismatch.');
+    if(validateOnly)continue;
     delete w.activeTx;delete w.holds[tx.holdId];if(w.usdcHolds)delete w.usdcHolds[tx.holdId];
     tx.status='cancelled';tx.note='Purchase cancelled before payment.';tx.updatedAt=w.updatedAt=now;
     await store.put(w);await store.put(tx);
   }
+  if(validateOnly)return order;
   await finishOrder(store,order,'payment_failed',now);
   order.note='Purchase cancelled before payment. No funds sent.';await store.put(order);return order;
 }

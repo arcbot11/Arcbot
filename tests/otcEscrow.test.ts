@@ -4,7 +4,7 @@ import { createListing, createQuote, acceptQuote, cancelListing, locked, walletI
 import { bindEscrow, escrowCall, escrowTxId, prepareEscrowStep, advanceEscrowState, retryEscrow, settlementSteps, type EscrowStep } from "../lib/otc/escrow-model";
 import { signTransactionRecord, settled } from "../lib/otc/transactions";
 import {escrowAccountName,legacyEscrowAccountName} from "../lib/otc/escrow-name";
-import {cancelUnpaidPurchase} from "../lib/otc/cancel-purchase";
+import {cancelUnpaidPurchase,canCancelUnpaidPurchase} from "../lib/otc/cancel-purchase";
 import {beginSigning} from "../lib/otc/unsigned-recovery";
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222",escrow="0x3333333333333333333333333333333333333333",fee="0x4444444444444444444444444444444444444444";
 const W=10n**18n,G=10n**15n,now=1800000000000;
@@ -100,7 +100,8 @@ it.each([false,true])("cancellation and signing are mutually exclusive, signing 
  const {store,listing}=await funded(),order=await orderFor(store,listing);
  const call=await escrowCall(store,listing,"deposit",order);
  const tx=await prepareEscrowStep(store,{listingId:listing.id,orderId:order.id,step:"deposit",unsigned:serializeTransaction({chainId:8453,type:"eip1559",to:call.to,value:call.value,data:call.data,nonce:0,gas:21000n,maxFeePerGas:1n,maxPriorityFeePerGas:0n}),gasWei:G.toString(),reserveWei:(call.value+G).toString(),balanceWei:(100n*W).toString(),block:"100"},now);
- if(signingFirst){await beginSigning(store,tx.id,now);await expect(cancelUnpaidPurchase(store,order.id,"buyer",now+999999)).rejects.toThrow("signing");expect((await store.get<Listing>(listing.id))!.held).toBe(order.amount);}
+ expect(await canCancelUnpaidPurchase(store,order.id,"buyer",now)).toBe(true);
+ if(signingFirst){await beginSigning(store,tx.id,now);expect(await canCancelUnpaidPurchase(store,order.id,"buyer",now)).toBe(false);await expect(cancelUnpaidPurchase(store,order.id,"buyer",now+999999)).rejects.toThrow("signing");expect((await store.get<Listing>(listing.id))!.held).toBe(order.amount);}
  else {await cancelUnpaidPurchase(store,order.id,"seller",now);await expect(beginSigning(store,tx.id,now)).rejects.toThrow();expect((await store.get<Wallet>(walletId(8453,buyer)))!.activeTx).toBeUndefined();}
 });
 it("requires verified seller payment before Arc delivery for new seller-first orders",async()=>{

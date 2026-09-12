@@ -5,7 +5,7 @@ import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce,extendEscrowBa
 import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
 import { publicMarket } from "../lib/otc/public-market";
 import { soldTotal } from "../lib/otc/sold-total";
-import {cancelUnpaidPurchase} from "../lib/otc/cancel-purchase";
+import {cancelUnpaidPurchase,canCancelUnpaidPurchase} from "../lib/otc/cancel-purchase";
 import type { QueryCtx,MutationCtx } from "./_generated/server";
 import {internal} from "./_generated/api";
 import type { Transaction } from "../lib/otc/model";
@@ -136,7 +136,7 @@ export const command = mutation({
         const order=await store.get<Order>(input.id);
         if(!order||order.owner!==input.owner)throw Error("Order not found.");
         if(order.status==="quoted"&&now>=order.expiresAt)return finishOrder(store,order,"expired",now);
-        return order;
+        return {...order,canCancelUnpaid:await canCancelUnpaidPurchase(store,order.id,input.owner,now)};
       }
       case "expire_unpaid": {
         const order=await store.get<Order>(input.id);

@@ -1,3 +1,4 @@
+import { purchaseProgress } from "@/lib/otc/purchase-progress";
 import { settlementFailure } from "@/lib/otc/settlement-error";
 import { getAddress, zeroAddress } from "viem";
 import { settlementSteps } from "@/lib/otc/escrow-model";
@@ -34,6 +35,7 @@ const bodySchema=z.discriminatedUnion("action",[
   z.object({action:z.literal("cancel"),listingId:id}).strict(),
   z.object({action:z.literal("cancel_purchase"),orderId:id}).strict(),
   z.object({action:z.literal("purchase_status"),orderId:id}).strict(),
+  z.object({action:z.literal("listing_status"),listingId:id}).strict(),
   z.object({action:z.literal("retry_escrow"),listingId:id,orderId:id.optional()}).strict(),
   z.object({action:z.literal("retry_payout"),orderId:id,attempt:z.number().int().min(0)}).strict(),
 ]);
@@ -97,11 +99,18 @@ export async function POST(request:NextRequest) {
     if(body.action==="retry_escrow"){const r=await repo.command("escrow_retry",{listingId:body.listingId,orderId:body.orderId,owner:session.owner});return json(r);}
     if(body.action==="cancel"){const r=await repo.command("cancel",{id:body.listingId,owner:session.owner});return json(r);}
     if(body.action==="cancel_purchase")return json(await repo.command("cancel_purchase",{id:body.orderId,owner:session.owner}));
+    if(body.action==="listing_status"){
+      const listing=await repo.read<Listing|null>({id:body.listingId});
+      if(!listing||listing.kind!=="listing"||listing.owner!==session.owner||listing.seller.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Listing not found.",404);
+      return json({id:listing.id,status:listing.status});
+    }
     if(body.action==="purchase_status"){
-      const order=await repo.command<Order>("purchase_status",{id:body.orderId,owner:session.owner});
+      const order=await repo.command<Order & {canCancelUnpaid?:boolean}>("purchase_status",{id:body.orderId,owner:session.owner});
       const payoutId=order.escrow?`escrow:${order.id}:arc:${order.escrow.attempts?.arc??0}`:`tx:${order.id}:payout${order.payoutAttempt?`:${order.payoutAttempt}`:""}`;
       const tx=await repo.read<Transaction|null>({id:payoutId});
-      return json({id:order.id,status:order.status,received:arcOrderReceived(order,tx?[tx]:[]),payoutHash:tx?.status==="completed"?tx.hash:undefined,note:order.note,updatedAt:order.updatedAt});
+      const steps=order.escrow?await Promise.all(["gas","deposit","seller","arc","fee","return_gas"].map(step=>repo.read<Transaction|null>({id:`escrow:${order.id}:${step}:${order.escrow!.attempts?.[step]??0}`}))):[];
+      const progress=purchaseProgress(order,steps.filter((value):value is Transaction=>!!value));
+      return json({id:order.id,status:order.status,canCancelUnpaid:order.canCancelUnpaid===true,progress,received:arcOrderReceived(order,tx?[tx]:[]),payoutHash:tx?.status==="completed"?tx.hash:undefined,note:order.note,updatedAt:order.updatedAt});
     }
     if(body.action==="retry_payout"){
       const order=await repo.read<Order|null>({id:body.orderId});
