@@ -1,6 +1,6 @@
 import {describe,it,expect} from "vitest";
 import {serializeTransaction} from "viem";
-import {extendEscrowBaseGas} from "../lib/otc/signed-recovery";
+import {extendEscrowBaseGas,extendBaseWithdrawalGas} from "../lib/otc/signed-recovery";
 import {type Store,type RecordValue,type Transaction,type Wallet,type Order,type Listing,walletId} from "../lib/otc/model";
 const address="0x1111111111111111111111111111111111111111",to="0x2222222222222222222222222222222222222222";
 function fixture(){
@@ -30,5 +30,23 @@ describe("automatic OTC Base gas-hold recovery",()=>{
   if(mode==="finished"){f.o.status="completed";f.rows.set(f.o.id,f.o);}
   await expect(extendEscrowBaseGas(f.store,f.input,2)).rejects.toThrow();
   expect(await f.store.get(f.w.id)).toEqual(f.w);
+ });
+});
+
+describe("ordinary Base withdrawal gas recovery",()=>{
+ function withdrawal(){const f=fixture();delete f.tx.escrowRef;f.tx.initialGasReserveWei="177297385840";f.w.usdcHolds={another:"11000000"};f.rows.set(f.tx.id,f.tx);f.rows.set(f.w.id,f.w);return f;}
+ it("covers a fee fluctuation without changing signed bytes or other ETH/USDC reservations",async()=>{
+  const f=withdrawal();await extendBaseWithdrawalGas(f.store,f.input,2);
+  expect(await f.store.get(f.tx.id)).toMatchObject({unsigned:f.tx.unsigned,raw:f.tx.raw,hash:f.tx.hash});
+  expect(await f.store.get(f.w.id)).toMatchObject({holds:{tx:"354901207948","gas-credit:other":"1000000000000"},usdcHolds:{another:"11000000"}});
+  await extendBaseWithdrawalGas(f.store,f.input,3);
+  await expect(extendBaseWithdrawalGas(f.store,{...f.input,gasWei:"1177297385841"},4)).rejects.toThrow("limit");
+ });
+ it.each(["funds","hash","lock","escrow"])("does not bypass %s constraints",async mode=>{
+  const f=withdrawal();if(mode==="funds")f.input.balanceWei="1200000000000";
+  if(mode==="hash")f.input.expectedHash="other";
+  if(mode==="lock"){f.w.activeTx="other";f.rows.set(f.w.id,f.w);}
+  if(mode==="escrow"){f.tx.escrowRef={listingId:"listing",orderId:"order",step:"fee"};f.rows.set(f.tx.id,f.tx);}
+  await expect(extendBaseWithdrawalGas(f.store,f.input,2)).rejects.toThrow();expect(await f.store.get(f.w.id)).toEqual(f.w);
  });
 });

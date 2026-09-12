@@ -111,9 +111,9 @@ describe("Base ETH escrow arrival verification",()=>{
     await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);
     await advanceTransaction(record.id,true);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
   });
-  it("keeps funds locked when historical balances are unavailable",async()=>{
+  it("verifies a matching successful native ETH receipt without unrelated balance reads",async()=>{
     await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockRejectedValue(new Error("archive unavailable"));
-    await expect(advanceTransaction(record.id,true)).rejects.toThrow();expect(mocks.command).not.toHaveBeenCalled();
+    await expect(advanceTransaction(record.id,true)).resolves.toMatchObject({status:"completed"});expect(mocks.client.getBalance).not.toHaveBeenCalled();
   });
   it("rejects a changed receipt block",async()=>{
     await escrowSend();receipt!.blockHash=otherHash;
@@ -308,4 +308,11 @@ it("extends a tiny escrow gas shortfall before rebroadcasting the identical sign
  expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:raw});
  expect(mocks.sign).not.toHaveBeenCalled();
  expect(mocks.command.mock.calls.findIndex(c=>c[0]==="extend_escrow_base_gas")).toBeLessThan(mocks.command.mock.calls.findIndex(c=>c[0]==="submitted"));
+});
+it("recovers ordinary withdrawal gas before broadcasting without resigning or changing the amount",async()=>{
+ await setupSend();receipt=null;nonce=0;wallet.holds[record.id]="10000010";extraFee=1000n;
+ const raw=record.raw;
+ await advanceTransaction(record.id);
+ expect(mocks.command).toHaveBeenCalledWith("extend_base_withdrawal_gas",expect.objectContaining({id:record.id,expectedHash:record.hash,gasWei:"20008000"}));
+ expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:raw});expect(mocks.sign).not.toHaveBeenCalled();
 });

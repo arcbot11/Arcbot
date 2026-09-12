@@ -19,7 +19,8 @@ const labels:Record<string,string>={topup:"Base gas recovery",arc_topup:"Arc gas
 /** Display-only projection. Never expose signed bytes or treat a quote as a receipt. */
 export function transactionHistory(record:Transaction){
   const details:Array<{label:string;value:string}>=[];
-  const note=["completed","reverted"].includes(record.status)?undefined:record.leg==="swap"?record.note?.replace(/Reserved funds remain locked\./gi,"").trim():record.note;
+  let note=["completed","reverted"].includes(record.status)?undefined:record.leg==="swap"?record.note?.replace(/Reserved funds remain locked\./gi,"").trim():record.note;
+  if(record.chainId===8453&&record.leg==="send"&&!record.escrowRef&&!record.orderId&&note==="Settlement blocked: network fees exceed the allowed gas budget. Operator assistance is required.")note="Withdrawal is waiting for a network fee recheck. It will retry automatically.";
   const result={id:record.id,chainId:record.chainId,leg:record.leg,escrowStep:record.escrowRef?.step,title:labels[record.escrowRef?.step??record.leg]??`OTC ${record.escrowRef?.step?.replaceAll("_"," ")??record.leg}`,status:record.status,hash:record.hash,note,createdAt:record.createdAt,blockNumber:record.blockNumber,details};
   if(record.swapOutput?.recipient?.toLowerCase()==="0x000000000000000000000000000000000000dead"){
     result.title="Buy and burn";details.push({label:"Burn destination",value:record.swapOutput.recipient});

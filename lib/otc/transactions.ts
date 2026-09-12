@@ -75,6 +75,7 @@ export async function prepareTransaction(store: Store, input: { id: string; owne
   }
   w.activeTx = input.id; w.updatedAt = now;
   const tx: Transaction = { kind: "transaction", id: input.id, owner: input.owner, wallet: input.wallet, chainId: input.chainId, leg: input.leg, ...(input.orderId ? { orderId: input.orderId } : {}), holdId, ...(input.swapOutput ? {swapOutput:input.swapOutput} : {}), ...(input.sourceRequestId ? {sourceRequestId:input.sourceRequestId} : {}), unsigned: input.unsigned, recoveryVersion:1, status: "prepared", createdAt: now, updatedAt: now };
+  if(input.chainId===8453&&input.leg==="send"&&!escrow){const parsed=parseTransaction(input.unsigned as Hex);tx.initialGasReserveWei=(BigInt(input.reserveWei)-(parsed.value??0n)).toString();}
   await store.put(w); await store.put(tx); return tx;
 }
 export async function signTransactionRecord(store: Store, id: string, raw: string, hash: string, now: number,expectedUnsigned?:string) {
@@ -90,6 +91,7 @@ export async function submitted(store: Store, id: string, now: number) {
   const tx = await store.get<Transaction>(id);
   if (!tx?.raw || !tx.hash) throw new Error("Persist the signature before broadcasting.");
   if (["completed", "reverted"].includes(tx.status)) return tx;
+  tx.firstBroadcastAt??=now;tx.lastBroadcastAt=now;tx.broadcastAttempts=(tx.broadcastAttempts??0)+1;
   tx.status = "submitted"; tx.updatedAt = now; await store.put(tx);
   if (tx.orderId) {
     const order = await store.get<Order>(tx.orderId);

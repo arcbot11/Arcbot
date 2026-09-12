@@ -34,7 +34,7 @@ export function usdcPrice(amount: bigint, premiumBps: number, feeBps=100) {
   return {sellerWei: sellerWei.toString(), feeWei: feeWei.toString(), totalWei: (sellerWei + feeWei).toString()};
 }
 export type EscrowPosition = {settlementOrderId?:string;fundingExtraWei?:string;version:1;accountName:string;address?:string;fundingWei:string;feeRecipient:string;fundingGasWei:string;closeGasWei:string;closeReason?:"cancelled"|"filled";returnedWei?:string;gasRemainderWei?:string;attempts?:Record<string,number>;note?:string};
-export type EscrowOrder = {refundSkipped?:boolean;topupWei?:string;arcTopupWei?:string;topupSpentWei?:string;arcTopupSpentWei?:string;baseRecoveryLimitWei?:string;arcRecoveryLimitWei?:string;version:1|2;address:string;gasBudgetWei:string;gasRemainderWei?:string;attempts?:Record<string,number>};
+export type EscrowOrder = {sellerFirst?:boolean;refundSkipped?:boolean;topupWei?:string;arcTopupWei?:string;topupSpentWei?:string;arcTopupSpentWei?:string;baseRecoveryLimitWei?:string;arcRecoveryLimitWei?:string;version:1|2;address:string;gasBudgetWei:string;gasRemainderWei?:string;attempts?:Record<string,number>};
 export type Listing = {
   kind: "listing"; id: string; owner: string; seller: string; premiumBps: number;
   originalAmount?: string; originalBudget?: string; available: string; held: string; pendingFills: number; gasPerFillWei: string;
@@ -55,6 +55,8 @@ export type Order = {
 export type Wallet = { kind: "wallet"; id: string; owner: string; address: string; chainId: Chain;
   holds: Record<string, string>; usdcHolds?: Record<string, string>; activeTx?: string; lastSettledBlock?: string; updatedAt: number };
 export type Transaction = { kind: "transaction"; id: string; owner: string; wallet: string; chainId: Chain;
+  firstBroadcastAt?:number;lastBroadcastAt?:number;broadcastAttempts?:number;broadcastAcknowledgedAt?:number;
+  initialGasReserveWei?:string;
   escrowRef?: {listingId:string;orderId?:string;step:string;sourceHold?:string;reserveWei?:string}; sourceRequestId?: string;
   swapOutput?: {token:string;minimum:string;recipient?:string};
   settlement?: {gasWei:string;output?:{raw:string;decimals?:number}};
@@ -156,7 +158,7 @@ export async function createQuote(store: Store, input: { id: string; owner: stri
     expiresAt: now + QUOTE_MS, status: "quoted", listingReserved:false, createdAt: now, updatedAt: now };
   await store.put(order); return order;
 }
-export async function acceptQuote(store: Store, id: string, owner: string, snapshot: { baseBalanceWei: string; baseBlock: string; baseUsdcBalance?: string; arcBalanceWei: string; arcBlock: string }, now: number) {
+export async function acceptQuote(store: Store, id: string, owner: string, snapshot: { baseBalanceWei: string; baseBlock: string; baseUsdcBalance?: string; arcBalanceWei: string; arcBlock: string }, now: number, sellerFirst=false) {
   const order = await store.get<Order>(id);
   if (!order || order.kind !== "order" || order.owner !== owner) throw new Error("Order not found.");
   if (order.status !== "quoted") return order;
@@ -189,6 +191,7 @@ export async function acceptQuote(store: Store, id: string, owner: string, snaps
     if (listing.escrow) listing.escrow.settlementOrderId = order.id;
     await updateListingHold(store, listing, now);
   }
+  if(order.escrow&&sellerFirst)order.escrow.sellerFirst=true;
   order.listingReserved = true;
   order.status = "payment_pending"; order.updatedAt = now;
   await store.put(buyer); await store.put(order); return order;

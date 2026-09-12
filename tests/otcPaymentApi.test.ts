@@ -13,6 +13,18 @@ import {GET,POST} from "../app/api/otc/route";
 const request=(body:unknown)=>new NextRequest("https://arc.invalid/api/otc",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
 beforeEach(()=>{vi.clearAllMocks();m.read.mockImplementation(async({id})=>id.startsWith("wallet:")?null:{id:"listing:test",kind:"listing",status:"active",available:"100000000",seller,premiumBps:1000,escrow:{version:1,address:router,feeRecipient:fees}});m.code.mockResolvedValue("0x");m.command.mockImplementation(async(_command,input)=>({...input,status:"quoted"}));m.rate.mockResolvedValue({ethUsdMicros:"2000000000",priceAt:Date.now()});m.prepare.mockResolvedValue({gasWei:"100",snapshot:{balanceWei:"1000000000000000000",block:"100",nonce:0,pendingNonce:0}});m.usdc.mockResolvedValue("100000000");});
 describe("OTC ETH-only payment API",()=>{
+ it("reconciles an uncertain confirmation through the original owner-scoped order",async()=>{
+  m.command.mockResolvedValue({id:"order:test",owner:"buyer",status:"payment_pending",escrow:{version:2},updatedAt:1});
+  m.read.mockResolvedValue({chainId:5042,status:"completed",hash:"verified-payout",blockNumber:"100",escrowRef:{orderId:"order:test",step:"arc"}});
+  const response=await POST(request({action:"purchase_status",orderId:"order:test"}));
+  expect(response.status).toBe(200);expect(await response.json()).toMatchObject({received:true,payoutHash:"verified-payout"});
+  expect(m.command).toHaveBeenCalledWith("purchase_status",{id:"order:test",owner:"buyer"});expect(m.advance).not.toHaveBeenCalled();
+ });
+ it("cancels through the atomic owner-scoped path without preparing a payment",async()=>{
+  m.command.mockResolvedValue({id:"order:test",status:"payment_failed"});
+  expect((await POST(request({action:"cancel_purchase",orderId:"order:test"}))).status).toBe(200);
+  expect(m.command).toHaveBeenCalledWith("cancel_purchase",{id:"order:test",owner:"buyer"});expect(m.prepare).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+ });
  it("refreshes a price that aged during preparation and uses the new terms",async()=>{
   m.rate.mockResolvedValueOnce({ethUsdMicros:"2000000000",priceAt:Date.now()-31_000}).mockResolvedValueOnce({ethUsdMicros:"1000000000",priceAt:Date.now()});
   const r=await POST(request({action:"quote",listingId:"listing:test",amount:"10"}));

@@ -11,7 +11,7 @@ const transferAbi=parseAbi(["function transfer(address,uint256) returns(bool)"])
 export const ARC_RETURN_GAS_FLEX_WEI=10n**16n; // At most 0.01 USDC from unsold funds for return gas.
 export type EscrowStep="arc_topup"|"topup"|"fund"|"gas"|"deposit"|"arc"|"seller"|"fee"|"return_arc"|"return_gas";
 export const orderSteps:EscrowStep[]=["gas","deposit","arc","seller","fee","return_gas"];
-export const settlementSteps=(order:Order):EscrowStep[]=>order.escrow?.version===2?["deposit","arc","seller","fee","return_gas"]:orderSteps;
+export const settlementSteps=(order:Order):EscrowStep[]=>order.escrow?.version===2?(order.escrow.sellerFirst?["deposit","seller","arc","fee","return_gas"]:["deposit","arc","seller","fee","return_gas"]):orderSteps;
 export function escrowTxId(listing:Listing,step:EscrowStep,order?:Order){
   const attempt=(order?.escrow??listing.escrow)?.attempts?.[step]??0;
   return `escrow:${order?.id??listing.id}:${step}:${attempt}`;

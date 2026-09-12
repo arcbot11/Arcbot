@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { settlementFailure } from '../lib/otc/settlement-error';
+import { settlementFailure,withdrawalFailure } from '../lib/otc/settlement-error';
+it('reports ordinary withdrawal gas rechecks without claiming OTC settlement or requiring an operator',()=>{
+ expect(withdrawalFailure(Error('Base fees exceeded the reserved allowance. Signature retained for recovery.'))).toBe('Withdrawal is waiting for a network fee recheck. It will retry automatically.');
+ expect(withdrawalFailure(Error('Not enough Base ETH for withdrawal gas.'))).toContain('needs more Base ETH');
+});
 describe('safe settlement failure status',()=>{
  it('identifies signing failures without exposing credentials',()=>expect(settlementFailure(new Error('Wallet authentication error. https://secret-provider/key'))).toBe('Settlement blocked: wallet signing needs operator attention. Funds remain protected.'));
  it('recognizes nested provider limits',()=>expect(settlementFailure({cause:{details:'over rate limit'}})).toBe('Base RPC is busy. Settlement will retry automatically.'));

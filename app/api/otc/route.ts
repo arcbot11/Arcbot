@@ -1,6 +1,7 @@
 import { settlementFailure } from "@/lib/otc/settlement-error";
 import { getAddress, zeroAddress } from "viem";
 import { settlementSteps } from "@/lib/otc/escrow-model";
+import {unpaidPurchaseCandidate} from "@/lib/otc/cancel-purchase";
 import {neverSigned} from "@/lib/otc/unsigned-recovery";
 import { escrowBaseGasBudget } from "@/lib/otc/base-gas-budget";
 import { escrowConfiguration, escrowAccountName, advanceEscrowPosition } from "@/lib/otc/escrow-runtime";
@@ -31,6 +32,8 @@ const bodySchema=z.discriminatedUnion("action",[
   z.object({action:z.literal("quote_preview"),listingId:id,amount}).strict(),
   z.object({action:z.literal("accept"),orderId:id}).strict(),
   z.object({action:z.literal("cancel"),listingId:id}).strict(),
+  z.object({action:z.literal("cancel_purchase"),orderId:id}).strict(),
+  z.object({action:z.literal("purchase_status"),orderId:id}).strict(),
   z.object({action:z.literal("retry_escrow"),listingId:id,orderId:id.optional()}).strict(),
   z.object({action:z.literal("retry_payout"),orderId:id,attempt:z.number().int().min(0)}).strict(),
 ]);
@@ -66,7 +69,7 @@ export async function GET(request:NextRequest) {
         const stepTx=(step:string)=>evidence.find(tx=>tx.escrowRef?.orderId===o.id&&tx.escrowRef.step===step&&tx.status==="completed"&&tx.hash&&tx.blockNumber);
         const remainingStep=!stepTx("seller")?"Seller payment":!stepTx("fee")?"Service fee transfer":"Remaining gas";
         const note=o.status==="completed"?undefined:received?(o.note?remainingStep+": "+o.note:remainingStep+" is pending."):o.note;
-        return {received,listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash??stepTx("deposit")?.hash,payoutHash:o.payoutHash??stepTx("arc")?.hash,note,createdAt:o.createdAt,updatedAt:o.updatedAt,side:o.owner===session.owner?"buy":"sell"};
+        return {received,canCancelUnpaid:unpaidPurchaseCandidate(o,evidence),listingId:o.listingId,canRetry:await retryAvailable(o),escrowAddress:o.escrow?.address,gasRemainderWei:o.escrow?.gasRemainderWei,sellerPaymentHash:o.sellerPaymentHash,serviceFeeHash:o.serviceFeeHash,gasRefundHash:o.gasRefundHash,payoutAttempt:o.payoutAttempt??0,paymentAsset:paymentAsset(o),approvalHash:o.approvalHash,id:o.id,amount:o.amount,premiumBps:o.premiumBps,totalWei:o.totalWei,feeWei:o.feeWei,status:o.status,paymentHash:o.paymentHash??stepTx("deposit")?.hash,payoutHash:o.payoutHash??stepTx("arc")?.hash,note,createdAt:o.createdAt,updatedAt:o.updatedAt,side:o.owner===session.owner?"buy":"sell"};
       }));
       const transactions=records.filter((r):r is Transaction=>r.kind==="transaction"&&r.leg!=="allowance"&&r.leg!=="approval").map(transactionHistory);
       const listings=await Promise.all(records.filter((r):r is Listing=>r.kind==="listing").map(async listing=>({...positionHistory(listing,
@@ -75,7 +78,7 @@ export async function GET(request:NextRequest) {
       const usdcHeld=Object.values(baseWallet?.usdcHolds??{}).reduce((sum,value)=>sum+BigInt(value),0n);
       const usdcBalance=snapshots[1].status==="fulfilled"?await baseUsdcBalance(session.walletAddress,snapshots[1].value.block).catch(()=>null):null;
       const baseUsdc={balance:usdcBalance,locked:usdcHeld.toString(),available:usdcBalance===null?null:(BigInt(usdcBalance)>usdcHeld?BigInt(usdcBalance)-usdcHeld:0n).toString()};
-      return json({walletAddress:session.walletAddress,balances,baseUsdc,orders,transactions,listings});
+      return json({walletAddress:session.walletAddress,balances,baseUsdc,orders,transactions,listings:listings.map(listing=>({...listing,canCancel:listing.canCancel||listing.status==="active"&&orders.some(order=>order.listingId===listing.id&&order.canCancelUnpaid)}))});
     } catch(error){return webFailure(error);}
   }
   let enabled=false;
@@ -93,6 +96,13 @@ export async function POST(request:NextRequest) {
     const repo=repository();
     if(body.action==="retry_escrow"){const r=await repo.command("escrow_retry",{listingId:body.listingId,orderId:body.orderId,owner:session.owner});return json(r);}
     if(body.action==="cancel"){const r=await repo.command("cancel",{id:body.listingId,owner:session.owner});return json(r);}
+    if(body.action==="cancel_purchase")return json(await repo.command("cancel_purchase",{id:body.orderId,owner:session.owner}));
+    if(body.action==="purchase_status"){
+      const order=await repo.command<Order>("purchase_status",{id:body.orderId,owner:session.owner});
+      const payoutId=order.escrow?`escrow:${order.id}:arc:${order.escrow.attempts?.arc??0}`:`tx:${order.id}:payout${order.payoutAttempt?`:${order.payoutAttempt}`:""}`;
+      const tx=await repo.read<Transaction|null>({id:payoutId});
+      return json({id:order.id,status:order.status,received:arcOrderReceived(order,tx?[tx]:[]),payoutHash:tx?.status==="completed"?tx.hash:undefined,note:order.note,updatedAt:order.updatedAt});
+    }
     if(body.action==="retry_payout"){
       const order=await repo.read<Order|null>({id:body.orderId});
       if(!order||order.sellerOwner!==session.owner||order.seller.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Order not found.",404);

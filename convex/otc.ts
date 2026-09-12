@@ -1,14 +1,16 @@
 import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement,authorizeGasRecovery} from "../lib/otc/gas-recovery";
 import {acquireOperatorLease,releaseOperatorLease} from "../lib/otc/operator-lease";
 import {beginSigning,cancelUnsignedTrade} from "../lib/otc/unsigned-recovery";
-import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce,extendEscrowBaseGas} from "../lib/otc/signed-recovery";
+import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce,extendEscrowBaseGas,extendBaseWithdrawalGas} from "../lib/otc/signed-recovery";
 import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
 import { publicMarket } from "../lib/otc/public-market";
 import { soldTotal } from "../lib/otc/sold-total";
-import type { QueryCtx } from "./_generated/server";
+import {cancelUnpaidPurchase} from "../lib/otc/cancel-purchase";
+import type { QueryCtx,MutationCtx } from "./_generated/server";
+import {internal} from "./_generated/api";
 import type { Transaction } from "../lib/otc/model";
 import { otcWorkerUrl } from "../lib/project-config";
-import { mutation, query, action, internalAction } from "./_generated/server";
+import { mutation, query, action, internalAction,internalMutation } from "./_generated/server";
 import { v } from "convex/values";
 import { createListing, createQuote, acceptQuote, cancelListing, finishOrder, type Store, type RecordValue, type Order, type Listing } from "../lib/otc/model";
 import { prepareTransaction, signTransactionRecord, submitted, settled, retryPayout } from "../lib/otc/transactions";
@@ -16,6 +18,29 @@ import { prepareTransaction, signTransactionRecord, submitted, settled, retryPay
 function authorize(secret: string) {
   if (!process.env.OTC_SERVICE_SECRET || secret !== process.env.OTC_SERVICE_SECRET) throw new Error("OTC service authorization failed.");
 }
+async function creditSale(ctx:MutationCtx,order:Order){
+  if(await ctx.db.query("otcSales").withIndex("by_order",q=>q.eq("orderId",order.id)).unique())return;
+  const stats=await ctx.db.query("otcMarketStats").withIndex("by_key",q=>q.eq("key","total")).unique();
+  if(!stats)throw Error("Market statistics are not initialized.");
+  await ctx.db.insert("otcSales",{orderId:order.id,amount:order.amount});
+  await ctx.db.patch(stats._id,{soldUsdc:(BigInt(stats.soldUsdc)+BigInt(order.amount)).toString()});
+}
+export const backfillSales=internalMutation({args:{cursor:v.union(v.string(),v.null())},handler:async(ctx,args)=>{
+  let stats=await ctx.db.query("otcMarketStats").withIndex("by_key",q=>q.eq("key","total")).unique();
+  if(!stats){const id=await ctx.db.insert("otcMarketStats",{key:"total",soldUsdc:"0",ready:false});stats=(await ctx.db.get(id))!;}
+  const page=await ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","order")).paginate({cursor:args.cursor,numItems:100});
+  for(const row of page.page){const order=JSON.parse(row.json) as Order;
+    const sold=await soldTotal([order],async id=>{const tx=await ctx.db.query("otcRecords").withIndex("by_key",q=>q.eq("key",id)).unique();return tx?JSON.parse(tx.json) as Transaction:null;});
+    if(BigInt(sold)>0n)await creditSale(ctx,order);
+  }
+  if(page.isDone)await ctx.db.patch(stats._id,{ready:true});
+  else await ctx.scheduler.runAfter(0,internal.otc.backfillSales,{cursor:page.continueCursor});
+}});
+export const ensureStats=internalMutation({args:{},handler:async(ctx)=>{
+  if(await ctx.db.query("otcMarketStats").withIndex("by_key",q=>q.eq("key","total")).unique())return;
+  await ctx.db.insert("otcMarketStats",{key:"total",soldUsdc:"0",ready:false});
+  await ctx.scheduler.runAfter(0,internal.otc.backfillSales,{cursor:null});
+}});
 export const identity = query({args:{secret:v.string(),owner:v.string(),address:v.string()},handler:async(ctx,args)=>{
   authorize(args.secret);
   if (/^tg:\d{1,30}$/.test(args.owner)) {
@@ -31,6 +56,10 @@ export const command = mutation({
     authorize(args.secret);
     if (args.json.length > 32_768) throw new Error("OTC request too large.");
     const input = JSON.parse(args.json), now = Date.now();
+    if(!await ctx.db.query("otcMarketStats").withIndex("by_key",q=>q.eq("key","total")).unique()){
+      await ctx.db.insert("otcMarketStats",{key:"total",soldUsdc:"0",ready:false});
+      await ctx.scheduler.runAfter(0,internal.otc.backfillSales,{cursor:null});
+    }
     const store: Store = {
       get: async <T extends RecordValue>(id: string) => {
         const row = await ctx.db.query("otcRecords").withIndex("by_key", q=>q.eq("key",id)).unique();
@@ -41,6 +70,11 @@ export const command = mutation({
         const value = { key: record.id, kind: record.kind, owner: record.owner, ...(record.kind === "order" ? { counterparty: record.sellerOwner } : {}),
           status: "status" in record ? record.status : "wallet", updatedAt: now, json: JSON.stringify(record) };
         if (row) await ctx.db.replace(row._id, value); else await ctx.db.insert("otcRecords",value);
+        if(record.kind==="order"&&record.status==="completed")await creditSale(ctx,record);
+        if(record.kind==="transaction"&&record.status==="completed"&&record.hash&&record.blockNumber){
+          const id=record.escrowRef?.step==="arc"?record.escrowRef.orderId:record.leg==="payout"?record.orderId:undefined;
+          if(id){const order=await store.get<Order>(id);if(order)await creditSale(ctx,order);}
+        }
       },
     };
     switch(args.command) {
@@ -69,6 +103,7 @@ export const command = mutation({
       }
       case "replace_fees": return prepareReplacement(store,input,now);
       case "extend_escrow_base_gas": return extendEscrowBaseGas(store,input,now);
+      case "extend_base_withdrawal_gas": return extendBaseWithdrawalGas(store,input,now);
       case "select_mined_attempt": return selectMinedAttempt(store,input.id,input.hash,now);
       case "reconcile_mined_nonce": return reconcileMinedNonce(store,input,now);
       case "cancel_unsigned_trade": return cancelUnsignedTrade(store,input.id,now,input.owner);
@@ -95,8 +130,24 @@ export const command = mutation({
         }
         return createQuote(store,input,now);
       }
-      case "accept": return acceptQuote(store,input.id,input.owner,input.snapshot,now);
-      case "cancel": return cancelListing(store,input.id,input.owner,now);
+      case "accept": return acceptQuote(store,input.id,input.owner,input.snapshot,now,true);
+      case "cancel_purchase": return cancelUnpaidPurchase(store,input.id,input.owner,now);
+      case "purchase_status": {
+        const order=await store.get<Order>(input.id);
+        if(!order||order.owner!==input.owner)throw Error("Order not found.");
+        if(order.status==="quoted"&&now>=order.expiresAt)return finishOrder(store,order,"expired",now);
+        return order;
+      }
+      case "expire_unpaid": {
+        const order=await store.get<Order>(input.id);
+        if(!order||now-order.createdAt<120_000)return false;
+        return cancelUnpaidPurchase(store,input.id,order.owner,now);
+      }
+      case "cancel": {
+        const listing=await store.get<Listing>(input.id);
+        if(listing&&listing.owner===input.owner&&listing.escrow?.settlementOrderId)await cancelUnpaidPurchase(store,listing.escrow.settlementOrderId,input.owner,now);
+        return cancelListing(store,input.id,input.owner,now);
+      }
       case "expire": {
         const order = await store.get<Order>(input.id);
         if (!order) throw new Error("Order missing.");
@@ -105,6 +156,11 @@ export const command = mutation({
       case "prepare": return prepareTransaction(store,input,now);
       case "sign": return signTransactionRecord(store,input.id,input.raw,input.hash,now,input.unsigned);
       case "submitted": return submitted(store,input.id,now);
+      case "broadcast_ack": {
+        const tx=await store.get<Transaction>(input.id);
+        if(!tx||tx.hash!==input.hash)throw Error("Broadcast acknowledgement changed.");
+        tx.broadcastAcknowledgedAt=now;await store.put(tx);return tx;
+      }
       case "settled": return settled(store,input.id,input.block,input.success,now,input.settlement,input.expectedHash);
       case "retry_payout": return retryPayout(store,input,now);
       case "touch": {
@@ -122,15 +178,12 @@ export const command = mutation({
 });
 
 async function readMarket(ctx:QueryCtx){
-  const [listings,orders]=await Promise.all([
+  const [listings,stats]=await Promise.all([
     ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","listing").eq("status","active")).collect(),
-    ctx.db.query("otcRecords").withIndex("by_kind_status",q=>q.eq("kind","order")).filter(q=>q.and(q.neq(q.field("status"),"quoted"),q.neq(q.field("status"),"expired"),q.neq(q.field("status"),"payment_failed"))).collect(),
+    ctx.db.query("otcMarketStats").withIndex("by_key",q=>q.eq("key","total")).unique(),
   ]);
-  const sold=await soldTotal(orders.map(row=>JSON.parse(row.json) as Order),async id=>{
-    const row=await ctx.db.query("otcRecords").withIndex("by_key",q=>q.eq("key",id)).unique();
-    return row?JSON.parse(row.json) as Transaction:null;
-  });
-  return publicMarket(listings.map(row=>JSON.parse(row.json) as Listing),sold);
+  const market=publicMarket(listings.map(row=>JSON.parse(row.json) as Listing),stats?.soldUsdc??"0");
+  return {...market,stats:{...market.stats,soldUsdc:stats?.ready?stats.soldUsdc:undefined}};
 }
 export const read = query({
   args: { secret: v.string(), id: v.optional(v.string()), owner: v.optional(v.string()), work: v.optional(v.boolean()) },
@@ -175,7 +228,8 @@ export const wakeWorker = action({
   },
 });
 
-export const tick = internalAction({args:{},handler:async()=>{
+export const tick = internalAction({args:{},handler:async(ctx)=>{
+  await ctx.runMutation(internal.otc.ensureStats,{});
   const secret=process.env.OTC_SERVICE_SECRET;
   if(!secret)return;
   const url=otcWorkerUrl();

@@ -153,6 +153,11 @@ export async function advanceEscrowPosition(id:string){
 export async function advanceEscrowOrder(order:Order){
   if(!order.escrow||["quoted","completed","expired","payment_failed"].includes(order.status))return;
   const repo=repository();
+  if(order.status==="payment_pending"&&Date.now()-order.createdAt>=120_000){
+    // The mutation proves no signing ever started, atomically with begin_signing.
+    // A signed or funded order remains locked and continues normal recovery.
+    try{const result=await repo.command<Order|false>("expire_unpaid",{id:order.id});if(result&&result.status==="payment_failed")return;}catch{/* Not safely cancellable. */}
+  }
   if(!await repo.command<boolean>("escrow_claim",{listingId:order.listingId,orderId:order.id}))return;
   const listing=await repo.read<Listing>({id:order.listingId});
   for(const step of settlementSteps(order)){

@@ -241,6 +241,13 @@ button:hover:not(:disabled),.button:hover{filter:brightness(.96)}
 .arc-sell-percentages button:hover:not(:disabled) { background: rgba(150, 193, 222, .16); }
 .arc-sell-percentages button:disabled { opacity: .4; cursor: not-allowed; }
 .wallet-transaction-row > div { min-width: 0; }
+.wallet-history-collapse > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 44px; cursor: pointer; list-style: none; }
+.wallet-history-collapse > summary::-webkit-details-marker { display: none; }
+.wallet-history-collapse > summary h2 { margin: 0; }
+.wallet-history-collapse > summary::after { content: "+"; font-size: 24px; flex-shrink: 0; }
+.wallet-history-collapse[open] > summary::after { content: "−"; }
+.wallet-history-collapse > summary:focus-visible { outline: 2px solid currentColor; outline-offset: 5px; border-radius: 3px; }
+.wallet-history-collapse[open] > summary { margin-bottom: 16px; }
 .wallet-transaction-details { margin: 12px 0 0; display: grid; gap: 7px; font-size: 13px; }
 .wallet-transaction-details > div { display: flex; flex-wrap: wrap; gap: 4px 14px; }
 .wallet-transaction-details dt { color: var(--muted); min-width: 110px; }

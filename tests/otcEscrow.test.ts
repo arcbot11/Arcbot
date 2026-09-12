@@ -4,6 +4,8 @@ import { createListing, createQuote, acceptQuote, cancelListing, locked, walletI
 import { bindEscrow, escrowCall, escrowTxId, prepareEscrowStep, advanceEscrowState, retryEscrow, settlementSteps, type EscrowStep } from "../lib/otc/escrow-model";
 import { signTransactionRecord, settled } from "../lib/otc/transactions";
 import {escrowAccountName,legacyEscrowAccountName} from "../lib/otc/escrow-name";
+import {cancelUnpaidPurchase} from "../lib/otc/cancel-purchase";
+import {beginSigning} from "../lib/otc/unsigned-recovery";
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222",escrow="0x3333333333333333333333333333333333333333",fee="0x4444444444444444444444444444444444444444";
 const W=10n**18n,G=10n**15n,now=1800000000000;
 class Memory implements Store{
@@ -39,7 +41,7 @@ it("settles a self-purchase through the separate escrow, charges the fee, and un
  const {store,listing}=await funded();
  const quote=await createQuote(store,{id:"order:self",owner:"seller",buyer:seller,listingId:listing.id,amount:"10",ethUsdMicros:"2000000000",priceAt:now,baseGasWei:G.toString(),baseBalanceWei:(100n*W).toString(),baseBlock:"100",escrowGasBudgetWei:(3n*G).toString(),router:escrow,feeRecipient:fee},now);
  expect((await store.get<Listing>(listing.id))!.available).toBe(listing.available);
- const order=await acceptQuote(store,quote.id,"seller",{baseBalanceWei:(100n*W).toString(),baseBlock:"100",arcBalanceWei:(100n*W).toString(),arcBlock:"100"},now);
+ const order=await acceptQuote(store,quote.id,"seller",{baseBalanceWei:(100n*W).toString(),baseBlock:"100",arcBalanceWei:(100n*W).toString(),arcBlock:"100"},now,true);
  expect(order.buyer).toBe(order.seller);expect(order.owner).toBe(order.sellerOwner);
  expect(order.serviceFeeBps).toBe(150);expect(BigInt(order.feeWei)).toBe((BigInt(order.sellerWei)*150n+9999n)/10000n);
  await expect(cancelListing(store,listing.id,"seller",now)).rejects.toThrow("locked");
@@ -86,6 +88,29 @@ async function orderFor(store:Memory,listing:Listing,asset:"ETH"|"USDC"="ETH",am
   await acceptQuote(store,order.id,"buyer",{baseBalanceWei:W.toString(),baseUsdcBalance:"1000000000",baseBlock:"100",arcBalanceWei:(100n*W).toString(),arcBlock:"100"},now);
   return (await store.get<Order>(order.id))!;
 }
+it("cancels an accepted purchase with no deposit and restores only its reservations",async()=>{
+ const {store,listing}=await funded(),order=await orderFor(store,listing);
+ await cancelUnpaidPurchase(store,order.id,"buyer",now);
+ expect((await store.get<Listing>(listing.id))!.available).toBe(listing.available);
+ expect((await store.get<Listing>(listing.id))!.pendingFills).toBe(0);
+ expect((await store.get<Wallet>(walletId(8453,buyer)))!.holds[order.id]).toBeUndefined();
+ expect((await cancelUnpaidPurchase(store,order.id,"buyer",now)).status).toBe("payment_failed");
+});
+it.each([false,true])("cancellation and signing are mutually exclusive, signing first=%s",async signingFirst=>{
+ const {store,listing}=await funded(),order=await orderFor(store,listing);
+ const call=await escrowCall(store,listing,"deposit",order);
+ const tx=await prepareEscrowStep(store,{listingId:listing.id,orderId:order.id,step:"deposit",unsigned:serializeTransaction({chainId:8453,type:"eip1559",to:call.to,value:call.value,data:call.data,nonce:0,gas:21000n,maxFeePerGas:1n,maxPriorityFeePerGas:0n}),gasWei:G.toString(),reserveWei:(call.value+G).toString(),balanceWei:(100n*W).toString(),block:"100"},now);
+ if(signingFirst){await beginSigning(store,tx.id,now);await expect(cancelUnpaidPurchase(store,order.id,"buyer",now+999999)).rejects.toThrow("signing");expect((await store.get<Listing>(listing.id))!.held).toBe(order.amount);}
+ else {await cancelUnpaidPurchase(store,order.id,"seller",now);await expect(beginSigning(store,tx.id,now)).rejects.toThrow();expect((await store.get<Wallet>(walletId(8453,buyer)))!.activeTx).toBeUndefined();}
+});
+it("requires verified seller payment before Arc delivery for new seller-first orders",async()=>{
+ const {store,listing}=await funded(),order=await orderFor(store,listing);order.escrow!.sellerFirst=true;await store.put(order);
+ await complete(store,listing,"deposit",order);
+ await expect(escrowCall(store,listing,"arc",order)).rejects.toThrow("preceding payout");
+ await complete(store,listing,"seller",order);
+ await expect(escrowCall(store,listing,"arc",order)).resolves.toMatchObject({to:buyer});
+ expect(settlementSteps(order)).toEqual(["deposit","seller","arc","fee","return_gas"]);
+});
 it("blocks new Base USDC quotes before locking inventory",async()=>{
   const {store,listing}=await funded();
   const before=await store.get<Listing>(listing.id);

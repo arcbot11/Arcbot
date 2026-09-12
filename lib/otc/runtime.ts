@@ -1,7 +1,7 @@
 import {staleUnsigned} from "./unsigned-recovery";
 import { otcDepositConfirmed } from "./deposit-confirmation";
 import { ARC_NATIVE_TRANSFER, verifyArcUsdcDelivery } from "../arc/usdc-delivery";
-import { settlementFailure } from "./settlement-error";
+import { settlementFailure,withdrawalFailure } from "./settlement-error";
 import { baseTransport } from "../base/transport";
 import { otcWorkerUrl } from "../project-config";
 import { nativeSpend } from "./native-spend";
@@ -95,6 +95,7 @@ export async function prepareCall(chain: Chain, call: Call, allowGasShortfall=fa
     const extra = await createBaseRpc(base).extraFees(tx as BaseTransaction,blockNumber);
     if (extra.l1FeeUpperBoundWei < 0n || extra.operatorFeeWei < 0n) throw new Error("Invalid Base fee estimate.");
     gasWei += 2n * (extra.l1FeeUpperBoundWei + extra.operatorFeeWei);
+    gasWei *= 2n; // Reserve headroom before signing; unused ETH stays in the payer wallet.
     if (gasWei > base.maxTotalFeeWei) throw new Error("Base fees exceed the configured cap.");
   }
   if (!allowGasShortfall && BigInt(snapshot.balanceWei) < spend + gasWei) throw new Error("Not enough funds for the amount and gas.");
@@ -138,7 +139,6 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     const config=await verifyRouter(false),order=await repo.read<Order>({id:record.orderId!});
     if(order.router.toLowerCase()!==config.router.toLowerCase()||order.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new Error("Payment configuration changed. Recovery required.");
   }
-  const snapshot=await balanceSnapshot(record.chainId,record.wallet);
   const tx=parseTransaction(record.unsigned as Hex);
   if (tx.type !== "eip1559" || tx.chainId !== record.chainId) throw new Error("Stored transaction chain mismatch.");
   if(record.orderId){
@@ -156,6 +156,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     record=await repo.command<Transaction>("sign",{id,raw:signature,hash,unsigned:record.unsigned});
   }
   if (!record.raw) {
+    const snapshot=await balanceSnapshot(record.chainId,record.wallet);
     if (!await escrowDepositReadyForPayout(record)) return record;
     if(record.sourceRequestId){
       const authority=await socialAuthority(record.sourceRequestId);
@@ -321,6 +322,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     return repo.command<Transaction>("settled",{id,expectedHash:record.hash,block:receipt.blockNumber.toString(),success:receipt.status==="success",...(settlement?{settlement}:{})});
   }
   if(receiptOnly)return record;
+  const snapshot=await balanceSnapshot(record.chainId,record.wallet);
   if (snapshot.nonce>(tx.nonce??0)) throw new Error("Nonce consumed without a verified receipt. Funds remain reserved.");
   const reserved=await repo.read<Wallet>({id:walletId(record.chainId,record.wallet)});
   if(!reserved || reserved.activeTx!==record.id || BigInt(snapshot.balanceWei)<locked(reserved)) throw new Error("Signed request is no longer covered by wallet reservations.");
@@ -335,6 +337,13 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     const allowance=BigInt(reserved.holds[record.holdId]??"0")-(tx.value??0n);
     if(worst>baseConfigFromEnv().maxTotalFeeWei)throw new Error("Base fees exceed the configured cap.");
     if(worst>allowance){
+      if(record.leg==="send"&&!record.escrowRef&&!record.orderId){
+        const {withdrawalGasLimit}=await import("./signed-recovery");
+        const available=BigInt(snapshot.balanceWei)-locked(reserved)+allowance;
+        const cap=[withdrawalGasLimit(record),available,baseConfigFromEnv().maxTotalFeeWei].reduce((a,b)=>a<b?a:b);
+        if(cap<worst)throw Error(available<worst?"Not enough Base ETH for withdrawal gas.":"Withdrawal fee estimate exceeds the automatic recovery limit.");
+        record=await repo.command<Transaction>("extend_base_withdrawal_gas",{id,expectedHash:record.hash,gasWei:(worst*2n<cap?worst*2n:cap).toString(),balanceWei:snapshot.balanceWei,block:snapshot.block});
+      }else{
       if(!record.escrowRef?.orderId||!["deposit","seller","fee"].includes(record.escrowRef.step))throw new Error("Base fees exceeded the reserved allowance. Signature retained for recovery.");
       const order=await repo.read<Order>({id:record.escrowRef.orderId});
       const {BASE_RECOVERY_WEI}=await import("./gas-recovery");
@@ -344,6 +353,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
       const gasWei=worst*2n<cap?worst*2n:cap;
       if(gasWei<worst)throw new Error("Gas exceeds the escrow allowance.");
       record=await repo.command<Transaction>("extend_escrow_base_gas",{id,expectedHash:record.hash,gasWei:gasWei.toString(),balanceWei:snapshot.balanceWei,block:snapshot.block});
+      }
     }
   }
   if (!await escrowDepositReadyForPayout(record)) return record;
@@ -351,6 +361,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
   // The signature and submitted state remain durable if broadcasting throws.
   const hash=await client.sendRawTransaction({serializedTransaction:record.raw as Hex});
   if (hash!==record.hash) throw new Error("Broadcast returned the wrong hash.");
+  await repo.command("broadcast_ack",{id,hash});
   return record;
 }
 export async function verifyUsdcPaymentDelivery(order: Order, block: bigint, logs: Parameters<typeof verifyTransferDelivery>[0]["logs"]) {
@@ -408,10 +419,13 @@ export async function drainWork() {
   const deadline=Date.now()+240_000;
   for (const record of selectSettlementWork(records)) {
     if(Date.now()>=deadline)break;
+    // Rotate before external I/O: a killed or timed-out worker must not pin the
+    // same oldest batch forever. The query index includes this updatedAt.
+    await repo.command("touch",{id:record.id});
     try { if(record.kind==="order") await advanceOrder(record.id); else if(record.kind==="listing")await (await import("./escrow-runtime")).advanceEscrowPosition(record.id);else await advanceTransaction(record.id); await repo.command("touch",{id:record.id}); processed++; }
     catch(error) {
       failed++;
-      const note=settlementFailure(error);
+      const note=record.kind==="transaction"&&record.chainId===8453&&record.leg==="send"&&!record.escrowRef&&!record.orderId?withdrawalFailure(error):settlementFailure(error);
       console.error("otc_worker",record.id,note);
       await repo.command("note",{id:record.id,note:record.kind==="listing"&&record.status==="funding"&&!record.escrow?.address?"Escrow wallet setup is pending. Listing funds remain reserved in your wallet.":note});
     }

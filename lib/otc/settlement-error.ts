@@ -5,6 +5,7 @@ export function settlementFailure(error: unknown): string {
     if (typeof current !== "object") break;
     const item = current as { message?: unknown; details?: unknown; errorType?: unknown; cause?: unknown };
     const text = [item.message, item.details, item.errorType].filter(v => typeof v === "string").join(" ");
+    if(/Base broadcast was not acknowledged/i.test(text))return "Base submission is retrying. Payment confirmation is pending.";
     if (/wallet authentication|wallet_authentication/i.test(text)) return "Settlement blocked: wallet signing needs operator attention. Funds remain protected.";
     if (/Nonce consumed|Wallet nonce changed|Nonce changed\. Reconcile/i.test(text)) return "Transaction needs wallet recovery. Contact support. Funds remain protected.";
     if (/rate limit|too many requests|429/i.test(text)) return "Base RPC is busy. Settlement will retry automatically.";
@@ -16,4 +17,12 @@ export function settlementFailure(error: unknown): string {
     current = item.cause;
   }
   return "Pending verification";
+}
+
+export function withdrawalFailure(error:unknown){
+  const text=error instanceof Error?error.message:"";
+  if(/Not enough Base ETH for withdrawal gas/i.test(text))return "Withdrawal needs more Base ETH for gas. The transfer remains protected.";
+  if(/fee.*(?:cap|limit|allowance)|gas.*(?:policy|allowance)/i.test(text))return "Withdrawal is waiting for a network fee recheck. It will retry automatically.";
+  const message=settlementFailure(error);
+  return message.replace(/Settlement/g,"Withdrawal").replace(/settlement/g,"withdrawal");
 }

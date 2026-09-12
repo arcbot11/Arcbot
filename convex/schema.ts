@@ -27,6 +27,8 @@ export default defineSchema({
     status: v.union(v.literal("pending"), v.literal("complete")), result: v.optional(v.string()), delivered: v.boolean(),
     lease: v.optional(v.string()), leaseUntil: v.optional(v.number()), nextAttemptAt: v.number(), createdAt: v.number(),
   }).index("by_request", ["requestId"]).index("by_due", ["delivered", "nextAttemptAt"]),
+  otcSales: defineTable({orderId:v.string(),amount:v.string()}).index("by_order",["orderId"]),
+  otcMarketStats: defineTable({key:v.string(),soldUsdc:v.string(),ready:v.boolean()}).index("by_key",["key"]),
   otcRecords: defineTable({ key: v.string(), kind: v.string(), owner: v.string(), counterparty: v.optional(v.string()), status: v.string(), updatedAt: v.number(), json: v.string() })
     .index("by_key", ["key"]).index("by_kind_status", ["kind", "status", "updatedAt"]).index("by_owner", ["owner", "kind"]).index("by_counterparty", ["counterparty", "kind"]),
 

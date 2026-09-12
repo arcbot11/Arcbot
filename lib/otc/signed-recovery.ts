@@ -5,6 +5,25 @@ import { BASE_GAS_POLICY } from "../project-config";
 import {nativeSpend} from "./native-spend";
 
 export type SignedAttempt={unsigned:string;raw:string;hash:string;revision:number};
+export const BASE_WITHDRAWAL_GAS_FLEX_WEI=10n**12n; // At most 0.000001 additional ETH per withdrawal.
+export function withdrawalGasLimit(tx:Transaction){
+  const parsed=parseTransaction(tx.unsigned as Hex);
+  return BigInt(tx.initialGasReserveWei??((parsed.gas??0n)*(parsed.maxFeePerGas??0n)).toString())+BASE_WITHDRAWAL_GAS_FLEX_WEI;
+}
+/** Only the original sender's free ETH can cover a small withdrawal gas change. */
+export async function extendBaseWithdrawalGas(store:Store,input:{id:string;expectedHash:string;gasWei:string;balanceWei:string;block:string},now:number){
+  const tx=await store.get<Transaction>(input.id);
+  if(!tx?.raw||tx.hash!==input.expectedHash||tx.chainId!==8453||tx.leg!=="send"||tx.escrowRef||tx.orderId||!["signed","submitted"].includes(tx.status))throw Error("Withdrawal gas recovery transaction changed.");
+  const gas=BigInt(input.gasWei),parsed=parseTransaction(tx.unsigned as Hex);
+  if(gas<=0n||gas>withdrawalGasLimit(tx)||gas>BigInt(BASE_GAS_POLICY.maxTotalFeeWei))throw Error("Withdrawal fee estimate exceeds the automatic recovery limit.");
+  const w=await wallet(store,8453,tx.wallet,tx.owner,now);checkSnapshot({...w,activeTx:undefined},input.block);
+  if(w.activeTx!==tx.id)throw Error("Wallet transaction lease mismatch.");
+  const old=BigInt(w.holds[tx.holdId]??"0"),required=(parsed.value??0n)+gas;
+  if(required<=old)return tx;
+  if(BigInt(input.balanceWei)<locked(w)-old+required)throw Error("Not enough Base ETH for withdrawal gas.");
+  w.holds[tx.holdId]=required.toString();w.updatedAt=now;tx.updatedAt=now;delete tx.note;
+  await store.put(w);await store.put(tx);return tx;
+}
 /** Increase only the gas hold; preserve the signed bytes, nonce, amount and recipient. */
 export async function extendEscrowBaseGas(store:Store,input:{id:string;expectedHash:string;gasWei:string;balanceWei:string;block:string},now:number){
   const tx=await store.get<Transaction>(input.id);

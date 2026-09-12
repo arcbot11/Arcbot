@@ -1,4 +1,4 @@
-import { custom, http } from "viem";
+import { custom, http,keccak256,type Hex } from "viem";
 import type { BaseConfig } from "./config";
 function isBlock(value:unknown):value is {number:string;hash:string;timestamp:string}{
   if(!value||typeof value!=="object")return false;
@@ -56,14 +56,26 @@ function createBaseTransport(config:BaseConfig){
     return endpoint.checking;
   }
   return custom({request:async args=>{
+    if(args.method==="eth_sendRawTransaction"){
+      const raw=(args.params as [Hex])[0],expected=keccak256(raw);
+      // One immutable signed envelope on both verified providers. Same nonce
+      // and hash cannot execute twice, even if a prior response was lost.
+      const results=await Promise.allSettled(endpoints.map(async endpoint=>{
+        await validate(endpoint);
+        try{const hash=await retryBaseRateLimit(()=>endpoint.rpc.request(args));if(hash!==expected)throw Error("Base broadcast hash mismatch.");return hash;}
+        catch(error){if(/already known|already imported|known transaction/i.test(error instanceof Error?error.message:""))return expected;throw error;}
+      }));
+      if(results.some(r=>r.status==="fulfilled"))return expected;
+      throw new Error("Base broadcast was not acknowledged. The same signed payment is retained for retry.");
+    }
     let failure:unknown=new Error("No healthy Base RPC is available.");
+    let absent=false;
     for(const endpoint of endpoints){
       if(endpoint.cooldownUntil>Date.now())continue;
       try{await validate(endpoint);}catch(error){failure=error;endpoint.cooldownUntil=Date.now()+10000;continue;}
-      // After a broadcast attempt, never switch providers on an ambiguous response.
-      if(args.method==="eth_sendRawTransaction")return retryBaseRateLimit(()=>endpoint.rpc.request(args));
       try{
         const result=await endpoint.rpc.request(args);
+        if(result===null&&["eth_getTransactionReceipt","eth_getTransactionByHash"].includes(args.method)){absent=true;continue;}
         if(result===null&&["eth_getBlockByNumber","eth_getBlockByHash"].includes(args.method))throw new Error("Base RPC block is unavailable.");
         return result;
       }catch(error){
@@ -75,6 +87,7 @@ function createBaseTransport(config:BaseConfig){
         if(message!=="Base RPC block is unavailable."){endpoint.verifiedUntil=0;endpoint.cooldownUntil=Date.now()+10000;}
       }
     }
+    if(absent)return null;
     throw failure;
   }},{retryCount:0});
 }
