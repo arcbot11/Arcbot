@@ -14,7 +14,7 @@ import { formatUnits } from "viem";
 import {displayUsdc,displayEth} from "@/lib/amount-display";
 import { usdc as validateAmount, premium as validatePremium, usdcPrice, SERVICE_FEE_BPS } from "@/lib/otc/model";
 
-export type OtcSession={authenticated:boolean;walletAddress?:string;csrfToken?:string};
+export type OtcSession={authenticated:boolean;walletAddress?:string;csrfToken?:string;reauthAt?:number};
 type Listing={id:string;seller:string;available:string;premiumBps:number};
 type Market={available:boolean;enabled:boolean;listings:Listing[];stats:{soldUsdc?:string;count:number;available:string;lowestBps:number|null;averageBps:number|null}};
 type Quote={received?:boolean;payoutHash?:string;escrowVersion?:1|2;serviceFeeBps?:number;escrowAddress?:string;escrowGasBudgetWei?:string;paymentAsset?:"ETH"|"USDC";approvalGasWei?:string;id:string;amount:string;premiumBps:number;sellerWei:string;feeWei:string;totalWei:string;baseGasWei:string;expiresAt:number;status:string};
@@ -25,6 +25,9 @@ export function ethUnits(value:string){return displayEth(formatUnits(BigInt(valu
 const pct=(bps:number|null)=>bps===null?"—":`${(bps/100).toLocaleString("en-US",{maximumFractionDigits:2})}%`;
 export const useOtcSession = useWalletSession;
 export async function webPost(path:string,body:unknown,session:OtcSession|null,signal?:AbortSignal){
+  const action = body && typeof body === "object" && "action" in body ? body.action : undefined;
+  const statusRead = path === "/api/otc" && (action === "purchase_status" || action === "listing_status");
+  if (!statusRead && session?.reauthAt && Date.now() >= session.reauthAt * 1000) throw new Error("Sign in again before making another transaction.");
   const response=await fetch(path,{method:"POST",headers:{"content-type":"application/json","x-argus-csrf":session?.csrfToken??""},body:JSON.stringify(body),signal});
   const result=await response.json();if(!response.ok)throw new Error(result.error??"Request failed.");return result;
 }

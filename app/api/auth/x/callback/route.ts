@@ -3,6 +3,7 @@ import { walletReturnPath } from "@/lib/wallet-return-path";
 import { checkWebSession } from "@/lib/web-session-authority";
 import { browserHash, hashAuth } from "@/lib/web-browser-auth";
 import { xBrowserReturn } from "@/lib/x-browser-return";
+import { completeXOAuth } from "@/lib/x-oauth-completion";
 import type { OAuthAttempt } from "@/lib/x-oauth-attempt";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
@@ -60,6 +61,7 @@ export async function GET(request: NextRequest) {
   const state = request.nextUrl.searchParams.get("state");
   const context=attemptContext(request),verifier=context?.verifier;
   if(request.nextUrl.searchParams.has("error"))return errorRedirect(request,"denied");
+  if (state?.startsWith("v4_") && oauthCookieName(state)) return completeXOAuth(request);
   if(!verifier){const handoff=xBrowserReturn(request,siteUrl);if(handoff)return handoff;}
   if (!code || !state || !verifier) return errorRedirect(request, "invalid_state");
 

@@ -1,7 +1,7 @@
 import {createHmac,timingSafeEqual} from "node:crypto";
 
 export type OAuthAttempt={verifier:string;returnTo:string;telegramLink?:string;expiresAt:number;browserFamily?:string;generation?:number};
-export const oauthCookieName=(state:string)=>/^(?:v2_|v3_(?:ff|ch|other)_)[A-Za-z0-9_-]{43}$/.test(state)?`argos_oauth_${state}`:null;
+export const oauthCookieName=(state:string)=>/^(?:v2_|v[34]_(?:ff|ch|other)_)[A-Za-z0-9_-]{43}$/.test(state)?`argos_oauth_${state}`:null;
 // This hint selects a browser link only. The full random state still requires
 // its matching HttpOnly cookie and PKCE verifier before any authorization.
 export function oauthBrowserHint(userAgent:string):"ff"|"ch"|"other" {

@@ -1,4 +1,5 @@
 import { v } from "convex/values";
+import {telegramOperatorProfile} from "../lib/telegram-operator-profile";
 import { internal } from "./_generated/api";
 import { internalAction, internalMutation, internalQuery, type MutationCtx, type QueryCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
@@ -10,6 +11,20 @@ import { ARC_COMMAND_HTTP_TIMEOUT_MS, arcServiceResult, arcPendingRetryDelay } f
 import { arcCommandResponse, arcWalletUrl } from "../lib/public-links";
 
 type DbCtx = QueryCtx | MutationCtx;
+export async function refreshOperatorUsername(ctx:MutationCtx,userId:string,chatId:string,updateJson:string|undefined,at:number){
+  const profile=telegramOperatorProfile(updateJson,userId,chatId,at);
+  if(!profile)return;
+  const wallet=await ctx.db.query("telegramNativeWallets").withIndex("by_user",q=>q.eq("telegramUserId",userId)).unique();
+  if(wallet&&wallet.telegramChatId===chatId&&(wallet.telegramUsernameUpdatedAt??0)<at)await ctx.db.patch(wallet._id,profile);
+}
+
+/** Optional operator backfill from retained, authenticated Telegram updates. */
+export const backfillOperatorUsernames=internalMutation({args:{cursor:v.optional(v.string())},handler:async(ctx,args)=>{
+  const page=await ctx.db.query("telegramUpdates").paginate({cursor:args.cursor??null,numItems:100});
+  for(const update of page.page)if(update.telegramUserId&&update.telegramChatId)await refreshOperatorUsername(ctx,update.telegramUserId,update.telegramChatId,update.updateJson,update.createdAt);
+  if(!page.isDone)await ctx.scheduler.runAfter(0,internal.telegramWallets.backfillOperatorUsernames,{cursor:page.continueCursor});
+  return {scanned:page.page.length,complete:page.isDone};
+}});
 export async function walletContext(ctx: DbCtx, telegramUserId: string, telegramChatId: string) {
   const native = await ctx.db.query("telegramNativeWallets").withIndex("by_user", q => q.eq("telegramUserId", telegramUserId)).unique();
   const links = await ctx.db.query("telegramAccountLinks").withIndex("by_telegram_user", q => q.eq("telegramUserId", telegramUserId)).collect();
@@ -54,7 +69,7 @@ export const bind = internalMutation({ args: { updateId: v.string(), address: v.
   if (!/^0x[a-fA-F0-9]{40}$/.test(a.address) || a.signerWalletRef.toLowerCase() !== a.address.toLowerCase()) throw Error("Invalid CDP wallet.");
   const existing = await ctx.db.query("telegramNativeWallets").withIndex("by_user", q => q.eq("telegramUserId", telegramUserId)).unique();
   if (existing && (existing.address.toLowerCase() !== a.address.toLowerCase() || existing.telegramChatId !== update.telegramChatId)) throw Error("Permanent wallet binding cannot change.");
-  if (!existing) await ctx.db.insert("telegramNativeWallets", { telegramUserId, telegramChatId: update.telegramChatId!, address: a.address, signerWalletRef: a.signerWalletRef, createdAt: Date.now() });
+  if (!existing) await ctx.db.insert("telegramNativeWallets", { telegramUserId, telegramChatId: update.telegramChatId!, address: a.address, signerWalletRef: a.signerWalletRef, createdAt: Date.now(), ...(telegramOperatorProfile(update.updateJson,telegramUserId,update.telegramChatId!,update.createdAt)??{}) });
   await saveSelection(ctx, telegramUserId, "tg", update.createdAt);
 } });
 export const create = internalAction({ args: { updateId: v.string() }, handler: async (ctx, a): Promise<void> => {

@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import {oauthCookieName,sealOAuthAttempt,readTelegramRetry,oauthBrowserHint} from "@/lib/x-oauth-attempt";
+import { encryptXCheckpoint } from "@/lib/x-oauth-checkpoint";
 import { walletReturnPath } from "@/lib/wallet-return-path";
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
@@ -55,7 +56,7 @@ export async function GET(request: NextRequest) {
     const valid=await new ConvexHttpClient(convexUrl).action(api.telegram.previewLink,{secret:webSecret,nonce:validTelegramLink}).catch(()=>undefined);
     if(!valid){const target=new URL("/wallet/sign-in-error",siteUrl);target.searchParams.set("reason",valid===undefined?"link_check":"telegram_expired");target.searchParams.set("telegram","1");return NextResponse.redirect(target);}
   }
-  const state = "v3_"+oauthBrowserHint(request.headers.get("user-agent")??"")+"_"+base64url(randomBytes(32));
+  const state = (validTelegramLink ? "v3_" : "v4_")+oauthBrowserHint(request.headers.get("user-agent")??"")+"_"+base64url(randomBytes(32));
   let family: string | null = null, generation: number | undefined;
   if (!validTelegramLink) {
     family = browserHash(request, webSecret);
@@ -90,7 +91,11 @@ export async function GET(request: NextRequest) {
   const response = NextResponse.redirect(authorize);
   const secure = callback.startsWith("https://");
   const cookie = { httpOnly: true, secure, sameSite: "lax" as const, path: "/api/auth/x", maxAge: 10 * 60 };
-  response.cookies.set(oauthCookieName(state)!,sealOAuthAttempt({verifier,returnTo,...(validTelegramLink?{telegramLink:validTelegramLink}:{}),...(family ? { browserFamily: family, generation } : {}),expiresAt:Date.now()+600_000},webSecret),cookie);
+  const attempt = {verifier,returnTo,...(validTelegramLink?{telegramLink:validTelegramLink}:{}),...(family ? { browserFamily: family, generation } : {}),expiresAt:Date.now()+600_000};
+  try {
+    if (!validTelegramLink) await new ConvexHttpClient(convexUrl).mutation(api.webAuth.xStart, { secret: webSecret, stateHash: hashAuth(state), encrypted: encryptXCheckpoint({ attempt }, state, webSecret), ...(family ? { browserFamily: family, generation } : {}) });
+  } catch { return NextResponse.json({ error: "Sign-in unavailable. Try again." }, { status: 503, headers: { "cache-control": "no-store" } }); }
+  response.cookies.set(oauthCookieName(state)!,sealOAuthAttempt(attempt,webSecret),cookie);
   response.headers.set("Cache-Control","no-store");
   // A cryptographically valid cookie may refer to a revoked or missing Convex
   // session. Remove it before starting OAuth so it cannot cause a redirect loop.

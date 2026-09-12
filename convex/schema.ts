@@ -13,6 +13,8 @@ const intakeFilterGuardState = v.object({
 
 export default defineSchema({
   telegramNativeWallets: defineTable({
+    // Operator-only display metadata; ownership remains keyed by Telegram user ID.
+    telegramUsername: v.optional(v.string()), telegramUsernameUpdatedAt: v.optional(v.number()),
     telegramUserId: v.string(), telegramChatId: v.string(), address: v.string(), signerWalletRef: v.string(),
     createdAt: v.number(),
   }).index("by_user", ["telegramUserId"]),
@@ -684,12 +686,18 @@ export default defineSchema({
     .index("by_owner", ["ownerXUserId"]),
 
   telegramWebLogins: defineTable({
+    returnTo: v.optional(v.string()),
     browserFamily: v.optional(v.string()), generation: v.optional(v.number()),
     tokenHash: v.string(), browserHash: v.string(), code: v.string(), expiresAt: v.number(),
     walletId: v.optional(v.id("telegramNativeWallets")), approvedAt: v.optional(v.number()),
     sessionIdHash: v.optional(v.string()), revokedAt: v.optional(v.number()),
   }).index("by_token", ["tokenHash"]).index("by_session", ["sessionIdHash"]).index("by_expiry", ["expiresAt"]),
 
+  webXOAuthAttempts: defineTable({
+    stateHash: v.string(), encrypted: v.string(), expiresAt: v.number(),
+    browserFamily: v.optional(v.string()), generation: v.optional(v.number()),
+    lease: v.optional(v.string()), leaseUntil: v.optional(v.number()),
+  }).index("by_state", ["stateHash"]).index("by_expiry", ["expiresAt"]),
   webAuthBrowsers: defineTable({
     browserHash: v.string(), generation: v.number(), activeSessionHash: v.optional(v.string()),
     activeExpiresAt: v.optional(v.number()), activeGeneration: v.optional(v.number()), previousSessionHash: v.optional(v.string()), expiresAt: v.number(),

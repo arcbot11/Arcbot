@@ -76,7 +76,40 @@ export const logout = mutation({ args: { secret: v.string(), browserHash: v.stri
   }
 } });
 export const cleanup = internalMutation({ args: {}, handler: async ctx => {
+  for (const row of await ctx.db.query("webXOAuthAttempts").withIndex("by_expiry", q => q.lt("expiresAt", Date.now())).take(500)) await ctx.db.delete(row._id);
   for (const row of await ctx.db.query("telegramWebLogins").withIndex("by_expiry", q => q.lt("expiresAt", Date.now() - 7_200_000)).take(500)) await ctx.db.delete(row._id);
   for (const row of await ctx.db.query("webAuthBrowsers").withIndex("by_expiry", q => q.lt("expiresAt", Date.now())).take(500)) await ctx.db.delete(row._id);
   for (const row of await ctx.db.query("webAuthLimits").withIndex("by_expiry", q => q.lt("resetAt", Date.now() - 60_000)).take(1000)) await ctx.db.delete(row._id);
+} });
+
+// Only the website server can access ciphertext. Browsers never receive OAuth credentials.
+export const xStart = mutation({ args: { secret: v.string(), stateHash: v.string(), encrypted: v.string(), browserFamily: v.optional(v.string()), generation: v.optional(v.number()) }, handler: async (ctx, a) => {
+  authorizeWeb(a.secret);
+  if (!digest(a.stateHash) || a.encrypted.length > 20000) throw Error("Invalid attempt.");
+  const existing = await ctx.db.query("webXOAuthAttempts").withIndex("by_state", q => q.eq("stateHash", a.stateHash)).unique();
+  if (existing) throw Error("Attempt already exists.");
+  await ctx.db.insert("webXOAuthAttempts", { stateHash: a.stateHash, encrypted: a.encrypted, expiresAt: Date.now() + 600_000, ...(a.browserFamily ? { browserFamily: a.browserFamily, generation: a.generation } : {}) });
+} });
+export const xLock = mutation({ args: { secret: v.string(), stateHash: v.string(), lease: v.string() }, handler: async (ctx, a) => {
+  authorizeWeb(a.secret);
+  const row = await ctx.db.query("webXOAuthAttempts").withIndex("by_state", q => q.eq("stateHash", a.stateHash)).unique();
+  if (!row || row.expiresAt <= Date.now()) return { status: "expired" as const };
+  if (row.browserFamily) {
+    const family = await ctx.db.query("webAuthBrowsers").withIndex("by_browser", q => q.eq("browserHash", row.browserFamily!)).unique();
+    if (!family || family.generation !== row.generation || family.expiresAt <= Date.now()) return { status: "expired" as const };
+  }
+  if (row.lease && (row.leaseUntil ?? 0) > Date.now()) return { status: "busy" as const };
+  await ctx.db.patch(row._id, { lease: a.lease, leaseUntil: Date.now() + 120_000 });
+  return { status: "ready" as const, encrypted: row.encrypted };
+} });
+export const xSave = mutation({ args: { secret: v.string(), stateHash: v.string(), lease: v.string(), encrypted: v.string() }, handler: async (ctx, a) => {
+  authorizeWeb(a.secret);
+  const row = await ctx.db.query("webXOAuthAttempts").withIndex("by_state", q => q.eq("stateHash", a.stateHash)).unique();
+  if (!row || row.expiresAt <= Date.now() || row.lease !== a.lease || a.encrypted.length > 20000) throw Error("Attempt expired.");
+  await ctx.db.patch(row._id, { encrypted: a.encrypted });
+} });
+export const xUnlock = mutation({ args: { secret: v.string(), stateHash: v.string(), lease: v.string() }, handler: async (ctx, a) => {
+  authorizeWeb(a.secret);
+  const row = await ctx.db.query("webXOAuthAttempts").withIndex("by_state", q => q.eq("stateHash", a.stateHash)).unique();
+  if (row?.lease === a.lease) await ctx.db.patch(row._id, { lease: undefined, leaseUntil: undefined });
 } });

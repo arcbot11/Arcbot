@@ -93,7 +93,8 @@ export async function GET(request:NextRequest) {
 export async function POST(request:NextRequest) {
   let operation:"quote"|undefined;
   try{
-    const session=await websiteSession(request,true),body=bodySchema.parse(await boundedJson(request,4096));
+    const body=bodySchema.parse(await boundedJson(request,4096));
+    const session=await websiteSession(request,true,body.action!=="purchase_status"&&body.action!=="listing_status");
     if(body.action==="quote"||body.action==="quote_preview")operation="quote";
     const repo=repository();
     if(body.action==="retry_escrow"){const r=await repo.command("escrow_retry",{listingId:body.listingId,orderId:body.orderId,owner:session.owner});return json(r);}

@@ -6137,13 +6137,11 @@ export const registerWebSessionRecord = internalMutation({
       )
       .unique();
     const now = Date.now();
-    if (existing)
-      await ctx.db.patch(existing._id, {
-        ownerXUserId: args.ownerXUserId,
-        expiresAt: args.expiresAt,
-        revokedAt: undefined,
-        updatedAt: now,
-      });
+    if (existing) {
+      if (existing.revokedAt || existing.ownerXUserId !== args.ownerXUserId || existing.expiresAt !== args.expiresAt)
+        throw new Error("Web session cannot be replaced or restored.");
+      await ctx.db.patch(existing._id, { updatedAt: now });
+    }
     else
       await ctx.db.insert("webWalletSessions", {
         ...args,

@@ -5,7 +5,7 @@ import { internal } from "./_generated/api";
 import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 import type { WalletCommand } from "./walletCommands";
-import { walletContext, saveSelection } from "./telegramWallets";
+import { walletContext, saveSelection, refreshOperatorUsername } from "./telegramWallets";
 import { releaseUnsignedTelegramWork } from "./lib/telegramUnlink";
 import { telegramMenu, telegramWalletLabel } from "../lib/telegram-commands";
 import { TELEGRAM_HELP, TELEGRAM_FORMATS, telegramInput, telegramWalletCommand, telegramResponse } from "../lib/telegram-commands";
@@ -102,6 +102,7 @@ export const reserveUpdate = internalMutation({
     const links = args.telegramUserId ? await ctx.db.query("telegramAccountLinks").withIndex("by_telegram_user", q => q.eq("telegramUserId", args.telegramUserId!)).collect() : [];
     const link = links.find(row => !row.revokedAt && row.telegramChatId === args.telegramChatId);
     const state = args.telegramUserId && args.telegramChatId ? await walletContext(ctx, args.telegramUserId, args.telegramChatId) : null;
+    if(state?.native&&args.telegramUserId&&args.telegramChatId)await refreshOperatorUsername(ctx,args.telegramUserId,args.telegramChatId,args.updateJson,now);
     let walletTransitionBlocked = false;
     if (state && args.updateJson && args.telegramUserId === args.telegramChatId) {
       const payload = JSON.parse(args.updateJson) as TelegramUpdate;

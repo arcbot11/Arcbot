@@ -9,7 +9,7 @@ import { browserHash } from "../web-browser-auth";
 import { readWebWalletSession, WEB_WALLET_SESSION_COOKIE, webWalletCsrfToken, TERMINAL_RECENT_AUTH_SECONDS } from "../web-wallet-session";
 export function sameSecret(a:string,b:string) { const x=Buffer.from(a),y=Buffer.from(b); return x.length===y.length && timingSafeEqual(x,y); }
 export class WebError extends Error { constructor(message:string,public status=400){super(message);} }
-export async function websiteSession(request:NextRequest,write=false) {
+export async function websiteSession(request:NextRequest,write=false,requireRecent=write) {
   const secret=process.env.WEB_AUTH_SECRET, url=process.env.NEXT_PUBLIC_CONVEX_URL;
   const session=secret?readWebWalletSession(request.cookies.get(WEB_WALLET_SESSION_COOKIE)?.value,secret):null;
   if(!secret||!url||!session) throw new WebError("Connect your account first.",401);
@@ -19,7 +19,7 @@ export async function websiteSession(request:NextRequest,write=false) {
     const site=process.env.NEXT_PUBLIC_SITE_URL;
     if(!site || request.headers.get("origin")!==new URL(site).origin) throw new WebError("Invalid request origin.",403);
     if(!sameSecret(request.headers.get("x-argus-csrf")??"",webWalletCsrfToken(session.sessionId,secret))) throw new WebError("Invalid session token.",403);
-    if(Math.floor(Date.now()/1000)-session.authenticatedAt>=TERMINAL_RECENT_AUTH_SECONDS) throw new WebError("Reconnect before moving funds.",401);
+    if(requireRecent&&Math.floor(Date.now()/1000)-session.authenticatedAt>=TERMINAL_RECENT_AUTH_SECONDS) throw new WebError("Reconnect before moving funds.",401);
     if(!await repository().identity(webSessionOwner(session),session.walletAddress))throw new WebError("Wallet ownership or active status could not be verified.",403);
   }
   return {...session,owner:webSessionOwner(session),walletAddress:getAddress(session.walletAddress)};

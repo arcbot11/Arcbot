@@ -6,7 +6,7 @@ function authorize(secret: string) {
   if (!process.env.WEB_AUTH_SECRET || secret !== process.env.WEB_AUTH_SECRET) throw Error("Unauthorized.");
 }
 const digest = (s: string) => /^[a-f0-9]{64}$/.test(s);
-export const start = mutation({ args: { secret: v.string(), tokenHash: v.string(), browserHash: v.string(), code: v.string(), browserFamily: v.string(), sourceHash: v.string(), previousSessionHash: v.optional(v.string()) }, handler: async (ctx, a) => {
+export const start = mutation({ args: { secret: v.string(), tokenHash: v.string(), browserHash: v.string(), code: v.string(), browserFamily: v.string(), sourceHash: v.string(), previousSessionHash: v.optional(v.string()), returnTo: v.optional(v.string()) }, handler: async (ctx, a) => {
   authorize(a.secret);
   if (!digest(a.tokenHash) || !digest(a.browserHash) || !/^[A-F0-9]{8}$/.test(a.code)) throw Error("Invalid challenge.");
   const existing = await ctx.db.query("telegramWebLogins").withIndex("by_token", q => q.eq("tokenHash", a.tokenHash)).unique();
@@ -14,7 +14,7 @@ export const start = mutation({ args: { secret: v.string(), tokenHash: v.string(
   if (!digest(a.sourceHash)) throw Error("Invalid source.");
   await takeLoginLimit(ctx, a.browserFamily, a.sourceHash);
   const generation = await beginBrowser(ctx, a.browserFamily, a.previousSessionHash);
-  await ctx.db.insert("telegramWebLogins", { tokenHash: a.tokenHash, browserHash: a.browserHash, browserFamily: a.browserFamily, generation, code: a.code, expiresAt: Date.now() + 600_000 });
+  await ctx.db.insert("telegramWebLogins", { tokenHash: a.tokenHash, browserHash: a.browserHash, browserFamily: a.browserFamily, generation, code: a.code, expiresAt: Date.now() + 600_000, ...(a.returnTo ? { returnTo: a.returnTo } : {}) });
 } });
 
 // Called only by the authenticated bot webhook, using its durably recorded private-chat update.
@@ -38,7 +38,7 @@ export const respond = internalMutation({ args: { updateId: v.string(), tokenHas
 } });
 
 // Exchange is idempotent only for the original browser. A retry cannot create another session.
-export const exchange = mutation({ args: { secret: v.string(), tokenHash: v.string(), browserHash: v.string(), sessionIdHash: v.string(), browserFamily: v.string() }, handler: async (ctx, a) => {
+export const exchange = mutation({ args: { secret: v.string(), tokenHash: v.string(), browserHash: v.string(), sessionIdHash: v.string(), browserFamily: v.string(), resume: v.optional(v.boolean()) }, handler: async (ctx, a) => {
   authorize(a.secret);
   if (![a.tokenHash,a.browserHash,a.sessionIdHash].every(digest)) throw Error("Invalid challenge.");
   const row = await ctx.db.query("telegramWebLogins").withIndex("by_token", q => q.eq("tokenHash", a.tokenHash)).unique();
@@ -46,13 +46,13 @@ export const exchange = mutation({ args: { secret: v.string(), tokenHash: v.stri
   if (!row.browserFamily || row.browserFamily !== a.browserFamily || row.generation === undefined) return { status: "expired" as const };
   const family = await ctx.db.query("webAuthBrowsers").withIndex("by_browser", q => q.eq("browserHash", a.browserFamily)).unique();
   if (!family || family.generation !== row.generation) return { status: "expired" as const };
-  if (!row.approvedAt || !row.walletId) return { status: "pending" as const };
+  if (!row.approvedAt || !row.walletId) return { status: "pending" as const, ...(a.resume ? { code: row.code, expiresAt: row.expiresAt, returnTo: row.returnTo } : {}) };
   if (row.sessionIdHash && row.sessionIdHash !== a.sessionIdHash) return { status: "expired" as const };
   const wallet = await ctx.db.get(row.walletId);
   if (!wallet || wallet.telegramUserId !== wallet.telegramChatId) return { status: "expired" as const };
   if (!await activateBrowser(ctx, row.browserFamily, row.generation, a.sessionIdHash, row.approvedAt + 7_200_000)) return { status: "expired" as const };
   if (!row.sessionIdHash) await ctx.db.patch(row._id, { sessionIdHash: a.sessionIdHash });
-  return { status: "approved" as const, walletAddress: wallet.address, telegramUserId: wallet.telegramUserId, authenticatedAt: Math.floor(row.approvedAt / 1000) };
+  return { status: "approved" as const, walletAddress: wallet.address, telegramUserId: wallet.telegramUserId, authenticatedAt: Math.floor(row.approvedAt / 1000), returnTo: row.returnTo };
 } });
 
 export const session = mutation({ args: { secret: v.string(), sessionIdHash: v.string(), telegramUserId: v.string(), revoke: v.boolean() }, handler: async (ctx, a) => {
