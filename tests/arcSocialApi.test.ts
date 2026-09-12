@@ -1,5 +1,6 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
 import {NextRequest} from "next/server";
+import {serializeTransaction,encodeFunctionData,parseAbi} from 'viem';
 const m=vi.hoisted(()=>({auth:vi.fn(),read:vi.fn(),command:vi.fn(),advance:vi.fn(),prepare:vi.fn(),trade:vi.fn(),balance:vi.fn(),convert:vi.fn(),contract:vi.fn()}));
 vi.mock("../lib/arc/social-authority",()=>({socialAuthority:m.auth}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.command})}));
@@ -56,7 +57,7 @@ describe("Arc social execution boundary",()=>{
  });
  it("reports an unsupported swap immediately even after a completed approval",async()=>{
    command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:100};
-   m.read.mockResolvedValueOnce({chainId:5042,status:"completed",leg:"allowance"}).mockResolvedValue(null);
+   m.read.mockResolvedValueOnce({chainId:5042,status:"completed",leg:"allowance",unsigned:serializeTransaction({type:'eip1559',chainId:5042,to:recipient,nonce:1,gas:21000n,maxFeePerGas:1n,maxPriorityFeePerGas:0n,data:encodeFunctionData({abi:parseAbi(['function approve(address,uint256)']),functionName:'approve',args:[wallet,10n]})})}).mockResolvedValue(null);
    m.trade.mockRejectedValue(Error("Unsupported Argus pool configuration."));
    expect(await(await POST(request())).json()).toEqual({ok:false,message:"Unsupported Argus pool configuration."});
    expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();

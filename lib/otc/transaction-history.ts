@@ -19,6 +19,8 @@ const labels:Record<string,string>={topup:"Base gas recovery",arc_topup:"Arc gas
 /** Display-only projection. Never expose signed bytes or treat a quote as a receipt. */
 export function transactionHistory(record:Transaction){
   const details:Array<{label:string;value:string}>=[];
+  if(record.externalReplacement)details.push({label:'External activity',value:'Matching replacement verified on chain'});
+  if(record.nonceConflict)details.push({label:'External replacement',value:record.nonceConflict.hash});
   let note=["completed","reverted"].includes(record.status)?undefined:record.leg==="swap"?record.note?.replace(/Reserved funds remain locked\./gi,"").trim():record.note;
   if(record.chainId===8453&&record.leg==="send"&&!record.escrowRef&&!record.orderId&&note==="Settlement blocked: network fees exceed the allowed gas budget. Operator assistance is required.")note="Withdrawal is waiting for a network fee recheck. It will retry automatically.";
   const result={id:record.id,chainId:record.chainId,leg:record.leg,escrowStep:record.escrowRef?.step,title:labels[record.escrowRef?.step??record.leg]??`OTC ${record.escrowRef?.step?.replaceAll("_"," ")??record.leg}`,status:record.status,hash:record.hash,note,createdAt:record.createdAt,blockNumber:record.blockNumber,details};
@@ -80,6 +82,7 @@ export function transactionHistory(record:Transaction){
 }
 export function transactionStatus(record:Transaction){
   return {id:record.id,status:record.status,leg:record.leg,hash:record.hash,
+    ...(record.broadcastPausedAt!==undefined&&!['completed','reverted','cancelled'].includes(record.status)?{attention:'Signed transaction unresolved. Bot broadcasts are paused. It may still execute if funds return; resolve it before submitting another.'}:{}),
     ...(record.status==="submitted"&&record.chainId===8453&&record.leg==="send"&&record.confirmation?{confirmation:record.confirmation}:{}),
     ...(record.status==="completed"&&record.leg==="swap"?{details:transactionHistory(record).details}:{}),};
 }

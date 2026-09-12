@@ -21,13 +21,15 @@ export function ArcTokenBalances({address,refreshKey=0,onTrade,busy=false}:{addr
   useEffect(()=>{
     const controller=new AbortController();let pending=false;let fresh=refreshKey>0;
     const refresh=async()=>{
-      if(pending)return;pending=true;
+      if(pending||document.visibilityState==='hidden')return;pending=true;
       try{const response=await fetch(`/api/wallet/tokens${fresh?"?refresh=1":""}`,{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(45000)])});const result=await response.json();
         if(!response.ok||result.walletAddress?.toLowerCase()!==address.toLowerCase())throw Error("Token balances unavailable.");
         if(!controller.signal.aborted){fresh=false;setData(result);}
       }catch{if(!controller.signal.aborted)setError("Token balances could not refresh.");}finally{pending=false;}
     };
-    void refresh();const timer=setInterval(()=>void refresh(),15_000);return()=>{controller.abort();clearInterval(timer);};
+    const focus=()=>{fresh=true;void refresh();};
+    window.addEventListener('focus',focus);document.addEventListener('visibilitychange',focus);
+    void refresh();const timer=setInterval(()=>void refresh(),15_000);return()=>{controller.abort();clearInterval(timer);window.removeEventListener('focus',focus);document.removeEventListener('visibilitychange',focus);};
   },[address,refreshKey]);
   useEffect(()=>{setData(null);setError("");},[address]);
   return <section className="otc-history"><h2>Your Arc tokens</h2>

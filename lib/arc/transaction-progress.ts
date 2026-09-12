@@ -1,4 +1,4 @@
-export type TransactionStatus={id:string;status:string;leg?:string;hash?:string;confirmation?:{status:"success"|"reverted";blockNumber:string};details?:Array<{label:string;value:string}>};
+export type TransactionStatus={id:string;status:string;leg?:string;hash?:string;attention?:string;confirmation?:{status:"success"|"reverted";blockNumber:string};details?:Array<{label:string;value:string}>};
 export function transactionProgress(status:string,action:string){
   switch(status){
     case "prepared":return `Preparing ${action} signature…`;
@@ -20,9 +20,9 @@ export async function waitForTransaction(initial:TransactionStatus,action:string
   while(io.active()){
     if(!io.active())throw new Error("Tracking stopped. Check transaction history before submitting again.");
     if(result.id!==initial.id||result.leg!==initial.leg)throw new Error("Unexpected transaction status. Check transaction history.");
-    io.progress(result.status==="submitted"&&result.confirmation
+    io.progress(result.attention??(result.status==="submitted"&&result.confirmation
       ?result.confirmation.status==="success"?`${action[0].toUpperCase()+action.slice(1)} received on Base. Verifying delivery…`:`${action[0].toUpperCase()+action.slice(1)} reverted on Base. Verifying receipt…`
-      :transactionProgress(result.status,action));
+      :transactionProgress(result.status,action)));
     if(result.status==="completed")return result;
     if(result.status==="reverted"||result.status==="cancelled")throw new Error(transactionProgress(result.status,action));
     await io.wait();

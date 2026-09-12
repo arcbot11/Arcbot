@@ -9,7 +9,7 @@ export function expiredSwap(record:Transaction,now=Date.now()){
 export function staleUnsigned(record:Transaction,now=Date.now()){
   return expiredSwap(record,now)||(["send","allowance"].includes(record.leg)&&now-record.createdAt>=15*60_000);
 }
-export function neverSigned(tx:Transaction){return tx.recoveryVersion===1&&tx.status==="prepared"&&tx.signingStartedAt===undefined&&!tx.raw&&!tx.hash;}
+export function neverSigned(tx:Transaction){return tx.recoveryVersion===1&&tx.status==="prepared"&&tx.signingStartedAt===undefined&&!tx.raw&&!tx.hash&&!tx.previousSigned?.length;}
 /** Atomic with cancellation. Once entered, even a timed-out CDP call remains locked. */
 export async function beginSigning(store:Store,id:string,now:number){
   const tx=await store.get<Transaction>(id);

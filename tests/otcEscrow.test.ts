@@ -6,6 +6,8 @@ import { signTransactionRecord, settled } from "../lib/otc/transactions";
 import {escrowAccountName,legacyEscrowAccountName} from "../lib/otc/escrow-name";
 import {cancelUnpaidPurchase,canCancelUnpaidPurchase} from "../lib/otc/cancel-purchase";
 import {beginSigning} from "../lib/otc/unsigned-recovery";
+import {abortUnfundedListing,abortUnfundedPurchase,abortChangedRequest} from '../lib/otc/external-spending';
+import {reconcileMinedNonce,cleanupExternalConflict} from '../lib/otc/signed-recovery';
 const seller="0x1111111111111111111111111111111111111111",buyer="0x2222222222222222222222222222222222222222",escrow="0x3333333333333333333333333333333333333333",fee="0x4444444444444444444444444444444444444444";
 const W=10n**18n,G=10n**15n,now=1800000000000;
 class Memory implements Store{
@@ -37,6 +39,50 @@ async function complete(store:Memory,listing:Listing,step:EscrowStep,order?:Orde
   await signTransactionRecord(store,tx.id,"test-raw","test-hash",now);await settled(store,tx.id,"100",success,now);return tx;
 }
 async function funded(){const f=await setup();await complete(f.store,f.listing,"fund");f.listing=await advanceEscrowState(f.store,f.listing.id,undefined,now) as Listing;return f;}
+
+async function pendingStep(store:Memory,listing:Listing,step:EscrowStep,order?:Order){
+ const call=await escrowCall(store,listing,step,order);
+ return prepareEscrowStep(store,{listingId:listing.id,orderId:order?.id,step,unsigned:serializeTransaction({type:'eip1559',chainId:call.chainId,to:call.to,value:call.value,data:call.data,nonce:0,gas:21000n,maxFeePerGas:1n,maxPriorityFeePerGas:0n}),gasWei:G.toString(),reserveWei:(call.value+G).toString(),balanceWei:(100n*W).toString(),block:'100'},now);
+}
+it.each([true,false])('does not confuse a changed escrow payment with an unfunded request: success=%s',async success=>{
+ const {store,listing}=await setup(),tx=await pendingStep(store,listing,'fund');
+ await signTransactionRecord(store,tx.id,'original','original',now);
+ const unsigned=serializeTransaction({type:'eip1559',chainId:5042,to:escrow,value:99n,nonce:0,gas:21000n,maxFeePerGas:2n,maxPriorityFeePerGas:0n});
+ const input={id:tx.id,expectedHash:'original',unsigned,raw:'other',hash:'other',block:'101',receiptSuccess:success};
+ if(success){await expect(reconcileMinedNonce(store,input,now)).rejects.toThrow('may have funded');expect((await store.get<Wallet>(walletId(5042,seller)))!.activeTx).toBe(tx.id);}
+ else {await reconcileMinedNonce(store,input,now);await cleanupExternalConflict(store,tx.id,now);expect((await store.get<Listing>(listing.id))!.status).toBe('cancelled');}
+});
+it.each(['unsigned','signing','signed','previous signature'])('handles listing funding cancellation safely: %s',async mode=>{
+ const {store,listing}=await setup(),tx=await pendingStep(store,listing,'fund');
+ const w=(await store.get<Wallet>(walletId(5042,seller)))!;w.holds.other='77';await store.put(w);
+ if(mode==='signing')await beginSigning(store,tx.id,now);
+ if(mode==='signed')await signTransactionRecord(store,tx.id,'raw','hash',now);
+ if(mode==='previous signature'){tx.previousSigned=[{raw:'raw',hash:'hash',unsigned:tx.unsigned,revision:0}];await store.put(tx);}
+ if(mode!=='unsigned'){await expect(abortUnfundedListing(store,listing.id,'seller',now)).rejects.toThrow();expect((await store.get<Wallet>(w.id))!.holds.other).toBe('77');expect((await store.get<Wallet>(w.id))!.activeTx).toBe(tx.id);return;}
+ await abortChangedRequest(store,tx.id,'balance_changed',now);
+ expect((await store.get<Listing>(listing.id))!.status).toBe('cancelled');expect((await store.get<Wallet>(w.id))!.holds).toEqual({other:'77'});
+ await abortUnfundedListing(store,listing.id,'seller',now);await expect(beginSigning(store,tx.id,now)).rejects.toThrow();
+});
+it.each(['unsigned','signing','different finalized nonce','matching replacement'])('releases an unpaid purchase only with non-execution proof: %s',async mode=>{
+ const {store,listing}=await funded();
+ const q=await createQuote(store,{id:'order:outside',owner:'buyer',buyer,listingId:listing.id,amount:'10',ethUsdMicros:'2000000000',priceAt:now,baseGasWei:G.toString(),baseBalanceWei:(100n*W).toString(),baseBlock:'100',escrowGasBudgetWei:(3n*G).toString(),router:escrow,feeRecipient:fee},now);
+ const order=await acceptQuote(store,q.id,'buyer',{baseBalanceWei:(100n*W).toString(),baseBlock:'100',arcBalanceWei:(100n*W).toString(),arcBlock:'100'},now,true);
+ const tx=await pendingStep(store,listing,'deposit',order),w=(await store.get<Wallet>(walletId(8453,buyer)))!;w.holds.other='77';await store.put(w);
+ if(mode==='signing'){await beginSigning(store,tx.id,now);await expect(abortUnfundedPurchase(store,order.id,'buyer',now)).rejects.toThrow();expect((await store.get<Listing>(listing.id))!.pendingFills).toBe(1);return;}
+ if(mode.includes('replacement')||mode.includes('nonce')){
+  await signTransactionRecord(store,tx.id,'original-raw','original-hash',now);
+  const unsigned=mode==='matching replacement'?tx.unsigned:serializeTransaction({type:'eip1559',chainId:8453,to:buyer,value:0n,nonce:0,gas:21000n,maxFeePerGas:2n,maxPriorityFeePerGas:0n});
+  await reconcileMinedNonce(store,{id:tx.id,expectedHash:'original-hash',unsigned,raw:'external-raw',hash:'external-hash',block:'101'},now);
+  if(mode==='matching replacement'){await expect(abortUnfundedPurchase(store,order.id,'buyer',now)).rejects.toThrow();expect((await store.get<Listing>(listing.id))!.pendingFills).toBe(1);return;}
+  await cleanupExternalConflict(store,tx.id,now);
+ }else await abortUnfundedPurchase(store,order.id,'buyer',now);
+ expect((await store.get<Order>(order.id))!.status).toBe('payment_failed');
+ expect((await store.get<Listing>(listing.id))!.available).toBe(listing.available);
+ expect((await store.get<Listing>(listing.id))!.pendingFills).toBe(0);
+ expect((await store.get<Wallet>(w.id))!.holds).toEqual({other:'77'});
+ await abortUnfundedPurchase(store,order.id,'buyer',now);
+ expect((await store.get<Listing>(listing.id))!.available).toBe(listing.available);
+});
 it("settles a self-purchase through the separate escrow, charges the fee, and unlocks once",async()=>{
  const {store,listing}=await funded();
  const quote=await createQuote(store,{id:"order:self",owner:"seller",buyer:seller,listingId:listing.id,amount:"10",ethUsdMicros:"2000000000",priceAt:now,baseGasWei:G.toString(),baseBalanceWei:(100n*W).toString(),baseBlock:"100",escrowGasBudgetWei:(3n*G).toString(),router:escrow,feeRecipient:fee},now);
@@ -193,7 +239,7 @@ describe("position CDP escrow",()=>{
     expect((await cancelListing(first.store,first.listing.id,"seller",now)).status).toBe("cancelled");
     expect(locked((await first.store.get<Wallet>(walletId(5042,seller)))!)).toBe(0n);
     const second=await setup();await complete(second.store,second.listing,"fund");
-    await expect(cancelListing(second.store,second.listing.id,"seller",now)).rejects.toThrow("funding transaction");
+    await expect(cancelListing(second.store,second.listing.id,"seller",now)).rejects.toThrow("Funding signing");
   });
   it.each(["ETH"] as const)("keeps partial %s fills locked until the combined deposit and all dispersals are verified",async asset=>{
     const {store,listing}=await funded(),order=await orderFor(store,listing,asset,"12.345678");

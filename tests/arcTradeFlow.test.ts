@@ -3,6 +3,11 @@ import { executeTradeFlow, estimatedTradeGasBudget, ARC_TRADE_GAS_BUDGET_WEI, ty
 const quote = (stage = "approve token", changes: Partial<TradeFlowQuote> = {}): TradeFlowQuote => ({ quote: stage, stage, amountOut: "100", minimumOut: "99", protocol: "v3", gasWei: "10", expiresAt: Date.now() + 60000, ...changes });
 const io = () => ({ confirm: vi.fn(), preview: vi.fn(), wait: vi.fn(async () => {}), active: () => true, progress: vi.fn() });
 describe("automatic trade setup", () => {
+  it('does not overwrite an approval revoked externally after confirmation',async()=>{
+    const calls=io();calls.confirm.mockResolvedValue({id:'a',leg:'allowance',status:'completed'});calls.preview.mockResolvedValue(quote('approve token'));
+    await expect(executeTradeFlow(quote('approve token'),calls)).rejects.toThrow('approval changed');
+    expect(calls.confirm).toHaveBeenCalledTimes(1);
+  });
   it("carries the latest verified route through both approvals", async () => {
     const calls = io();
     calls.confirm.mockResolvedValueOnce({id:"a",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"b",leg:"allowance",status:"completed"}).mockResolvedValueOnce({id:"c",leg:"swap",status:"completed"});

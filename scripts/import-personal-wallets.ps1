@@ -1,4 +1,4 @@
-param([ValidateRange(1,8)][int]$StartAt=1, [switch]$CheckOnly, [switch]$FromClipboard, [switch]$ValidateOnly, [switch]$SelfTest)
+param([ValidateRange(1,9999)][int]$StartAt=1, [ValidateRange(1,9999)][int]$EndAt=8, [switch]$CheckOnly, [switch]$FromClipboard, [switch]$ValidateOnly, [switch]$SelfTest)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $helperPath = Join-Path $PSScriptRoot 'import-personal-wallet.mjs'
@@ -66,9 +66,10 @@ if ($SelfTest) {
 }
 if (-not $ValidateOnly) { Invoke-PersonalImport -AccountName '--check' }
 if ($CheckOnly) { return }
+if ($EndAt -lt $StartAt) { throw 'EndAt must be at least StartAt. For one wallet, set both to the same number.' }
 Write-Host 'Importing personal CDP wallets. Keys are hidden. Ctrl+C stops the process.'
 Write-Host 'Only names and public addresses are saved. No website, X, or Telegram links are created.'
-for ($number=$StartAt; $number -le 8; $number++) {
+for ($number=$StartAt; $number -le $EndAt; $number++) {
     $accountName = 'Personal' + $number
     if ($FromClipboard) {
         [void](Read-Host "Copy the key for $accountName, then press Enter here (do not paste it)")

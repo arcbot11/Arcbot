@@ -3,6 +3,7 @@ import {type Store,type Transaction,type Order,type Listing,wallet,locked,checkS
 import { BASE_RECOVERY_WEI } from "./gas-recovery";
 import { BASE_GAS_POLICY } from "../project-config";
 import {nativeSpend} from "./native-spend";
+import {abortUnfundedListing,abortUnfundedPurchase} from './external-spending';
 
 export type SignedAttempt={unsigned:string;raw:string;hash:string;revision:number};
 export const BASE_WITHDRAWAL_GAS_FLEX_WEI=10n**12n; // At most 0.000001 additional ETH per withdrawal.
@@ -44,7 +45,7 @@ export async function extendEscrowBaseGas(store:Store,input:{id:string;expectedH
   tx.updatedAt=now;delete tx.note;
   await store.put(w);await store.put(tx);return tx;
 }
-export function sameCall(a:string,b:string){const x=parseTransaction(a as Hex),y=parseTransaction(b as Hex);return x.type==="eip1559"&&y.type==="eip1559"&&x.chainId===y.chainId&&x.nonce===y.nonce&&x.to?.toLowerCase()===y.to?.toLowerCase()&&(x.data??"0x")===(y.data??"0x")&&(x.value??0n)===(y.value??0n);}
+export function sameCall(a:string,b:string){const x=parseTransaction(a as Hex),y=parseTransaction(b as Hex);return (x.chainId===y.chainId||y.type==='legacy'&&y.chainId===undefined)&&x.nonce===y.nonce&&x.to?.toLowerCase()===y.to?.toLowerCase()&&(x.data??"0x")===(y.data??"0x")&&(x.value??0n)===(y.value??0n);}
 export function sameIntent(a:string,b:string){
   const x=parseTransaction(a as Hex),y=parseTransaction(b as Hex);
   return x.type==="eip1559"&&y.type==="eip1559"&&x.chainId===y.chainId&&x.nonce===y.nonce&&x.to?.toLowerCase()===y.to?.toLowerCase()&&(x.data??"0x")===(y.data??"0x")&&(x.value??0n)===(y.value??0n)&&x.gas===y.gas&&JSON.stringify(x.accessList??[])===JSON.stringify(y.accessList??[]);
@@ -64,7 +65,7 @@ export async function prepareReplacement(store:Store,input:{id:string;expectedHa
   tx.previousSigned=[...(tx.previousSigned??[]),{unsigned:tx.unsigned,raw:tx.raw,hash:tx.hash,revision:tx.signingRevision??0}];
   tx.signingRevision=(tx.signingRevision??0)+1;tx.unsigned=input.unsigned;delete tx.raw;delete tx.hash;
   // This mutation is the durable signing fence for the operator-authorized bytes.
-  tx.signingStartedAt=now;tx.status="prepared";tx.updatedAt=now;
+  tx.signingStartedAt=now;tx.status="prepared";tx.updatedAt=now;delete tx.broadcastPausedAt;
   await store.put(w);await store.put(tx);return tx;
 }
 export async function selectMinedAttempt(store:Store,id:string,hash:string,now:number){
@@ -80,16 +81,20 @@ export async function selectMinedAttempt(store:Store,id:string,hash:string,now:n
 }
 
 /** Private worker supplies finalized nonce evidence, never merely a pending nonce. */
-export async function reconcileMinedNonce(store:Store,input:{id:string;expectedHash:string;unsigned:string;raw:string;hash:string;block:string},now:number){
+export async function reconcileMinedNonce(store:Store,input:{id:string;expectedHash:string;unsigned:string;raw:string;hash:string;block:string;receiptSuccess?:boolean},now:number){
   const tx=await store.get<Transaction>(input.id);
   if(!tx?.raw||!tx.hash||tx.hash!==input.expectedHash||!["signed","submitted"].includes(tx.status))throw Error("Nonce recovery changed. Inspect the current request.");
   const original=parseTransaction(tx.unsigned as Hex),other=parseTransaction(input.unsigned as Hex);
-  if(original.chainId!==other.chainId||original.nonce!==other.nonce||tx.hash===input.hash)throw Error("Not a conflicting nonce.");
+  if((original.chainId!==other.chainId&&!(other.type==='legacy'&&other.chainId===undefined))||original.nonce!==other.nonce||tx.hash===input.hash)throw Error("Not a conflicting nonce.");
   if(sameCall(tx.unsigned,input.unsigned)){
     tx.previousSigned=[...(tx.previousSigned??[]),{unsigned:tx.unsigned,raw:tx.raw,hash:tx.hash,revision:tx.signingRevision??0}];
     tx.unsigned=input.unsigned;tx.raw=input.raw;tx.hash=input.hash;tx.status="submitted";tx.updatedAt=now;
+    tx.externalReplacement=true;
     await store.put(tx);return tx; // Normal receipt, finality and delivery verification still required.
   }
+  // A changed payment to the escrow may still have moved money. Keep it under
+  // reconciliation rather than calling it unfunded or collecting a second deposit.
+  if(input.receiptSuccess!==false&&tx.escrowRef&&['fund','deposit'].includes(tx.escrowRef.step)&&other.to?.toLowerCase()===original.to?.toLowerCase())throw Error('External transaction may have funded escrow with different terms. Reconciliation is required.');
   if(tx.orderId)throw Error("Legacy OTC nonce conflict requires manual reconciliation.");
   const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);checkSnapshot({...w,activeTx:undefined},input.block);
   if(w.activeTx!==tx.id)throw Error("Wallet transaction lease mismatch.");
@@ -98,4 +103,33 @@ export async function reconcileMinedNonce(store:Store,input:{id:string;expectedH
   if(tx.escrowRef?.sourceHold)w.holds[tx.escrowRef.sourceHold]=(BigInt(w.holds[tx.escrowRef.sourceHold]??"0")+hold).toString();
   tx.nonceConflict={hash:input.hash,block:input.block};tx.status="cancelled";tx.note="A different finalized transaction consumed this nonce. Original request cannot execute.";tx.updatedAt=w.updatedAt=now;w.lastSettledBlock=input.block;
   await store.put(w);await store.put(tx);return tx;
+}
+
+export async function cleanupExternalConflict(store:Store,id:string,now:number){
+  const tx=await store.get<Transaction>(id);
+  if(!tx||tx.status!=='cancelled'||!tx.nonceConflict)throw Error('External conflict is not reconciled.');
+  if(tx.escrowRef?.step==='fund')await abortUnfundedListing(store,tx.escrowRef.listingId,tx.owner,now);
+  if(tx.escrowRef?.step==='deposit'&&tx.escrowRef.orderId)await abortUnfundedPurchase(store,tx.escrowRef.orderId,tx.owner,now);
+  return tx;
+}
+export async function saveNonceSearch(store:Store,input:{id:string;expectedHash:string;search:NonNullable<Transaction['nonceSearch']>},now:number){
+  const tx=await store.get<Transaction>(input.id);
+  if(!tx?.raw||tx.hash!==input.expectedHash||!['signed','submitted'].includes(tx.status))throw Error('Nonce search request changed.');
+  const s=input.search;
+  if(![s.low,s.high,s.anchor].every(n=>/^\d+$/.test(n))||BigInt(s.low)>BigInt(s.high)||BigInt(s.high)>BigInt(s.anchor)||!/^0x[0-9a-f]{64}$/i.test(s.anchorHash))throw Error('Invalid nonce search bounds.');
+  tx.nonceSearch=s;tx.updatedAt=now;await store.put(tx);return tx;
+}
+/** Pausing stops our broadcasts, never the executability of already signed bytes. */
+export async function pauseSignedBroadcast(store:Store,input:{id:string;expectedHash:string},now:number){
+  const tx=await store.get<Transaction>(input.id);
+  if(!tx?.raw||tx.hash!==input.expectedHash||!['signed','submitted'].includes(tx.status))throw Error('Signed request changed.');
+  tx.broadcastPausedAt??=now;tx.note='Signed transaction is underfunded. Bot broadcasts are paused. It is not cancelled and may execute if funds return. Resolve this request before submitting another.';
+  tx.updatedAt=now;await store.put(tx);return tx;
+}
+export async function resumeSignedBroadcast(store:Store,input:{id:string;expectedHash:string;owner:string},now:number){
+  const tx=await store.get<Transaction>(input.id);
+  if(!tx?.raw||tx.hash!==input.expectedHash||tx.owner!==input.owner||tx.externalReplacement||!['signed','submitted'].includes(tx.status))throw Error('Signed request changed.');
+  const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);
+  if(w.activeTx!==tx.id)throw Error('Wallet transaction lease mismatch.');
+  delete tx.broadcastPausedAt;delete tx.note;tx.updatedAt=now;await store.put(tx);return tx;
 }

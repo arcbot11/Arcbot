@@ -78,7 +78,14 @@ export function OtcClient(){
     return()=>{controller.abort();clearInterval(timer);};
   },[formOpen,tab,session?.authenticated,session?.walletAddress,balanceRevision]);
   useEffect(()=>{if(formOpen)dialog.current?.showModal();else dialog.current?.close();},[formOpen]);
-  const openForm=(direction:"buy"|"sell",id="")=>{setPurchaseSuccessDismissed(false);setPremiumAccepted(null);setTab(direction);setSelected(id);setAmount(direction==="sell"&&pendingListing?pendingListing.amount:"10");setPremium(direction==="sell"&&pendingListing?pendingListing.premium:"0");setQuote(null);setListingPreview(null);setFormOpen(true);};
+  const openForm=(direction:"buy"|"sell",id="")=>{
+    if(direction==="sell"&&!pendingListing){
+      notices.forEach(dismiss);
+      // The new form must not receive completion notices from the previous listing.
+      setFundingListing(null);
+    }
+    setPurchaseSuccessDismissed(false);setPremiumAccepted(null);setTab(direction);setSelected(id);setAmount(direction==="sell"&&pendingListing?pendingListing.amount:"10");setPremium(direction==="sell"&&pendingListing?pendingListing.premium:"0");setQuote(null);setListingPreview(null);setFormOpen(true);
+  };
   const marketRequest=useRef<AbortController|null>(null);
   const liveVersion=useRef(0);
   const [marketError,setMarketError]=useState(false);

@@ -162,6 +162,6 @@ it("preserves a verified payment failure instead of replacing it with a generic 
  records.set(id,{...arcPayout(),id,chainId:8453,status:"submitted",hash:"deposit-hash"});
  m.advance.mockImplementation(async txId=>{if(txId===id){records.set(id,{...records.get(id) as Transaction,status:"reverted",blockNumber:"101"});records.set(order.id,{...order,status:"payment_failed"});}});
  await expect(advanceEscrowOrder(order)).resolves.toBeUndefined();
- expect(m.command).toHaveBeenCalledWith("escrow_advance",{listingId:listing.id,orderId:order.id});
+ expect(m.command).not.toHaveBeenCalledWith("escrow_advance",expect.anything());
  expect(m.prepare).not.toHaveBeenCalled();
 });

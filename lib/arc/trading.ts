@@ -226,7 +226,7 @@ export async function previewArcTrade(wallet:Address,input:TradeInput,delivery: 
   const tradeGasBudgetWei=estimatedTradeGasBudget(prepared.gasWei);
   const usdcInput=leg==="swap"&&token.toLowerCase()===ARC_USDC.toLowerCase()?q.amountIn*10n**12n:0n;
   const outDecimals=q.route.tokenOut===zeroAddress?18:await rpc.decimals(q.route.tokenOut,head.number);
-  return {...prepared,routeHint,tradeGasBudgetWei,reserveWei:(BigInt(prepared.reserveWei)+usdcInput).toString(),leg,stage,swapOutput:leg==="swap"?{token:q.route.tokenOut,minimum:q.amountOutMinimum.toString(),...(outputRecipient?{recipient:outputRecipient}:{})}:undefined,
+  return {...prepared,routeHint,tradeGasBudgetWei,reserveWei:(BigInt(prepared.reserveWei)+usdcInput).toString(),leg,stage,swapOutput:leg==="swap"?{token:q.route.tokenOut,minimum:q.amountOutMinimum.toString(),inputToken:token,inputAmount:tokenDebit(q.amountIn,inputTaxBps).toString(),...(outputRecipient?{recipient:outputRecipient}:{})}:undefined,
     amountIn:input.amount,amountOut:formatUnits(q.amountOut,outDecimals),minimumOut:formatUnits(q.amountOutMinimum,outDecimals),
     tokenIn:input.tokenIn,tokenOut:input.tokenOut,protocol:q.route.pools.every(p=>p.protocol===q.route.pools[0].protocol)?q.route.pools[0].protocol:"v3/v4",expiresAt:q.expiresAt};
 }

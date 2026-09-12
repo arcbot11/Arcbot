@@ -51,7 +51,7 @@ export async function GET(request:NextRequest) {
         const w=records.find(r=>r.kind==="wallet"&&r.id===walletId(chain as 5042|8453,session.walletAddress)) as Wallet|undefined;
         const result=snapshots[index]; const balance=result.status==="fulfilled"?BigInt(result.value.balanceWei):null;
         const held=w?locked(w):0n;
-        return {chainId:chain,listingReservedWei:chain===5042?listingReservedWei:"0",balanceWei:balance?.toString()??null,lockedWei:held.toString(),availableWei:balance===null?null:(balance>held?balance-held:0n).toString(),pending:Boolean(w?.activeTx),error:result.status==="rejected"?`${chain===5042?"Arc":"Base"} balance unavailable. Retry shortly.`:null};
+        return {chainId:chain,observedAt:balance===null?null:Date.now(),balanceDeficitWei:balance!==null&&held>balance?(held-balance).toString():"0",listingReservedWei:chain===5042?listingReservedWei:"0",balanceWei:balance?.toString()??null,lockedWei:held.toString(),availableWei:balance===null?null:(balance>held?balance-held:0n).toString(),pending:Boolean(w?.activeTx),error:result.status==="rejected"?`${chain===5042?"Arc":"Base"} balance unavailable. Retry shortly.`:null};
       });
       const retryAvailable=async(record:Order|Listing)=>{
         if(!record.escrow||["quoted","completed","expired","payment_failed","active","filled","cancelled"].includes(record.status))return false;
@@ -79,7 +79,7 @@ export async function GET(request:NextRequest) {
       const baseWallet=records.find((r):r is Wallet=>r.kind==="wallet"&&r.id===walletId(8453,session.walletAddress));
       const usdcHeld=Object.values(baseWallet?.usdcHolds??{}).reduce((sum,value)=>sum+BigInt(value),0n);
       const usdcBalance=snapshots[1].status==="fulfilled"?await baseUsdcBalance(session.walletAddress,snapshots[1].value.block).catch(()=>null):null;
-      const baseUsdc={balance:usdcBalance,locked:usdcHeld.toString(),available:usdcBalance===null?null:(BigInt(usdcBalance)>usdcHeld?BigInt(usdcBalance)-usdcHeld:0n).toString()};
+      const baseUsdc={observedAt:usdcBalance===null?null:Date.now(),balance:usdcBalance,locked:usdcHeld.toString(),available:usdcBalance===null?null:(BigInt(usdcBalance)>usdcHeld?BigInt(usdcBalance)-usdcHeld:0n).toString()};
       return json({walletAddress:session.walletAddress,balances,baseUsdc,orders,transactions,listings:listings.map(listing=>({...listing,canCancel:listing.canCancel||listing.status==="active"&&orders.some(order=>order.listingId===listing.id&&order.canCancelUnpaid)}))});
     } catch(error){return webFailure(error);}
   }

@@ -3,7 +3,7 @@ import {xBurnReceipt} from "@/lib/arc/burn-reply";
 import {transactionHistory} from "@/lib/otc/transaction-history";
 import {createHash} from "node:crypto";
 import {NextRequest} from "next/server";
-import {getAddress} from "viem";
+import {getAddress,parseTransaction,type Hex} from "viem";
 import {z} from "zod";
 import {boundedJson} from "@/lib/bounded-json";
 import {socialAuthority} from "@/lib/arc/social-authority";
@@ -55,6 +55,11 @@ export async function POST(request:NextRequest){
     if(baseWithdrawal&&(auth.source!=="telegram"||command.token!==undefined||!["eth","usd"].includes(command.unit)))throw Error("Command not supported.");
     const chainId=baseWithdrawal?8453:5042;
     const root=`social:${createHash("sha256").update(requestId).digest("hex")}`;
+    const approvals=new Set<string>();
+    const approvalKey=(unsigned:string)=>{
+      const t=parseTransaction(unsigned as Hex),erc20=t.data?.startsWith('0x095ea7b3');
+      return `${t.to?.toLowerCase()}:${t.data?.slice(0,erc20?74:138)}:${erc20&&BigInt(`0x${t.data?.slice(74,138)}`)===0n?'reset':'approve'}`;
+    };
     for(let step=0;step<5;step++){
       const id=`${root}:${step}`;
       preparing=false;
@@ -68,6 +73,7 @@ export async function POST(request:NextRequest){
         if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
         if(tx.status!=="completed")return json({pending:true,processing:true,message:"Arc transaction pending. Check wallet history.",hash:tx.hash});
         if(tx.leg!=="allowance")return json({ok:true,message:await completedMessage(command,tx,auth.source==="x"),hash:tx.hash});
+        approvals.add(approvalKey(tx.unsigned));
         continue;
       }
       preparing=true;
@@ -95,6 +101,10 @@ export async function POST(request:NextRequest){
       // Storage may succeed even if its response is lost. From here onward, recover
       // the durable transaction rather than declaring a preparation failure.
       preparing=false;
+      if(prepared.leg==='allowance'){
+        const key=approvalKey(prepared.unsigned);
+        if(approvals.has(key)||approvals.has(key.replace(/:reset$/,':approve')))return json({ok:false,message:'Token approval changed after confirmation. Submit a new command.'});
+      }
       const record=await repo.command<Transaction>("prepare",{id,owner:auth.owner,wallet,chainId,leg:prepared.leg,...(prepared.swapOutput?{swapOutput:prepared.swapOutput}:{}),sourceRequestId:requestId,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
       try{tx=await advanceTransaction(record.id);}catch{return json({pending:true,processing:true,message:"Arc request recorded. Funds remain reserved for verification."});}
       if(tx.status==="cancelled")return json({ok:false,message:tx.nonceConflict?"Request replaced by another transaction. Check wallet history.":"Request cancelled before signing. Funds released. Submit a new command."});

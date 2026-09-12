@@ -19,8 +19,8 @@ export const TELEGRAM_MENU = { inline_keyboard: [
   [{ text: "Help", callback_data: "/help" }, { text: "Unlink X", callback_data: "/unlink" }],
 ] };
 const walletNavigation = ["createtg", "usetg", "usex", "link"];
-export function telegramMenu(state: { native: unknown; link: unknown; selected: string | null }) {
-  const rows = state.native || state.link ? TELEGRAM_MENU.inline_keyboard.slice(0, -1).concat([[{ text: "Help", callback_data: "/help" }]]) : [];
+export function telegramMenu(state: { native: unknown; link: unknown; selected: string | null }, hasBaseEth = false) {
+  const rows = state.native || state.link ? TELEGRAM_MENU.inline_keyboard.slice(0, -1).filter(row => hasBaseEth || !row.some(button => button.callback_data === "/withdraw")).concat([[{ text: "Help", callback_data: "/help" }]]) : [];
   if (!state.native) rows.push([{ text: "Create TG Linked Wallet", callback_data: "/createtg" }]);
   if (!state.link) rows.push([{ text: "Link X", callback_data: "/link" }]);
   if (state.native && state.link) rows.push([{ text: state.selected === "tg" ? "Switch to X Wallet" : "Switch to TG Wallet", callback_data: state.selected === "tg" ? "/usex" : "/usetg" }]);

@@ -1,4 +1,5 @@
 import { exactAmount, USDC_SCALE } from "../arc/amounts";
+import {abortUnfundedListing} from './external-spending';
 
 export const MIN_USDC = 10_000_000n;
 export const MAX_PREMIUM_BPS = 1_000_000;
@@ -57,8 +58,12 @@ export type Wallet = { kind: "wallet"; id: string; owner: string; address: strin
 export type Transaction = { kind: "transaction"; id: string; owner: string; wallet: string; chainId: Chain;
   firstBroadcastAt?:number;lastBroadcastAt?:number;broadcastAttempts?:number;broadcastAcknowledgedAt?:number;
   initialGasReserveWei?:string;
+  failureReason?:import('./external-spending').WalletChangeReason;
+  nonceSearch?:{low:string;high:string;anchor:string;anchorHash:string};
+  externalReplacement?:boolean;
+  broadcastPausedAt?:number;
   escrowRef?: {listingId:string;orderId?:string;step:string;sourceHold?:string;reserveWei?:string}; sourceRequestId?: string;
-  swapOutput?: {token:string;minimum:string;recipient?:string};
+  swapOutput?: {token:string;minimum:string;recipient?:string;inputToken?:string;inputAmount?:string};
   settlement?: {gasWei:string;output?:{raw:string;decimals?:number}};
   /** Read-only observation; not a settled transaction or permission to release holds. */
   confirmation?: {status:"success"|"reverted";blockNumber:string};
@@ -200,11 +205,7 @@ export async function cancelListing(store: Store, id: string, owner: string, now
   const listing = await store.get<Listing>(id);
   if (!listing || listing.kind !== "listing" || listing.owner !== owner) throw new Error("Listing not found.");
   if(listing.escrow&&listing.status==="funding"){
-    const seller=await wallet(store,5042,listing.seller,listing.owner,now);
-    const funding=await store.get<Transaction>(`escrow:${listing.id}:fund:${listing.escrow.attempts?.fund??0}`);
-    if(seller.activeTx||(funding&&!(funding.status==="reverted"&&funding.hash&&funding.blockNumber)))throw new Error("Position is locked by its funding transaction. Wait for verification.");
-    delete seller.holds[listing.id];await store.put(seller);
-    listing.status="cancelled";listing.available="0";listing.escrow.returnedWei="0";delete listing.escrow.note;listing.updatedAt=now;await store.put(listing);return listing;
+    return abortUnfundedListing(store,id,owner,now);
   }
   if (listing.status !== "active") return listing;
   const seller = await wallet(store, 5042, listing.escrow?.address??listing.seller, listing.owner, now);

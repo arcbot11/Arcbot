@@ -1,7 +1,8 @@
 import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement,authorizeGasRecovery} from "../lib/otc/gas-recovery";
 import {acquireOperatorLease,releaseOperatorLease} from "../lib/otc/operator-lease";
 import {beginSigning,cancelUnsignedTrade} from "../lib/otc/unsigned-recovery";
-import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce,extendEscrowBaseGas,extendBaseWithdrawalGas} from "../lib/otc/signed-recovery";
+import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce,extendEscrowBaseGas,extendBaseWithdrawalGas,cleanupExternalConflict,saveNonceSearch,pauseSignedBroadcast,resumeSignedBroadcast} from "../lib/otc/signed-recovery";
+import {abortChangedRequest,abortUnfundedListing,abortUnfundedPurchase} from '../lib/otc/external-spending';
 import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
 import { publicMarket } from "../lib/otc/public-market";
 import { soldTotal } from "../lib/otc/sold-total";
@@ -105,8 +106,19 @@ export const command = mutation({
       case "extend_escrow_base_gas": return extendEscrowBaseGas(store,input,now);
       case "extend_base_withdrawal_gas": return extendBaseWithdrawalGas(store,input,now);
       case "select_mined_attempt": return selectMinedAttempt(store,input.id,input.hash,now);
-      case "reconcile_mined_nonce": return reconcileMinedNonce(store,input,now);
+      case "reconcile_mined_nonce": {
+        const tx=await reconcileMinedNonce(store,input,now);
+        if(tx.status==='cancelled'&&tx.escrowRef&&['fund','deposit'].includes(tx.escrowRef.step))await cleanupExternalConflict(store,tx.id,now);
+        return tx;
+      }
+      case "nonce_search": return saveNonceSearch(store,input,now);
+      case "pause_signed_broadcast": return pauseSignedBroadcast(store,input,now);
+      case "resume_signed_broadcast": return resumeSignedBroadcast(store,input,now);
+      case "cleanup_external_conflict": return cleanupExternalConflict(store,input.id,now);
       case "cancel_unsigned_trade": return cancelUnsignedTrade(store,input.id,now,input.owner);
+      case "abort_changed_request": return abortChangedRequest(store,input.id,input.reason,now);
+      case "abort_unfunded_listing": return abortUnfundedListing(store,input.id,input.owner,now);
+      case "abort_unfunded_purchase": return abortUnfundedPurchase(store,input.id,input.owner,now);
       case "escrow_bind": return bindEscrow(store,input.id,input.address,now,input.accountName);
       case "escrow_prepare": return prepareEscrowStep(store,input,now);
       case "escrow_advance": return advanceEscrowState(store,input.listingId,input.orderId,now,input.baseBalanceWei,input.baseBlock,input.arcBalanceWei,input.arcBlock,input.progressOnly===true);

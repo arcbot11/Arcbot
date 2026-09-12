@@ -38,8 +38,20 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
   if(order)order=await repo.read<Order>({id:order.id});
   if(order?.status==="payment_failed")return false;
   const id=escrowTxId(listing,step,order);let record=await repo.read<Transaction|null>({id});
+  if(record?.status==='cancelled'){
+    if(record.nonceConflict&&['fund','deposit'].includes(step))await repo.command('cleanup_external_conflict',{id});
+    return false;
+  }
   if(record?.status==="reverted")throw new Error("Escrow transaction reverted. Retry settlement after checking balances.");
   if(!record){
+    if(step==='fund'||step==='deposit'){
+      const address=step==='fund'?listing.seller:order!.buyer,chain=step==='fund'?5042:8453;
+      const snapshot=await balanceSnapshot(chain,address),w=await repo.read<Wallet|null>({id:walletId(chain,address)});
+      if(w&&(BigInt(snapshot.balanceWei)<locked(w)||snapshot.nonce!==snapshot.pendingNonce)){
+        await repo.command(step==='fund'?'abort_unfunded_listing':'abort_unfunded_purchase',{id:step==='fund'?listing.id:order!.id,owner:step==='fund'?listing.owner:order!.owner});
+        return false;
+      }
+    }
     if(step==="return_arc"&&BigInt(listing.available)<=10_000n){
       const balance=await balanceSnapshot(5042,listing.escrow!.address!);
       const w=await repo.read<Wallet|null>({id:walletId(5042,listing.escrow!.address!)});
@@ -172,6 +184,7 @@ export async function advanceEscrowOrder(order:Order){
       }
     }
     if(!complete){
+      if((await repo.read<Order>({id:order.id})).status==='payment_failed')return;
       await repo.command("escrow_advance",{listingId:listing.id,orderId:order.id});
       return;
     }

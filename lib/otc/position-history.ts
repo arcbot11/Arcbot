@@ -1,5 +1,6 @@
 import { MIN_USDC, paymentAsset, type Listing, type Order, type Wallet, type Transaction } from "./model";
 import { arcOrderReceived } from "./order-display";
+import {cannotExecute} from './external-spending';
 
 /** Derive history from durable settlement records; quoted payments are not receipts. */
 export function positionHistory(listing: Listing, orders: Order[], wallet?: Wallet, transactions:Transaction[]=[] ) {
@@ -14,10 +15,12 @@ export function positionHistory(listing: Listing, orders: Order[], wallet?: Wall
       received[paymentAsset(order)] += BigInt(order.sellerWei);
   }
   const settlementLocked = listing.pendingFills > 0 || BigInt(listing.held) > 0n;
+  const funding=transactions.filter(t=>t.escrowRef?.listingId===listing.id&&t.escrowRef.step==='fund');
+  const canAbortFunding=listing.status==='funding'&&funding.every(cannotExecute)&&(!wallet?.activeTx||funding.some(t=>t.id===wallet.activeTx));
   const closed = ["cancelled","filled"].includes(listing.status) && !settlementLocked;
   // Unknown original amounts in legacy records must not be reported as zero returns.
   const returned = closed && listing.originalAmount !== undefined ? BigInt(listing.originalAmount) - sold : null;
   return {...listing, sold: sold.toString(), pendingDelivery:pendingDelivery.toString(),closingAfterSettlement:listing.status==="active"&&sold>0n&&BigInt(listing.available)<MIN_USDC, receivedEthWei: received.ETH.toString(), receivedUsdcUnits: received.USDC.toString(),
     returnedUsdc: listing.escrow?.returnedWei ? (BigInt(listing.escrow.returnedWei)/10n**12n).toString() : returned !== null && returned >= 0n ? returned.toString() : null,
-    settlementLocked, canCancel: ["active","funding"].includes(listing.status) && !settlementLocked && !wallet?.activeTx};
+    settlementLocked, canCancel: !settlementLocked&&(canAbortFunding||listing.status==='active'&&!wallet?.activeTx)};
 }

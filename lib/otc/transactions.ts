@@ -90,7 +90,8 @@ export async function signTransactionRecord(store: Store, id: string, raw: strin
 export async function submitted(store: Store, id: string, now: number) {
   const tx = await store.get<Transaction>(id);
   if (!tx?.raw || !tx.hash) throw new Error("Persist the signature before broadcasting.");
-  if (["completed", "reverted"].includes(tx.status)) return tx;
+  if (["completed", "reverted", "cancelled"].includes(tx.status)) return tx;
+  if(tx.broadcastPausedAt!==undefined)throw Error('Signed transaction is underfunded. Bot broadcasts are paused; reconciliation is required.');
   tx.firstBroadcastAt??=now;tx.lastBroadcastAt=now;tx.broadcastAttempts=(tx.broadcastAttempts??0)+1;
   tx.status = "submitted"; tx.updatedAt = now; await store.put(tx);
   if (tx.orderId) {

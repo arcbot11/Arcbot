@@ -22,7 +22,7 @@ async function main(){
   const name=process.argv[2];
   let key,address;
   if(name!=="--check"){
-    if(name!=="--validate"&&!/^Personal[1-8]$/.test(name??""))throw new Error("name");
+    if(name!=="--validate"&&!/^Personal[1-9][0-9]{0,3}$/.test(name??""))throw new Error("name");
     let input="";
     for await(const chunk of process.stdin){input+=chunk.toString("utf8");if(input.length>256)throw new KeyInputError("Received more than 256 characters. Copy only the EVM private key.");}
     ({key,address}=parsePersonalKey(input));input="";

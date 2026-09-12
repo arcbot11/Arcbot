@@ -2,7 +2,10 @@ import { suppressCreationReply } from "../lib/disabled-creation";
 import { socialAddressLinks } from "../lib/social-address-links";
 import { ARC_BOT_TELEGRAM_USER_ID } from "../lib/project-config";
 import { internal } from "./_generated/api";
-import { action, internalAction, internalMutation, internalQuery } from "./_generated/server";
+import { action, internalAction, internalMutation, internalQuery, type ActionCtx } from "./_generated/server";
+import { baseConfigFromEnv } from "../lib/base/config";
+import { createBaseRpc, checkBaseRpc } from "../lib/base/rpc";
+import { getAddress } from "viem";
 import { v } from "convex/values";
 import type { WalletCommand } from "./walletCommands";
 import { walletContext, saveSelection, refreshOperatorUsername } from "./telegramWallets";
@@ -13,6 +16,20 @@ import { TELEGRAM_HELP, TELEGRAM_FORMATS, telegramInput, telegramWalletCommand, 
 
 
 const LINK_TTL_MS = 10 * 60 * 1_000;
+
+async function fundedWalletMenu(ctx: ActionCtx, state: Awaited<ReturnType<typeof walletContext>>) {
+  let hasBaseEth = false;
+  try {
+    const address = state.selected === "tg" ? state.native?.address : state.selected === "x" && state.link
+      ? (await ctx.runQuery(internal.wallets.getXUserAndWallet, { xUserId: state.link.ownerXUserId }))?.wallet?.address : undefined;
+    if (address) {
+      const config = baseConfigFromEnv(), rpc = createBaseRpc(config);
+      const head = await checkBaseRpc(rpc, config);
+      hasBaseEth = await rpc.balance(getAddress(address), head.number) > 0n;
+    }
+  } catch { /* An unavailable balance must not prevent the rest of the menu. */ }
+  return telegramMenu(state, hasBaseEth);
+}
 
 type TelegramUpdate = {
   update_id?: number;
@@ -499,7 +516,7 @@ export const processUpdate = internalAction({
         const result=await ctx.runMutation(internal.telegram.consumeLinkNonce,{returnHash:await sha256(input.args.slice(5)),telegramUserId,telegramChatId:chatId});
         const reply=result.status==="linked"?"X linked. Your wallet is ready.":result.status==="wallet_already_linked"?"This X wallet is linked to another Telegram account. Unlink it first.":result.status==="telegram_already_linked"?"This Telegram account already has a different X wallet. Use /unlink first.":"Link expired or belongs to another Telegram account. Use /link to start again.";
         const state = await ctx.runQuery(internal.telegramWallets.context, { telegramUserId, telegramChatId: chatId });
-        await sendMessage(chatId,`${reply}\n\n${telegramWalletLabel(state.selected,state.xUsername,Boolean(state.native && state.link))}`,telegramMenu(state));
+        await sendMessage(chatId,`${reply}\n\n${telegramWalletLabel(state.selected,state.xUsername,Boolean(state.native && state.link))}`,await fundedWalletMenu(ctx, state));
         await ctx.runMutation(internal.telegram.updateStatus,{updateId:args.updateId,status:"completed"});return;
       }
       const command = "/" + input.name;
@@ -532,7 +549,7 @@ export const processUpdate = internalAction({
         } else if (input.name === "link") reply = "X is already linked. Use /usex to select it.";
         state = await ctx.runQuery(internal.telegramWallets.context, { telegramUserId, telegramChatId: chatId });
         const label = telegramWalletLabel(state.selected, state.xUsername, Boolean(state.native && state.link));
-        await sendMessage(chatId, [label, reply, ["start", "help", "unlink"].includes(input.name) && state.selected ? TELEGRAM_HELP : ""].filter(Boolean).join("\n\n"), input.name === "help" ? undefined : telegramMenu(state));
+        await sendMessage(chatId, [label, reply, ["start", "help", "unlink"].includes(input.name) && state.selected ? TELEGRAM_HELP : ""].filter(Boolean).join("\n\n"), input.name === "help" ? undefined : await fundedWalletMenu(ctx, state));
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "completed" });
         return;
       }
@@ -558,7 +575,7 @@ export const processUpdate = internalAction({
         if (!current.valid || current.link?._id !== link?._id) throw new Error("Telegram wallet link changed; request cancelled");
       };
       if (!link) {
-        await sendMessage(chatId, telegramWalletLabel(null), telegramMenu(state));
+        await sendMessage(chatId, telegramWalletLabel(null), await fundedWalletMenu(ctx, state));
       } else if (!input.args && TELEGRAM_FORMATS[input.name]) {
         await sendMessage(chatId, `${telegramWalletLabel("x",state.xUsername,Boolean(state.native && state.link))}\n\n${TELEGRAM_FORMATS[input.name]}`);
       } else {

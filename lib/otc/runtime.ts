@@ -1,4 +1,7 @@
 import {staleUnsigned} from "./unsigned-recovery";
+import {WalletChangeError,recheckUnsignedCall} from './external-spending';
+import {verifyExternalSignature} from './external-signature';
+import {approvalReceiptMatches} from './approval-delivery';
 import { otcDepositConfirmed } from "./deposit-confirmation";
 import { ARC_NATIVE_TRANSFER, verifyArcUsdcDelivery } from "../arc/usdc-delivery";
 import { settlementFailure,withdrawalFailure } from "./settlement-error";
@@ -121,9 +124,21 @@ async function escrowDepositReadyForPayout(record: Transaction) {
   return !!deposit && deposit.status === "completed" && await otcDepositConfirmed(chainClient(8453), deposit);
 }
 /** Persisted unsigned bytes and a wallet lease precede signing; persisted signed bytes precede every broadcast. */
-export async function advanceTransaction(id: string, receiptOnly = false) {
+export async function advanceTransaction(id: string, receiptOnly = false):Promise<Transaction> {
+  try{return await advanceTransactionAttempt(id,receiptOnly);}
+  catch(error){
+    if(error instanceof WalletChangeError){
+      const repo=repository(),tx=await repo.read<Transaction>({id});
+      if(tx?.recoveryVersion===1&&tx.signingStartedAt===undefined&&!tx.raw&&!tx.hash&&(!tx.escrowRef||['fund','deposit'].includes(tx.escrowRef.step))&&!tx.orderId)
+        return repo.command<Transaction>('abort_changed_request',{id,reason:error.reason});
+    }
+    throw error;
+  }
+}
+async function advanceTransactionAttempt(id:string,receiptOnly:boolean):Promise<Transaction>{
   const repo=repository(); let record=await repo.read<Transaction>({id});
-  if (!record || ["completed","reverted","cancelled"].includes(record.status)) return record;
+  if(!record)throw Error('Transaction missing.');
+  if (["completed","reverted","cancelled"].includes(record.status)) return record;
   if(receiptOnly&&(!record.raw||!record.hash||record.status!=="submitted"))return record;
   if(record.recoveryVersion===1&&record.signingStartedAt===undefined&&!record.raw&&!record.escrowRef&&!record.orderId&&staleUnsigned(record))return repo.command<Transaction>("cancel_unsigned_trade",{id});
   walletTransferConfiguration(record.chainId);
@@ -140,7 +155,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     if(order.router.toLowerCase()!==config.router.toLowerCase()||order.feeRecipient.toLowerCase()!==config.feeRecipient.toLowerCase())throw new Error("Payment configuration changed. Recovery required.");
   }
   const tx=parseTransaction(record.unsigned as Hex);
-  if (tx.type !== "eip1559" || tx.chainId !== record.chainId) throw new Error("Stored transaction chain mismatch.");
+  if ((!record.externalReplacement&&(tx.type !== "eip1559"||tx.chainId!==record.chainId)) || (tx.chainId!==undefined&&tx.chainId !== record.chainId)) throw new Error("Stored transaction chain mismatch.");
   if(record.orderId){
     const order=await repo.read<Order>({id:record.orderId});
     const expected=record.leg==="approval"?approvalCall(order):record.leg==="payment"?paymentCall(order):payoutCall(order);
@@ -149,7 +164,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
   // Reconcile a prior signing attempt using its exact bytes and original idempotency keys.
   // Its authorization was fenced before CDP was called; fresh simulation/nonce checks
   // must not prevent retrieval after the deadline or an already-mined submission.
-  if (!record.raw && record.signingStartedAt) {
+  if (!record.raw && record.signingStartedAt!==undefined) {
     const cdp=new CdpClient({apiKeyId:required("CDP_API_KEY_ID"),apiKeySecret:required("CDP_API_KEY_SECRET"),walletSecret:required("CDP_WALLET_SECRET")});
     const {signature}=await signWithAuthRecovery(record.signingRevision?`${id}:fees:${record.signingRevision}`:id,idempotencyKey=>cdp.evm.signTransaction({address:getAddress(record.wallet),transaction:record.unsigned as Hex,idempotencyKey}));
     const hash=await verifyRaw(signature as Hex,record.unsigned as Hex,record.wallet);
@@ -162,17 +177,18 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
       const authority=await socialAuthority(record.sourceRequestId);
       if(authority.recoveryOnly||authority.owner!==record.owner||authority.wallet.toLowerCase()!==record.wallet.toLowerCase())throw new Error("Social command authorization changed.");
     }
+    if (snapshot.nonce !== tx.nonce || snapshot.pendingNonce !== snapshot.nonce) throw new WalletChangeError('nonce_changed');
+    const w=await repo.read<Wallet>({id:walletId(record.chainId,record.wallet)});
+    if (!w || w.activeTx !== id) throw new Error('Wallet transaction lease mismatch.');
+    if (BigInt(snapshot.balanceWei)<locked(w)) throw new WalletChangeError('balance_changed');
     if(record.leg==="swap"){
       if(record.chainId!==5042||tx.to?.toLowerCase()!==ARC_ROUTER.toLowerCase())throw new Error("Invalid Arc swap target.");
       const code=await chainClient(5042).getCode({address:ARC_ROUTER});
       if(!code||keccak256(code)!==ARC_ROUTER_CODE_HASH)throw new Error("Arc router code changed.");
-      await chainClient(5042).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value});
+      await recheckUnsignedCall(()=>chainClient(5042).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value}));
     }
     if(record.escrowRef)await (await import("./escrow-runtime")).assertEscrowTransaction(record);
     if(!record.escrowRef&&!await repo.identity(record.owner,record.wallet))throw new Error("Wallet ownership or active status changed before signing.");
-    if (snapshot.nonce !== tx.nonce || snapshot.pendingNonce !== snapshot.nonce) throw new Error("Wallet nonce changed before signing. Recovery required.");
-    const w=await repo.read<Wallet>({id:walletId(record.chainId,record.wallet)});
-    if (!w || w.activeTx !== id || BigInt(snapshot.balanceWei)<locked(w)) throw new Error("Wallet reservation is not covered.");
     const minimumReserve = nativeSpend(record.chainId, tx) + (tx.gas ?? 0n) * (tx.maxFeePerGas ?? 0n);
     if (BigInt(w.holds[record.holdId] ?? "0") < minimumReserve) throw new Error("Transaction amount and gas exceed its reservation.");
     if (record.orderId && ["approval", "payment"].includes(record.leg)) {
@@ -183,15 +199,18 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
       }
     }
     if(record.leg==="send"&&tokenTransfer(tx.data,tx.value)){
+      const transfer=tokenTransfer(tx.data,tx.value)!;
+      const balance=await chainClient(record.chainId).readContract({address:tx.to!,abi:transferAbi,functionName:'balanceOf',args:[getAddress(record.wallet)],blockNumber:BigInt(snapshot.block)});
+      if(balance<transfer.amount)throw new WalletChangeError('balance_changed');
       if(!record.escrowRef&&record.chainId===8453&&tx.to?.toLowerCase()===BASE_USDC.toLowerCase()){
         const transfer=tokenTransfer(tx.data,tx.value)!;
-        if(BigInt(w.usdcHolds?.[record.holdId]??"0")!==transfer.amount||BigInt(await baseUsdcBalance(record.wallet,snapshot.block))<lockedBaseUsdc(w))throw new Error("Base USDC reservation is not covered.");
+        if(BigInt(w.usdcHolds?.[record.holdId]??"0")!==transfer.amount||BigInt(await baseUsdcBalance(record.wallet,snapshot.block))<lockedBaseUsdc(w))throw new WalletChangeError('balance_changed');
       }
-      const simulation=await chainClient(record.chainId).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value,blockNumber:BigInt(snapshot.block)});
+      const simulation=await recheckUnsignedCall(()=>chainClient(record.chainId).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value,blockNumber:BigInt(snapshot.block)}));
       verifyTransferReturn(simulation.data);
     }
     if(record.leg==="allowance"){
-      const simulation=await chainClient(record.chainId).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value,blockNumber:BigInt(snapshot.block)});
+      const simulation=await recheckUnsignedCall(()=>chainClient(record.chainId).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value,blockNumber:BigInt(snapshot.block)}));
       if(tx.data?.startsWith("0x095ea7b3"))verifyTransferReturn(simulation.data);
     }
     const cdp=new CdpClient({apiKeyId:required("CDP_API_KEY_ID"),apiKeySecret:required("CDP_API_KEY_SECRET"),walletSecret:required("CDP_WALLET_SECRET")});
@@ -203,7 +222,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     const hash=await verifyRaw(signature as Hex,record.unsigned as Hex,record.wallet);
     record=await repo.command<Transaction>("sign",{id,raw:signature,hash,unsigned:record.unsigned});
   }
-  if (await verifyRaw(record.raw as Hex,record.unsigned as Hex,record.wallet)!==record.hash) throw new Error("Stored signature hash mismatch.");
+  if ((record.externalReplacement?await verifyExternalSignature(record):await verifyRaw(record.raw as Hex,record.unsigned as Hex,record.wallet))!==record.hash) throw new Error("Stored signature hash mismatch.");
   const client=chainClient(record.chainId);
   const receipt=await client.getTransactionReceipt({hash:record.hash as Hex}).catch(error=>{
     if (error?.name === "TransactionReceiptNotFoundError") return null; throw error;
@@ -279,10 +298,12 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
       if(!tx.data||!tx.to)throw new Error("Approval terms missing.");
       const decoded=decodeFunctionData({abi:tradeApprovalAbi,data:tx.data});
       if(decoded.functionName!=="approve")throw new Error("Invalid approval call.");
-      if(decoded.args.length===2){
+      // Later spending/revocation in the block changes current allowance, not this approval's execution.
+      const eventVerified=approvalReceiptMatches({address:tx.to,owner:record.wallet,args:decoded.args,logs:receipt.logs});
+      if(!eventVerified&&decoded.args.length===2){
         const amount=await client.readContract({address:tx.to,abi:tradeApprovalAbi,functionName:"allowance",args:[getAddress(record.wallet),decoded.args[0]],blockNumber:receipt.blockNumber});
         if(amount!==decoded.args[1])throw new Error("Token approval was not verified.");
-      }else{
+      }else if(!eventVerified&&decoded.args.length===4){
         const [amount,expiration]=await client.readContract({address:tx.to,abi:tradeApprovalAbi,functionName:"allowance",args:[getAddress(record.wallet),decoded.args[0],decoded.args[1]],blockNumber:receipt.blockNumber});
         if(amount!==decoded.args[2]||expiration!==decoded.args[3])throw new Error("Router approval was not verified.");
       }
@@ -290,8 +311,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     if (receipt.status === "success" && record.leg === "approval") {
       const order = await repo.read<Order>({id: record.orderId!});
       const logs = parseEventLogs({abi: baseUsdcAbi, logs: receipt.logs.filter(log => log.address.toLowerCase() === BASE_USDC.toLowerCase()), eventName: "Approval", strict: true});
-      const allowance = await client.readContract({address: BASE_USDC, abi: baseUsdcAbi, functionName: "allowance", args: [getAddress(order.buyer), getAddress(order.router)], blockNumber: receipt.blockNumber});
-      if (!logs.some(e => e.args.owner.toLowerCase() === order.buyer.toLowerCase() && e.args.spender.toLowerCase() === order.router.toLowerCase() && e.args.value === BigInt(order.totalWei)) || allowance !== BigInt(order.totalWei)) throw new Error("USDC approval was not verified.");
+      if (!logs.some(e => e.args.owner.toLowerCase() === order.buyer.toLowerCase() && e.args.spender.toLowerCase() === order.router.toLowerCase() && e.args.value === BigInt(order.totalWei))) throw new Error("USDC approval was not verified.");
     }
     if (receipt.status === "success" && record.leg === "payment") {
       const order=await repo.read<Order>({id:record.orderId!});
@@ -323,9 +343,22 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
   }
   if(receiptOnly)return record;
   const snapshot=await balanceSnapshot(record.chainId,record.wallet);
-  if (snapshot.nonce>(tx.nonce??0)) throw new Error("Nonce consumed without a verified receipt. Funds remain reserved.");
+  if(record.externalReplacement)throw Error('External replacement receipt is unavailable. Reconciliation is required.');
+  if (snapshot.nonce>(tx.nonce??0)) return (await import('./recovery-runtime')).discoverConsumedNonce(record);
   const reserved=await repo.read<Wallet>({id:walletId(record.chainId,record.wallet)});
-  if(!reserved || reserved.activeTx!==record.id || BigInt(snapshot.balanceWei)<locked(reserved)) throw new Error("Signed request is no longer covered by wallet reservations.");
+  if(!reserved || reserved.activeTx!==record.id)throw Error('Wallet transaction lease mismatch.');
+  if(BigInt(snapshot.balanceWei)<locked(reserved)) {
+    if(!record.escrowRef||['fund','deposit','topup','arc_topup'].includes(record.escrowRef.step))await repo.command('pause_signed_broadcast',{id,expectedHash:record.hash});
+    throw new Error("Signed transaction is underfunded. Bot broadcasts are paused. It is not cancelled and may execute if funds return. Resolve this request before submitting another.");
+  }
+  if(record.broadcastPausedAt!==undefined)throw Error('Signed transaction is underfunded. Bot broadcasts remain paused until explicit recovery; signed bytes may still execute.');
+  const transfer=record.leg==='send'?tokenTransfer(tx.data,tx.value):null;
+  const inputToken=transfer?tx.to:record.swapOutput?.inputToken;
+  const inputAmount=transfer?.amount??(record.swapOutput?.inputAmount?BigInt(record.swapOutput.inputAmount):undefined);
+  if(inputToken&&BigInt(inputToken)!==0n&&inputAmount!==undefined){
+    const balance=await client.readContract({address:getAddress(inputToken),abi:transferAbi,functionName:'balanceOf',args:[getAddress(record.wallet)],blockNumber:BigInt(snapshot.block)});
+    if(balance<inputAmount){await repo.command('pause_signed_broadcast',{id,expectedHash:record.hash});throw Error('Signed transaction is underfunded. Input tokens were spent. Bot broadcasts are paused; the signature is not cancelled.');}
+  }
   if (record.orderId && ["approval", "payment"].includes(record.leg)) {
     const order = await repo.read<Order>({id: record.orderId});
     if (paymentAsset(order) === "USDC") await verifyUsdcCoverage(order, reserved, snapshot.block);
@@ -358,6 +391,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
   }
   if (!await escrowDepositReadyForPayout(record)) return record;
   record=await repo.command<Transaction>("submitted",{id});
+  if(record.status!=='submitted'||record.broadcastPausedAt!==undefined)return record;
   // The signature and submitted state remain durable if broadcasting throws.
   const hash=await client.sendRawTransaction({serializedTransaction:record.raw as Hex});
   if (hash!==record.hash) throw new Error("Broadcast returned the wrong hash.");

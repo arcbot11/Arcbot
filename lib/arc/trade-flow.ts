@@ -23,9 +23,12 @@ export async function executeTradeFlow(initial: TradeFlowQuote, io: {
 }) {
   const budget = tradeGasBudget(initial), minimum = decimal(initial.minimumOut);
   let current = initial, spent = 0n;
+  const completedApprovals=new Set<string>();
   for (let step = 0; step < 4; step++) {
     if (!io.active()) throw new Error("Trade paused. Check transaction history before continuing.");
     if (Date.now() >= current.expiresAt) throw new Error("Quote expired. Submit the trade again.");
+    if(completedApprovals.has(current.stage)||completedApprovals.has('approve token')&&current.stage==='reset token approval')
+      throw Error('Token approval changed after confirmation. Review a new trade.');
     // A refreshed server quote can authorize its higher estimated gas. The
     // transaction still passes backend gas policy and available-balance checks.
     const refreshedAllowance=current.tradeGasBudgetWei?BigInt(current.tradeGasBudgetWei):0n;
@@ -40,6 +43,7 @@ export async function executeTradeFlow(initial: TradeFlowQuote, io: {
     const action=current.stage==="swap"?"trade":current.stage==="reset token approval"?"approval reset":current.stage==="approve router"?"router approval":"token approval";
     const settled=await waitForTransaction(result,action,{...io,read:io.status??(()=>io.confirm(current.quote))});
     if (current.stage === "swap") return { result:settled };
+    completedApprovals.add(current.stage);
     spent += BigInt(current.gasWei);
     if (!io.active()) throw new Error("Trade paused. Check transaction history before continuing.");
     io.progress("Refreshing trade quote…");

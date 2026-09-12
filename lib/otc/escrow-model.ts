@@ -145,7 +145,10 @@ export async function retryEscrow(store:Store,listingId:string,orderId:string|un
   for(const step of order?retrySteps:listing.status==="funding"?["fund" as const]:["return_arc" as const]){
     const tx=await store.get<Transaction>(escrowTxId(listing,step,order));
     if(!tx){const record=order??listing;record.updatedAt=now;if(record.kind==="order")delete record.note;else delete record.escrow!.note;await store.put(record);return record;}
-    if(tx.status==="cancelled"&&tx.nonceConflict){const record=order??listing,e=record.escrow!;e.attempts={...e.attempts,[step]:(e.attempts?.[step]??0)+1};record.updatedAt=now;await store.put(record);return record;}
+    if(tx.status==="cancelled"&&tx.nonceConflict){
+      if(step==='fund'||step==='deposit')throw Error('External cancellation requires a new listing or purchase.');
+      const record=order??listing,e=record.escrow!;e.attempts={...e.attempts,[step]:(e.attempts?.[step]??0)+1};record.updatedAt=now;await store.put(record);return record;
+    }
     if(neverSigned(tx)){
       const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);
       if(w.activeTx!==tx.id)throw Error("Wallet transaction lease mismatch.");
