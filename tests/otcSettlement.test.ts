@@ -91,11 +91,21 @@ describe("Base ETH escrow arrival verification",()=>{
     await setupSend();finalized=99n;record.escrowRef={listingId:"listing:test",orderId:order.id,step:"seller"};
     (mocks.client.getBalance as ReturnType<typeof vi.fn>).mockImplementation(async({address,blockNumber}:{address:string;blockNumber:bigint})=>address.toLowerCase()===seller.toLowerCase()?(blockNumber===99n?100n:110n):10n**18n);
   }
-  it.each(["gas","deposit","seller","fee","return_gas"])("completes %s on canonical success and balance delivery before finality",async step=>{
+  it.each(["gas","seller","fee","return_gas"])("completes %s on canonical success and balance delivery before finality",async step=>{
     await escrowSend();record.escrowRef!.step=step;
     await advanceTransaction(record.id,true);
     expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
     expect(mocks.client.getBlock).not.toHaveBeenCalledWith({blockTag:"finalized"});
+  });
+  it.each([29,30])("only verifies incoming deposits after 30 seconds: %s",async age=>{
+    await escrowSend();record.escrowRef!.step="deposit";
+    const now=BigInt(Math.floor(Date.now()/1000));
+    const original=mocks.client.getTransaction as ReturnType<typeof vi.fn>;
+    const tx=await original();original.mockResolvedValue({...tx,blockHash:hash});
+    mocks.client.getBlock=vi.fn(async(args:{blockNumber?:bigint;blockTag?:string}={})=>({hash,number:args.blockNumber??200n,timestamp:args.blockNumber===100n?now-BigInt(age):now}));
+    await advanceTransaction(record.id,true);
+    if(age===30)expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
+    else expect(mocks.command).not.toHaveBeenCalled();
   });
   it("verifies a credited Base payment despite unrelated recipient spending",async()=>{
     await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);

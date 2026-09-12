@@ -1,4 +1,5 @@
 "use client";
+import { ActiveStatus } from "./ActiveStatus";
 import {startEstimateRefresh} from "@/lib/arc/estimate-refresh";
 import {completedTrade} from "@/lib/arc/trade-result";
 import {displayTokenAmount,isUsdcAsset} from "@/lib/amount-display";
@@ -74,9 +75,9 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{},onBusyChan
     <label>{side==="buy"?"USDC to spend":amountUnit==="usd"?(side==="sell"?"USD value to sell":"USD value to swap"):(side==="sell"?"Tokens to sell":"Tokens to swap")}<input inputMode="decimal" value={amount} onChange={e=>{setAmount(e.target.value);}} placeholder="0.00"/></label>
     {side!=="buy"&&<div className="arc-sell-percentages" aria-label="Percentage of token balance to trade">{([25,50,100] as const).map(percent=><button type="button" key={percent} disabled={disabled||busy||!selectedBalance||BigInt(selectedBalance.raw)===0n} onClick={()=>{if(selectedBalance){setAmountUnit("tokens");setAmount(formatUnits(BigInt(selectedBalance.maxSellRaw??selectedBalance.raw)*BigInt(percent)/100n,selectedBalance.decimals));}}}>{percent}%</button>)}</div>}
     <label>Slippage %<input inputMode="decimal" value={slippage} onChange={e=>{setSlippage(e.target.value);}}/></label>
-    <div className="arc-trade-estimate" aria-live="polite">{completion?<><p>{completion.received?<>You received <strong>{completion.received}</strong>.</>:"Trade completed. Received amount unavailable."}</p>{completion.hash&&<a href={`https://www.arcexplorer.org/tx/${completion.hash}`} target="_blank" rel="noopener noreferrer">View transaction on Arc Explorer</a>}</>:estimate?<><p>You will receive at least <strong>{displayTokenAmount(estimate.minimumOut,estimate.outputAddress??(side==="sell"?"native":side==="buy"?token:output))} {estimate.outputSymbol?estimate.outputSymbol:side==="sell"?"USDC":estimate.outputAddress??(side==="buy"?token:output)}</strong>.</p><small>Estimate includes slippage.</small></>:<p>{estimateStatus}</p>}</div>
-    <button type="button" className="arc-button" onClick={()=>void execute()} disabled={disabled||busy||!session?.authenticated||!token||(side==="swap"&&!/^0x[0-9a-fA-F]{40}$/.test(output))}>{busy?progress:side==="buy"?"Buy":side==="sell"?"Sell":"Swap"}</button>
-    {busy&&<div className="otc-notice" role="status" aria-live="polite">{progress}</div>}
+    <div className="arc-trade-estimate" aria-live="polite">{completion?<><p>{completion.received?<>You received <strong>{completion.received}</strong>.</>:"Trade completed. Received amount unavailable."}</p>{completion.hash&&<a href={`https://www.arcexplorer.org/tx/${completion.hash}`} target="_blank" rel="noopener noreferrer">View transaction on Arc Explorer</a>}</>:estimate?<><p>You will receive at least <strong>{displayTokenAmount(estimate.minimumOut,estimate.outputAddress??(side==="sell"?"native":side==="buy"?token:output))} {estimate.outputSymbol?estimate.outputSymbol:side==="sell"?"USDC":estimate.outputAddress??(side==="buy"?token:output)}</strong>.</p><small>Estimate includes slippage.</small></>:<p><ActiveStatus text={estimateStatus} active={/^(Preparing|Refreshing|Loading)/.test(estimateStatus)}/></p>}</div>
+    <button type="button" className="arc-button" onClick={()=>void execute()} disabled={disabled||busy||!session?.authenticated||!token||(side==="swap"&&!/^0x[0-9a-fA-F]{40}$/.test(output))}>{busy?<ActiveStatus text={progress} active={busy}/>:side==="buy"?"Buy":side==="sell"?"Sell":"Swap"}</button>
+    {busy&&<div className="otc-notice" role="status" aria-live="polite"><ActiveStatus text={progress} active={busy}/></div>}
     {children}
   </fieldset>;
 }

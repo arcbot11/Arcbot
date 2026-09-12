@@ -1,4 +1,5 @@
 import {staleUnsigned} from "./unsigned-recovery";
+import { otcDepositConfirmed } from "./deposit-confirmation";
 import { ARC_NATIVE_TRANSFER, verifyArcUsdcDelivery } from "../arc/usdc-delivery";
 import { settlementFailure } from "./settlement-error";
 import { baseTransport } from "../base/transport";
@@ -108,6 +109,16 @@ export async function verifyRaw(raw: Hex, unsigned: Hex, sender: string) {
     || (await recoverTransactionAddress({serializedTransaction:raw as `0x02${string}`})).toLowerCase() !== sender.toLowerCase()) throw new Error("Signer returned a different transaction.");
   return keccak256(raw);
 }
+async function escrowDepositReadyForPayout(record: Transaction) {
+  if (record.chainId !== 5042 || record.escrowRef?.step !== "arc") return true;
+  const { escrowTxId } = await import("./escrow-model");
+  const repo = repository();
+  const order = await repo.read<Order>({ id: record.escrowRef.orderId! });
+  const listing = await repo.read<Listing>({ id: record.escrowRef.listingId });
+  if (!order?.escrow || !listing?.escrow || order.listingId !== listing.id) return false;
+  const deposit = await repo.read<Transaction>({ id: escrowTxId(listing, "deposit", order) });
+  return !!deposit && deposit.status === "completed" && await otcDepositConfirmed(chainClient(8453), deposit);
+}
 /** Persisted unsigned bytes and a wallet lease precede signing; persisted signed bytes precede every broadcast. */
 export async function advanceTransaction(id: string, receiptOnly = false) {
   const repo=repository(); let record=await repo.read<Transaction>({id});
@@ -145,6 +156,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     record=await repo.command<Transaction>("sign",{id,raw:signature,hash,unsigned:record.unsigned});
   }
   if (!record.raw) {
+    if (!await escrowDepositReadyForPayout(record)) return record;
     if(record.sourceRequestId){
       const authority=await socialAuthority(record.sourceRequestId);
       if(authority.recoveryOnly||authority.owner!==record.owner||authority.wallet.toLowerCase()!==record.wallet.toLowerCase())throw new Error("Social command authorization changed.");
@@ -297,7 +309,10 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt changed during verification.");
     // All Base operations use canonical receipt verification and the delivery checks above.
     // Reverted receipts are recorded as failures, never delivery. Arc still requires finality.
-    if(record.chainId===8453)return repo.command<Transaction>("settled",{id,expectedHash:record.hash,block:receipt.blockNumber.toString(),success:receipt.status==="success"});
+    if(record.chainId===8453){
+      if(receipt.status==="success"&&record.escrowRef?.step==="deposit"&&!await otcDepositConfirmed(client,record))return record;
+      return repo.command<Transaction>("settled",{id,expectedHash:record.hash,block:receipt.blockNumber.toString(),success:receipt.status==="success"});
+    }
     const finalized=await client.getBlock({blockTag:"finalized"});
     if(typeof finalized.number!=="bigint"||finalized.number<receipt.blockNumber){
       return record;
@@ -320,6 +335,7 @@ export async function advanceTransaction(id: string, receiptOnly = false) {
     const allowance=BigInt(reserved.holds[record.holdId]??"0")-(tx.value??0n);
     if(worst>allowance || worst>baseConfigFromEnv().maxTotalFeeWei)throw new Error("Base fees exceeded the reserved allowance. Signature retained for recovery.");
   }
+  if (!await escrowDepositReadyForPayout(record)) return record;
   record=await repo.command<Transaction>("submitted",{id});
   // The signature and submitted state remain durable if broadcasting throws.
   const hash=await client.sendRawTransaction({serializedTransaction:record.raw as Hex});

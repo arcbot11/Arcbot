@@ -247,3 +247,10 @@ button:hover:not(:disabled),.button:hover{filter:brightness(.96)}
 .wallet-transaction-details dd { margin: 0; overflow-wrap: anywhere; }
 
 .arc-sell-percentages button[aria-pressed="true"] { background: rgba(150, 193, 222, .24); border-color: #96c1de; }
+/* Fixed space keeps active status text from shifting between frames. */
+.active-status-dots { display: inline-flex; width: 1em; }
+.active-status-dots > span { animation: status-dot 1.2s infinite; }
+.active-status-dots > span:nth-child(2) { animation-delay: .2s; }
+.active-status-dots > span:nth-child(3) { animation-delay: .4s; }
+@keyframes status-dot { 0%, 70%, 100% { opacity: .2; } 35% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .active-status-dots > span { animation: none; } }

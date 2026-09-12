@@ -1,3 +1,4 @@
+import { OTC_DEPOSIT_WAIT_SECONDS } from "./deposit-confirmation";
 import {BASE_DUST_WEI,BASE_RECOVERY_WEI,BASE_UNECONOMIC_REFUND_WEI} from "./gas-recovery";
 import { CdpClient } from "@coinbase/cdp-sdk";
 import { OTC_FEE_RECIPIENT } from "../project-config";
@@ -120,7 +121,17 @@ async function runStep(listing:Listing,step:EscrowStep,order?:Order){
   if(latest.status==="submitted"&&latest.hash){
     // Continue a promptly mined payout in this worker pass instead of waiting a minute per leg.
     const receipt=await chainClient(latest.chainId).waitForTransactionReceipt({hash:latest.hash as Hex,timeout:8000,pollingInterval:1000}).catch(()=>null);
-    if(receipt){await advanceTransaction(id,true);latest=await repo.read<Transaction>({id});}
+    if(receipt){
+      if(step==="deposit"&&receipt.status==="success"){
+        const block=await chainClient(8453).getBlock({blockNumber:receipt.blockNumber});
+        // Keep this live worker pass through the short deposit window, avoiding
+        // an extra minute waiting for the next scheduled recovery pass.
+        const windowMs=Number(OTC_DEPOSIT_WAIT_SECONDS)*1000+1000;
+        const remaining=Math.max(0,Math.min(windowMs,Number(block.timestamp)*1000+windowMs-Date.now()));
+        if(remaining)await new Promise(resolve=>setTimeout(resolve,remaining));
+      }
+      await advanceTransaction(id,true);latest=await repo.read<Transaction>({id});
+    }
   }
   if(latest.status==="reverted")throw new Error("Escrow transaction reverted. Retry settlement after checking balances.");
   return latest.status==="completed";
