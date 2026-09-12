@@ -2,7 +2,7 @@
 
 Implemented locally; requires deployment of both the website and Convex updates. No live wallet actions were performed.
 
-Every general website connection link opens `/wallet/sign-in`, with **Sign in with X** and **Sign in with Telegram**. Account switching is also available from the wallet menu. The browser has one signed wallet-session cookie. Successful account replacement revokes the old server session; other open tabs refresh their wallet display.
+Website connection buttons open a dropdown beneath the button, with **Sign in with X** and **Sign in with Telegram**. Telegram approval and status stay in that dropdown. Escape, the close button, or clicking outside dismisses it. Account switching is also available from the wallet menu. `/wallet/sign-in` remains available for older links. The browser has one signed wallet-session cookie. Successful account replacement revokes the old server session; other open tabs refresh their wallet display.
 
 Telegram sign-in opens `The_ArgosBot` with a random, ten-minute challenge. The bot displays a matching code and requires explicit approval in the user's private chat. Users return to the original browser after approval. This follows Telegram's documented [bot deep links](https://core.telegram.org/bots/features#deep-linking), without an embedded login widget or extra BotFather domain configuration.
 

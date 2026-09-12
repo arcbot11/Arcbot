@@ -15,13 +15,24 @@ export function WalletSignInButton({ className, children, destination = "/wallet
   }, [id]);
   useEffect(() => {
     if (!open) return;
+    const position = () => {
+      const popup = panel.current;
+      if (!popup) return;
+      popup.style.transform = "";
+      if (window.getComputedStyle(popup).position !== "absolute") return;
+      const bounds = popup.getBoundingClientRect();
+      const shift = Math.max(16 - bounds.left, Math.min(0, window.innerWidth - 16 - bounds.right));
+      if (shift) popup.style.transform = `translateX(${shift}px)`;
+    };
+    position();
+    window.addEventListener("resize", position);
     panel.current?.focus();
     const outside = (event: PointerEvent) => { if (!root.current?.contains(event.target as Node)) setOpen(false); };
     const escape = (event: KeyboardEvent) => { if (event.key === "Escape") { event.stopPropagation(); setOpen(false); trigger.current?.focus(); } };
     document.addEventListener("pointerdown", outside);
     root.current?.addEventListener("keydown", escape);
     const element = root.current;
-    return () => { document.removeEventListener("pointerdown", outside); element?.removeEventListener("keydown", escape); };
+    return () => { window.removeEventListener("resize", position); document.removeEventListener("pointerdown", outside); element?.removeEventListener("keydown", escape); };
   }, [open]);
   return <span className={`wallet-signin-anchor wallet-signin-${align}`} ref={root}>
     <button ref={trigger} className={className} type="button" aria-expanded={open} aria-haspopup="dialog" aria-controls={id} onClick={() => {
