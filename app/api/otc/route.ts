@@ -71,7 +71,11 @@ export async function GET(request:NextRequest) {
       const transactions=records.filter((r):r is Transaction=>r.kind==="transaction"&&r.leg!=="allowance"&&r.leg!=="approval").map(transactionHistory);
       const listings=await Promise.all(records.filter((r):r is Listing=>r.kind==="listing").map(async listing=>({...positionHistory(listing,
         records.filter((r):r is Order=>r.kind==="order"), records.find((r):r is Wallet=>r.kind==="wallet"&&r.id===walletId(5042,listing.status==="funding"?listing.seller:listing.escrow?.address??listing.seller)),records.filter((r):r is Transaction=>r.kind==="transaction")),canRetry:await retryAvailable(listing)})));
-      return json({walletAddress:session.walletAddress,balances,orders,transactions,listings});
+      const baseWallet=records.find((r):r is Wallet=>r.kind==="wallet"&&r.id===walletId(8453,session.walletAddress));
+      const usdcHeld=Object.values(baseWallet?.usdcHolds??{}).reduce((sum,value)=>sum+BigInt(value),0n);
+      const usdcBalance=snapshots[1].status==="fulfilled"?await baseUsdcBalance(session.walletAddress,snapshots[1].value.block).catch(()=>null):null;
+      const baseUsdc={balance:usdcBalance,locked:usdcHeld.toString(),available:usdcBalance===null?null:(BigInt(usdcBalance)>usdcHeld?BigInt(usdcBalance)-usdcHeld:0n).toString()};
+      return json({walletAddress:session.walletAddress,balances,baseUsdc,orders,transactions,listings});
     } catch(error){return webFailure(error);}
   }
   let enabled=false;

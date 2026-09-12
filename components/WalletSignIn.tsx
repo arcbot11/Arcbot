@@ -47,7 +47,7 @@ export function WalletSignIn({ destination }: { destination?: string } = {}) {
     return () => { cancelled = true; controller.abort(); clearTimeout(timer); };
   }, [attempt, returnTo]);
   return <div className="wallet-signin-form">
-    <p>Choose your wallet. One account at a time.</p>
+    <p>Choose your wallet.</p>
     {ready ? <a className="arc-button" href={`/api/auth/x/start?returnTo=${encodeURIComponent(returnTo)}`}>Sign in with X</a> : <button className="arc-button" disabled>Sign in with X</button>}
     <button className="arc-button" onClick={() => void start()} disabled={busy || !ready}>{busy ? "Preparing…" : attempt ? "Restart Telegram sign-in" : "Sign in with Telegram"}</button>
     {attempt && <div className="otc-notice"><p>Match this code in Telegram: <strong>{attempt.code}</strong></p><a className="arc-button" href={attempt.url} target="_blank" rel="noopener noreferrer">Open Telegram to approve</a><p>Approve in the bot, then return here. Waiting for approval…</p><p>This opens your TG linked wallet. If you haven’t created one, use /createtg in the bot first.</p></div>}

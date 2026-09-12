@@ -25,9 +25,18 @@ it("converts a dollar withdrawal to exact Base ETH before quoting",async()=>{
  expect(response.status).toBe(200);expect(await response.json()).toMatchObject({amount:"0.005",asset:"ETH"});
  expect(m.prepare).toHaveBeenCalledWith(8453,expect.objectContaining({value:5000000000000000n,to:recipient}));expect(m.convert).not.toHaveBeenCalled();
 });
-it.each(["tokens","usd"])("rejects new Base USDC withdrawals in %s units",async amountUnit=>{
+it.each(["tokens","usd"])("prepares exact Base USDC withdrawals in %s units",async amountUnit=>{
  const response=await POST(request({chainId:8453,asset:BASE_USDC,amount:"10.25",amountUnit}));
- expect(response.status).toBe(400);expect(m.prepare).not.toHaveBeenCalled();
+ expect(response.status).toBe(200);expect(await response.json()).toMatchObject({amount:"10.25",asset:"USDC"});
+ const call=m.prepare.mock.calls[0][1];expect(call.to).toBe(BASE_USDC);expect(call.value).toBe(0n);
+ expect(decodeFunctionData({abi:parseAbi(["function transfer(address,uint256) returns (bool)"]),data:call.data}).args).toEqual([recipient,10250000n]);
+ expect(m.price).not.toHaveBeenCalled();
+});
+it("requires Base ETH for USDC withdrawal gas",async()=>{
+ m.prepare.mockResolvedValue({unsigned:"unsigned",gasWei:"1000",reserveWei:"1000",snapshot:{balanceWei:"999",block:"100"}});
+ m.read.mockResolvedValue({holds:{}});
+ const response=await POST(request({chainId:8453,asset:BASE_USDC,amount:"11"}));
+ expect(response.status).toBe(400);expect((await response.json()).error).toContain("Base ETH for gas");
 });
 it("rejects Base USDC reserved for other operations",async()=>{
  m.read.mockResolvedValue({holds:{},usdcHolds:{otc:"95000000"}});
