@@ -25,7 +25,7 @@ export function PublicWalletBalances({ address }: { address: string }) {
         const response = await fetch(`/api/wallet/public/${address}`, { signal: AbortSignal.any([controller.signal, AbortSignal.timeout(60000)]) });
         const result = await response.json() as Balances;
         if (!response.ok || result.walletAddress?.toLowerCase() !== address.toLowerCase()) throw Error("Wallet balances unavailable.");
-        if (!controller.signal.aborted) setData(result);
+        if (!controller.signal.aborted) setData(previous => ({ ...result, balanceWei: result.balanceWei ?? (previous?.walletAddress.toLowerCase() === result.walletAddress.toLowerCase() ? previous.balanceWei : null) }));
       } catch { if (!controller.signal.aborted) notify("Wallet balances could not refresh."); }
       finally { pending = false; }
     };

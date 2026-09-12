@@ -78,7 +78,7 @@ export async function POST(request:NextRequest){
         prepared=await prepareBaseWithdrawal(wallet,{recipient:command.recipient,amount:command.amount,amountUnit:command.unit==="usd"?"usd":"tokens"});
       }else if(command.kind==="buy"||command.kind==="buy_and_burn"||command.kind==="buy_and_send"||command.kind==="sell"||command.kind==="swap_token_for_token"){
         const buying=command.kind==="buy"||command.kind==="buy_and_burn"||command.kind==="buy_and_send";
-        if(buying&&command.unit!=="usd"&&!(command.unit==="pair"&&command.pairAsset?.toUpperCase()==="USDC"))throw new Error("Specify the USDC amount to spend, for example buy 10 USDC of TOKEN or buy $10 of TOKEN.");
+        if(buying&&command.unit!=="usd"&&!(command.unit==="pair"&&command.pairAsset?.toUpperCase()==="USDC"))throw new Error("To buy, post with a dollar amount and a ticker or contract address. Example: Buy $10 of $ARGOS or Buy $10 of ADDRESS.");
         if(command.kind==="sell"&&!["usd","token","percent"].includes(command.unit))throw new Error("Specify a USDC value, token amount, or percentage to sell.");
         if(command.kind==="swap_token_for_token"&&!["token","usd","percent"].includes(command.unit))throw new Error("Specify a token amount, USDC value, or percentage to swap.");
         const target=token(command.kind==="swap_token_for_token"?command.fromToken:command.token);

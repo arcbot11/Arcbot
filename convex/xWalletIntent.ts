@@ -27,9 +27,11 @@ export type AiWorkflowDiagnostics = {
 
 const PERSISTED_HELP_TOPICS = new Set<WalletHelpTopic>(["capabilities", "wallet", "fund", "gas", "balance", "send", "buy_sell", "burn", "launch", "pairs", "fees"]);
 
+function disabledHelpTopic(topic: unknown) { return disabledCreationKind(topic) || topic === "fees" || topic === "pairs"; }
+
 export function decodePersistedXWalletIntent(value: string): XWalletIntent {
   const parsed = JSON.parse(value) as { kind?: unknown; topic?: unknown; command?: unknown };
-  if (parsed.kind === "help" && disabledCreationKind(parsed.topic)) return { kind: "irrelevant" };
+  if (parsed.kind === "help" && disabledHelpTopic(parsed.topic)) return { kind: "irrelevant" };
   if (parsed.kind === "irrelevant") return { kind: "irrelevant" };
   if (parsed.kind === "unknown_wallet") return { kind: "unknown_wallet" };
   if (parsed.kind === "help" && typeof parsed.topic === "string" && PERSISTED_HELP_TOPICS.has(parsed.topic as WalletHelpTopic)) {
@@ -48,7 +50,7 @@ export function decodePersistedXWalletIntent(value: string): XWalletIntent {
 const WALLET_WORDS = /\b(?:wallet|address|balance|holdings?|portfolio|fund|deposit|send|transfer|give|pay|envoie|buy(?:\s*back)?|purchase|grab|gimme|ape|compra|ach[eè]te|sell|dump|unload|swap|burn|claim|collect|fees?|launch|deploy|token|coin|ticker|slippage|pairs?|assets?|dev\s*buy)\b/i;
 
 export function walletHelpMessage(topic: WalletHelpTopic) {
-  if (disabledCreationKind(topic)) return "";
+  if (disabledHelpTopic(topic)) return "";
   const messages: Record<WalletHelpTopic, string> = {
     capabilities: GENERAL_GUIDED_HELP_MESSAGE,
     wallet: "Wallet: address and holdings. Use “show my wallet”.",
@@ -59,8 +61,8 @@ export function walletHelpMessage(topic: WalletHelpTopic) {
     buy_sell: "Buy: USDC amount and token. Sell: token amount and token. Swap: amount, input token, output token. Arc gas is paid in USDC.",
     burn: "Burn: amount and token. Burns are permanent. A combined buy and burn requires both actions in the command.",
     launch: "",
-    pairs: "Buy and sell Arc tokens against USDC. Token swaps require a supported onchain route. Use a contract address when a ticker is ambiguous.",
-    fees: "Arc transaction gas is paid in USDC. The website OTC service fee is 1.5%.",
+    pairs: "",
+    fees: "",
   };
   return messages[topic];
 }
@@ -1042,7 +1044,7 @@ export async function parseXWalletIntent(text: string, hasImage: boolean, diagno
   const originalText = hasImage ? stripDirectLaunchImageInstruction(text) : text;
   const operativeText = normalizeXCommandLanguage(originalText);
   const finish = (intent: XWalletIntent, source: NonNullable<AiWorkflowDiagnostics["source"]>) => {
-    if ((intent.kind === "command" && disabledCreationKind(intent.command.kind)) || (intent.kind === "help" && disabledCreationKind(intent.topic))) intent = { kind: "irrelevant" };
+    if ((intent.kind === "command" && disabledCreationKind(intent.command.kind)) || (intent.kind === "help" && disabledHelpTopic(intent.topic))) intent = { kind: "irrelevant" };
     if (diagnostics) { diagnostics.source = source; diagnostics.finalIntent = intent; }
     return intent;
   };

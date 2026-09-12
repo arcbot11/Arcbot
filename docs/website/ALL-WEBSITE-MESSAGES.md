@@ -446,7 +446,7 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 170 · Text / template:** Balance unavailable
 - **Line 171 · Composed display template:** Available Arc USDC {availableWei!=null?usdcUnits(availableWei):"—"}
 - **Line 173 · Visible text:** Connect your account ↗
-- **Line 173 · Visible text:** to create a listing or trade. Base actions are website only.
+- **Line 173 · Visible text:** to create a listing or trade.
 - **Line 174 · Visible text:** Creating OTC USDC listing
 - **Line 175 · Status / notice:** Could not save the request for safe retry. No listing was submitted.
 - **Line 175 · Status / notice:** Position created. Its escrow deposit is being verified. You can view your OTC listings in your wallet.
@@ -748,7 +748,7 @@ This extraction follows local imports from all app routes, plus the OTC storage 
 - **Line 71 · Text / template:** Arc transaction reverted. Check wallet history.
 - **Line 72 · Text / template:** Arc transaction pending. Check wallet history.
 - **Line 77 · Error:** Request expired before the next transaction was prepared. Check wallet history before sending a new command.
-- **Line 83 · Error:** Specify the USDC amount to spend, for example buy 10 USDC of TOKEN or buy $10 of TOKEN.
+- **Line 83 · Error:** To buy, post with a dollar amount and a ticker or contract address. Example: Buy $10 of $ARGOS or Buy $10 of ADDRESS.
 - **Line 84 · Error:** Specify a USDC value, token amount, or percentage to sell.
 - **Line 85 · Error:** Specify a token amount, USDC value, or percentage to swap.
 - **Line 89 · Error:** Use a valid recipient wallet.

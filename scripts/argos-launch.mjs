@@ -7,7 +7,10 @@ import {getAddress,encodeFunctionData,decodeFunctionResult,parseAbi,parseEventLo
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const args=process.argv.slice(2);
-const creatorFees=args.length===2&&args[1]==='--creator-fees';
+const crankFees=args.length===2&&args[1]==='--crank-fees';
+const creatorFees=args.length===2&&(args[1]==='--creator-fees'||crankFees);
+const crankRun=process.env.ARGOS_CRANK_RUN_ID??'first';
+if(crankFees&&!/^[a-zA-Z0-9-]{1,48}$/.test(crankRun))throw Error('Invalid crank run ID.');
 const personalSell=args[1]==='--personal-sell';
 const validPersonalArgs=args.length===5||(args.length===7&&!personalSell&&args[5]==='--percent'&&['45','50','95'].includes(args[6]));
 const personalPercent=personalSell?50:args.length===7?Number(args[6]):95;
@@ -18,7 +21,7 @@ if(args[0]==='--help'||(args.length!==1&&!personal&&!creatorFees)||!['--preview'
 }
 const batchId=process.env.ARGOS_PERSONAL_BATCH_ID;
 if(batchId&&(!personal||personalSell||!/^[a-z0-9-]{1,64}$/.test(batchId)))throw Error('Invalid personal buy batch ID.');
-const mode=args[0],privateDir=path.join(root,'.deployment-private'),journalPath=path.join(privateDir,creatorFees?'argos-creator-fees-20260911-v1.json':personal?`argos-${personalSell?'sell50':personalPercent===95?'buy':`buy${personalPercent}`}-${personal.toLowerCase()}-${args[4].toLowerCase()}${batchId?`-${batchId}`:''}-v1.json`:'argos-launch-v1.json');
+const mode=args[0],privateDir=path.join(root,'.deployment-private'),journalPath=path.join(privateDir,crankFees?`argos-crank-${crankRun}-v1.json`:creatorFees?'argos-creator-fees-20260911-v1.json':personal?`argos-${personalSell?'sell50':personalPercent===95?'buy':`buy${personalPercent}`}-${personal.toLowerCase()}-${args[4].toLowerCase()}${batchId?`-${batchId}`:''}-v1.json`:'argos-launch-v1.json');
 const readJson=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 const serial=x=>JSON.stringify(x,(_,v)=>typeof v==='bigint'?v.toString():v,2);
 const same=(a,b)=>a.toLowerCase()===b.toLowerCase();
@@ -31,7 +34,7 @@ const sequence=await readJson(path.join(root,'docs/launch/EXECUTION-SEQUENCE.jso
 const bundle=await readJson(path.join(root,'docs/launch/argus-bundle-2026-09-11.json'));
 const abi=bundle.contracts.ArgusV4Portal6.abi;
 const erc=parseAbi(['function approve(address,uint256) returns(bool)','function allowance(address,address) view returns(uint256)','function balanceOf(address) view returns(uint256)','function symbol() view returns(string)','function name() view returns(string)','function decimals() view returns(uint8)','event Transfer(address indexed from,address indexed to,uint256 value)']);
-const digest=createHash('sha256').update(serial(creatorFees?{purpose:'creator-fees',token:draft.predictedToken,creator:draft.creatorWallet,chainId:5042}:personal?{personal,token:args[4].toLowerCase(),percent:personalPercent,chainId:5042}: {draft,sequence})).digest('hex');
+const digest=createHash('sha256').update(serial(creatorFees?{purpose:crankFees?'collect-crank-claim':'creator-fees',...(crankFees?{run:crankRun}:{}),token:draft.predictedToken,creator:draft.creatorWallet,chainId:5042}:personal?{personal,token:args[4].toLowerCase(),percent:personalPercent,chainId:5042}: {draft,sequence})).digest('hex');
 let journal,lock;
 try{journal=await readJson(journalPath);}catch(e){if(e.code!=='ENOENT')throw e;}
 if(mode==='--status'){
@@ -46,6 +49,7 @@ process.env.DISABLE_CDP_ERROR_REPORTING='true';process.env.DISABLE_CDP_USAGE_TRA
 const {CdpClient}=await import('@coinbase/cdp-sdk');
 const {chainClient,balanceSnapshot,prepareCall,verifyRaw}=await import('../lib/otc/runtime.ts');
 const {repository}=await import('../lib/otc/repository.ts');
+const {signingId,signWithAuthRecovery}=await import('../lib/otc/signing.ts');
 const {locked,walletId}=await import('../lib/otc/model.ts');
 const {previewArcTrade,PERMIT2}=await import('../lib/arc/trading.ts');
 const {ARC_ROUTER}=await import('../lib/arc/routing.ts');
@@ -103,6 +107,18 @@ async function prepareFeeCall(w,splitter,functionName){
   const abi=bundle.contracts.ArgusV4HookedSplitter6.abi;
   if(!same(await contract(splitter,abi,'creator'),w.address))fail('Creator fee recipient changed.');
   return {...await prepareCall(5042,{from:w.address,to:splitter,value:0n,data:encodeFunctionData({abi,functionName,args:functionName==='claim'?[w.address]:[]})}),leg:functionName==='claim'?'claim':'distribution'};
+}
+async function prepareCollect(w){
+  const r=await portal('launches',[journal?.token??draft.predictedToken]);
+  const lockerAbi=bundle.contracts.ArgusV4HookedLocker.abi;
+  if(!same(r[0],w.address)||!same(r[5],draft.predictedSplitter)||!same(await contract(r[3],lockerAbi,'splitter'),r[5])||!same(await contract(r[3],lockerAbi,'quoteAsset'),draft.quoteAsset))fail('LP locker or creator verification failed.');
+  return {...await prepareCall(5042,{from:w.address,to:r[3],value:0n,data:encodeFunctionData({abi:lockerAbi,functionName:'collect'})}),leg:'collection'};
+}
+async function reportCrank(){
+  const abi=bundle.contracts.ArgusV4HookedSplitter6.abi;
+  const remaining=await contract(journal.splitter,abi,'claimableQuote6',[draft.creatorWallet]);
+  const transactions=journal.transactions.map(t=>({step:t.label,status:t.status,hash:t.hash,gasUSDC:t.gasWei?formatUnits(BigInt(t.gasWei),18):null,received:t.claimed??[],url:t.hash?`https://www.arcexplorer.org/tx/${t.hash}`:undefined}));
+  out('Crank cycle report',{run:crankRun,status:journal.status,creator:draft.creatorWallet,transactions,remainingClaimableUSDC:formatUnits(remaining,6),note:'One collect/distribute/claim cycle. Processing limits may leave more fees waiting. Use a new run ID only after this run completes.'});
 }
 function personalTradeInput(w,token){
   return personalSell?{tokenIn:token,tokenOut:'native',amount:w.amountARGOS,slippageBps:100}:{tokenIn:'native',tokenOut:token,amount:w.amountUSDC,slippageBps:1000};
@@ -243,7 +259,9 @@ async function transact(w,label,prepare,wait=true){
       },async attempt=>{refresh=true;out('Refreshing before signing; no transaction submitted.',{wallet:w.name,attempt:attempt+1});});
       t.signingStarted=true;await save();
     }
-    const signed=await cdp.evm.signTransaction({address:w.address,transaction:t.unsigned,idempotencyKey:t.idempotencyKey});
+    // Preserve the original key for all saved/ambiguous requests. Only the shared
+    // explicit unsigned-authentication rejection policy permits one recovery key.
+    const signed=await signWithAuthRecovery(t.idempotencyKey,key=>cdp.evm.signTransaction({address:w.address,transaction:t.unsigned,idempotencyKey:key===signingId(t.idempotencyKey)?t.idempotencyKey:key}));
     t.hash=await verifyRaw(signed.signature,t.unsigned,w.address);t.raw=signed.signature;t.status='signed';await save();
   }
   if(await verifyRaw(t.raw,t.unsigned,w.address)!==t.hash)fail('Journal signature mismatch.');
@@ -313,6 +331,7 @@ try{
       const p=await preflightFees(),w=p.wallets[0],abi=bundle.contracts.ArgusV4HookedSplitter6.abi;
       const [usdc,tokens]=await Promise.all(['claimableQuote6','claimableToken18'].map(fn=>contract(p.splitter,abi,fn,[w.address])));
       const distribution=await prepareFeeCall(w,p.splitter,'distribute');
+      if(crankFees){const collection=await prepareCollect(w);out('READ-ONLY LP collection preview',{gasAllowanceUSDC:formatUnits(BigInt(collection.gasWei),18),executionPerformed:false});}
       out('READ-ONLY creator fee preview',{creator:w.address,splitter:p.splitter,claimableUSDC:formatUnits(usdc,6),claimableARGOS:formatUnits(tokens,18),distributionGasAllowanceUSDC:formatUnits(BigInt(distribution.gasWei),18),executionPerformed:false});process.exit(0);
     }
     if(personal){
@@ -347,7 +366,7 @@ try{
     }
     journal.status='aborted';await save();out('Stopped remaining work; reconciled wallet locks released.');
   }else{
-    if(journal.status==='completed'){out('Already completed',{token:journal.token});}
+    if(journal.status==='completed'){out('Already completed',{token:journal.token});if(crankFees)await reportCrank();}
     else{
       if(journal.status==='aborted')fail('This run was aborted. Do not reuse its journal to place duplicate buys.');
       for(const w of journal.wallets)await acquire(w);
@@ -359,6 +378,7 @@ try{
       }
       if(creatorFees){
         const w=journal.wallets[0],abi=bundle.contracts.ArgusV4HookedSplitter6.abi;
+        if(crankFees)await transact(w,'Creator:collect',()=>prepareCollect(w));
         await transact(w,'Creator:distribute',()=>prepareFeeCall(w,journal.splitter,'distribute'));
         const [usdc,tokens]=await Promise.all(['claimableQuote6','claimableToken18'].map(fn=>contract(journal.splitter,abi,fn,[w.address])));
         if(usdc>0n||tokens>0n||journal.transactions.some(t=>t.label==='Creator:claim')){
@@ -366,6 +386,7 @@ try{
           out('Creator fees received',{creator:w.address,hash:t.hash,received:t.claimed});
         }else out('No claimable fees remain after distribution. Another claimant may already have delivered them.');
         await release(w);journal.status='completed';await save();
+        if(crankFees)await reportCrank();
       }else if(personal){
         const w=journal.wallets[0];
         let readySwap;

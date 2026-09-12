@@ -2489,7 +2489,7 @@
     "file": "components/OtcClient.tsx",
     "line": 173,
     "kind": "Visible text",
-    "text": "to create a listing or trade. Base actions are website only."
+    "text": "to create a listing or trade."
   },
   {
     "area": "Website controls and displays",
@@ -4393,7 +4393,7 @@
     "file": "app/api/arc/command/route.ts",
     "line": 83,
     "kind": "Error",
-    "text": "Specify the USDC amount to spend, for example buy 10 USDC of TOKEN or buy $10 of TOKEN."
+    "text": "To buy, post with a dollar amount and a ticker or contract address. Example: Buy $10 of $ARGOS or Buy $10 of ADDRESS."
   },
   {
     "area": "Website API responses",
