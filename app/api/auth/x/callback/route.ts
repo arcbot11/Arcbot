@@ -1,6 +1,8 @@
 import { ConvexHttpClient } from "convex/browser";
 import { walletReturnPath } from "@/lib/wallet-return-path";
 import { checkWebSession } from "@/lib/web-session-authority";
+import { browserHash, hashAuth } from "@/lib/web-browser-auth";
+import type { OAuthAttempt } from "@/lib/x-oauth-attempt";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
 import {oauthCookieName,readOAuthAttempt,telegramRetryToken,telegramReturnToken} from "@/lib/x-oauth-attempt";
@@ -14,7 +16,7 @@ export const maxDuration = 120;
 type XToken = { access_token?: string };
 type XIdentity = { data?: { id?: string; username?: string; verified?: boolean; verified_type?: string } };
 
-function attemptContext(request:NextRequest){
+function attemptContext(request:NextRequest):Partial<OAuthAttempt>|null{
   const state=request.nextUrl.searchParams.get("state")??"",secret=process.env.WEB_AUTH_SECRET??"";
   const name=oauthCookieName(state);
   if(name)return readOAuthAttempt(request.cookies.get(name)?.value,secret);
@@ -61,6 +63,11 @@ export async function GET(request: NextRequest) {
 
   let stage="token_exchange";
   try {
+    const family = browserHash(request, webSecret);
+    if (!context?.telegramLink) {
+      if (!family || context?.browserFamily !== family || !Number.isSafeInteger(context.generation)) return errorRedirect(request, "invalid_state");
+      if (!await new ConvexHttpClient(convexUrl).mutation(api.webAuth.check, { secret: webSecret, browserHash: family, generation: context.generation })) return errorRedirect(request, "invalid_state");
+    }
     const callback = `${siteUrl.replace(/\/$/, "")}/api/auth/x/callback`;
     const tokenResponse = await fetch("https://api.x.com/2/oauth2/token", {
       method: "POST",
@@ -106,6 +113,10 @@ export async function GET(request: NextRequest) {
       await new ConvexHttpClient(convexUrl).action(api.telegram.stageXLink,{secret:webSecret,nonce:telegramLink,ownerXUserId:identity.id,returnToken});
       const target=new URL(ARC_BOT_TELEGRAM_URL);target.searchParams.set("start","link_"+returnToken);
       const response = NextResponse.redirect(target);
+      const previous = readWebWalletSession(request.cookies.get(WEB_WALLET_SESSION_COOKIE)?.value, webSecret);
+      if (family) await new ConvexHttpClient(convexUrl).mutation(api.webAuth.logout, { secret: webSecret, browserHash: family, ...(previous ? { previousSessionHash: hashAuth(previous.sessionId) } : {}) });
+      else if (previous) await checkWebSession(new ConvexHttpClient(convexUrl), webSecret, previous, true);
+      response.cookies.set("argos_tg_web_login", "", { httpOnly: true, path: "/api/auth/telegram", maxAge: 0 });
       response.cookies.set("argus_x_oauth_state", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
       response.cookies.set("argus_x_oauth_verifier", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
       response.cookies.set("argus_x_oauth_return", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });
@@ -120,14 +131,17 @@ export async function GET(request: NextRequest) {
     stage="session";
     const requestedReturn = context?.returnTo;
     const returnTo = walletReturnPath(requestedReturn);
-    const sessionCookie = createWebWalletSession(wallet.address, identity.id, identity.username, webSecret);
+    const sessionCookie = createWebWalletSession(wallet.address, identity.id, identity.username, webSecret, family!);
     const session = readWebWalletSession(sessionCookie, webSecret);
     if (!session || session.provider === "telegram") return errorRedirect(request, "session");
     await new ConvexHttpClient(convexUrl).action(api.wallets.registerWebSession, {
       secret: webSecret, sessionId: session.sessionId, ownerXUserId: session.xUserId, expiresAt: session.expiresAt,
     });
-    const previous = readWebWalletSession(request.cookies.get(WEB_WALLET_SESSION_COOKIE)?.value, webSecret);
-    if (previous) await checkWebSession(new ConvexHttpClient(convexUrl), webSecret, previous, true);
+    const activated = await new ConvexHttpClient(convexUrl).mutation(api.webAuth.activate, { secret: webSecret, browserHash: family!, generation: context!.generation!, sessionIdHash: hashAuth(session.sessionId), expiresAt: session.expiresAt * 1000 });
+    if (!activated) {
+      await checkWebSession(new ConvexHttpClient(convexUrl), webSecret, session, true);
+      return errorRedirect(request, "invalid_state");
+    }
     const response = NextResponse.redirect(new URL(returnTo, siteUrl));
     response.cookies.set("argos_tg_web_login", "", { httpOnly: true, path: "/api/auth/telegram", maxAge: 0 });
     response.cookies.set("argus_x_oauth_state", "", { httpOnly: true, path: "/api/auth/x", maxAge: 0 });

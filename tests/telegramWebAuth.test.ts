@@ -5,17 +5,17 @@ const handler = (fn: unknown) => (fn as { _handler: (ctx: unknown, args: unknown
 const address = "0x1111111111111111111111111111111111111111", secret = "test-web-secret";
 type Row = Record<string, unknown>;
 function fixture() {
-  const rows: Record<string, Row[]> = { telegramWebLogins: [], telegramNativeWallets: [{ _id: "tg1", telegramUserId: "123", telegramChatId: "123", address }], telegramUpdates: [{ _id: "u1", updateId: "one", telegramUserId: "123", telegramChatId: "123" }, { _id: "u2", updateId: "two", telegramUserId: "456", telegramChatId: "456" }] };
+  const rows: Record<string, Row[]> = { webAuthBrowsers: [], webAuthLimits: [], webWalletSessions: [], telegramWebLogins: [], telegramNativeWallets: [{ _id: "tg1", telegramUserId: "123", telegramChatId: "123", address }], telegramUpdates: [{ _id: "u1", updateId: "one", telegramUserId: "123", telegramChatId: "123" }, { _id: "u2", updateId: "two", telegramUserId: "456", telegramChatId: "456" }] };
   const ctx = { db: {
-    query(table: string) { let selected = rows[table]; const q = { eq: (key: string, val: unknown) => { selected = selected.filter(r => r[key] === val); return q; } }; return { withIndex: (_: string, cb: (q: typeof q) => unknown) => { cb(q); return { unique: async () => selected[0] ?? null }; } }; },
+    query(table: string) { let selected = rows[table]; const q = { eq: (key: string, val: unknown) => { selected = selected.filter(r => r[key] === val); return q; } }; return { withIndex: (_: string, cb: (query: typeof q) => unknown) => { cb(q); return { unique: async () => selected[0] ?? null }; } }; },
     get: async (id: unknown) => Object.values(rows).flat().find(r => r._id === id) ?? null,
-    insert: async (table: string, value: Row) => { rows[table].push({ _id: `row${rows[table].length}`, ...value }); },
+    insert: async (table: string, value: Row) => { rows[table].push({ _id: `${table}${rows[table].length}`, ...value }); },
     patch: async (id: unknown, value: Row) => Object.assign(Object.values(rows).flat().find(r => r._id === id)!, value),
   } };
   return { rows, ctx };
 }
-const begin = { secret, tokenHash: "a".repeat(64), browserHash: "b".repeat(64), code: "ABCDEF12" };
-const check = { secret, tokenHash: begin.tokenHash, browserHash: begin.browserHash, sessionIdHash: "c".repeat(64) };
+const begin = { secret, tokenHash: "a".repeat(64), browserHash: "b".repeat(64), code: "ABCDEF12", browserFamily: "f".repeat(64), sourceHash: "1".repeat(64) };
+const check = { secret, tokenHash: begin.tokenHash, browserHash: begin.browserHash, sessionIdHash: "c".repeat(64), browserFamily: begin.browserFamily };
 const confirm = { updateId: "one", tokenHash: begin.tokenHash, approve: false };
 beforeEach(() => { vi.stubEnv("WEB_AUTH_SECRET", secret); });
 afterEach(() => { vi.unstubAllEnvs(); vi.useRealTimers(); });

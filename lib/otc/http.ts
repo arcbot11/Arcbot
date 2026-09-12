@@ -5,6 +5,7 @@ import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
 import { checkWebSession } from "../web-session-authority";
 import { webSessionOwner } from "../web-wallet-session";
+import { browserHash } from "../web-browser-auth";
 import { readWebWalletSession, WEB_WALLET_SESSION_COOKIE, webWalletCsrfToken, TERMINAL_RECENT_AUTH_SECONDS } from "../web-wallet-session";
 export function sameSecret(a:string,b:string) { const x=Buffer.from(a),y=Buffer.from(b); return x.length===y.length && timingSafeEqual(x,y); }
 export class WebError extends Error { constructor(message:string,public status=400){super(message);} }
@@ -12,7 +13,7 @@ export async function websiteSession(request:NextRequest,write=false) {
   const secret=process.env.WEB_AUTH_SECRET, url=process.env.NEXT_PUBLIC_CONVEX_URL;
   const session=secret?readWebWalletSession(request.cookies.get(WEB_WALLET_SESSION_COOKIE)?.value,secret):null;
   if(!secret||!url||!session) throw new WebError("Connect your account first.",401);
-  const active=await checkWebSession(new ConvexHttpClient(url),secret,session);
+  const active=await checkWebSession(new ConvexHttpClient(url),secret,session,false,browserHash(request,secret));
   if(!active) throw new WebError("Reconnect your account.",401);
   if(write){
     const site=process.env.NEXT_PUBLIC_SITE_URL;

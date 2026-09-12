@@ -7,6 +7,14 @@ export function WalletSignIn() {
   const params = useSearchParams(), returnTo = walletReturnPath(params.get("returnTo"));
   const [attempt, setAttempt] = useState<{ code: string; url: string; expiresAt: number } | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/auth/browser", { method: "POST", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(10000)]) }).then(r => {
+      if (!r.ok) throw Error(); setReady(true);
+    }).catch(() => { if (!controller.signal.aborted) setError("Sign-in unavailable. Refresh this page to retry."); });
+    return () => controller.abort();
+  }, []);
   async function start() {
     if (busy) return;
     setBusy(true); setError(""); setAttempt(null);
@@ -41,8 +49,8 @@ export function WalletSignIn() {
   }, [attempt, returnTo]);
   return <div className="otc-form" style={{ maxWidth: 520, display: "grid", gap: 16 }}>
     <p>Choose the account linked to your wallet. Only one wallet can be signed in at a time.</p>
-    <a className="arc-button" href={`/api/auth/x/start?returnTo=${encodeURIComponent(returnTo)}`}>Sign in with X</a>
-    <button className="arc-button" onClick={() => void start()} disabled={busy}>{busy ? "Preparing…" : attempt ? "Restart Telegram sign-in" : "Sign in with Telegram"}</button>
+    {ready ? <a className="arc-button" href={`/api/auth/x/start?returnTo=${encodeURIComponent(returnTo)}`}>Sign in with X</a> : <button className="arc-button" disabled>Sign in with X</button>}
+    <button className="arc-button" onClick={() => void start()} disabled={busy || !ready}>{busy ? "Preparing…" : attempt ? "Restart Telegram sign-in" : "Sign in with Telegram"}</button>
     {attempt && <div className="otc-notice"><p>Match this code in Telegram: <strong>{attempt.code}</strong></p><a className="arc-button" href={attempt.url} target="_blank" rel="noopener noreferrer">Open Telegram to approve</a><p>Approve in the bot, then return here. Waiting for approval…</p><p>This opens your TG linked wallet. If you haven’t created one, use /createtg in the bot first.</p></div>}
     {error && <p role="alert">{error}</p>}
   </div>;

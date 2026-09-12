@@ -1,6 +1,6 @@
 import {createHmac,timingSafeEqual} from "node:crypto";
 
-export type OAuthAttempt={verifier:string;returnTo:string;telegramLink?:string;expiresAt:number};
+export type OAuthAttempt={verifier:string;returnTo:string;telegramLink?:string;expiresAt:number;browserFamily?:string;generation?:number};
 export const oauthCookieName=(state:string)=>/^v2_[A-Za-z0-9_-]{43}$/.test(state)?`argos_oauth_${state}`:null;
 function seal(value:unknown,secret:string,purpose:string){const data=Buffer.from(JSON.stringify(value)).toString("base64url");return `${data}.${createHmac("sha256",secret).update(`${purpose}:${data}`).digest("base64url")}`;}
 function unseal(value:string|undefined,secret:string,purpose:string):unknown{

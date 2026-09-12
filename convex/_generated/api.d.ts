@@ -39,6 +39,7 @@ import type * as telegram from "../telegram.js";
 import type * as telegramDeliveries from "../telegramDeliveries.js";
 import type * as telegramWallets from "../telegramWallets.js";
 import type * as telegramWebAuth from "../telegramWebAuth.js";
+import type * as webAuth from "../webAuth.js";
 import type * as walletCommands from "../walletCommands.js";
 import type * as walletContinuations from "../walletContinuations.js";
 import type * as wallets from "../wallets.js";
@@ -90,6 +91,7 @@ declare const fullApi: ApiFromModules<{
   telegramDeliveries: typeof telegramDeliveries;
   telegramWallets: typeof telegramWallets;
   telegramWebAuth: typeof telegramWebAuth;
+  webAuth: typeof webAuth;
   walletCommands: typeof walletCommands;
   walletContinuations: typeof walletContinuations;
   wallets: typeof wallets;

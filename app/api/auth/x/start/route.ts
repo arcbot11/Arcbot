@@ -4,6 +4,8 @@ import { walletReturnPath } from "@/lib/wallet-return-path";
 import { ConvexHttpClient } from "convex/browser";
 import { NextRequest, NextResponse } from "next/server";
 import { api } from "@/convex/_generated/api";
+import { browserHash, browserValue, setBrowserCookie, loginSourceHash, hashAuth } from "@/lib/web-browser-auth";
+import { checkWebSession } from "@/lib/web-session-authority";
 import { readWebWalletSession, WEB_WALLET_SESSION_COOKIE, TERMINAL_RECENT_AUTH_SECONDS } from "@/lib/web-wallet-session";
 
 export const runtime = "nodejs";
@@ -36,11 +38,16 @@ export async function GET(request: NextRequest) {
   // a website session here can bind the Telegram nonce to a stale or different
   // X identity, and can make relinking fail before the nonce is consumed.
   if (session && session.provider !== "telegram" && !validTelegramLink) {
-    const active = await new ConvexHttpClient(convexUrl).action(api.wallets.verifyWebSession, {
-      secret: webSecret, sessionId: session.sessionId, ownerXUserId: session.xUserId,
-    }).catch(() => false);
+    const active = await checkWebSession(new ConvexHttpClient(convexUrl), webSecret, session, false, browserHash(request, webSecret)).catch(() => false);
     if (active && Math.floor(Date.now()/1000)-session.authenticatedAt < TERMINAL_RECENT_AUTH_SECONDS) {
-      return NextResponse.redirect(new URL(returnTo, siteUrl));
+      const family = browserHash(request, webSecret);
+      const kept = !family || await new ConvexHttpClient(convexUrl).mutation(api.webAuth.keepSession, { secret: webSecret, browserHash: family, sessionIdHash: hashAuth(session.sessionId) }).catch(() => false);
+      if (kept) {
+        const response = NextResponse.redirect(new URL(returnTo, siteUrl));
+        response.cookies.set("argos_tg_web_login", "", { httpOnly: true, path: "/api/auth/telegram", maxAge: 0 });
+        response.headers.set("Cache-Control", "no-store");
+        return response;
+      }
     }
   }
 
@@ -49,6 +56,23 @@ export async function GET(request: NextRequest) {
     if(!valid){const target=new URL("/wallet/sign-in-error",siteUrl);target.searchParams.set("reason",valid===undefined?"link_check":"telegram_expired");target.searchParams.set("telegram","1");return NextResponse.redirect(target);}
   }
   const state = "v2_"+base64url(randomBytes(32));
+  let family: string | null = null, generation: number | undefined;
+  if (!validTelegramLink) {
+    family = browserHash(request, webSecret);
+    if (!family) {
+      const response = NextResponse.redirect(request.nextUrl);
+      setBrowserCookie(response, browserValue(webSecret), new URL(siteUrl).protocol === "https:");
+      response.headers.set("Cache-Control", "no-store");
+      return response;
+    }
+    try {
+      const begun = await new ConvexHttpClient(convexUrl).mutation(api.webAuth.begin, { secret: webSecret, browserHash: family, sourceHash: loginSourceHash(request, webSecret), ...(session ? { previousSessionHash: hashAuth(session.sessionId) } : {}) });
+      generation = begun.generation;
+    } catch (error) {
+      const limited = error instanceof Error && error.message.includes("Sign-in limit reached");
+      return NextResponse.json({ error: limited ? "Sign-in limit reached. Try again in a minute." : "Sign-in unavailable. Try again." }, { status: limited ? 429 : 503, headers: { "cache-control": "no-store" } });
+    }
+  }
   const verifier = base64url(randomBytes(48));
   const challenge = base64url(createHash("sha256").update(verifier).digest());
   const callback = `${siteUrl.replace(/\/$/, "")}/api/auth/x/callback`;
@@ -66,11 +90,11 @@ export async function GET(request: NextRequest) {
   const response = NextResponse.redirect(authorize);
   const secure = callback.startsWith("https://");
   const cookie = { httpOnly: true, secure, sameSite: "lax" as const, path: "/api/auth/x", maxAge: 10 * 60 };
-  response.cookies.set(oauthCookieName(state)!,sealOAuthAttempt({verifier,returnTo,...(validTelegramLink?{telegramLink:validTelegramLink}:{}),expiresAt:Date.now()+600_000},webSecret),cookie);
+  response.cookies.set(oauthCookieName(state)!,sealOAuthAttempt({verifier,returnTo,...(validTelegramLink?{telegramLink:validTelegramLink}:{}),...(family ? { browserFamily: family, generation } : {}),expiresAt:Date.now()+600_000},webSecret),cookie);
   response.headers.set("Cache-Control","no-store");
   // A cryptographically valid cookie may refer to a revoked or missing Convex
   // session. Remove it before starting OAuth so it cannot cause a redirect loop.
-  if (session) response.cookies.set(WEB_WALLET_SESSION_COOKIE, "", {
+  if (session && !validTelegramLink && !await checkWebSession(new ConvexHttpClient(convexUrl), webSecret, session, false, family).catch(() => false)) response.cookies.set(WEB_WALLET_SESSION_COOKIE, "", {
     httpOnly: true, secure, sameSite: "lax", path: "/", maxAge: 0,
   });
   return response;

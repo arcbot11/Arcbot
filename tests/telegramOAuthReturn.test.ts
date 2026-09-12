@@ -6,7 +6,8 @@ vi.mock("convex/browser",()=>({ConvexHttpClient:class{action=m.action;mutation=m
 import {createTelegramWebSession,readWebWalletSession,WEB_WALLET_SESSION_COOKIE} from "../lib/web-wallet-session";
 import {GET as callback} from "../app/api/auth/x/callback/route";
 import {GET as start} from "../app/api/auth/x/start/route";
-import {oauthCookieName,readTelegramRetry,telegramReturnToken} from "../lib/x-oauth-attempt";
+import {oauthCookieName,readTelegramRetry,telegramReturnToken,sealOAuthAttempt} from "../lib/x-oauth-attempt";
+import {BROWSER_COOKIE,browserValue,hashAuth} from "../lib/web-browser-auth";
 beforeEach(()=>{
  m.mutation.mockReset().mockResolvedValue(true);
  for(const [k,v]of Object.entries({X_OAUTH_CLIENT_ID:"client",X_OAUTH_CLIENT_SECRET:"secret",WEB_AUTH_SECRET:"test-secret",NEXT_PUBLIC_SITE_URL:"https://www.argosbot.io",NEXT_PUBLIC_CONVEX_URL:"https://example.convex.cloud"}))vi.stubEnv(k,v);
@@ -15,10 +16,12 @@ beforeEach(()=>{
 });
 it("replaces a Telegram browser session with X and invalidates the pending TG exchange cookie",async()=>{
  const tg=createTelegramWebSession("0x1111111111111111111111111111111111111111","456","web_abcdefghijklmnop",Math.floor(Date.now()/1000),"test-secret");
- const r=await callback(new NextRequest("https://www.argosbot.io/api/auth/x/callback?code=test&state=test-state",{headers:{cookie:`argus_x_oauth_state=test-state; argus_x_oauth_verifier=test-verifier; ${WEB_WALLET_SESSION_COOKIE}=${tg}`}}));
+ const browser=browserValue("test-secret"),family=hashAuth(browser.split(".")[0]),state="v2_"+"a".repeat(43);
+ const attempt=sealOAuthAttempt({verifier:"test-verifier",returnTo:"/wallet",browserFamily:family,generation:1,expiresAt:Date.now()+600000},"test-secret");
+ const r=await callback(new NextRequest(`https://www.argosbot.io/api/auth/x/callback?code=test&state=${state}`,{headers:{cookie:`${oauthCookieName(state)}=${attempt}; ${BROWSER_COOKIE}=${browser}; ${WEB_WALLET_SESSION_COOKIE}=${tg}`}}));
  expect(r.headers.get("location")).toBe("https://www.argosbot.io/wallet");
  expect(readWebWalletSession(r.cookies.get(WEB_WALLET_SESSION_COOKIE)!.value,"test-secret")).toMatchObject({xUserId:"123"});
- expect(m.mutation.mock.calls[0][1]).toMatchObject({telegramUserId:"456",revoke:true});
+ expect(m.mutation.mock.calls.some(([ref,a])=>getFunctionName(ref)==="webAuth:activate"&&a.browserHash===family)).toBe(true);
  expect(r.cookies.get("argos_tg_web_login")?.value).toBe("");
 });
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();});
