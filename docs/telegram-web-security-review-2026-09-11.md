@@ -12,7 +12,7 @@ All three findings below have now been addressed locally. The original findings 
 
 New regression coverage is in `tests/webAuthSecurity.test.ts`, including both concurrent completion orders, delayed responses after logout, preservation/revocation of legacy X sessions, foreign-browser rejection, one activation per generation, source/browser throttling, and safe retention. The private original reproduction probes below describe the old contract and are not current regression tests.
 
-233 focused tests across 18 files passed after remediation. Local TypeScript checks passed. Convex remote code generation was blocked by automatic approval review over possible source upload; the local API declarations were updated and checked without deployment. Production/mobile smoke testing remains necessary after deployment to the existing Convex/Vercel projects.
+233 focused tests across 18 files passed after remediation. Local TypeScript checks and the production Next.js build passed. Convex remote code generation was blocked by automatic approval review over possible source upload; the local API declarations were updated and checked without deployment. Production/mobile smoke testing remains necessary after deployment to the existing Convex/Vercel projects.
 
 ## Findings
 

@@ -1,10 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { walletReturnPath } from "@/lib/wallet-return-path";
 
-export function WalletSignIn() {
-  const params = useSearchParams(), returnTo = walletReturnPath(params.get("returnTo"));
+export function WalletSignIn({ destination }: { destination?: string } = {}) {
+  const returnTo = walletReturnPath(destination);
   const [attempt, setAttempt] = useState<{ code: string; url: string; expiresAt: number } | null>(null);
   const [busy, setBusy] = useState(false), [error, setError] = useState("");
   const [ready, setReady] = useState(false);
@@ -47,8 +46,8 @@ export function WalletSignIn() {
     void check();
     return () => { cancelled = true; controller.abort(); clearTimeout(timer); };
   }, [attempt, returnTo]);
-  return <div className="otc-form" style={{ maxWidth: 520, display: "grid", gap: 16 }}>
-    <p>Choose the account linked to your wallet. Only one wallet can be signed in at a time.</p>
+  return <div className="wallet-signin-form">
+    <p>Choose your wallet. One account at a time.</p>
     {ready ? <a className="arc-button" href={`/api/auth/x/start?returnTo=${encodeURIComponent(returnTo)}`}>Sign in with X</a> : <button className="arc-button" disabled>Sign in with X</button>}
     <button className="arc-button" onClick={() => void start()} disabled={busy || !ready}>{busy ? "Preparing…" : attempt ? "Restart Telegram sign-in" : "Sign in with Telegram"}</button>
     {attempt && <div className="otc-notice"><p>Match this code in Telegram: <strong>{attempt.code}</strong></p><a className="arc-button" href={attempt.url} target="_blank" rel="noopener noreferrer">Open Telegram to approve</a><p>Approve in the bot, then return here. Waiting for approval…</p><p>This opens your TG linked wallet. If you haven’t created one, use /createtg in the bot first.</p></div>}
