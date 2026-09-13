@@ -530,6 +530,7 @@ export const processUpdate = internalAction({
       if(input.name==="export"){
         try{
           if(!input.args){
+            await ctx.runAction(makeFunctionReference<"action">("walletExportEnrollment:telegram"),{updateId:args.updateId});
             await ctx.runMutation(makeFunctionReference<"mutation">("walletExports:requestTelegramConfirmation"),{updateId:args.updateId});
           }else{
             const confirmed=/^confirm ([a-f0-9]{8})$/i.exec(input.args);
@@ -731,7 +732,7 @@ export const deliverExportConfirmation=internalAction({args:{confirmationId:v.id
   let delivered=false;
   try{
     const minutes=Math.max(1,Math.ceil((delivery.expiresAt-Date.now())/60000));
-    await sendMessage(delivery.chatId,"Export your TG linked wallet's private key? Anyone with it can take every asset in that wallet. Never share it.\n\nTo continue, send:\n/export confirm "+delivery.code+"\n\nExpires in "+minutes+" minute"+(minutes===1?"":"s")+". Verification starts only after you confirm.");
+    await sendMessage(delivery.chatId,"Export your TG linked wallet's private key? Your private key controls this wallet on every EVM chain. Never share your private key. Fresh Telegram verification is required.\n\nTo continue, send:\n/export confirm "+delivery.code+"\n\nExpires in "+minutes+" minute"+(minutes===1?"":"s")+". Verification starts only after you confirm.");
     delivered=true;
   }catch{/* Retry the same confirmation; never log Telegram response bodies. */}
   await ctx.runMutation(makeFunctionReference<"mutation">("walletExports:finishConfirmationDelivery"),{...a,attempt:delivery.attempt,delivered});

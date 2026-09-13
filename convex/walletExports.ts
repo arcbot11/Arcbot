@@ -50,6 +50,36 @@ export const eligibility=query({args:{secret:v.string(),provider,userId:v.string
   try{await accountFor(ctx,a.provider,a.userId);return {eligible:true};}
   catch{return {eligible:false};}
 }});
+// Enrollment is public to customers only through the authenticated website server
+// or a validated private Telegram update. CDP checks run in the Node action.
+export const enrollmentCandidate=internalQuery({args:{provider,userId:v.string()},handler:async(ctx,a)=>{
+  if(process.env.WALLET_EXPORT_ENABLED!=="true")exportFail("UNAVAILABLE");
+  const current=await binding(ctx,a.provider,a.userId);
+  const existing=await ctx.db.query("walletExportAccounts").withIndex("by_owner",q=>q.eq("provider",a.provider).eq("userId",a.userId)).unique();
+  if(existing){await accountFor(ctx,a.provider,a.userId);return {enrolled:true as const};}
+  if(process.env.WALLET_EXPORT_ALL_CUSTOMERS!=="true")exportFail("ELIGIBILITY");
+  const projectId=process.env.WALLET_EXPORT_CDP_PROJECT_ID;
+  if(!projectId)exportFail("UNAVAILABLE");
+  const collision=await ctx.db.query("walletExportAccounts").withIndex("by_address",q=>q.eq("address",current.address)).unique();
+  if(collision)exportFail("ELIGIBILITY");
+  return {enrolled:false as const,...current,projectId};
+}});
+export const enrollVerifiedCustomer=internalMutation({args:{provider,userId:v.string(),address:v.string(),bindingId:v.string(),projectId:v.string(),cdpAccountName:v.string()},handler:async(ctx,a)=>{
+  if(process.env.WALLET_EXPORT_ENABLED!=="true"||process.env.WALLET_EXPORT_ALL_CUSTOMERS!=="true")exportFail("ELIGIBILITY");
+  const current=await binding(ctx,a.provider,a.userId);
+  if(current.address!==a.address||current.bindingId!==a.bindingId||a.projectId!==process.env.WALLET_EXPORT_CDP_PROJECT_ID)exportFail("ELIGIBILITY");
+  if(!(a.provider==="x"?/^arcbot-rh-[a-f0-9]{25}$/:/^argos-tg-[a-f0-9]{25}$/).test(a.cdpAccountName))exportFail("ELIGIBILITY");
+  const existing=await ctx.db.query("walletExportAccounts").withIndex("by_owner",q=>q.eq("provider",a.provider).eq("userId",a.userId)).unique();
+  // Never restore a revoked account, replace a binding, or reset a live export fence.
+  if(existing){await accountFor(ctx,a.provider,a.userId);return;}
+  if(await ctx.db.query("walletExportAccounts").withIndex("by_address",q=>q.eq("address",a.address)).unique())exportFail("ELIGIBILITY");
+  const id=await ctx.db.insert("walletExportAccounts",{...a,approved:true,revision:1});
+  await audit(ctx,id,"eligibility_verified_automatically");
+}});
+export const telegramEnrollmentOwner=internalQuery({args:{updateId:v.string()},handler:async(ctx,a)=>{
+  const {update}=await telegramRequest(ctx,a.updateId);
+  return {provider:"telegram" as const,userId:update.telegramUserId!};
+}});
 /** Read-only operator preflight. Never returns credentials, grants, or keys. */
 export const rolloutStatus=internalQuery({args:{targets:v.array(v.object({provider,userId:v.string()}))},handler:async(ctx,a)=>{
   if(a.targets.length>10)throw Error("Inspect at most ten accounts at a time.");
@@ -78,7 +108,8 @@ async function live(ctx:MutationCtx,g:Doc<"walletExportGrants">){
   if(g.provider==="x"){
     const session=await ctx.db.query("webWalletSessions").withIndex("by_session_hash",q=>q.eq("sessionIdHash",g.sessionHash!)).unique();
     const browser=await ctx.db.query("webAuthBrowsers").withIndex("by_browser",q=>q.eq("browserHash",g.browserFamily!)).unique();
-    if(!session||session.revokedAt||session.expiresAt<=Date.now()||session.ownerXUserId!==g.userId||!browser||browser.expiresAt<=Date.now()||browser.generation!==g.generation||browser.activeSessionHash!==g.sessionHash)exportFail("AUTHORIZATION");
+    // Website session expiry is Unix seconds; browser-family expiry is milliseconds.
+    if(!session||session.revokedAt||session.expiresAt<=Math.floor(Date.now()/1000)||session.ownerXUserId!==g.userId||!browser||browser.expiresAt<=Date.now()||browser.generation!==g.generation||browser.activeSessionHash!==g.sessionHash)exportFail("AUTHORIZATION");
   }else{
     const selection=await ctx.db.query("telegramWalletSelections").withIndex("by_user",q=>q.eq("telegramUserId",g.userId)).unique();
     if(!selection||selection.selected!=="tg"||selection.pendingUpdateId||selection.updatedAt!==g.selectionAt)throw Error("Telegram wallet selection changed. Start again.");
@@ -119,10 +150,11 @@ export const startX=mutation({args:{secret:v.string(),ticketHash:v.string(),user
   const family=await ctx.db.query("webAuthBrowsers").withIndex("by_browser",q=>q.eq("browserHash",a.browserFamily)).unique();
   const issued=await issue(ctx,{ticketHash:a.ticketHash,provider:"x",userId:a.userId,sessionHash:a.sessionHash,browserFamily:a.browserFamily,generation:family?.generation});
   const session=await ctx.db.query("webWalletSessions").withIndex("by_session_hash",q=>q.eq("sessionIdHash",a.sessionHash)).unique();
-  await ctx.db.insert("walletExportAttempts",{ticketHash:a.ticketHash,expiresAt:session!.expiresAt});
+  // Attempt cleanup uses milliseconds. Keep the replay tombstone for the full session.
+  await ctx.db.insert("walletExportAttempts",{ticketHash:a.ticketHash,expiresAt:session!.expiresAt*1000});
   return issued;
 }});
-async function telegramRequest(ctx:MutationCtx,updateId:string){
+async function telegramRequest(ctx:MutationCtx|QueryCtx,updateId:string){
   if(process.env.WALLET_EXPORT_ENABLED!=="true")exportFail("UNAVAILABLE");
   const update=await ctx.db.query("telegramUpdates").withIndex("by_update_id",q=>q.eq("updateId",updateId)).unique();
   if(!update?.telegramUserId||update.telegramChatId!==update.telegramUserId||update.walletTransitionBlocked||Date.now()-update.createdAt>EXPORT_TTL_MS)throw Error("A fresh private Telegram request is required.");

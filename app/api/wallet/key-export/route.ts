@@ -13,7 +13,7 @@ export async function GET(request:NextRequest){
   try{
     if(process.env.WALLET_EXPORT_ENABLED!=="true"||process.env.WALLET_EXPORT_RUNTIME==="broker")return unavailable();
     const session=await websiteSession(request,false,false);
-    const result=await new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!).query(makeFunctionReference<"query">("walletExports:eligibility"),{secret:process.env.WEB_AUTH_SECRET!,provider:session.provider==="telegram"?"telegram":"x",userId:session.provider==="telegram"?session.telegramUserId:session.xUserId});
+    const result=await new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL!).action(makeFunctionReference<"action">("walletExportEnrollment:website"),{secret:process.env.WEB_AUTH_SECRET!,provider:session.provider==="telegram"?"telegram":"x",userId:session.provider==="telegram"?session.telegramUserId:session.xUserId});
     return NextResponse.json(result,{headers:{"cache-control":"no-store"}});
   }catch{return unavailable();}
 }

@@ -72,7 +72,8 @@ describe("Telegram update execution boundary", () => {
     const ctx=await run("/export");const calls=ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]));
     expect(calls).toContain("walletExports:requestTelegramConfirmation");expect(calls).not.toContain("walletExports:startTelegram");
     const sent=vi.mocked(fetch).mock.calls.map(c=>JSON.parse(String(c[1]?.body)));expect(sent).toHaveLength(0);
-    expect(sent.every(body=>!body.reply_markup)).toBe(true);expect(ctx.runAction).not.toHaveBeenCalled();
+    expect(sent.every(body=>!body.reply_markup)).toBe(true);
+    expect(ctx.runAction.mock.calls.map(c=>getFunctionName(c[0]))).toEqual(["walletExportEnrollment:telegram"]);
   });
 
   it("queues initial confirmation without relying on a Telegram send in the intake action",async()=>{

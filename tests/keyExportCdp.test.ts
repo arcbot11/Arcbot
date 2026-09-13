@@ -30,8 +30,13 @@ it("resolves by audited name and preserves CDP canonical address for export",asy
  expect(await encryptedCdpExport({...input,address:canonical.toLowerCase()},fetcher)).toEqual({address:canonical.toLowerCase(),encryptedPrivateKey:ciphertext});
  expect(fetcher).toHaveBeenCalledTimes(2);
 });
-it.each([[401,"UNAVAILABLE"],[403,"UNAVAILABLE"],[404,"ELIGIBILITY"],[503,"PROVIDER_RETRY"]])("classifies CDP lookup %s without forwarding its response",async(status,code)=>{
+it.each([[401,"CDP_LOOKUP_AUTH"],[403,"CDP_LOOKUP_AUTH"],[404,"ELIGIBILITY"],[503,"PROVIDER_RETRY"]])("classifies CDP lookup %s without forwarding its response",async(status,code)=>{
  const fetcher=vi.fn().mockResolvedValue(new Response("PRIVATE PROVIDER DETAILS",{status:Number(status)}));
  try{await encryptedCdpExport(input,fetcher);throw Error("Expected rejection");}catch(error){const safe=safeExportError(error);expect(safe.code).toBe(code);expect(safe.message).not.toContain("PRIVATE");}
  expect(fetcher).toHaveBeenCalledTimes(1);
+});
+it.each([401,403])("distinguishes export authorization rejection %s from missing configuration",async status=>{
+ const fetcher=vi.fn().mockResolvedValueOnce(Response.json({address,name})).mockResolvedValueOnce(new Response("PRIVATE PROVIDER DETAILS",{status}));
+ try{await encryptedCdpExport(input,fetcher);throw Error("Expected rejection");}catch(error){expect(safeExportError(error).code).toBe("CDP_EXPORT_AUTH");expect(safeExportError(error).message).not.toContain("PRIVATE");}
+ expect(fetcher).toHaveBeenCalledTimes(2);
 });

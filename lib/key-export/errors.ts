@@ -2,6 +2,8 @@ import {ConvexError} from "convex/values";
 // Only these codes/messages may leave the broker. Never forward provider bodies.
 export const exportErrors={
   UNAVAILABLE:{status:503,message:"Key export is not configured. Contact Argos Bot support."},
+  CDP_LOOKUP_AUTH:{status:503,message:"The wallet provider rejected account access. Contact Argos Bot support."},
+  CDP_EXPORT_AUTH:{status:503,message:"The wallet provider rejected key export authorization. Contact Argos Bot support."},
   REGISTRY_NOT_READY:{status:503,message:"Wallet export eligibility is being checked. Try later."},
   ELIGIBILITY:{status:403,message:"Wallet export eligibility has not been verified. Contact Argos Bot support."},
   TG_SELECTION:{status:409,message:"Select your TG linked wallet first. X wallet keys require X verification on the website."},

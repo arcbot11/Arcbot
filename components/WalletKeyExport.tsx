@@ -10,7 +10,7 @@ export function WalletKeyExport({address}:{address?:string}={}){
     const controller=new AbortController();let current=true;
     setEligibleFor(undefined);setBusy(false);setError("");attempt.current=undefined;
     if(process.env.NEXT_PUBLIC_WALLET_EXPORT_ENABLED==="true"&&identity){
-      const timer=setTimeout(()=>controller.abort(),10000);
+      const timer=setTimeout(()=>controller.abort(),30000);
       void fetch("/api/wallet/key-export",{cache:"no-store",signal:controller.signal}).then(async response=>{
         const result=await response.json() as {eligible?:boolean};
         if(current&&response.ok&&result.eligible===true)setEligibleFor(identity);
@@ -29,5 +29,5 @@ export function WalletKeyExport({address}:{address?:string}={}){
     if(!expected||target.origin!==expected||target.protocol!=="https:"||target.pathname!=="/api/key-export/view")throw Error("Export destination is not configured.");
     window.location.assign(target.href);
   }catch(e){setError(e instanceof Error?e.message:"Export could not be started.");setBusy(false);}}
-  return <div className="wallet-key-export" style={{marginTop:"2rem",paddingTop:"1rem",borderTop:"1px solid var(--arc-line, #294154)"}}><p>Export gives full control of this wallet on every EVM chain. Fresh X verification is required.</p><button type="button" disabled={busy} onClick={()=>void start()}>{busy?"Opening secure export…":"Export private key"}</button>{error&&<p role="alert">{error}</p>}</div>;
+  return <div className="wallet-key-export" style={{marginTop:"2rem",paddingTop:"1rem",borderTop:"1px solid var(--arc-line, #294154)"}}><p>Your private key controls this wallet on every EVM chain. Never share your private key. Fresh X verification is required.</p><button type="button" disabled={busy} onClick={()=>void start()}>{busy?"Opening secure export…":"Export private key"}</button>{error&&<p role="alert">{error}</p>}</div>;
 }

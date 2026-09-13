@@ -18,7 +18,7 @@ function fixture(){
    xReplyUsers:[{_id:"ua",xUserId:"1",walletId:"xa"},{_id:"ub",xUserId:"2",walletId:"xb"}],
    telegramNativeWallets:[{_id:"tg",telegramUserId:"1",telegramChatId:"1",address:tgAddress,normalizedAddress:tgAddress,signerWalletRef:tgAddress}],
    telegramWalletSelections:[{_id:"selection",telegramUserId:"1",selected:"tg",updatedAt:1}],
-   webWalletSessions:[{_id:"session",sessionIdHash:hash("session"),ownerXUserId:"1",expiresAt:Date.now()+3600_000}],
+   webWalletSessions:[{_id:"session",sessionIdHash:hash("session"),ownerXUserId:"1",expiresAt:Math.floor(Date.now()/1000)+3600}],
    webAuthBrowsers:[{_id:"browser",browserHash:hash("family"),generation:1,activeSessionHash:hash("session"),expiresAt:Date.now()+3600_000}],
    walletExportMigration:[{_id:"migration",key:"v1",table:"otcRecords",cursor:null,ready:true}],walletExportAccounts:[],walletExportGrants:[],walletExportProofs:[],walletExportAudit:[],walletExportLimits:[],walletExportConfirmations:[],otcRecords:[],
  };
@@ -45,6 +45,34 @@ function fixture(){
 }
 beforeEach(()=>{vi.useFakeTimers();vi.setSystemTime(new Date("2026-09-12T12:00:00Z"));vi.stubEnv("WEB_AUTH_SECRET",webSecret);vi.stubEnv("WALLET_EXPORT_SERVICE_SECRET",secret);vi.stubEnv("WALLET_EXPORT_ENABLED","true");vi.stubEnv("WALLET_EXPORT_CDP_PROJECT_ID","project");});
 afterEach(()=>{vi.useRealTimers();vi.unstubAllEnvs();});
+it("automatically enrolls a verified customer once without resetting its revision or fence",async()=>{
+ const f=fixture();vi.stubEnv("WALLET_EXPORT_ALL_CUSTOMERS","true");
+ const args={provider:"x",userId:"1",address:alice,bindingId:"xa",projectId:"project",cdpAccountName:"arcbot-rh-"+"a".repeat(25)};
+ expect(await f.call(exports.enrollmentCandidate,{provider:"x",userId:"1"})).toMatchObject({enrolled:false,address:alice});
+ await f.call(exports.enrollVerifiedCustomer,args);
+ const row=f.rows.walletExportAccounts[0];row.fenceUntil=Date.now()+60000;
+ await f.call(exports.enrollVerifiedCustomer,args);
+ expect(f.rows.walletExportAccounts).toHaveLength(1);expect(row.revision).toBe(1);expect(row.fenceUntil).toBeGreaterThan(Date.now());
+ expect(await f.call(exports.enrollmentCandidate,{provider:"x",userId:"1"})).toEqual({enrolled:true});
+});
+it.each(["revoked","binding_changed","protected","duplicate","project_changed","disabled"])("automatic enrollment fails closed after %s, including after CDP validation",async mode=>{
+ const f=fixture();vi.stubEnv("WALLET_EXPORT_ALL_CUSTOMERS","true");
+ const args={provider:"x",userId:"1",address:alice,bindingId:"xa",projectId:"project",cdpAccountName:"arcbot-rh-"+"a".repeat(25)};
+ await f.call(exports.enrollmentCandidate,{provider:"x",userId:"1"});
+ if(mode==="revoked")await f.audit("x",false);
+ if(mode==="binding_changed")f.rows.cryptoWallets[0].signerWalletRef=bob;
+ if(mode==="protected")vi.stubEnv("WALLET_EXPORT_PROTECTED_ADDRESSES",alice);
+ if(mode==="duplicate")f.rows.telegramNativeWallets.push({_id:"dup",address:alice,normalizedAddress:alice});
+ if(mode==="project_changed")vi.stubEnv("WALLET_EXPORT_CDP_PROJECT_ID","changed");
+ if(mode==="disabled")vi.stubEnv("WALLET_EXPORT_ALL_CUSTOMERS","false");
+ await expect(f.call(exports.enrollVerifiedCustomer,args)).rejects.toThrow();
+ expect(f.rows.walletExportAccounts.every(r=>r.approved===false)).toBe(true);
+});
+it("does not auto-enroll without explicit rollout activation",async()=>{
+ const f=fixture();vi.stubEnv("WALLET_EXPORT_ALL_CUSTOMERS","false");
+ await expect(f.call(exports.enrollmentCandidate,{provider:"x",userId:"1"})).rejects.toThrow();
+ expect(f.rows.walletExportAccounts).toHaveLength(0);
+});
 it("keeps the feature disabled without explicit configuration",async()=>{const f=fixture();vi.stubEnv("WALLET_EXPORT_ENABLED","false");await expect(f.start()).rejects.toThrow("disabled");expect(f.rows.walletExportGrants).toHaveLength(0);});
 it("requires explicit reviewed eligibility rather than granting it on login",async()=>{const f=fixture();await expect(f.call(exports.startX,{secret:webSecret,ticketHash:f.base.ticketHash,userId:"1",sessionHash:hash("session"),browserFamily:hash("family")})).rejects.toThrow("eligibility");});
 it("reveals eligibility only to the authenticated website server, with provider separation",async()=>{
@@ -267,6 +295,23 @@ it("reuses X initiation only for the same live owner session and does not exhaus
  await expect(f.call(exports.startX,{...args,userId:"2"})).rejects.toThrow();
  await expect(f.call(exports.startX,{...args,sessionHash:hash("other-session")})).rejects.toThrow();
  f.rows.webWalletSessions[0].revokedAt=Date.now();await expect(f.call(exports.startX,args)).rejects.toThrow();
+});
+it("accepts a real Unix-seconds website session and preserves the attempt through its full lifetime",async()=>{
+ const f=fixture();await f.start();
+ expect(f.rows.walletExportGrants).toHaveLength(1);
+ expect(f.rows.walletExportAttempts[0].expiresAt).toBe(Number(f.rows.webWalletSessions[0].expiresAt)*1000);
+ vi.advanceTimersByTime(300001);await f.call(cleanup,{});
+ expect(f.rows.walletExportGrants).toHaveLength(0);expect(f.rows.walletExportAttempts).toHaveLength(1);
+ await expect(f.call(exports.startX,{secret:webSecret,ticketHash:f.base.ticketHash,userId:"1",sessionHash:hash("session"),browserFamily:hash("family")})).rejects.toThrow("expired");
+ vi.advanceTimersByTime(3600000);await f.call(cleanup,{});expect(f.rows.walletExportAttempts).toHaveLength(0);
+});
+it("rejects a website session at the exact Unix-seconds expiry boundary",async()=>{
+ const f=fixture();f.rows.webWalletSessions[0].expiresAt=Math.floor(Date.now()/1000);
+ await expect(f.start()).rejects.toThrow("authorization changed");expect(f.rows.walletExportGrants).toHaveLength(0);
+});
+it("rechecks Unix-seconds session expiry during an already started export",async()=>{
+ const f=fixture();f.rows.webWalletSessions[0].expiresAt=Math.floor(Date.now()/1000)+2;await f.start();
+ vi.advanceTimersByTime(2000);await expect(f.call(exports.status,f.base)).rejects.toThrow("authorization changed");
 });
 it("does not rebind a claimed ticket to a newly generated browser verifier",async()=>{
  const f=fixture();await f.start();
