@@ -1,0 +1,82 @@
+{
+  "reviewedAt": "2026-09-13T17:38:30.369Z",
+  "chainId": 5042,
+  "verificationBlock": "20686130",
+  "catalogCountBefore": 271,
+  "catalogCountAfter": 268,
+  "reason": "User-authorized exclusion of extreme reported market caps backed by negligible pool USDC and trading volume. This is an indexing decision, not a finding of fraud.",
+  "removed": [
+    {
+      "symbol": "KTEST",
+      "address": "0x7555a09d2a6798fd863c014d54226e15b45b5085",
+      "pool": "0x725e369fb581eaccfe684f6dd8bb95c0af665040",
+      "protocol": "v3",
+      "block": "20686130",
+      "usdcBalance": 0.024382,
+      "activeLiquidityRaw": "2530546973",
+      "explorerMarketCapUsd": 617000000000.0001,
+      "explorerLiquidityUsd": 0.048764,
+      "explorerVolume24hUsd": 0.0006280000000000001,
+      "swaps24h": 3,
+      "holders": 8,
+      "lastSwapAt": "2026-09-12T18:30:33.000Z",
+      "createdAt": "2026-09-12T18:23:23.000Z"
+    },
+    {
+      "symbol": "SGR",
+      "address": "0xffa9d1836bd073855e15788d0ca3d645b6f68018",
+      "pool": "0xa6f72bf6eb32c8acdde0096474223334c94c04ef",
+      "protocol": "v3",
+      "block": "20686130",
+      "usdcBalance": 0.000004,
+      "activeLiquidityRaw": "0",
+      "explorerMarketCapUsd": 1600140706.2006485,
+      "explorerLiquidityUsd": 0.000008,
+      "explorerVolume24hUsd": 0.000004,
+      "swaps24h": 1,
+      "holders": 2,
+      "lastSwapAt": "2026-09-13T02:33:57.000Z",
+      "createdAt": "2026-09-13T02:30:10.000Z"
+    },
+    {
+      "symbol": "BARC",
+      "address": "0x4753c45fb550fecaa143a47968659117e6ffc2ce",
+      "pool": "0x2a1473df20e2a2ad2195fba3f72414a02fe5c016",
+      "protocol": "v2",
+      "block": "20686130",
+      "usdcBalance": 0.000149,
+      "activeLiquidityRaw": null,
+      "explorerMarketCapUsd": 29586297.29725241,
+      "explorerLiquidityUsd": 0.000298,
+      "explorerVolume24hUsd": 0.029751,
+      "swaps24h": 2,
+      "holders": 492,
+      "lastSwapAt": "2026-09-13T12:07:11.000Z",
+      "createdAt": "2026-09-12T17:07:49.000Z"
+    }
+  ],
+  "replacements": [],
+  "alternatives": [
+    {
+      "symbol": "BARC",
+      "address": "0x399bb88d5e663ccb172fb1007eac22395d212786",
+      "decision": "Not substituted: ArgusPad-listed, but zero reported 24-hour volume and no last trade block in the reviewed board data.",
+      "marketCapUsd": 2482.95509,
+      "volume24hUsd": 0
+    },
+    {
+      "symbol": "BARC",
+      "address": "0x98489bd1dfadf52cfc99cd17a2f04e507e40f490",
+      "decision": "Not substituted: metadata verified, but no priced pool in the reviewed explorer dataset. Liquidity and activity are unverified."
+    }
+  ],
+  "noOtherCandidatesFoundFor": [
+    "KTEST",
+    "SGR"
+  ],
+  "sources": [
+    "https://arguspad.io/",
+    "https://www.arcexplorer.org/api/v1/dex/pools",
+    "https://arguspad.io/api/rpc"
+  ]
+}

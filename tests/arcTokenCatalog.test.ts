@@ -8,8 +8,8 @@ import type { MutationCtx } from "../convex/_generated/server";
 
 describe("Arc snapshot index selection", () => {
   it("keeps the refreshed unique tickers and Argus launches, with no retired addresses", () => {
-    expect(ARC_TOKEN_CATALOG).toHaveLength(271);
-    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol.normalize("NFKC").toUpperCase())).size).toBe(271);
+    expect(ARC_TOKEN_CATALOG).toHaveLength(268);
+    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol.normalize("NFKC").toUpperCase())).size).toBe(268);
     expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(172);
     for (const t of ARC_TOKEN_CATALOG) {
       expect(t.chainId).toBe(5042);
@@ -39,6 +39,19 @@ describe("Arc snapshot index selection", () => {
       expect(canIndexArcToken("0x1111111111111111111111111111111111111111", selected.symbol)).toBe(false);
     }
   });
+  it("keeps the reviewed near-empty pools out of indexing even with renamed metadata", () => {
+    const rejected = [
+      ["KTEST", "0x7555a09d2a6798fd863c014d54226e15b45b5085"],
+      ["SGR", "0xffa9d1836bd073855e15788d0ca3d645b6f68018"],
+      ["BARC", "0x4753c45fb550fecaa143a47968659117e6ffc2ce"],
+    ];
+    for (const [symbol, address] of rejected) {
+      expect(ARC_TOKEN_CATALOG.some(t => t.address === address)).toBe(false);
+      expect(canIndexArcToken(address, symbol)).toBe(false);
+      expect(canIndexArcToken(address.toUpperCase(), "RENAMED")).toBe(false);
+    }
+    expect(ARC_TOKEN_CATALOG[0].symbol).toBe("ARGOS");
+  });
   it("seeds idempotently, removes rejected index rows, and never enables launch-pair approval", async () => {
     type Row = { _id: string; [key: string]: unknown };
     const tables: Record<string, Row[]> = {
@@ -61,7 +74,7 @@ describe("Arc snapshot index selection", () => {
     } } as unknown as MutationCtx;
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
-    expect(tables.tokenRegistry).toHaveLength(271);
+    expect(tables.tokenRegistry).toHaveLength(268);
     expect(tables.walletTokenIndex).toEqual([]);
     expect(tables.walletTransactions).toHaveLength(1);
     for (const token of tables.tokenRegistry) expect(token).toMatchObject({ chainId: 5042, active: true, pairCandidate: false, pairApproved: false });

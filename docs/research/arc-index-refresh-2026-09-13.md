@@ -1,5 +1,7 @@
 # Arc token index refresh — 13 September 2026
 
+Post-review correction: the current local catalog has **268 contracts**. KTEST, SGR and the high-cap BARC below were removed after checking their negligible liquidity and volume. No sufficiently supported namesake was substituted. The counts and selection below document the original refresh; see [the risk review](./arc-index-risk-review-2026-09-13.md) for the override.
+
 Updated the local catalog from 96 to 271 contracts: 176 additions and one replacement. Of the additions, 152 are ArgusPad launches and 24 are other Arc tokens. The resulting catalog contains 172 ArgusPad tokens. ARGOS remains pinned first.
 
 ## Sources and selection

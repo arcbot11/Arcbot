@@ -22,6 +22,7 @@ import type * as creatorFeeHistory from "../creatorFeeHistory.js";
 import type * as crons from "../crons.js";
 import type * as freeLaunches from "../freeLaunches.js";
 import type * as graduationAnnouncements from "../graduationAnnouncements.js";
+import type * as launchDrafts from "../launchDrafts.js";
 import type * as legacyClaims from "../legacyClaims.js";
 import type * as legacyLaunch from "../legacyLaunch.js";
 import type * as lib_telegramUnlink from "../lib/telegramUnlink.js";
@@ -79,6 +80,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   freeLaunches: typeof freeLaunches;
   graduationAnnouncements: typeof graduationAnnouncements;
+  launchDrafts: typeof launchDrafts;
   legacyClaims: typeof legacyClaims;
   legacyLaunch: typeof legacyLaunch;
   "lib/telegramUnlink": typeof lib_telegramUnlink;

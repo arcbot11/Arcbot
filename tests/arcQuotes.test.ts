@@ -75,4 +75,20 @@ describe("Arc quotes", () => {
     const result = await quoteRoutes([route(v3)], 100n, 100, a, rpc as unknown as ArcRpc, config, now);
     expect(result.rejected).toEqual([{ index: 0, reason: "Route validation or quote failed" }]);
   });
+  it("does not turn a provider outage into a no-liquidity result", async () => {
+    const rpc = mockRpc();
+    rpc.call.mockRejectedValue(Object.assign(new Error("secret provider details"), { code: -32098 }));
+    await expect(quoteRoutes([route(v3)], 100n, 100, a, rpc as unknown as ArcRpc, config, now))
+      .rejects.toMatchObject({ name: "ArcQuoteUnavailableError", code: -32098, message: "Arc quote is temporarily unavailable. Try again." });
+  });
+  it("retains a valid alternative when one pool's provider read fails", async () => {
+    const rpc = mockRpc(), original = rpc.call.getMockImplementation()!;
+    rpc.call.mockImplementation(async (...args: Parameters<typeof original>) => {
+      if (decodeFunctionData({ abi: quoteAbi, data: args[0].data }).functionName === "getPool") throw Object.assign(new Error("upstream unavailable"), { code: -32098 });
+      return original(...args);
+    });
+    const result = await quoteRoutes([route(v3), route(v4)], 100n, 100, a, rpc as unknown as ArcRpc, config, now);
+    expect(result.quotes).toHaveLength(1);
+    expect(result.quotes[0].route.pools[0].protocol).toBe("v4");
+  });
 });

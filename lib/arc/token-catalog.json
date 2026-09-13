@@ -21,36 +21,6 @@
   },
   {
     "chainId": 5042,
-    "address": "0x7555a09d2a6798fd863c014d54226e15b45b5085",
-    "symbol": "KTEST",
-    "name": "Kenny Test Shift",
-    "decimals": 18,
-    "marketCapUsd": 617000000000.0001,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
-    "address": "0xffa9d1836bd073855e15788d0ca3d645b6f68018",
-    "symbol": "SGR",
-    "name": "Sugar",
-    "decimals": 18,
-    "marketCapUsd": 1600140706.2006485,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
-    "address": "0x4753c45fb550fecaa143a47968659117e6ffc2ce",
-    "symbol": "BARC",
-    "name": "Barc",
-    "decimals": 18,
-    "marketCapUsd": 29586297.29725241,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
     "address": "0x3600000000000000000000000000000000000000",
     "symbol": "USDC",
     "name": "USDC",

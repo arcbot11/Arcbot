@@ -70,7 +70,7 @@ describe("passive X chain filtering", () => {
 
   it("applies deep-reply intent restrictions to every reply without a direct bot tag", () => {
     expect(shouldRestrictChainReply("great launch", reply, false)).toBe(true);
-    expect(shouldRestrictChainReply("@alice @TheArgosBot buy $5 of ARCBOT", reply, false)).toBe(true);
+    expect(shouldRestrictChainReply("@alice @TheArgosBot buy $5 of ARCBOT", reply, false)).toBe(false);
     expect(shouldRestrictChainReply("@TheArgosBot what can you do?", reply, false)).toBe(false);
     expect(shouldRestrictChainReply("@alice @TheArgosBot ask @TheArgosBot for help", reply, false)).toBe(false);
     expect(shouldRestrictChainReply("@TheArgosBot what can you do?", reply, true)).toBe(false);

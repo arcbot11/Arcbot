@@ -2,6 +2,7 @@ import { decodeFunctionResult, encodeFunctionData, parseAbi, zeroAddress, type A
 import type { ArcConfig } from "./config.ts";
 import { checkArcRpc, type ArcRpc, type ArcBlock } from "./rpc.ts";
 import { minimumOutput, mixedRouteSupported, poolId, routeCurrencies, v3Path, v4Path, type Route } from "./routing.ts";
+import { retryableOperatorPreviewError } from "./operator-preview";
 
 export const V3_FACTORY = "0xf0db7b58379503491d857db50ac9ece64c653918" as const;
 export const V3_QUOTER = "0x7dfd4f31be6814d2906bde155c3e1b146eac1468" as const;
@@ -19,6 +20,11 @@ export const v4MultiQuoteAbi=parseAbi(["function quoteExactInput((address exactC
 export type RouteQuote = { route: Route; amountIn: bigint; amountOut: bigint; amountOutMinimum: bigint; gasEstimate: bigint;
   snapshot: { number: bigint; hash: string }; expiresAt: number; executionBlocker?: string };
 
+export class ArcQuoteUnavailableError extends Error {
+  readonly code = -32098;
+  constructor() { super("Arc quote is temporarily unavailable. Try again."); this.name = "ArcQuoteUnavailableError"; }
+}
+
 /** Read-only quotes, including hooked-pool diagnostics. Hook quotes are never execution approval. */
 export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps: number, sender: Address, rpc: ArcRpc, config: ArcConfig, now = Date.now(), verifiedHead?: ArcBlock) {
   if (routes.length > 32 || routes.length < 1) throw new Error("Provide 1–32 route candidates");
@@ -31,6 +37,7 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
   if (age < -5n || age > BigInt(config.maxHeadAgeSeconds)) throw new Error("Arc quote head is stale or invalid");
   const quotes: RouteQuote[] = [];
   const rejected: { index: number; reason: string }[] = [];
+  let unavailable = false;
   const callCache = new Map<string, Promise<unknown>>();
   const codeCache = new Map<string, Promise<void>>();
   const call = async (to: Address, functionName: typeof quoteAbi[number]["name"], args: readonly unknown[]): Promise<unknown> => {
@@ -95,6 +102,7 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
         ...(route.pools.some(p => p.protocol === "v4" && p.hooks.toLowerCase() !== zeroAddress) ? { executionBlocker: "Hook requires a reviewed adapter and sender-specific simulation" } : {}),
       });
     } catch (error) {
+      if (retryableOperatorPreviewError(error)) unavailable = true;
       // Do not include RPC errors that can carry endpoint credentials or request internals.
       const message = error instanceof Error ? error.message : "";
       const allowed = ["Mixed-protocol quotes are unsupported", "V3 factory pool mismatch", "No active liquidity", "V4 multihop quotes are unsupported", "V4 input exceeds uint128", "V4 pool is uninitialized or has no active liquidity", "Contract code missing"];
@@ -106,6 +114,10 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
   rejected.sort((a, b) => a.index - b.index);
   const pinned = await rpc.block(head.number);
   if (pinned.hash.toLowerCase() !== head.hash.toLowerCase()) throw new Error("Quote snapshot changed");
+  // An unavailable provider is not evidence that the pool has no liquidity.
+  // Propagate a safe retryable error instead of letting callers declare that
+  // no supported route exists after an interrupted cached-route quote.
+  if (!quotes.length && unavailable) throw new ArcQuoteUnavailableError();
   // Compare output in the same asset only. Gas estimate is diagnostic, not an all-in fee quote.
   if (routes.some(r => r.tokenIn.toLowerCase() !== routes[0].tokenIn.toLowerCase() || r.tokenOut.toLowerCase() !== routes[0].tokenOut.toLowerCase())) throw new Error("Quote candidates must share input and output currencies");
   quotes.sort((a, b) => a.amountOut > b.amountOut ? -1 : a.amountOut < b.amountOut ? 1 : 0);

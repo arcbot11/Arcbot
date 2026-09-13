@@ -1,4 +1,6 @@
 import { xBotUsername } from "./x-bot-identity";
+import { directPostCommandText } from "./x-direct-post-policy";
+import { completeXCommand, normalizeXCommandLanguage } from "./x-command-language";
 type XReference = { type: "replied_to" | "quoted" | "retweeted"; id: string };
 
 function escapeRegExp(value: string) {
@@ -36,7 +38,14 @@ export function isPassiveBotChainReply(text: string, references: XReference[] | 
  */
 export function hasExplicitBotMention(text: string, references: XReference[] | undefined, botUsername = xBotUsername()) {
   if (!new RegExp(`@${escapeRegExp(botUsername)}\\b`, "i").test(text)) return false;
-  return !isPassiveBotChainReply(text, references, botUsername);
+  if (!isPassiveBotChainReply(text, references, botUsername)) return true;
+  // X does not identify which leading reply handles the author typed. A full
+  // current-post wallet command must not disappear merely because another
+  // participant precedes the bot. This only admits parsing: normal intent,
+  // ownership, funds, execution and duplicate-request checks still apply.
+  const body = directPostCommandText(text, botUsername);
+  if (completeXCommand(normalizeXCommandLanguage(body))) return true;
+  return /^(?:please\s+)?(?:show(?:\s+me)?|give\s+me|what(?:'s|\s+is)|where(?:'s|\s+is))\s+my\s+(?:wallet|wallet\s+address|balance|balances|holdings|portfolio)[.!?]*$/i.test(body);
 }
 
 /** Current post only. Links, parent posts and inherited thread participants cannot opt in. */

@@ -89,6 +89,23 @@ describe("Arc RPC failover", () => {
     await expect(f.client.request({ method: "eth_call", params: [{}, "latest"] })).rejects.toThrow();
     expect(f.calls.filter(c => c.method === "eth_call")).toHaveLength(1);
   });
+  it("retries a transient upstream read once after exhausting alternatives", async () => {
+    let reads = 0;
+    const f = fixture((url, method) => {
+      if (method !== "eth_call") return;
+      if (url !== primary) return { error: { code: -32600, message: "project ID exceeded quota" } };
+      if (++reads === 1) return { error: { code: -32603, message: "upstream unreachable" } };
+      return "0x1234";
+    });
+    expect(await f.client.request({ method: "eth_call", params: [{}, "0xa"] })).toBe("0x1234");
+    expect(f.calls.filter(c => c.method === "eth_call").map(c => c.url)).toEqual([primary, readOnly, secondary, primary]);
+    expect(f.calls.filter(c => c.method === "eth_call").every(c => c.params[1] === "0xa")).toBe(true);
+  });
+  it("bounds transient read retries even if every upstream stays unavailable", async () => {
+    const f = fixture((_url, method) => method === "eth_call" ? { error: { code: -32603, message: "upstream unreachable" } } : undefined);
+    await expect(f.client.request({ method: "eth_call", params: [{}, "latest"] })).rejects.toThrow();
+    expect(f.calls.filter(c => c.method === "eth_call")).toHaveLength(6);
+  });
 });
 
 it("shares validated transports across clients with identical configuration",()=>{expect(arcTransport(config)).toBe(arcTransport({...config}));});
