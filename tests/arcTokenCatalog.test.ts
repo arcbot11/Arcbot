@@ -1,16 +1,16 @@
 import { describe, expect, it } from "vitest";
 import { ARC_TOKEN_CATALOG, canIndexArcToken } from "../lib/arc/token-catalog";
-import snapshot from "../docs/research/arc-token-snapshot-2026-09-09.json";
+import snapshot from "../docs/research/arc-index-selection-2026-09-13.json";
 import excluded from "../lib/arc/excluded-catalog-addresses.json";
 import { RETIRED_TOKEN_ADDRESSES } from "../lib/token-index-exclusions";
 import { seedArcTokenCatalog } from "../convex/arcTokenCatalog";
 import type { MutationCtx } from "../convex/_generated/server";
 
 describe("Arc snapshot index selection", () => {
-  it("keeps 96 unique tickers including 21 Argus tokens, with no retired addresses", () => {
-    expect(ARC_TOKEN_CATALOG).toHaveLength(96);
-    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol)).size).toBe(96);
-    expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(21);
+  it("keeps the refreshed unique tickers and Argus launches, with no retired addresses", () => {
+    expect(ARC_TOKEN_CATALOG).toHaveLength(271);
+    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol.normalize("NFKC").toUpperCase())).size).toBe(271);
+    expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(172);
     for (const t of ARC_TOKEN_CATALOG) {
       expect(t.chainId).toBe(5042);
       expect(Number.isInteger(t.decimals)).toBe(true);
@@ -19,10 +19,10 @@ describe("Arc snapshot index selection", () => {
   });
   it("retains the highest-cap contract for each ticker in the combined snapshot", () => {
     const contracts = new Map<string, { address: string; symbol: string; marketCapUsd: number }>();
-    // Use ranking-source valuations for addresses also present on the Argus board.
-    for (const t of [...snapshot.top100, ...snapshot.argusTokens]) if (!contracts.has(t.address.toLowerCase())) contracts.set(t.address.toLowerCase(), t);
-    for (const selected of ARC_TOKEN_CATALOG.filter(t => t.symbol !== "USDC" && t.symbol !== "ARGOS")) {
-      const candidates = [...contracts.values()].filter(t => t.symbol.toUpperCase() === selected.symbol);
+    // Fresh source valuations include on-chain fallbacks for unpriced old tokens.
+    for (const t of snapshot.candidates) contracts.set(t.address.toLowerCase(), t);
+    for (const selected of ARC_TOKEN_CATALOG.filter(t => t.symbol !== "USDC")) {
+      const candidates = [...contracts.values()].filter(t => t.symbol.normalize("NFKC").toUpperCase() === selected.symbol.normalize("NFKC").toUpperCase());
       expect(selected.marketCapUsd).toBe(Math.max(...candidates.map(t => t.marketCapUsd)));
     }
   });
@@ -61,7 +61,7 @@ describe("Arc snapshot index selection", () => {
     } } as unknown as MutationCtx;
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
-    expect(tables.tokenRegistry).toHaveLength(96);
+    expect(tables.tokenRegistry).toHaveLength(271);
     expect(tables.walletTokenIndex).toEqual([]);
     expect(tables.walletTransactions).toHaveLength(1);
     for (const token of tables.tokenRegistry) expect(token).toMatchObject({ chainId: 5042, active: true, pairCandidate: false, pairApproved: false });

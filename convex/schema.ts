@@ -12,6 +12,14 @@ const intakeFilterGuardState = v.object({
 });
 
 export default defineSchema({
+  // Preparation only. There is no signing state, scheduler, or execution mutation.
+  launchDrafts: defineTable({
+    requestId: v.string(), owner: v.string(), address: v.string(), inputJson: v.string(),
+    fingerprint: v.string(), tokenSalt: v.string(), revision: v.number(),
+    status: v.union(v.literal("draft"), v.literal("prepared"), v.literal("cancelled")),
+    previewJson: v.optional(v.string()), prepareToken: v.optional(v.string()), preparingUntil: v.optional(v.number()),
+    nextPreviewAt: v.optional(v.number()), createdAt: v.number(), updatedAt: v.number(), expiresAt: v.number(),
+  }).index("by_owner_request", ["owner", "requestId"]).index("by_owner", ["owner"]).index("by_expiry", ["expiresAt"]),
   walletExportMigration: defineTable({key:v.string(),table:v.union(v.literal("cryptoWallets"),v.literal("telegramNativeWallets"),v.literal("otcRecords")),cursor:v.union(v.string(),v.null()),ready:v.boolean()}).index("by_key",["key"]),
   walletExportAttempts: defineTable({ticketHash:v.string(),expiresAt:v.number()}).index("by_ticket",["ticketHash"]).index("by_expiry",["expiresAt"]),
   walletExportConfirmations: defineTable({

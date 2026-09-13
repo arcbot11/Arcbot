@@ -1,13 +1,21 @@
 import {tokenPattern} from "./token-pattern";
+import { normalizeLeadingQuantity, normalizeTokenFirstBuy } from "./command-amount-language";
 /** Normalize explicit command wording only. Keep every amount, asset and recipient.
  * Negation, conditions and quoted examples remain for the authority checks. */
 export function normalizeXCommandLanguage(text:string){
+  // Keep both invocation and destination mentions for the recipient authority
+  // checks. Removing all bot mentions would erase an explicit destination.
+  if ((text.match(/@TheArgosBot\b/gi)?.length ?? 0) > 1
+    || /\b(?:to|recipient|destination)\s+@TheArgosBot\b/i.test(text)) return text.trim();
   let result=text.replace(/(?:^|\s)@TheArgosBot\b/gi," ").trim();
-  result=result.replace(/^(?:(?:hey|hi|hello|yo|gm)[,!:\s]+)?(?:(?:can|could|would|will)\s+you\s+)?(?:please\s+)?(?=(?:buy|purchase|grab|pick\s+up|sell|dump|unload|send|transfer|move|burn|swap|convert|exchange|trade|spend)\b)/i,"");
+  result=result.replace(/^(?:(?:hey|hi|hello|yo|gm)[,!:\s]+)?(?:please\s+)?(?:(?:can|could|would|will)\s+you\s+)?(?:please\s+)?(?=(?:buy|purchase|grab|pick\s+up|sell|dump|unload|cash\s+out|send|transfer|move|forward|ship|burn|swap|convert|exchange|trade|spend)\b)/i,"");
   result=result.replace(/^(?:purchase|grab(?:\s+me)?|pick\s+up)\s+/i,"buy ")
     .replace(/^(?:dump|unload|cash\s+out)\s+/i,"sell ")
     .replace(/^(?:transfer|move|forward|ship)\s+/i,"send ")
     .replace(/^(?:convert|exchange|trade)\s+/i,"swap ");
+  result = result.replace(/^buy\s+(.+)$/i, (_, args: string) => `buy ${normalizeTokenFirstBuy(args)}`);
+  result = result.replace(/^(buy|sell|send|burn|swap)\s+(.+)$/i, (_, action: string, args: string) => `${action} ${normalizeLeadingQuantity(args)}`);
+  result = result.replace(/^(buy|sell|burn|swap)\s+(\d+(?:\.\d+)?)\s+(?:USD|dollars?|bucks?)\b/i, "$1 $$$2");
   // A token-first buy is unambiguous only with an explicit dollar/USDC budget.
   result=result.replace(/^buy\s+(\$?(?:0x[a-f0-9]{40}|[a-z][a-z0-9_]{0,31}))\s+(?:for|with|using)\s+(\$[0-9][0-9,.]*|[0-9][0-9,.]*\s+(?:USDC|USD|dollars?))(?=\s|[.!?]|$)/i,"buy $2 of $1");
   result=result.replace(/^(sell|send|burn|swap)\s+(?:a\s+|one\s+)?quarter\s+(?:of\s+)?(?:my\s+)?/i,"$1 25% ")

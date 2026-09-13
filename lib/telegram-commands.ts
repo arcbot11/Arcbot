@@ -1,6 +1,7 @@
 import { ARC_BOT_TELEGRAM_USERNAME } from "./project-config";
 import { tokenClarificationWithoutWallet } from "./public-links";
 import type { WalletCommand } from "../convex/walletCommands";
+import { normalizeLeadingQuantity, normalizeTokenFirstBuy, hasMalformedNumericGrouping } from "./command-amount-language";
 
 export const TELEGRAM_HELP = "Argos Bot\nYour Arc Chain wallet.\n\nUse the buttons or a full /command. Arc gas is paid in USDC. Token names accept a ticker or contract address. Sends require a full wallet address.";
 export const TELEGRAM_FORMATS: Record<string, string> = {
@@ -42,14 +43,29 @@ export function telegramInput(text: string, callback = false, username = ARC_BOT
   return { name, args };
 }
 
-const token = "(0x[a-fA-F0-9]{40}|[A-Za-z][A-Za-z0-9_]{0,31})";
+const token = "\\$?(0x[a-fA-F0-9]{40}|[A-Za-z][A-Za-z0-9_]{0,31})";
 const number = "((?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+))";
 const slippageBps = 100;
 /** Anchored formats only: no AI, inferred amounts, or prior-message context. */
 export function telegramWalletCommand(name: string, args: string): WalletCommand | null {
+  if (hasMalformedNumericGrouping(args)) return null;
+  if (["buy", "sell", "send", "swap", "burn", "withdraw"].includes(name)) {
+    if (name === "buy") args = normalizeTokenFirstBuy(args);
+    args = normalizeLeadingQuantity(args);
+    // An explicit dollar denomination before a named token stays a dollar amount.
+    args = args.replace(/^(\d+(?:\.\d+)?|\.\d+)\s+(?:USD|dollars?|bucks?)\s+/i, "$$$1 ")
+      .replace(/^(\$?(?:\d+(?:\.\d+)?|\.\d+)|all|\d+(?:\.\d+)?%)\s+(?:worth\s+)?of\s+(?:my\s+)?/i, "$1 ");
+    if (name === "buy") args = args.replace(/^(\$?(?:0x[a-fA-F0-9]{40}|[A-Za-z][A-Za-z0-9_]{0,31}))\s+(?:for|with|using)\s+(\$\d+(?:\.\d+)?|\d+(?:\.\d+)?\s+(?:USDC|USD|dollars?))$/i, "$2 $1");
+    args = args.replace(/^(\d+(?:\.\d+)?|\.\d+)\s+(?:USD|dollars?)\s+/i, "$$$1 ");
+  }
   if (name === "wallet") return args ? null : { kind: "show_wallet" };
-  if (name === "balance") return !args ? { kind: "show_balance" } : new RegExp(`^${token}$`).test(args) ? { kind: "show_balance", token: args } : null;
+  if (name === "balance") return !args ? { kind: "show_balance" } : new RegExp(`^${token}$`).test(args) ? { kind: "show_balance", token: args.replace(/^\$/, "") } : null;
   let match: RegExpMatchArray | null;
+  if (name === "send") {
+    const native = args.match(/^\$(\d+(?:\.\d+)?|\.\d+)\s+to\s+(0x[a-fA-F0-9]{40})$/i);
+    if (native && Number.isFinite(Number(native[1])) && Number(native[1]) > 0)
+      return { kind: "send", amount: native[1], unit: "usd", token: "USDC", recipient: native[2] };
+  }
   if (name === "withdraw") {
     match=args.match(/^(?:(\d+(?:\.\d+)?|\.\d+)\s+ETH|\$(\d+(?:\.\d+)?|\.\d+))\s+to\s+(0x[a-fA-F0-9]{40})$/i);
     if(!match)return null;
@@ -66,13 +82,13 @@ export function telegramWalletCommand(name: string, args: string): WalletCommand
     return { kind: "buy", ...base };
   }
   if (!["sell", "swap", "send", "burn"].includes(name)) return null;
-  const suffix = name === "swap" ? `\\s+(?:for|to)\\s+${token}` : name === "send" ? "\\s+to\\s+(0x[a-fA-F0-9]{40})" : "";
+  const suffix = name === "swap" ? `\\s+(?:for|to|into)\\s+${token}` : name === "send" ? "\\s+to\\s+(0x[a-fA-F0-9]{40})" : "";
   match = args.match(new RegExp(`^(\\$)?(${number.slice(1,-1)}|all)(%)?\\s+${token}${suffix}$`, "i"));
   if (!match) return null;
   const all = match[2].toLowerCase() === "all", amount = all ? "100" : match[2];
   const unit = match[1] ? "usd" : all || match[3] ? "percent" : "token";
   if ((match[1] && (all || match[3])) || !(Number(amount) > 0) || !Number.isFinite(Number(amount)) || (unit === "percent" && Number(amount) > 100)) return null;
-  if (name === "swap") return { kind: "swap_token_for_token", amount, unit, fromToken: match[4], toToken: match[5], slippageBps };
+  if (name === "swap") return match[4].toLowerCase() === match[5].toLowerCase() ? null : { kind: "swap_token_for_token", amount, unit, fromToken: match[4], toToken: match[5], slippageBps };
   if (name === "send") return { kind: "send", amount, unit, token: match[4], recipient: match[5] };
   if (name === "burn") return { kind: "burn", amount, unit, token: match[4] };
   return { kind: "sell", amount, unit, token: match[4], slippageBps };

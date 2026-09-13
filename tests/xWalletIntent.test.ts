@@ -342,13 +342,13 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("uses operation-specific parameter prompts", () => {
-    expect(parameterExtractorPrompt("buy", false)).toContain('"slippageBps"');
-    expect(parameterExtractorPrompt("buy", false)).toContain('"eth|usd|pair"');
-    expect(parameterExtractorPrompt("buy", false)).toContain("buy 5 MSFT of ARCBOT");
-    expect(parameterExtractorPrompt("buy_and_send", false)).toContain('"recipient"');
-    expect(parameterExtractorPrompt("buy_and_send", false)).toContain("purchased tokens");
-    expect(parameterExtractorPrompt("buy_and_send", false)).toContain("pairAsset AAPL");
-    expect(parameterExtractorPrompt("send", false)).toContain('"recipient"');
+    expect(parameterExtractorPrompt("buy", false)).toContain("unit usd");
+    expect(parameterExtractorPrompt("buy", false)).toContain("10 through 1000");
+    expect(parameterExtractorPrompt("buy", false)).not.toContain("buy 5 MSFT");
+    expect(parameterExtractorPrompt("buy_and_send", false)).toContain("recipient");
+    expect(parameterExtractorPrompt("buy_and_send", false)).toContain("tokens received by this buy");
+    expect(parameterExtractorPrompt("buy_and_send", false)).not.toContain("pairAsset AAPL");
+    expect(parameterExtractorPrompt("send", false)).toContain("exact handle or full wallet address");
     expect(parameterExtractorPrompt("launch", true)).toContain('"symbol"');
     expect(parameterExtractorPrompt("launch", true)).toContain("quotation marks delimit a literal field value");
     expect(parameterExtractorPrompt("launch", true)).toContain("connector words");
@@ -398,8 +398,9 @@ describe("deterministic X wallet replies", () => {
   });
 
   it("tells both AI stages to isolate the operative request and ignore politeness", () => {
-    expect(intentClassifierPrompt()).toContain("operative clause");
-    expect(parameterExtractorPrompt("buy", false)).toContain('trailing "please"');
+    expect(intentClassifierPrompt()).toContain("author's present request");
+    expect(parameterExtractorPrompt("buy", false)).toContain("Politeness may be ignored");
+    expect(parameterExtractorPrompt("buy", false)).toContain("Do not remove negations");
   });
 
   it("normalizes approved trading slang into grounded commands", () => {

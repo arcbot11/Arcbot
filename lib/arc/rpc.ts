@@ -53,7 +53,7 @@ export function createArcRpc(config: ArcConfig, transport = arcTransport(config)
   };
 }
 
-export async function checkArcRpc(rpc: ArcRpc, config: ArcConfig, now = Date.now()): Promise<ArcBlock> {
+export async function checkArcRpc(rpc: Pick<ArcRpc, "chainId" | "block">, config: ArcConfig, now = Date.now()): Promise<ArcBlock> {
   if (await rpc.chainId() !== ARC_CHAIN_ID) throw new Error("RPC is not Arc mainnet (5042)");
   const checkpoint = await rpc.block(config.checkpointNumber);
   if (checkpoint.number !== config.checkpointNumber || checkpoint.hash.toLowerCase() !== config.checkpointHash.toLowerCase()) throw new Error("Arc checkpoint mismatch");

@@ -1,0 +1,35 @@
+import { parseLaunchInput, type LaunchInput } from "./input";
+import type { LaunchPreview } from "./prepare";
+
+export type LaunchDraft = {
+  requestId: string; address: string; revision: number; status: "draft" | "prepared" | "cancelled";
+  input: LaunchInput; tokenSalt: string; fingerprint: string; preview: LaunchPreview | null;
+  expiresAt: number; executionEnabled: false;
+};
+export type LaunchForm = {
+  name: string; symbol: string; imageURI: string; description: string;
+  website: string; twitter: string; telegram: string; allocationText: string; devBuyUSDC: string;
+};
+export const emptyLaunchForm: LaunchForm = {
+  name: "", symbol: "", imageURI: "", description: "", website: "", twitter: "", telegram: "", allocationText: "", devBuyUSDC: "0",
+};
+export function formInput(form: LaunchForm): LaunchInput {
+  return parseLaunchInput({ ...form, imageURI: form.imageURI.trim(), devBuyUSDC: form.devBuyUSDC.trim() || "0" });
+}
+export function allocationSummary(input: LaunchInput) {
+  return [
+    { label: "Creator", bps: input.creatorBps }, { label: "Buyback and burn", bps: input.burnBps },
+    { label: "Holder dividends", bps: input.dividendBps }, { label: "Liquidity", bps: input.liquidityBps },
+  ].map(row => ({ ...row, percent: `${row.bps / 100}%` }));
+}
+export function draftForm(input: LaunchInput): LaunchForm {
+  const { name, symbol, imageURI, description, website, twitter, telegram, devBuyUSDC } = input;
+  return { name, symbol, imageURI, description, website, twitter, telegram, devBuyUSDC,
+    allocationText: `${input.creatorBps / 100}% creator, ${input.burnBps / 100}% burn, ${input.dividendBps / 100}% holders, ${input.liquidityBps / 100}% liquidity` };
+}
+export function currentLaunchPreview(draft: LaunchDraft, now: number) {
+  const p = draft.preview;
+  return draft.status === "prepared" && draft.expiresAt > now && p && p.expiresAt > now && p.createdAt <= now
+    && p.fingerprint === draft.fingerprint && p.creator.toLowerCase() === draft.address.toLowerCase()
+    && p.tokenSalt === draft.tokenSalt && p.executionEnabled === false ? p : null;
+}

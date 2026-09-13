@@ -1,0 +1,15 @@
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:24px;align-items:start}
+.panel{min-width:0;padding:28px;border:1px solid var(--line);border-radius:18px;background:var(--card)}
+.panel h2{margin:0 0 18px;font-size:25px}.panel h3{margin:20px 0 12px;font-size:17px}
+.fieldset{margin:0;padding:0;border:0;min-width:0}.fieldset:disabled{opacity:.6}
+.field{display:grid;gap:8px;margin:0 0 16px;font-size:14px;min-width:0}
+.field input,.field textarea{box-sizing:border-box;width:100%;min-width:0;padding:12px;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit;font:inherit}
+.field textarea{resize:vertical}.field input:focus-visible,.field textarea:focus-visible,.panel button:focus-visible{outline:2px solid var(--green);outline-offset:3px}
+.row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px}
+.hint{font-size:12px;line-height:1.6;color:var(--muted);overflow-wrap:anywhere}.fixed{font-size:14px;font-weight:600}
+.actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:18px}.actions button{padding:10px 14px;cursor:pointer;border:1px solid var(--line);border-radius:8px;background:transparent;color:inherit;font:inherit;font-size:13px}
+.actions button:disabled{opacity:.45;cursor:not-allowed}.token{display:flex;gap:16px;align-items:center}.token h3{margin:0 0 6px;overflow-wrap:anywhere}.token img{border-radius:12px;width:72px;height:72px;object-fit:cover}.token span{font-size:13px;color:var(--muted)}
+.facts{margin:20px 0}.facts>div{display:flex;justify-content:space-between;gap:18px;padding:10px 0;border-bottom:1px solid var(--line);font-size:13px}.facts dt{color:var(--muted)}.facts dd{margin:0;text-align:right;overflow-wrap:anywhere;min-width:0;max-width:60%}
+.links{display:flex;flex-wrap:wrap;gap:16px;font-size:13px}.links a,.address{text-decoration:underline;text-underline-offset:3px}.address{display:block;font-size:12px;overflow-wrap:anywhere}.prose{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.6}.simulation{border-top:1px solid var(--line);margin-top:24px}.simulation li{font-size:13px;line-height:1.8}
+@media(max-width:800px){.grid{grid-template-columns:1fr}.panel{padding:22px}}
+@media(max-width:480px){.row{grid-template-columns:1fr;gap:0}.panel{padding:18px}.actions button{min-height:44px}.facts>div{gap:12px}}

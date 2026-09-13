@@ -1,0 +1,223 @@
+{
+  "at": "2026-09-13T12:01:26.306Z",
+  "rpcHost": "arc-mainnet.infura.io",
+  "portals": [
+    {
+      "address": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+      "codeBytes": 22023,
+      "codeHash": "0xe0c3db1cba754430a88582b593b819e40484e778f9121ece798f74b4dcee5863",
+      "defaultQuoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteApproved": true,
+      "LAUNCH_STRUCT_WORDS": 11,
+      "lockerImpl": "0xb2eD8112Db1bc11F7e7AB7969C2a9d1f819Cfc6A",
+      "tokenCount": "127",
+      "splitterImpl": "0x6c8f50b8895d5a22c97E611B8F9678a09d045B16",
+      "registry": "unavailable",
+      "tokenImpl": "0x84d4704d8A62a47c3F0A19Ab4642Bf77ad0e9C1f",
+      "launchConfig": "0x8Bf56C35faEA89D81E8eEe45c2FfB3994148A840"
+    },
+    {
+      "address": "0xB021Be536808f551b31789422Fd28a6c9c6e97Da",
+      "codeBytes": 23845,
+      "codeHash": "0xe94d472a2fd09ea7abd17e6e6b76655eb4496b0f6525ccc7b466d01093537a26",
+      "LAUNCH_STRUCT_WORDS": 11,
+      "registry": "0xfA4552DD491acC08051725fe522F4cfEaeC8EDc6",
+      "tokenCount": "0",
+      "defaultQuoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteApproved": true,
+      "lockerImpl": "0xb2eD8112Db1bc11F7e7AB7969C2a9d1f819Cfc6A",
+      "splitterImpl": "0xd9578dd861b2fe59675C2C4B09b026FcB0df37FC",
+      "tokenImpl": "0x1B74922c01DDfD9C77B37D02C0a236611E8Fe500",
+      "launchConfig": "0x87FE2242b83680F3912829014A5915c9B0A51dD3"
+    }
+  ],
+  "launches": [
+    {
+      "token": "0xD165239D89a6D0E0eF919AaB84c9888752b46240",
+      "name": "Safemoon on Arc",
+      "symbol": "SFM",
+      "supply": "1000000000",
+      "creator": "0x3B90AdFa22C4184a17B190b59024fFbd8D49a99d",
+      "hook": "0xd2e2Cbe4C684559F024bc1284e04A753B1352044",
+      "splitter": "0x96371ae6ad0e782385533113F7739eBDEfF223d4",
+      "locker": "0x94AFc003678F5f59b55BFA9d46A32088e33231EF",
+      "buyTaxBps": 1000,
+      "sellTaxBps": 1000,
+      "quote": "0x3600000000000000000000000000000000000000",
+      "utc": "2026-09-13T10:02:01.000Z"
+    },
+    {
+      "token": "0x9DE28151B403523a865ABA8307F5e09f082391c6",
+      "name": "ArcBark",
+      "symbol": "BARK",
+      "supply": "1000000000",
+      "creator": "0x900538504378463793D276e9c84EeeCEF13cb3D4",
+      "hook": "0x05A85668c01c34891b55553B60Ec03B848e12044",
+      "splitter": "0xAF78aDEe7e147c6518dd0cC2c14F3DA6F06D4Dc0",
+      "locker": "0x2d692d3b0204d0775Cb2E316F63607548b6dd8cb",
+      "buyTaxBps": 100,
+      "sellTaxBps": 100,
+      "quote": "0x3600000000000000000000000000000000000000",
+      "utc": "2026-09-13T10:09:15.000Z"
+    },
+    {
+      "token": "0xD466a181582CCE70AcD71486614bDBd463190f57",
+      "name": "baton",
+      "symbol": "BATON",
+      "supply": "1000000000",
+      "creator": "0x074594C90ed30ffADbd5134fc6cda4c5bB95F2D6",
+      "hook": "0x216Ea4cFD1BDeCE8aCC79ECd284c93E0C6dBe044",
+      "splitter": "0x0BB1883D99434f23c82623E18022078139e84241",
+      "locker": "0xBdc907dB277BE6561810C5C8Ec98f8168683BA7c",
+      "buyTaxBps": 300,
+      "sellTaxBps": 300,
+      "quote": "0x3600000000000000000000000000000000000000",
+      "utc": "2026-09-13T11:46:42.000Z",
+      "transaction": {
+        "hash": "0x06bc14503c0e81ce1ad344b2af4ea12b914cc4cd454b3a5a84e11ad135f1117a",
+        "from": "0x074594c90ed30ffadbd5134fc6cda4c5bb95f2d6",
+        "to": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+        "value": "0",
+        "status": "success",
+        "gasUsed": "3598129",
+        "gasUSDC": "0.08577939536",
+        "functionName": "launch",
+        "params": {
+          "name": "baton",
+          "symbol": "BATON",
+          "totalSupply": "1000000000000000000000000000",
+          "startFdvUsdc6": "2500000000",
+          "bondFdvUsdc6": "45000000000",
+          "buyTaxBps": 300,
+          "sellTaxBps": 300,
+          "creatorBps": 0,
+          "burnBps": 0,
+          "dividendBps": 10000,
+          "liquidityBps": 0,
+          "devBuyQuote": "1000000",
+          "quoteAsset": "0x3600000000000000000000000000000000000000"
+        },
+        "metadata": {
+          "imageURI": "ipfs://QmW5fGWB4ZCaQAtTUAerg4HGLxwekbkeezz7Y5CNjGVvdr",
+          "website": "",
+          "twitter": "WhaleScan",
+          "telegram": "",
+          "description": "baton now on arc network after hitting 13 million on solana"
+        },
+        "devBuyEvents": [
+          {
+            "token": "0xD466a181582CCE70AcD71486614bDBd463190f57",
+            "creator": "0x074594C90ed30ffADbd5134fc6cda4c5bB95F2D6",
+            "quoteIn": "1000000",
+            "tokensOut": "386947181833981618672043"
+          }
+        ]
+      }
+    },
+    {
+      "token": "0x32926a15d6964F7769F916470fD3875977A76181",
+      "name": "RugDuck",
+      "symbol": "RUGDUCK",
+      "supply": "1000000000",
+      "creator": "0xbec31e1f6b54555bE09867d5e2d3C6BFfbeF3bc6",
+      "hook": "0xAD340c56e1E1DD6Cf70FC3846216015823926044",
+      "splitter": "0x0c2c46aC5C33b3527fa1779a8675b97A793c8eA3",
+      "locker": "0x06C82ec8B6f51304E1A0941530Ea677d08EDd2f6",
+      "buyTaxBps": 100,
+      "sellTaxBps": 100,
+      "quote": "0x3600000000000000000000000000000000000000",
+      "utc": "2026-09-13T11:54:27.000Z",
+      "transaction": {
+        "hash": "0x0db42062d9a9d38c7961c4f2e5d0f85524f085caf97fa985cac0b9db21d17340",
+        "from": "0xbec31e1f6b54555be09867d5e2d3c6bffbef3bc6",
+        "to": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+        "value": "0",
+        "status": "success",
+        "gasUsed": "3330905",
+        "gasUSDC": "0.0996606776",
+        "functionName": "launch",
+        "params": {
+          "name": "RugDuck",
+          "symbol": "RUGDUCK",
+          "totalSupply": "1000000000000000000000000000",
+          "startFdvUsdc6": "2500000000",
+          "bondFdvUsdc6": "45000000000",
+          "buyTaxBps": 100,
+          "sellTaxBps": 100,
+          "creatorBps": 5000,
+          "burnBps": 2500,
+          "dividendBps": 2500,
+          "liquidityBps": 0,
+          "devBuyQuote": "0",
+          "quoteAsset": "0x3600000000000000000000000000000000000000"
+        },
+        "metadata": {
+          "imageURI": "ipfs://QmTNruG8KpH2wK4F7jwh7YLupAti8q6q5tF3y75dNKadxW",
+          "website": "",
+          "twitter": "",
+          "telegram": "",
+          "description": "Cool duck"
+        },
+        "devBuyEvents": []
+      }
+    },
+    {
+      "token": "0x0B01177759C2b22F18d0538979715C5bbad490b0",
+      "name": "XyloNet",
+      "symbol": "XYLONET",
+      "supply": "1000000000",
+      "creator": "0x074594C90ed30ffADbd5134fc6cda4c5bB95F2D6",
+      "hook": "0x8FFc3cEAe8d104a272C8491F5d0A44164684A044",
+      "splitter": "0x341D45F5ba0e612935A06C3aE2b4C9c7e8b77e56",
+      "locker": "0x5e8b698d821D257Bb71b3249f94F1a5014A0F5D8",
+      "buyTaxBps": 100,
+      "sellTaxBps": 100,
+      "quote": "0x3600000000000000000000000000000000000000",
+      "utc": "2026-09-13T11:55:22.000Z",
+      "transaction": {
+        "hash": "0x0bdbfc168c0331425bb128611fc15c7f4ee8b923031bdec651ab96adb0c2581f",
+        "from": "0x074594c90ed30ffadbd5134fc6cda4c5bb95f2d6",
+        "to": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+        "value": "0",
+        "status": "success",
+        "gasUsed": "3595258",
+        "gasUSDC": "0.0762194696",
+        "functionName": "launch",
+        "params": {
+          "name": "XyloNet",
+          "symbol": "XYLONET",
+          "totalSupply": "1000000000000000000000000000",
+          "startFdvUsdc6": "2500000000",
+          "bondFdvUsdc6": "45000000000",
+          "buyTaxBps": 100,
+          "sellTaxBps": 100,
+          "creatorBps": 3000,
+          "burnBps": 6500,
+          "dividendBps": 500,
+          "liquidityBps": 0,
+          "devBuyQuote": "1000000",
+          "quoteAsset": "0x3600000000000000000000000000000000000000"
+        },
+        "metadata": {
+          "imageURI": "ipfs://QmYs3wjRdfz7UGEsWBUf8RSCzB9NiR91Q81z83qArH9keM",
+          "website": "",
+          "twitter": "Xylonet_",
+          "telegram": "",
+          "description": "XyloNet is a social-first liquidity and payments layer on \n@Arc\n enabling identity based payments, swapping, and bridging with seamless onboarding"
+        },
+        "devBuyEvents": [
+          {
+            "token": "0x0B01177759C2b22F18d0538979715C5bbad490b0",
+            "creator": "0x074594C90ed30ffADbd5134fc6cda4c5bB95F2D6",
+            "quoteIn": "1000000",
+            "tokensOut": "394925474242929688910072"
+          }
+        ]
+      }
+    }
+  ],
+  "block": "20646713",
+  "blockHash": "0x61e44f416440fdd8b5282e63f3f80d403f907ce086bd86a1455eecc5e50eec1f",
+  "blockUtc": "2026-09-13T12:01:26.000Z",
+  "contractReadHost": "arguspad.io"
+}
