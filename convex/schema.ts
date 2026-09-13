@@ -12,12 +12,37 @@ const intakeFilterGuardState = v.object({
 });
 
 export default defineSchema({
+  walletExportMigration: defineTable({key:v.string(),table:v.union(v.literal("cryptoWallets"),v.literal("telegramNativeWallets"),v.literal("otcRecords")),cursor:v.union(v.string(),v.null()),ready:v.boolean()}).index("by_key",["key"]),
+  walletExportAttempts: defineTable({ticketHash:v.string(),expiresAt:v.number()}).index("by_ticket",["ticketHash"]).index("by_expiry",["expiresAt"]),
+  walletExportConfirmations: defineTable({
+    userId:v.string(), accountId:v.id("walletExportAccounts"), revision:v.number(), selectionAt:v.number(),
+    code:v.string(), updateId:v.string(), createdAt:v.number(), expiresAt:v.number(), consumedAt:v.optional(v.number()),
+    deliveryDueAt:v.optional(v.number()), deliveryAttempt:v.optional(v.string()), deliveryLeaseUntil:v.optional(v.number()), deliveredAt:v.optional(v.number()),
+  }).index("by_user",["userId"]).index("by_expiry",["expiresAt"]).index("by_delivery",["deliveryDueAt"]),
+  walletExportAccounts: defineTable({
+    address: v.string(), provider: v.union(v.literal("x"),v.literal("telegram")), userId: v.string(),
+    bindingId: v.string(), projectId: v.string(), cdpAccountName:v.string(), approved: v.boolean(), revision: v.number(),
+    fenceGrant: v.optional(v.string()), fenceUntil: v.optional(v.number()), externalControlPossibleAt: v.optional(v.number()),
+  }).index("by_address",["address"]).index("by_owner",["provider","userId"]),
+  walletExportGrants: defineTable({
+    ticketHash:v.string(), accountId:v.id("walletExportAccounts"), revision:v.number(), provider:v.union(v.literal("x"),v.literal("telegram")), userId:v.string(),
+    sessionHash:v.optional(v.string()), browserFamily:v.optional(v.string()), generation:v.optional(v.number()), selectionAt:v.optional(v.number()),
+    browserHash:v.optional(v.string()), state:v.union(v.literal("pending"),v.literal("authenticated"),v.literal("approved"),v.literal("exporting"),v.literal("relayed"),v.literal("revoked")),
+    createdAt:v.number(), expiresAt:v.number(), authenticatedAt:v.optional(v.number()), publicKey:v.optional(v.string()), keyHash:v.optional(v.string()), approvedAt:v.optional(v.number()),
+    oauthCodeHash:v.optional(v.string()),
+    telegramDeliveryDueAt:v.optional(v.number()), telegramUpdateId:v.optional(v.string()), telegramConfirmationHash:v.optional(v.string()), telegramDeliveredAt:v.optional(v.number()), telegramDeliveryAttempt:v.optional(v.string()), telegramDeliveryLeaseUntil:v.optional(v.number()),
+    oauthState:v.optional(v.string()), oauthVerifier:v.optional(v.string()), oauthUsedAt:v.optional(v.number()), oauthToken:v.optional(v.string()), oauthAttempt:v.optional(v.string()), oauthLeaseUntil:v.optional(v.number()),
+    exportId:v.optional(v.string()), exportingAt:v.optional(v.number()), relayedAt:v.optional(v.number()), acknowledgedAt:v.optional(v.number()),
+  }).index("by_telegram_delivery",["telegramDeliveryDueAt"]).index("by_telegram_update",["telegramUpdateId"]).index("by_ticket",["ticketHash"]).index("by_oauth",["oauthState"]).index("by_expiry",["expiresAt"]),
+  walletExportProofs: defineTable({hash:v.string(),grantId:v.id("walletExportGrants"),expiresAt:v.number()}).index("by_hash",["hash"]).index("by_expiry",["expiresAt"]),
+  walletExportLimits: defineTable({key:v.string(),count:v.number(),resetAt:v.number()}).index("by_key",["key"]).index("by_expiry",["resetAt"]),
+  walletExportAudit: defineTable({accountId:v.id("walletExportAccounts"),grantId:v.optional(v.id("walletExportGrants")),event:v.string(),at:v.number()}).index("by_account",["accountId","at"]).index("by_time",["at"]),
   telegramNativeWallets: defineTable({
     // Operator-only display metadata; ownership remains keyed by Telegram user ID.
     telegramUsername: v.optional(v.string()), telegramUsernameUpdatedAt: v.optional(v.number()),
-    telegramUserId: v.string(), telegramChatId: v.string(), address: v.string(), signerWalletRef: v.string(),
+    telegramUserId: v.string(), telegramChatId: v.string(), address: v.string(), normalizedAddress:v.optional(v.string()), signerWalletRef: v.string(),
     createdAt: v.number(),
-  }).index("by_user", ["telegramUserId"]),
+  }).index("by_user", ["telegramUserId"]).index("by_normalized_address",["normalizedAddress"]),
   telegramWalletSelections: defineTable({
     pendingUpdateId: v.optional(v.string()),
     telegramUserId: v.string(), selected: v.union(v.literal("tg"), v.literal("x")), updatedAt: v.number(),
@@ -31,8 +56,8 @@ export default defineSchema({
   }).index("by_request", ["requestId"]).index("by_due", ["delivered", "nextAttemptAt"]),
   otcSales: defineTable({orderId:v.string(),amount:v.string()}).index("by_order",["orderId"]),
   otcMarketStats: defineTable({key:v.string(),soldUsdc:v.string(),ready:v.boolean()}).index("by_key",["key"]),
-  otcRecords: defineTable({ key: v.string(), kind: v.string(), owner: v.string(), counterparty: v.optional(v.string()), status: v.string(), updatedAt: v.number(), json: v.string() })
-    .index("by_key", ["key"]).index("by_kind_status", ["kind", "status", "updatedAt"]).index("by_owner", ["owner", "kind"]).index("by_counterparty", ["counterparty", "kind"]),
+  otcRecords: defineTable({ key: v.string(), kind: v.string(), owner: v.string(), counterparty: v.optional(v.string()), status: v.string(), updatedAt: v.number(), json: v.string(), normalizedWallet:v.optional(v.string()), escrowAddress:v.optional(v.string()) })
+    .index("by_key", ["key"]).index("by_kind_status", ["kind", "status", "updatedAt"]).index("by_owner", ["owner", "kind"]).index("by_counterparty", ["counterparty", "kind"]).index("by_wallet_status",["normalizedWallet","kind","status"]).index("by_escrow",["escrowAddress"]),
 
   walletContinuations: defineTable({
     owner: v.string(), source: v.union(v.literal("terminal"), v.literal("telegram")), scope: v.string(),

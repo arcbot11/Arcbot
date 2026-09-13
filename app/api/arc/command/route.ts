@@ -1,4 +1,5 @@
 import {prepareBaseWithdrawal} from "@/lib/base/wallet-actions";
+import {ARC_SIGNED_PAUSED} from "@/lib/arc/social-timing";
 import {xBurnReceipt} from "@/lib/arc/burn-reply";
 import {transactionHistory} from "@/lib/otc/transaction-history";
 import {createHash} from "node:crypto";
@@ -49,6 +50,19 @@ export async function POST(request:NextRequest){
   try{
     const {requestId}=z.object({requestId:z.string().min(1).max(200)}).strict().parse(await boundedJson(request,1024));
     const auth=await socialAuthority(requestId),wallet=getAddress(auth.wallet),repo=repository();
+    const paused=(tx:Transaction)=>tx.broadcastPausedAt!==undefined&&['signed','submitted'].includes(tx.status);
+    const pending=(tx:Transaction)=>paused(tx)
+      ?json({pending:true,processing:false,attention:ARC_SIGNED_PAUSED,message:ARC_SIGNED_PAUSED,hash:tx.hash})
+      :json({pending:true,processing:true,message:"Arc transaction pending. Check wallet history.",hash:tx.hash});
+    async function advance(id:string){
+      try{return await advanceTransaction(id);}catch(error){
+        // Underfunding can persist its pause then throw. Read that durable state
+        // instead of turning an action-required result into generic processing.
+        const latest=await repo.read<Transaction|null>({id});
+        if(latest&&latest.owner===auth.owner&&latest.wallet.toLowerCase()===wallet.toLowerCase()&&paused(latest))return latest;
+        throw error;
+      }
+    }
     const command=JSON.parse(auth.command) as WalletCommand;
     preparing=true;
     const baseWithdrawal=command.kind==="send"&&command.chainId===8453;
@@ -68,10 +82,10 @@ export async function POST(request:NextRequest){
         if(tx.chainId!==chainId)throw Error("Command not supported. Stored transaction chain mismatch.");
         if(auth.recoveryOnly&&tx.status==="prepared"&&tx.recoveryVersion===1&&!tx.signingStartedAt&&!tx.raw&&!tx.hash)
           tx=await repo.command<Transaction>("cancel_unsigned_trade",{id,owner:auth.owner});
-        if(!["completed","reverted"].includes(tx.status))tx=await advanceTransaction(id);
+        if(!["completed","reverted"].includes(tx.status))tx=await advance(id);
         if(tx.status==="cancelled")return json({ok:false,message:tx.nonceConflict?"Request replaced by another transaction. Check wallet history.":"Request cancelled before signing. Funds released. Submit a new command."});
         if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
-        if(tx.status!=="completed")return json({pending:true,processing:true,message:"Arc transaction pending. Check wallet history.",hash:tx.hash});
+        if(tx.status!=="completed")return pending(tx);
         if(tx.leg!=="allowance")return json({ok:true,message:await completedMessage(command,tx,auth.source==="x"),hash:tx.hash});
         approvals.add(approvalKey(tx.unsigned));
         continue;
@@ -106,11 +120,11 @@ export async function POST(request:NextRequest){
         if(approvals.has(key)||approvals.has(key.replace(/:reset$/,':approve')))return json({ok:false,message:'Token approval changed after confirmation. Submit a new command.'});
       }
       const record=await repo.command<Transaction>("prepare",{id,owner:auth.owner,wallet,chainId,leg:prepared.leg,...(prepared.swapOutput?{swapOutput:prepared.swapOutput}:{}),sourceRequestId:requestId,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block});
-      try{tx=await advanceTransaction(record.id);}catch{return json({pending:true,processing:true,message:"Arc request recorded. Funds remain reserved for verification."});}
+      try{tx=await advance(record.id);}catch{return json({pending:true,message:"Arc request recorded. Funds remain reserved for verification."});}
       if(tx.status==="cancelled")return json({ok:false,message:tx.nonceConflict?"Request replaced by another transaction. Check wallet history.":"Request cancelled before signing. Funds released. Submit a new command."});
         if(tx.status==="reverted")return json({ok:false,message:"Arc transaction reverted. Check wallet history.",hash:tx.hash});
       if(tx.status==="completed"&&tx.leg!=="allowance")return json({ok:true,message:await completedMessage(command,tx,auth.source==="x"),hash:tx.hash});
-      return json({pending:true,processing:true,message:"Arc request recorded. Check wallet history.",hash:tx.hash});
+      return pending(tx);
     }
     return json({ok:false,message:"Approval steps exceeded the request limit. Check wallet history."});
   }catch(e){

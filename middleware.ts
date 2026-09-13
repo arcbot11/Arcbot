@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import {exportOrigin} from "./lib/key-export/policy";
 
 function compact(parts: string[]) {
   return parts.join("; ");
@@ -41,6 +42,19 @@ function isSensitivePage(pathname: string) {
 }
 
 export function middleware(request: NextRequest) {
+  const exportMode=process.env.WALLET_EXPORT_RUNTIME;
+  let keyOrigin:string|undefined;
+  try{keyOrigin=exportOrigin();}catch{/* Misconfiguration must not expose export routes. */}
+  const onKeyHost=!!keyOrigin&&request.nextUrl.origin===keyOrigin;
+  const keyPath=/^\/api\/key-export(?:\/(?:view|script|callback))?$/.test(request.nextUrl.pathname);
+  const notFound=()=>new NextResponse("Not found",{status:404,headers:{"cache-control":"no-store"}});
+  if(exportMode==="broker"||onKeyHost){
+    if(!["broker","shared"].includes(exportMode??"")||!onKeyHost||!keyPath)return notFound();
+    return NextResponse.next();
+  }
+  // The ordinary website and Vercel preview domains never serve the reveal API.
+  if(request.nextUrl.pathname==="/api/key-export"||request.nextUrl.pathname.startsWith("/api/key-export/"))return notFound();
+  if(request.headers.has("next-router-prefetch")||request.headers.get("purpose")==="prefetch"||/^\/(?:api(?:\/|$)|_next\/(?:static|image)|favicon|arcbot\.png|arcbot-banner\.png|x-logo\.png|x\.webp)/.test(request.nextUrl.pathname))return NextResponse.next();
   const nonce = isSensitivePage(request.nextUrl.pathname)
     ? Buffer.from(crypto.randomUUID()).toString("base64")
     : undefined;
@@ -56,11 +70,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: [{
-    source: "/((?!api|_next/static|_next/image|favicon.ico|favicon.png|faviconlarge.png|arcbot.png|arcbot-banner.png|x-logo.png|x.webp).*)",
-    missing: [
-      { type: "header", key: "next-router-prefetch" },
-      { type: "header", key: "purpose", value: "prefetch" },
-    ],
-  }],
+  matcher: ["/:path*"],
 };

@@ -6,6 +6,7 @@ import { telegramMenu, telegramInput, telegramWalletLabel } from "../lib/telegra
 import { identity, command as otcCommand } from "../convex/otc";
 import { walletId } from "../lib/otc/model";
 import { walletRequestSchema } from "../lib/wallet-signer/policy";
+import { ARC_SIGNED_PAUSED } from "../lib/arc/social-timing";
 
 const handler = (fn: unknown) => (fn as { _handler: (ctx: unknown, args: unknown) => Promise<unknown> })._handler;
 const address = "0x1111111111111111111111111111111111111111";
@@ -154,12 +155,28 @@ describe("permanent TG wallets without changing X identities", () => {
     const w={kind:"wallet",id:walletId(5042,address),owner:"456",address,chainId:5042,activeTx:"tx",holds:{tx:"100"},updatedAt:1};
     f.rows.otcRecords=[{_id:"tx-row",key:"tx",owner:"456",kind:"transaction",status:"prepared",json:JSON.stringify(tx)},{_id:"wallet-row",key:w.id,owner:"456",kind:"wallet",status:"wallet",json:JSON.stringify(w)}];
     f.rows.walletRequests=[{_id:"req",requestId:"request",source:"telegram",telegramUpdateId:"create"}];
+    f.rows.otcMarketStats=[{_id:"stats",key:"total",soldUsdc:"0",ready:true}];
     f.ctx.db.insert.mockImplementation(async()=>{throw Error("Unexpected insert");});
     Object.assign(f.ctx.db,{replace:async(id:unknown,value:Row)=>Object.assign(f.rows.otcRecords.find(r=>r._id===id)!,value)});
     expect(await handler(otcCommand)(f.ctx,{secret:"secret",command:"begin_signing",json:JSON.stringify({id:"tx"})})).toMatchObject({status:"cancelled"});
   });
 });
 describe("menus and shared transaction service", () => {
+  it("reports a signed pause without completing the request or claiming it is processing",async()=>{
+    vi.stubEnv("WEB_AUTH_SECRET","secret");
+    vi.stubGlobal("fetch",vi.fn(async()=>new Response(JSON.stringify({pending:true,processing:false,attention:ARC_SIGNED_PAUSED,message:ARC_SIGNED_PAUSED}))));
+    const row={requestId:"telegram-native:attention",command:JSON.stringify({kind:"buy",amount:"10",unit:"usd",token:"ARGOS"}),createdAt:Date.now()};
+    const wallet={_id:"native",address,telegramUserId:"123",telegramChatId:"123"};
+    const ctx={runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0],args:unknown)=>{void args;return getFunctionName(ref)==="telegramWallets:claim"?{row,wallet}:true;}),runAction:vi.fn(async()=>true)};
+    await handler(work)(ctx,{requestId:row.requestId});
+    await handler(work)(ctx,{requestId:row.requestId});
+    const notices=ctx.runAction.mock.calls as unknown as [unknown,{text:string;requestId:string}][];
+    expect(notices).toHaveLength(2);
+    for(const [,notice] of notices)expect(notice).toMatchObject({text:ARC_SIGNED_PAUSED,requestId:`telegram-attention:${row.requestId}`});
+    for(const call of ctx.runMutation.mock.calls.filter(c=>getFunctionName(c[0])==="telegramWallets:finish")){
+      expect(call[1]).toMatchObject({delivered:false});expect(call[1]).not.toHaveProperty("result");
+    }
+  });
   it.each([
     {ok:false,message:"Token UNKNOWN is not in the index. Enter its contract address."},
     {ok:false,message:"More than one token uses SAME. Enter its contract address."},

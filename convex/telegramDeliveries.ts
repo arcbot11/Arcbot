@@ -48,7 +48,10 @@ export const deliver = internalAction({ args: { requestId: v.string() }, handler
     if (!binding.valid || binding.link?.ownerXUserId !== row.ownerXUserId) { status = "cancelled"; return; }
     if (!text) {
       const result = await ctx.runQuery(internal.telegram.walletRequestResult, { requestId: row.requestId, ownerXUserId: row.ownerXUserId });
-      if (!result || !["confirmed", "rejected", "failed", "skipped"].includes(result.status)) return;
+      if (!result || !["confirmed", "rejected", "failed", "skipped"].includes(result.status)) {
+        if(result?.attention)await ctx.runAction(internal.telegram.deliverWalletMessage,{telegramUserId:row.telegramUserId,telegramChatId:row.telegramChatId,ownerXUserId:row.ownerXUserId,text:result.attention,requestId:`telegram-attention:${row.requestId}`});
+        return; // An attention notice is not the final outcome of the signed request.
+      }
       text = result.finalMessage || result.safeError || "The request finished. Check your wallet activity for the result.";
       // Deferred results must not replace newer user conversations.
 

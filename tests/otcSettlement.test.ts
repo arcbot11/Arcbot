@@ -354,3 +354,29 @@ it("recovers ordinary withdrawal gas before broadcasting without resigning or ch
  expect(mocks.command).toHaveBeenCalledWith("extend_base_withdrawal_gas",expect.objectContaining({id:record.id,expectedHash:record.hash,gasWei:"20008000"}));
  expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:raw});expect(mocks.sign).not.toHaveBeenCalled();
 });
+
+it('yields once when its mined original hash has no receipt, then completes when the receipt becomes visible',async()=>{
+ const originalReceipt=receipt;receipt=null;nonce=1;
+ mocks.client.getTransactionCount=vi.fn(async({blockNumber}:{blockNumber?:bigint})=>blockNumber!==undefined&&blockNumber<100n?0:1);
+ mocks.client.getBlock=vi.fn(async({blockNumber,blockTag,includeTransactions}:{blockNumber?:bigint;blockTag?:string;includeTransactions?:boolean}={})=>({number:blockNumber??(blockTag==='finalized'?101n:200n),hash,timestamp:BigInt(Math.floor(Date.now()/1000)),transactions:includeTransactions?[{from:account.address,nonce:0,hash:record.hash}]:[]}));
+ expect((await advanceTransaction(record.id)).status).toBe('submitted');
+ expect(mocks.client.getTransactionReceipt).toHaveBeenCalledTimes(1);
+ expect(mocks.command.mock.calls.filter(c=>c[0]==='nonce_search')).toHaveLength(1);
+ expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();
+ receipt=originalReceipt;
+ expect((await advanceTransaction(record.id)).status).toBe('completed');
+ expect(mocks.sign).not.toHaveBeenCalled();
+});
+it.each(['empty','funded','contract','calldata','unavailable'] as const)('requires independent unfunded-escrow evidence for an external replacement: %s',async mode=>{
+ await setupSend(5042);record.escrowRef={listingId:'listing:test',step:'fund'};
+ const other={chainId:5042,type:'eip1559' as const,to:router as Hex,value:0n,data:(mode==='calldata'?'0x12345678':'0x') as Hex,nonce:0,gas:21000n,maxFeePerGas:200n,maxPriorityFeePerGas:2n};
+ const raw=await account.signTransaction(other),parsed=parseTransaction(raw),minedHash=keccak256(raw);
+ mocks.client.getTransaction=vi.fn(async()=>({...parsed,hash:minedHash,from:account.address,input:other.data,blockNumber:100n,blockHash:hash}));
+ receipt={transactionHash:minedHash,status:'success',blockNumber:100n,blockHash:hash,logs:[]};
+ mocks.client.getCode=vi.fn(async()=>mode==='contract'?'0x1234':'0x');
+ mocks.client.getBalance=vi.fn(async()=>{if(mode==='unavailable')throw Error('unavailable');return mode==='funded'?1n:0n;});
+ const {reconcileTransactionNonce}=await import('../lib/otc/recovery-runtime');
+ if(mode==='unavailable'){await expect(reconcileTransactionNonce(record.id,minedHash)).rejects.toThrow();expect(mocks.command).not.toHaveBeenCalled();}
+ else{await reconcileTransactionNonce(record.id,minedHash);expect(mocks.command).toHaveBeenCalledWith('reconcile_mined_nonce',expect.objectContaining({unfundedEscrowVerified:mode==='empty'}));}
+ expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();
+});

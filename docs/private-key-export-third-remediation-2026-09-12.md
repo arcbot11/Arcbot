@@ -1,0 +1,11 @@
+# Export recovery remediation — third pass
+
+All three findings from the third review are fixed locally. No live private key export, provider sign-in, bot message, wallet transaction, deployment or customer enrollment was performed.
+
+1. Cached browser returns before encryption now revalidate authorization, expiry and expected wallet identity while controls remain hidden. Explicit consent is reset. An older asynchronous response cannot overwrite the new page state. Restoration after encryption/reveal still destroys local key access.
+2. X error pages now distinguish restart-required, busy, recoverable provider failures, expired/revoked requests, and wrong-browser callbacks. Only recoverable callbacks retain a retry carrying their old code. Interrupted exchanges without a saved token lead to fresh X verification. Existing cookie, state, original-code and owner checks remain required.
+3. The first Telegram export warning now uses a durable confirmation delivery record and atomic schedule. It retries the original code, recovers interrupted workers, fences stale acknowledgements and expires safely. It cannot create a verification grant or consume export quota. A separate typed confirmation still starts verification.
+
+Tests cover restoration before/after reveal, offline/expired/revoked/changed-wallet status, late asynchronous responses, X recovery-action selection, same-code warning retry, crash rescue, stale workers, replaced/consumed confirmations and the existing wallet protections. Original characterization tests were changed into fixed-behavior regressions.
+
+453 regression tests passed across 14 export/wallet/settlement suites. Application and Convex TypeScript checks passed. The isolated browser bundle and full Next.js production build completed successfully (exit 0). Static generation logged two local certificate-verification fetch warnings but completed all 20 pages. Targeted ESLint passed with two existing unused test-argument warnings; production compilation reports existing warnings in unrelated routing/OTC/X code. Real X app/browser handoff, Telegram clients and a designated disposable CDP encrypted export remain rollout tests; local fixtures do not establish deployed behavior.

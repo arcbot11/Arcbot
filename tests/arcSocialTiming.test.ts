@@ -2,7 +2,7 @@ import {afterEach,beforeEach,expect,it,vi} from "vitest";
 import {getFunctionName} from "convex/server";
 import {scheduleInteractionRetry} from "../convex/xReplies";
 import {continueArcCommand,executeCommand} from "../convex/wallets";
-import {ARC_WALLET_PENDING,ARC_COMMAND_HTTP_TIMEOUT_MS,arcPendingRetryDelay,arcServiceResult} from "../lib/arc/social-timing";
+import {ARC_WALLET_PENDING,ARC_SIGNED_PAUSED,ARC_COMMAND_HTTP_TIMEOUT_MS,arcPendingRetryDelay,arcServiceResult} from "../lib/arc/social-timing";
 const invoke=(fn:unknown,ctx:unknown,args:unknown)=>(fn as {_handler:(ctx:unknown,args:unknown)=>Promise<unknown>})._handler(ctx,args);
 beforeEach(()=>{vi.stubEnv("WEB_AUTH_SECRET","test-secret");});
 afterEach(()=>{vi.unstubAllEnvs();vi.unstubAllGlobals();vi.restoreAllMocks();});
@@ -57,4 +57,22 @@ it("blocks a forged Base withdrawal from X before wallet access",async()=>{
  const ctx={runQuery:vi.fn(),runMutation:vi.fn(),runAction:vi.fn()};
  const result=await invoke(executeCommand,ctx,{source:"x",xUserId:"12345",sourcePostId:"post",text:"withdraw",parsedCommandJson:JSON.stringify({kind:"send",chainId:8453,unit:"eth",amount:"0.001",recipient:"0x1111111111111111111111111111111111111111"})});
  expect(result).toMatchObject({ok:false});expect(ctx.runQuery).not.toHaveBeenCalled();expect(ctx.runMutation).not.toHaveBeenCalled();expect(ctx.runAction).not.toHaveBeenCalled();
+});
+
+it.each(["telegram","x"])("keeps signed %s pauses observable without publishing a final outcome",async source=>{
+ const request={source,status:"prepared",ownerXUserId:"alice",_creationTime:Date.now()};
+ const ctx={runQuery:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref).endsWith("getWalletRequest")?request:{wallet:{address:"0x1111111111111111111111111111111111111111"}}),runMutation:vi.fn(),scheduler:{runAfter:vi.fn()}};
+ vi.stubGlobal("fetch",vi.fn().mockResolvedValue({ok:true,json:async()=>({pending:true,processing:true,attention:ARC_SIGNED_PAUSED,message:ARC_SIGNED_PAUSED})}));
+ expect(await invoke(continueArcCommand,ctx,{requestId:"request"})).toMatchObject({pending:true,deferred:true,message:"",processing:false,attention:ARC_SIGNED_PAUSED});
+ expect(ctx.runMutation).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({status:"prepared",workflowStage:"arc_attention",diagnosticCode:"SIGNED_WALLET_PAUSED"}));
+ expect(ctx.scheduler.runAfter).toHaveBeenCalledTimes(source==="telegram"?1:0);
+});
+
+it.each([false,true])("clears the pause diagnostic only after confirmed processing (processing=%s)",async processing=>{
+ const request={source:"x",status:"prepared",ownerXUserId:"alice",diagnosticCode:"SIGNED_WALLET_PAUSED",_creationTime:Date.now()};
+ const ctx={runQuery:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref).endsWith("getWalletRequest")?request:{}),runMutation:vi.fn(),scheduler:{runAfter:vi.fn()}};
+ vi.stubGlobal("fetch",processing?vi.fn().mockResolvedValue({ok:true,json:async()=>({pending:true,processing:true,message:"Processing."})}):vi.fn().mockRejectedValue(new Error("timeout")));
+ await invoke(continueArcCommand,ctx,{requestId:"request"});
+ if(processing)expect(ctx.runMutation).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({clearErrorState:true}));
+ else expect(ctx.runMutation).not.toHaveBeenCalled();
 });

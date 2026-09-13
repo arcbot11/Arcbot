@@ -33,6 +33,7 @@ const commands = [
   { command: "link", description: "Connect your X account" },
   { command: "unlink", description: "Unlink your X account" },
 ];
+if(process.env.WALLET_EXPORT_ENABLED==="true")commands.push({command:"export",description:"Confirm TG wallet key export"});
 
 const identity = await call("getMe", {});
 if (String(identity.id) !== "8280311402" || identity.username?.toLowerCase() !== "the_argosbot") throw new Error("Telegram bot identity does not match @The_ArgosBot");

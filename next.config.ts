@@ -14,7 +14,12 @@ const nextConfig: NextConfig = {
   // webpack does not resolve unused x402 peer dependencies during deployment.
   serverExternalPackages: ["@coinbase/cdp-sdk"],
   async headers() {
-    return [{ source: "/:path*", headers: securityHeaders }];
+    // Only the standalone reveal document may be framed by Telegram. Its route
+    // supplies the restrictive frame-ancestors policy; the website retains DENY.
+    return [
+      {source:"/:path*",headers:securityHeaders.filter(header=>header.key!=="X-Frame-Options")},
+      {source:"/((?!api/key-export(?:/|$)).*)",headers:[{key:"X-Frame-Options",value:"DENY"}]},
+    ];
   },
   images: {
     remotePatterns: [

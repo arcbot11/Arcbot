@@ -1,4 +1,6 @@
+import {safeExportError} from "../lib/key-export/errors";
 import { suppressCreationReply } from "../lib/disabled-creation";
+import {makeFunctionReference} from "convex/server";
 import { socialAddressLinks } from "../lib/social-address-links";
 import { ARC_BOT_TELEGRAM_USER_ID, ARC_BOT_TELEGRAM_USERNAME } from "../lib/project-config";
 import { internal } from "./_generated/api";
@@ -180,7 +182,7 @@ export const walletRequestResult = internalQuery({
   handler: async (ctx, args) => {
     const row = await ctx.db.query("walletRequests").withIndex("by_request_id", q => q.eq("requestId", args.requestId)).unique();
     if (!row || row.ownerXUserId !== args.ownerXUserId) return null;
-    return { status: row.status, finalMessage: row.finalMessage, safeError: row.safeError, updatedAt: row.updatedAt };
+    return { status: row.status, finalMessage: row.finalMessage, safeError: row.safeError, updatedAt: row.updatedAt, ...(row.diagnosticCode==="SIGNED_WALLET_PAUSED"?{attention:row.diagnosticDetail}:{}) };
   },
 });
 
@@ -525,6 +527,21 @@ export const processUpdate = internalAction({
         await ctx.runMutation(internal.telegram.updateStatus,{updateId:args.updateId,status:"completed"});return;
       }
       const command = "/" + input.name;
+      if(input.name==="export"){
+        try{
+          if(!input.args){
+            await ctx.runMutation(makeFunctionReference<"mutation">("walletExports:requestTelegramConfirmation"),{updateId:args.updateId});
+          }else{
+            const confirmed=/^confirm ([a-f0-9]{8})$/i.exec(input.args);
+            if(!confirmed){await sendMessage(chatId,"Use /export to request key export, then send the confirmation command shown.");}
+            else{
+              await ctx.runMutation(makeFunctionReference<"mutation">("walletExports:startTelegram"),{updateId:args.updateId,confirmationCode:confirmed[1].toLowerCase()});
+              // The confirmation mutation atomically queues durable link delivery.
+            }
+          }
+        }catch(error){await sendMessage(chatId,safeExportError(error,"TG_DELIVERY_RETRY").message);}
+        await ctx.runMutation(internal.telegram.updateStatus,{updateId:args.updateId,status:"completed"});return;
+      }
       if (["start", "help", "link", "unlink", "wallet", "createtg", "usetg", "usex"].includes(input.name) && input.args) {
         await sendMessage(chatId, "Use " + command + " without extra text.");
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "ignored" });
@@ -607,7 +624,9 @@ export const processUpdate = internalAction({
             ...(recipientAddress ? { recipientAddress } : {}),
           });
           if (result.pending || result.deferred) {
-            if (result.processing) {
+            if (result.attention) {
+              await ctx.runAction(internal.telegram.deliverWalletMessage, { telegramUserId, telegramChatId: chatId, ownerXUserId: link.ownerXUserId, requestId: `telegram-attention:${requestId}`, text: result.attention });
+            } else if (result.processing) {
               const action = parsedCommand.kind === "send" && parsedCommand.chainId === 8453 ? "Base withdrawal" : parsedCommand.kind === "swap_token_for_token" ? "Swap" : parsedCommand.kind[0].toUpperCase() + parsedCommand.kind.slice(1);
               await ctx.runAction(internal.telegram.deliverWalletMessage, { telegramUserId, telegramChatId: chatId, ownerXUserId: link.ownerXUserId, requestId: `telegram-processing:${requestId}`, text: `${action} processing.` });
             }
@@ -691,4 +710,29 @@ export const recoverUpdates = internalMutation({args:{},handler:async(ctx)=>{
       await ctx.scheduler.runAfter(0,internal.telegram.processUpdate,{updateId:row.updateId,updateJson:row.updateJson});
     }
   }
+}});
+
+/** No key material is handled here; only the short-lived verification link. */
+export const deliverKeyExport=internalAction({args:{grantId:v.id("walletExportGrants")},handler:async(ctx,a)=>{
+  const delivery:{attempt:string;chatId:string;url:string}|null=await ctx.runMutation(makeFunctionReference<"mutation">("walletExports:takeTelegramDelivery"),a);
+  if(!delivery)return;
+  let delivered=false;
+  try{
+    await sendMessage(delivery.chatId,"Confirmed. Open the secure window to verify your TG account. The key will not be sent in chat.",{inline_keyboard:[[{text:"Verify TG account",web_app:{url:delivery.url}}]]});
+    delivered=true;
+  }catch{/* Never persist Telegram errors that might contain the verification URL. */}
+  await ctx.runMutation(makeFunctionReference<"mutation">("walletExports:finishTelegramDelivery"),{...a,attempt:delivery.attempt,delivered});
+}});
+
+/** The initial warning is durable too; sending it does not create an export grant. */
+export const deliverExportConfirmation=internalAction({args:{confirmationId:v.id("walletExportConfirmations"),updateId:v.string()},handler:async(ctx,a)=>{
+  const delivery:{attempt:string;chatId:string;code:string;expiresAt:number}|null=await ctx.runMutation(makeFunctionReference<"mutation">("walletExports:takeConfirmationDelivery"),a);
+  if(!delivery)return;
+  let delivered=false;
+  try{
+    const minutes=Math.max(1,Math.ceil((delivery.expiresAt-Date.now())/60000));
+    await sendMessage(delivery.chatId,"Export your TG linked wallet's private key? Anyone with it can take every asset in that wallet. Never share it.\n\nTo continue, send:\n/export confirm "+delivery.code+"\n\nExpires in "+minutes+" minute"+(minutes===1?"":"s")+". Verification starts only after you confirm.");
+    delivered=true;
+  }catch{/* Retry the same confirmation; never log Telegram response bodies. */}
+  await ctx.runMutation(makeFunctionReference<"mutation">("walletExports:finishConfirmationDelivery"),{...a,attempt:delivery.attempt,delivered});
 }});

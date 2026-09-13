@@ -69,7 +69,7 @@ export const bind = internalMutation({ args: { updateId: v.string(), address: v.
   if (!/^0x[a-fA-F0-9]{40}$/.test(a.address) || a.signerWalletRef.toLowerCase() !== a.address.toLowerCase()) throw Error("Invalid CDP wallet.");
   const existing = await ctx.db.query("telegramNativeWallets").withIndex("by_user", q => q.eq("telegramUserId", telegramUserId)).unique();
   if (existing && (existing.address.toLowerCase() !== a.address.toLowerCase() || existing.telegramChatId !== update.telegramChatId)) throw Error("Permanent wallet binding cannot change.");
-  if (!existing) await ctx.db.insert("telegramNativeWallets", { telegramUserId, telegramChatId: update.telegramChatId!, address: a.address, signerWalletRef: a.signerWalletRef, createdAt: Date.now(), ...(telegramOperatorProfile(update.updateJson,telegramUserId,update.telegramChatId!,update.createdAt)??{}) });
+  if (!existing) await ctx.db.insert("telegramNativeWallets", { telegramUserId, telegramChatId: update.telegramChatId!, address: a.address, normalizedAddress:a.address.toLowerCase(), signerWalletRef: a.signerWalletRef, createdAt: Date.now(), ...(telegramOperatorProfile(update.updateJson,telegramUserId,update.telegramChatId!,update.createdAt)??{}) });
   await saveSelection(ctx, telegramUserId, "tg", update.createdAt);
 } });
 export const create = internalAction({ args: { updateId: v.string() }, handler: async (ctx, a): Promise<void> => {
@@ -153,7 +153,10 @@ export const work = internalAction({ args: { requestId: v.string() }, handler: a
         if (!response.ok) throw new TelegramServiceError([401,403].includes(response.status) ? "SERVICE_AUTHORIZATION" : [400,404].includes(response.status) ? "SERVICE_CONFIGURATION" : "SERVICE_UNAVAILABLE");
         const reply = arcServiceResult(await response.json());
         if (!reply.pending) result = arcCommandResponse(reply.message, wallet.address, reply.hash, command.kind === "send" && command.chainId === 8453 ? 8453 : 5042);
-        else if (reply.processing) {
+        else if (reply.attention) {
+          try { await ctx.runAction(internal.telegram.deliverNativeWalletMessage, { walletId: wallet._id, requestId: `telegram-attention:${row.requestId}`, text: reply.attention }); }
+          catch { /* Retry this idempotent notice while receipt recovery continues. */ }
+        } else if (reply.processing) {
           const action = command.kind === "send" && command.chainId === 8453 ? "Base withdrawal" : command.kind === "swap_token_for_token" ? "Swap" : command.kind[0].toUpperCase() + command.kind.slice(1);
           try { await ctx.runAction(internal.telegram.deliverNativeWalletMessage, { walletId: wallet._id, requestId: `telegram-processing:${row.requestId}`, text: `${action} processing.` }); }
           catch { /* A progress notice failure must not change transaction recovery. */ }

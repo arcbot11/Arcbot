@@ -147,6 +147,8 @@ export async function retryEscrow(store:Store,listingId:string,orderId:string|un
     if(!tx){const record=order??listing;record.updatedAt=now;if(record.kind==="order")delete record.note;else delete record.escrow!.note;await store.put(record);return record;}
     if(tx.status==="cancelled"&&tx.nonceConflict){
       if(step==='fund'||step==='deposit')throw Error('External cancellation requires a new listing or purchase.');
+      const payer=step==='topup'||step==='gas'?order?.owner:step==='arc_topup'?listing.owner:undefined;
+      if(payer&&owner!==payer)throw Error('The paying wallet owner must authorize retrying this cancelled gas payment.');
       const record=order??listing,e=record.escrow!;e.attempts={...e.attempts,[step]:(e.attempts?.[step]??0)+1};record.updatedAt=now;await store.put(record);return record;
     }
     if(neverSigned(tx)){

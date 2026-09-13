@@ -1,5 +1,7 @@
 # System review — 2026-09-12
 
+Follow-up: findings 1–5 below have since been addressed locally. See `external-spending-implementation.md` for the corrected behavior and deployment status. This report preserves the evidence from the original review.
+
 Review of the current committed application, with particular attention to the newly implemented safeguards for customer wallets that can spend outside the bot. Application code was not changed, nothing was deployed, no keys were exported, and no transactions were signed or submitted during this review.
 
 ## Assessment

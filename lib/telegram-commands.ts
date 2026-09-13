@@ -31,7 +31,7 @@ export function telegramWalletLabel(selected: string | null, username?: string |
   if (selected && !hasBothWallets) return "";
   return selected === "tg" ? "You are using your TG linked wallet" : selected === "x" ? `You are using your X linked wallet${username ? ` for @${username.replace(/^@/, "")}` : ""}` : "Choose a wallet for Telegram. A TG wallet is permanently linked to your Telegram account. You can also use an X-linked wallet later.";
 }
-const commands = new Set(["start", "help", "link", "unlink", "wallet", "balance", ...walletNavigation, ...Object.keys(TELEGRAM_FORMATS)]);
+const commands = new Set(["start", "help", "link", "unlink", "wallet", "balance", "export", ...walletNavigation, ...Object.keys(TELEGRAM_FORMATS)]);
 export function telegramInput(text: string, callback = false, username = ARC_BOT_TELEGRAM_USERNAME) {
   const match = text.trim().match(/^\/([a-z]+)(?:@([a-z0-9_]+))?(?:\s+([^\r\n]+))?$/i);
   if (!match || !commands.has(match[1].toLowerCase())) return null;

@@ -1,4 +1,6 @@
 import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement,authorizeGasRecovery} from "../lib/otc/gas-recovery";
+import {assertNoKeyExport} from "./lib/walletExportGuard";
+import {walletExportIndexes} from "./lib/walletExportIndexes";
 import {acquireOperatorLease,releaseOperatorLease} from "../lib/otc/operator-lease";
 import {beginSigning,cancelUnsignedTrade} from "../lib/otc/unsigned-recovery";
 import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce,extendEscrowBaseGas,extendBaseWithdrawalGas,cleanupExternalConflict,saveNonceSearch,pauseSignedBroadcast,resumeSignedBroadcast} from "../lib/otc/signed-recovery";
@@ -68,7 +70,12 @@ export const command = mutation({
       },
       put: async record => {
         const row = await ctx.db.query("otcRecords").withIndex("by_key", q=>q.eq("key",record.id)).unique();
-        const value = { key: record.id, kind: record.kind, owner: record.owner, ...(record.kind === "order" ? { counterparty: record.sellerOwner } : {}),
+        if(record.kind==="wallet"&&(record.activeTx||Object.values(record.holds).some(amount=>BigInt(amount)>0n)||Object.values(record.usdcHolds??{}).some(amount=>BigInt(amount)>0n)))await assertNoKeyExport(ctx,record.address);
+        if(record.kind==="transaction"&&record.signingStartedAt!==undefined){
+          const previous=row?JSON.parse(row.json) as Transaction:null;
+          if(!previous?.signingStartedAt||previous.unsigned!==record.unsigned)await assertNoKeyExport(ctx,record.wallet);
+        }
+        const value = { key: record.id, kind: record.kind, owner: record.owner, ...walletExportIndexes(record), ...(record.kind === "order" ? { counterparty: record.sellerOwner } : {}),
           status: "status" in record ? record.status : "wallet", updatedAt: now, json: JSON.stringify(record) };
         if (row) await ctx.db.replace(row._id, value); else await ctx.db.insert("otcRecords",value);
         if(record.kind==="order"&&record.status==="completed")await creditSale(ctx,record);

@@ -3,12 +3,13 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/build-key-export.mjs && next dev",
+    "build": "node scripts/build-key-export.mjs && next build",
     "start": "next start",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "project:health": "node --use-system-ca --env-file-if-exists=.env.local scripts/check-project-resources.mjs",
+    "keys:setup": "node --use-system-ca --experimental-strip-types --import=./scripts/register-typescript.mjs --env-file-if-exists=.env.local --env-file-if-exists=.deployment-private/key-export/shared.env scripts/key-export-setup.ts",
     "convex:dev": "convex dev",
     "x:authorize": "node scripts/authorize-x.mjs",
     "telegram:configure": "node --use-system-ca --env-file-if-exists=.env.local scripts/configure-telegram-bot.mjs",
@@ -66,6 +67,7 @@
     "@types/react-dom": "^19.1.9",
     "eslint": "^9.36.0",
     "eslint-config-next": "^15.5.7",
+    "esbuild": "0.27.0",
     "typescript": "^5.9.2",
     "vitest": "^3.2.4"
   },

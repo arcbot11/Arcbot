@@ -156,3 +156,11 @@ it.each(["x",undefined])("rejects Base withdrawal without explicit Telegram auth
  m.auth.mockResolvedValue({source,owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()});
  expect(await(await POST(request())).json()).toMatchObject({ok:false});expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
 });
+
+it.each([false,true])('reports a persisted signed pause, including when recovery throws (%s)',async throws=>{
+ const tx={owner:'alice',wallet,chainId:5042,status:'submitted',leg:'allowance',hash:'paused',broadcastPausedAt:1};
+ m.read.mockResolvedValue(tx);if(throws)m.advance.mockRejectedValue(Error('signed underfunding'));else m.advance.mockResolvedValue(tx);
+ const result=await(await POST(request())).json();
+ expect(result).toMatchObject({pending:true,processing:false,attention:expect.stringContaining('Contact Argos Bot support'),message:expect.stringContaining('not cancelled')});
+ expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
+});

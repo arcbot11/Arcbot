@@ -1,11 +1,16 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import {validateStructuredWalletCommand} from "../convex/walletCommands";
 import { getFunctionName } from "convex/server";
-import { isTelegramUnlinkCommand, processUpdate, acceptUpdate } from "../convex/telegram";
-import { TELEGRAM_MENU, TELEGRAM_FORMATS, telegramInput, telegramWalletCommand, telegramResponse } from "../lib/telegram-commands";
+import { isTelegramUnlinkCommand, processUpdate, acceptUpdate, deliverKeyExport, deliverExportConfirmation } from "../convex/telegram";
+import { TELEGRAM_MENU, TELEGRAM_FORMATS, telegramInput, telegramWalletCommand, telegramResponse, telegramMenu } from "../lib/telegram-commands";
 
 const address = "0x1111111111111111111111111111111111111111";
 describe("Telegram command-only interface", () => {
+  it("accepts typed /export without exposing an export menu callback",()=>{
+    expect(telegramInput("/export")).toEqual({name:"export",args:""});expect(telegramInput("/export confirm abcdef12")?.args).toBe("confirm abcdef12");
+    expect(telegramInput("/export",true)).toBeNull();expect(telegramInput("/exportkey")).toBeNull();
+    expect(JSON.stringify(telegramMenu({native:{},link:{},selected:"tg"}))).not.toMatch(/export/i);
+  });
   it.each(["hello", "buy 10 ARGOS", "resume", "10 USDC ARGOS", "guide:buy", "/fees", "/positions", "/launch", "/cancel", "/buyandsend", "/buyandburn"])("rejects chat and retired actions: %s", text => expect(telegramInput(text)).toBeNull());
   it("checks command addressing and callback payloads", () => {
     expect(telegramInput("/wallet@TheArgosBot", false, "TheArgosBot")?.name).toBe("wallet");
@@ -55,7 +60,7 @@ describe("Telegram update execution boundary", () => {
   afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
   async function run(text:string,callback=false,result: {ok:boolean;message:string;pending?:boolean;deferred?:boolean;processing?:boolean}={ok:true,message:"Arc transaction confirmed."}) {
     const ctx={
-      runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegram:consumeRateLimit"?true:getFunctionName(ref)==="telegram:consumeLinkNonce"?{status:"linked"}:null),
+      runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegram:consumeRateLimit"?true:getFunctionName(ref)==="telegram:consumeLinkNonce"?{status:"linked"}:getFunctionName(ref)==="walletExports:requestTelegramConfirmation"?{code:"abcdef12"}:getFunctionName(ref)==="walletExports:startTelegram"?{url:"https://keys.argosbot.io/api/key-export/view#ticket=test"}:null),
       runQuery:vi.fn(async()=>({valid:true,link:{_id:"link1",ownerXUserId:"99"}})),
       runAction:vi.fn(async(_ref:Parameters<typeof getFunctionName>[0],_args:Record<string,unknown>)=>result),
     };
@@ -63,6 +68,26 @@ describe("Telegram update execution boundary", () => {
     await (processUpdate as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{updateId:"42",updateJson:JSON.stringify(update)});
     return ctx;
   }
+  it("asks for typed confirmation before creating any TG verification link",async()=>{
+    const ctx=await run("/export");const calls=ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]));
+    expect(calls).toContain("walletExports:requestTelegramConfirmation");expect(calls).not.toContain("walletExports:startTelegram");
+    const sent=vi.mocked(fetch).mock.calls.map(c=>JSON.parse(String(c[1]?.body)));expect(sent).toHaveLength(0);
+    expect(sent.every(body=>!body.reply_markup)).toBe(true);expect(ctx.runAction).not.toHaveBeenCalled();
+  });
+
+  it("queues initial confirmation without relying on a Telegram send in the intake action",async()=>{
+    vi.mocked(fetch).mockRejectedValue(Error("Delivery failed"));const ctx=await run("/export");
+    expect(fetch).not.toHaveBeenCalled();expect(ctx.runMutation).toHaveBeenLastCalledWith(expect.anything(),{updateId:"42",status:"completed"});
+    expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).toContain("walletExports:requestTelegramConfirmation");
+    expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("walletExports:startTelegram");
+  });
+  it("queues verification delivery only after the separate export confirmation command",async()=>{
+    const ctx=await run("/export confirm abcdef12");expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).toContain("walletExports:startTelegram");
+    expect(vi.mocked(fetch).mock.calls.some(c=>JSON.parse(String(c[1]?.body)).reply_markup?.inline_keyboard?.[0]?.[0]?.web_app)).toBe(false);expect(ctx.runAction).not.toHaveBeenCalled();
+  });
+  it("does not start verification for an incomplete confirmation",async()=>{
+    const ctx=await run("/export confirm");expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("walletExports:startTelegram");
+  });
   it.each(["buy 10 USDC ARGOS","resume","guide:buy","0x1111111111111111111111111111111111111111"])("never executes free text %s",async text=>{
     const ctx=await run(text);expect(ctx.runAction).not.toHaveBeenCalled();expect(ctx.runQuery).not.toHaveBeenCalled();
   });
@@ -165,4 +190,35 @@ it("retains the Base chain at the structured command boundary",()=>{
  expect(validateStructuredWalletCommand(command)).toEqual(command);
  expect(validateStructuredWalletCommand({...command,token:"USDC"})).toBeNull();
  expect(validateStructuredWalletCommand({...command,chainId:1})).toBeNull();
+});
+
+describe("durable Telegram export link delivery",()=>{
+ beforeEach(()=>{vi.stubEnv("TELEGRAM_BOT_TOKEN","offline");});afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
+ it.each([true,false])("records delivery outcome without leaking provider errors: success=%s",async success=>{
+  const url="https://keys.argosbot.io/api/key-export/view#ticket="+"a".repeat(64);
+  vi.stubGlobal("fetch",vi.fn(async()=>{if(!success)throw Error("Provider diagnostic "+url);return new Response(JSON.stringify({ok:true}));}));
+  const ctx={runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="walletExports:takeTelegramDelivery"?{attempt:"attempt",chatId:"1",url}:undefined)};
+  await (deliverKeyExport as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{grantId:"grant"});
+  expect(JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body))).toMatchObject({chat_id:"1",reply_markup:{inline_keyboard:[[{web_app:{url}}]]}});
+  expect(ctx.runMutation).toHaveBeenLastCalledWith(expect.anything(),{grantId:"grant",attempt:"attempt",delivered:success});
+ });
+ it("does not send when the grant was delivered, expired or revoked",async()=>{
+  vi.stubGlobal("fetch",vi.fn());const ctx={runMutation:vi.fn(async()=>null)};
+  await (deliverKeyExport as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{grantId:"grant"});expect(fetch).not.toHaveBeenCalled();
+ });
+});
+
+describe("durable Telegram export confirmation warning",()=>{
+ beforeEach(()=>vi.stubEnv("TELEGRAM_BOT_TOKEN","offline"));afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
+ it.each([true,false])("acknowledges warning delivery only on success=%s",async success=>{
+  vi.stubGlobal("fetch",vi.fn(async()=>{if(!success)throw Error("Provider response");return new Response(JSON.stringify({ok:true}));}));
+  const ctx={runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="walletExports:takeConfirmationDelivery"?{attempt:"attempt",chatId:"1",code:"abcdef12",expiresAt:Date.now()+120000}:undefined)};
+  await (deliverExportConfirmation as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{confirmationId:"confirmation",updateId:"update"});
+  const body=JSON.parse(String(vi.mocked(fetch).mock.calls[0][1]?.body));expect(body.chat_id).toBe("1");expect(body.text).toContain("/export confirm abcdef12");expect(body.text).toContain("Expires in 2 minutes");expect(body.reply_markup).toBeUndefined();
+  expect(ctx.runMutation).toHaveBeenLastCalledWith(expect.anything(),{confirmationId:"confirmation",updateId:"update",attempt:"attempt",delivered:success});
+ });
+ it("sends nothing when a confirmation has expired, been superseded or consumed",async()=>{
+  vi.stubGlobal("fetch",vi.fn());const ctx={runMutation:vi.fn(async()=>null)};
+  await (deliverExportConfirmation as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{confirmationId:"confirmation",updateId:"update"});expect(fetch).not.toHaveBeenCalled();
+ });
 });

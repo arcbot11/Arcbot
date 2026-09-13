@@ -52,7 +52,9 @@ export async function reconcileTransactionNonce(id:string,hash:Hex):Promise<Tran
   const repo=repository(),record=await repo.read<Transaction>({id});
   if(!record?.raw||!record.hash||!["signed","submitted"].includes(record.status))throw Error("A signed request is required for nonce reconciliation.");
   if((record.externalReplacement?await verifyExternalSignature(record):await verifyRaw(record.raw as Hex,record.unsigned as Hex,record.wallet))!==record.hash)throw Error("Stored signature hash mismatch.");
-  if(record.hash===hash||record.previousSigned?.some(a=>a.hash===hash))return advanceTransaction(id);
+  // Discovery already came from advanceTransaction. A known mined hash with a
+  // missing receipt must yield to the next pass, never recursively recover it.
+  if(record.hash===hash||record.previousSigned?.some(a=>a.hash===hash))return record;
   const client=chainClient(record.chainId),old=parseTransaction(record.unsigned as Hex);
   const [mined,receipt,finalized]=await Promise.all([client.getTransaction({hash}),client.getTransactionReceipt({hash}),client.getBlock({blockTag:"finalized"})]);
   if(!['success','reverted'].includes(receipt.status))throw Error('Conflicting transaction execution status is unavailable.');
@@ -64,8 +66,23 @@ export async function reconcileTransactionNonce(id:string,hash:Hex):Promise<Tran
   const raw=serializeTransaction(fields as Parameters<typeof serializeTransaction>[0],signature);
   const unsigned=unsignedEnvelope(raw);
   if(keccak256(raw)!==hash||(await recoverTransactionAddress({serializedTransaction:raw})).toLowerCase()!==record.wallet.toLowerCase())throw Error("Mined transaction signature mismatch.");
-  const updated=await repo.command<Transaction>("reconcile_mined_nonce",{id,expectedHash:record.hash,unsigned,raw,hash,block:receipt.blockNumber.toString(),receiptSuccess:receipt.status==='success'});
-  return updated.status==="submitted"?advanceTransaction(id):updated;
+  let unfundedEscrowVerified=false;
+  if(receipt.status==='success'&&record.escrowRef&&['fund','deposit'].includes(record.escrowRef.step)&&old.to&&mined.to&&mined.to.toLowerCase()!==old.to.toLowerCase()&&mined.input==='0x'){
+    // Only a plain transfer to a non-contract, with the escrow still empty,
+    // can be classified automatically as unrelated. Contract calls (including
+    // ERC-20 USDC transfers) require reconciliation even if their net delta is zero.
+    const [beforeCode,afterCode,atReceipt,atFinality]=await Promise.all([
+      client.getCode({address:mined.to,blockNumber:receipt.blockNumber>0n?receipt.blockNumber-1n:0n}),
+      client.getCode({address:mined.to,blockNumber:receipt.blockNumber}),
+      client.getBalance({address:old.to,blockNumber:receipt.blockNumber}),
+      client.getBalance({address:old.to,blockNumber:finalized.number}),
+    ]);
+    unfundedEscrowVerified=(!beforeCode||beforeCode==='0x')&&(!afterCode||afterCode==='0x')&&atReceipt===0n&&atFinality===0n;
+    if((await client.getBlock({blockNumber:receipt.blockNumber})).hash!==receipt.blockHash||(await client.getBlock({blockNumber:finalized.number})).hash!==finalized.hash)throw Error('Escrow funding evidence changed.');
+  }
+  // Adoption still needs ordinary delivery checks on the next worker pass.
+  // Returning here bounds recovery even if RPC receipt visibility is inconsistent.
+  return repo.command<Transaction>("reconcile_mined_nonce",{id,expectedHash:record.hash,unsigned,raw,hash,block:receipt.blockNumber.toString(),receiptSuccess:receipt.status==='success',unfundedEscrowVerified});
 }
 
 /** Binary search the finalized nonce transition, eight reads per pass; no indexer trust. */

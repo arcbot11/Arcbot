@@ -81,7 +81,7 @@ export async function selectMinedAttempt(store:Store,id:string,hash:string,now:n
 }
 
 /** Private worker supplies finalized nonce evidence, never merely a pending nonce. */
-export async function reconcileMinedNonce(store:Store,input:{id:string;expectedHash:string;unsigned:string;raw:string;hash:string;block:string;receiptSuccess?:boolean},now:number){
+export async function reconcileMinedNonce(store:Store,input:{id:string;expectedHash:string;unsigned:string;raw:string;hash:string;block:string;receiptSuccess?:boolean;unfundedEscrowVerified?:boolean},now:number){
   const tx=await store.get<Transaction>(input.id);
   if(!tx?.raw||!tx.hash||tx.hash!==input.expectedHash||!["signed","submitted"].includes(tx.status))throw Error("Nonce recovery changed. Inspect the current request.");
   const original=parseTransaction(tx.unsigned as Hex),other=parseTransaction(input.unsigned as Hex);
@@ -94,7 +94,8 @@ export async function reconcileMinedNonce(store:Store,input:{id:string;expectedH
   }
   // A changed payment to the escrow may still have moved money. Keep it under
   // reconciliation rather than calling it unfunded or collecting a second deposit.
-  if(input.receiptSuccess!==false&&tx.escrowRef&&['fund','deposit'].includes(tx.escrowRef.step)&&other.to?.toLowerCase()===original.to?.toLowerCase())throw Error('External transaction may have funded escrow with different terms. Reconciliation is required.');
+  if(input.receiptSuccess!==false&&tx.escrowRef&&['fund','deposit'].includes(tx.escrowRef.step)&&
+    (!input.unfundedEscrowVerified||!other.to||other.to.toLowerCase()===original.to?.toLowerCase()||(other.data??'0x')!=='0x'))throw Error('External transaction may have funded escrow with different terms. Reconciliation is required.');
   if(tx.orderId)throw Error("Legacy OTC nonce conflict requires manual reconciliation.");
   const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);checkSnapshot({...w,activeTx:undefined},input.block);
   if(w.activeTx!==tx.id)throw Error("Wallet transaction lease mismatch.");

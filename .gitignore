@@ -38,3 +38,4 @@ wallet-exports/
 *.keystore.json
 .envrc
 /.next-preview/
+/lib/key-export/browser-bundle.ts
