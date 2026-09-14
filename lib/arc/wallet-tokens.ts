@@ -8,9 +8,10 @@ import { ARC_TOKEN_CATALOG, CANONICAL_ARC_USDC, isArcUsdcSymbol } from "./token-
 import { balanceRetryDelay, retryBalanceRead } from "./balance-retry";
 import { retainTokenBalances } from "../token-balance-display";
 import pinned from "./pinned-token-addresses.json";
+import {readInventory,saveInventory,discoverInventory,type Inventory} from './inventory';
 
 export type ArcTokenBalance={address:string;symbol:string;name:string;balance:string;usdValue?:number|null;pricedAt?:string|null;stale?:boolean};
-type Result={tokens:ArcTokenBalance[];partial:boolean;block:string;verifiedAddresses:string[]};
+type Result={tokens:ArcTokenBalance[];partial:boolean;block:string;verifiedAddresses:string[];discoveryPartial?:boolean;balancePartial?:boolean};
 const cache=new Map<string,{expires:number;request:Promise<Result>}>();
 const pending=new Map<string,Promise<Result>>();
 const snapshots=new Map<string,Result>();
@@ -38,29 +39,33 @@ export function arcTokenBalances(address:string,known:string[]=[],fresh=false):P
   const owner=getAddress(address),key=owner+[...new Set(known.map(a=>a.toLowerCase()))].sort().join();
   const running=pending.get(key);if(running)return running;
   const hit=cache.get(key);if(!fresh&&hit&&hit.expires>Date.now())return hit.request;
-  const previous=snapshots.get(owner);
-  const request=readBalances(owner,[...known,...(previous?.tokens.map(t=>t.address)??[]),...pinned]).then(result=>{
+  let previous=snapshots.get(owner);
+  const request=readInventory(owner).catch(()=>({entries:[],truncated:true,cursor:null} as Inventory)).then(async inventory=>{
+    if(!previous&&inventory.entries.some(e=>e.balance&&e.balance!=='0'&&e.symbol))previous={tokens:inventory.entries.filter(e=>e.balance&&e.balance!=='0'&&e.symbol).map(e=>({address:getAddress(e.token),symbol:e.symbol!,name:e.name??e.symbol!,balance:e.balance!,stale:true})),partial:true,block:'0',verifiedAddresses:[]};
+    const result=await readBalances(owner,[...known,...inventory.entries.map(e=>e.token),...(previous?.tokens.map(t=>t.address)??[]),...pinned],inventory);
+    return result;
+  }).then(result=>{
     const tokens=retainTokenBalances(previous??null,result);
-    const merged={...result,tokens,partial:result.partial||tokens.some(t=>t.stale)};
+    const merged={...result,tokens,partial:result.partial||tokens.some(t=>t.stale),balancePartial:result.balancePartial||tokens.some(t=>t.stale)};
     if(snapshots.size>=100&&!snapshots.has(owner))snapshots.delete(snapshots.keys().next().value!);
     snapshots.set(owner,merged);
     if(merged.partial)cache.delete(key);
     return merged;
   }).catch(error=>{
     cache.delete(key);
-    if(previous)return {...previous,partial:true,verifiedAddresses:[],tokens:previous.tokens.map(t=>({...t,stale:true}))};
+    if(previous)return {...previous,partial:true,balancePartial:true,verifiedAddresses:[],tokens:previous.tokens.map(t=>({...t,stale:true}))};
     throw error;
   }).finally(()=>pending.delete(key));
   pending.set(key,request);
   if(cache.size>=100)cache.delete(cache.keys().next().value!);
   cache.set(key,{expires:Date.now()+15_000,request});return request;
 }
-async function readBalances(owner:`0x${string}`,known:string[]):Promise<Result>{
+async function readBalances(owner:`0x${string}`,known:string[],inventory:Inventory):Promise<Result>{
   const candidates=new Map<string,{symbol?:string;name?:string}>();let partial=false;
   // The explorer sometimes returns an empty successful response during indexing.
   // Retry it as well as transport failures before falling back to indexed tokens.
   let discoveryComplete=false;
-  for(let attempt=0;attempt<3;attempt++){
+  for(let attempt=0;attempt<(inventory.entries.length?1:3);attempt++){
     try{
       let query="";const cursors=new Set<string>();let malformed=false;
       for(let page=0;page<20;page++){
@@ -82,7 +87,7 @@ async function readBalances(owner:`0x${string}`,known:string[]):Promise<Result>{
       }
       if(discoveryComplete&&candidates.size)break;
     }catch{discoveryComplete=false;}
-    if(attempt<2)await balanceRetryDelay(attempt);
+    if(attempt<2&&!inventory.entries.length)await balanceRetryDelay(attempt);
   }
   partial=!discoveryComplete;
   if(!discoveryComplete||candidates.size===0){
@@ -107,6 +112,13 @@ async function readBalances(owner:`0x${string}`,known:string[]):Promise<Result>{
   candidates.delete(CANONICAL_ARC_USDC);candidates.delete("0x0000000000000000000000000000000000000000");
   const config=arcDisplayConfig(),transport=arcTransport(config),rpc=createArcRpc(config,transport),client=createPublicClient({transport});
   const head=await retryBalanceRead(()=>checkArcRpc(rpc,config)),tokens:ArcTokenBalance[]=[],verifiedAddresses:string[]=[],queue=[...candidates.entries()];
+  let scan:Awaited<ReturnType<typeof discoverInventory>>|undefined;
+  try{
+    scan=await discoverInventory(owner,config,head.number,inventory);
+    for(const token of scan.tokens)if(!candidates.has(token)&&token!==CANONICAL_ARC_USDC)queue.push([token,{}]);
+  }catch{/* Keep the previous cursor and known inventory when logs are unavailable. */}
+  const discoveryPartial=partial||!scan||scan.partial||inventory.truncated;
+  let balancePartial=false;
   // Limit concurrency, not the number of holdings. Retry only the failed token.
   await Promise.all(Array.from({length:Math.min(4,queue.length)},async()=>{
     while(queue.length){const [raw,metadata]=queue.shift()!;const token=getAddress(raw);
@@ -115,11 +127,27 @@ async function readBalances(owner:`0x${string}`,known:string[]):Promise<Result>{
         const [decimals,symbol]=await retryBalanceRead(()=>Promise.all([rpc.decimals(token,head.number),metadata.symbol?Promise.resolve(metadata.symbol):client.readContract({address:token,abi:metadataAbi,functionName:"symbol",blockNumber:head.number})]));
         verifiedAddresses.push(token);
         if(isArcUsdcSymbol(symbol))continue;
-        const value=await tokenUsdEstimate(token,formatUnits(balance,decimals)).catch(()=>({usdValue:null,pricedAt:null}));
-        tokens.push({address:token,symbol:symbol.trim().replace(/^\$+/,""),name:metadata.name??symbol,balance:formatUnits(balance,decimals),...value});
-      }catch{partial=true;}
+        const amount=formatUnits(balance,decimals);
+        tokens.push({address:token,symbol:symbol.trim().replace(/^\$+/,""),name:metadata.name??symbol,balance:amount});
+      }catch{partial=true;balancePartial=true;}
     }
   }));
   if((await retryBalanceRead(()=>rpc.block(head.number))).hash!==head.hash)throw Error("Token balance block changed");
-  return {tokens:tokens.sort((a,b)=>a.symbol.localeCompare(b.symbol)),partial,block:head.number.toString(),verifiedAddresses};
+  // Independent bounded pricing: a slow price endpoint cannot occupy balance
+  // workers, create hundreds of parallel requests, or hide verified holdings.
+  const prices=new Map<string,Awaited<ReturnType<typeof tokenUsdEstimate>>>(),priceQueue=[...tokens];
+  let pricingOpen=true,timer:ReturnType<typeof setTimeout>|undefined;
+  const timeout=new Promise<null>(resolve=>{timer=setTimeout(()=>resolve(null),1500);});
+  try{
+    const work=Promise.all(Array.from({length:Math.min(4,priceQueue.length)},async()=>{
+      while(pricingOpen&&priceQueue.length){const t=priceQueue.shift()!;const value=await tokenUsdEstimate(t.address,t.balance).catch(()=>({usdValue:null,pricedAt:null}));if(pricingOpen)prices.set(t.address,value);}
+    }));
+    await Promise.race([work,timeout]);
+    for(const token of tokens){const value=prices.get(token.address);if(value)Object.assign(token,value);}
+  }finally{pricingOpen=false;if(timer)clearTimeout(timer);}
+  const byToken=new Map(tokens.map(t=>[t.address.toLowerCase(),t]));
+  await saveInventory(owner,head.number.toString(),[...new Set([...verifiedAddresses.map(a=>a.toLowerCase()),...(scan?.tokens??[])])].map(token=>{
+    const t=byToken.get(token);return t?{token,balance:t.balance,symbol:t.symbol,name:t.name}:verifiedAddresses.some(a=>a.toLowerCase()===token)?{token,balance:'0'}:{token};
+  }),scan?.cursor).catch(()=>undefined);
+  return {tokens:tokens.sort((a,b)=>a.symbol.localeCompare(b.symbol)),partial:partial||discoveryPartial,discoveryPartial,balancePartial,block:head.number.toString(),verifiedAddresses};
 }

@@ -124,6 +124,9 @@ it("binds one immutable encryption key and idempotency key across response loss"
  await expect(f.call(exports.begin,{...f.base,keyHash:hash("attacker-key")})).rejects.toThrow();
  await expect(assertNoKeyExport(f.ctx as never,alice)).rejects.toThrow("in progress");await expect(assertNoKeyExport(f.ctx as never,bob)).resolves.toBeUndefined();
  await f.call(exports.relayed,{...f.base,keyHash:hash("key")});await f.call(exports.close,{...f.base,acknowledged:true});
+ await f.call(exports.close,{...f.base,acknowledged:true});await f.call(exports.close,{...f.base,acknowledged:false});
+ expect(f.rows.walletExportAudit.filter(r=>r.event==='client_acknowledged')).toHaveLength(1);
+ await expect(f.call(exports.close,{...f.base,browserHash:hash('other'),acknowledged:true})).rejects.toThrow();
  expect(f.rows.walletExportAccounts[0].externalControlPossibleAt).toBeDefined();await expect(assertNoKeyExport(f.ctx as never,alice)).resolves.toBeUndefined();await expect(f.begin()).rejects.toThrow();
 });
 it("expires stale approvals and independently releases timed-out coordination without erasing disclosure risk",async()=>{

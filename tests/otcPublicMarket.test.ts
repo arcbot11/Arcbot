@@ -11,11 +11,12 @@ describe("public OTC book",()=>{
     const result=publicMarket(records);expect(result.listings.map(l=>l.id)).toEqual(["ready"]);expect(result.stats.lowestBps).toBe(200);
   });
   it("only publishes order-book fields",()=>{
-    expect(Object.keys(publicMarket([listing("public",100)]).listings[0]).sort()).toEqual(["available","createdAt","id","premiumBps","seller"]);
+    expect(Object.keys(publicMarket([listing("public",100)]).listings[0]).sort()).toEqual(["available","createdAt","id","premiumBps","seller","settling"]);
   });
-  it("hides the whole listing while a confirmed fill settles",()=>{
+  it("keeps a partially purchased listing visible with its remaining amount and a settlement lock",()=>{
     const active={...listing("busy",0),available:"50000000",held:"10000000",pendingFills:1};
-    expect(publicMarket([active]).listings).toEqual([]);
+    expect(publicMarket([active]).listings[0]).toMatchObject({id:'busy',available:'50000000',settling:true});
+    expect(publicMarket([{...active,available:'0'}]).listings[0]).toMatchObject({available:'0',settling:true});
     expect(publicMarket([{...active,held:"0",pendingFills:0}]).listings).toHaveLength(1);
   });
 });

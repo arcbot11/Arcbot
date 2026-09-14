@@ -67,14 +67,12 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
       }
       let amountOut: bigint; let gasEstimate: bigint;
       if (route.pools[0].protocol === "v3") {
-        await requireCode(V3_QUOTER);
-        for (const pool of route.pools) {
+        await Promise.all([requireCode(V3_QUOTER),...route.pools.map(async pool => {
           if (pool.protocol !== "v3") throw new Error("Invalid V3 route");
-          const registered = await call(V3_FACTORY, "getPool", [pool.currency0, pool.currency1, pool.fee]);
+          const [registered,,liquidity] = await Promise.all([call(V3_FACTORY, "getPool", [pool.currency0, pool.currency1, pool.fee]),requireCode(pool.address),call(pool.address,"liquidity",[])]);
           if (typeof registered !== "string" || registered.toLowerCase() !== pool.address.toLowerCase()) throw new Error("V3 factory pool mismatch");
-          await requireCode(pool.address);
-          if (await call(pool.address, "liquidity", []) === 0n) throw new Error("No active liquidity");
-        }
+          if (liquidity === 0n) throw new Error("No active liquidity");
+        })]);
         const result = await call(V3_QUOTER, "quoteExactInput", [v3Path(route), amountIn]) as readonly [bigint, readonly bigint[], readonly number[], bigint];
         amountOut = result[0]; gasEstimate = result[3];
         const last=route.pools.at(-1)!;
@@ -83,13 +81,12 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
         amountOut-=amountOut*BigInt(buyTax)/10000n;
       } else {
         if (amountIn >= 2n ** 128n) throw new Error("V4 input exceeds uint128");
-        await requireCode(V4_QUOTER); await requireCode(V4_STATE_VIEW);
-        for(const pool of route.pools){
+        await Promise.all([requireCode(V4_QUOTER),requireCode(V4_STATE_VIEW),...route.pools.map(async pool=>{
           if(pool.protocol!=="v4")throw new Error("Invalid V4 route");
           const id=poolId(pool);
-          const slot=await call(V4_STATE_VIEW,"getSlot0",[id]) as readonly [bigint,number,number,number];
-          if(!slot[0]||await call(V4_STATE_VIEW,"getLiquidity",[id])===0n)throw new Error("V4 pool is uninitialized or has no active liquidity");
-        }
+          const [slot,liquidity]=await Promise.all([call(V4_STATE_VIEW,"getSlot0",[id]) as Promise<readonly [bigint,number,number,number]>,call(V4_STATE_VIEW,"getLiquidity",[id])]);
+          if(!slot[0]||liquidity===0n)throw new Error("V4 pool is uninitialized or has no active liquidity");
+        })]);
         const pool=route.pools[0];
         const result=route.pools.length===1
           ? await call(V4_QUOTER,"quoteExactInputSingle",[{poolKey:pool,zeroForOne:currencies[0].toLowerCase()===pool.currency0.toLowerCase(),exactAmount:amountIn,hookData:"0x"}]) as readonly [bigint,bigint]

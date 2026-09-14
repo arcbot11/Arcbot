@@ -71,6 +71,7 @@ export async function completeXOAuth(request: NextRequest) {
     const family = browserHash(request, secret);
     const proof = readOAuthAttempt(request.cookies.get(oauthCookieName(state)!)?.value, secret);
     if (!context.telegramLink && (!family || family !== context.browserFamily || proof?.verifier !== context.verifier || proof.generation !== context.generation)) {
+      console.info('x_sign_in_handoff',{stage:'return_to_original_browser',identityVerified:true});
       return xBrowserReturn(request, site, true, completionProof) ?? expired();
     }
     if (!saved.walletAddress) {
@@ -103,6 +104,7 @@ export async function completeXOAuth(request: NextRequest) {
     response.cookies.set("argos_tg_web_login", "", { httpOnly: true, path: "/api/auth/telegram", maxAge: 0 });
     // Keep the attempt proof for its original short lifetime so an interrupted response can be retried.
     response.headers.set("cache-control", "no-store"); response.headers.set("referrer-policy", "no-referrer");
+    console.info('x_sign_in_complete',{stage:context.telegramLink?'telegram_link':'browser_session',resumed:tokenSaved});
     return response;
   } catch (error) {
     console.warn("x_sign_in_retry", { stage, errorType: error instanceof Error ? error.name : "unknown" });

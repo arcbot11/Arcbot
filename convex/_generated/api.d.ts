@@ -34,6 +34,10 @@ import type * as lib_xUnverifiedReplyLimit from "../lib/xUnverifiedReplyLimit.js
 import type * as lifetimeVolume from "../lifetimeVolume.js";
 import type * as llm from "../llm.js";
 import type * as marketData from "../marketData.js";
+import type * as walletData from "../walletData.js";
+import type * as walletInventory from "../walletInventory.js";
+import type * as operationDiagnostics from "../operationDiagnostics.js";
+import type * as arcPermits from "../arcPermits.js";
 import type * as otc from "../otc.js";
 import type * as registry from "../registry.js";
 import type * as retiredTokenCleanup from "../retiredTokenCleanup.js";
@@ -92,6 +96,10 @@ declare const fullApi: ApiFromModules<{
   lifetimeVolume: typeof lifetimeVolume;
   llm: typeof llm;
   marketData: typeof marketData;
+  walletData: typeof walletData;
+  walletInventory: typeof walletInventory;
+  operationDiagnostics: typeof operationDiagnostics;
+  arcPermits: typeof arcPermits;
   otc: typeof otc;
   registry: typeof registry;
   retiredTokenCleanup: typeof retiredTokenCleanup;

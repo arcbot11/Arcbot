@@ -1,4 +1,5 @@
 import {staleUnsigned} from "./unsigned-recovery";
+import {operationDiagnostic} from '../operation-diagnostics';
 import {WalletChangeError,recheckUnsignedCall} from './external-spending';
 import {verifyExternalSignature} from './external-signature';
 import {approvalReceiptMatches} from './approval-delivery';
@@ -47,7 +48,14 @@ export function chainClient(chain: Chain) {
   // is for discovery and quotes, never evidence of affordability or delivery.
   return createPublicClient({ transport: chain === 5042 ? arcTransport(arcConfigFromEnv(),{traceFallback:false}) : baseTransport(baseConfigFromEnv()) });
 }
-export async function balanceSnapshot(chain: Chain, address: string) {
+type BalanceSnapshot={balanceWei:string;block:string;nonce:number;pendingNonce:number};
+const snapshotRequests=new Map<string,Promise<BalanceSnapshot>>();
+export function balanceSnapshot(chain:Chain,address:string):Promise<BalanceSnapshot>{
+  const key=`${chain}:${getAddress(address)}`,pending=snapshotRequests.get(key);if(pending)return pending;
+  const request=readBalanceSnapshot(chain,address).finally(()=>{if(snapshotRequests.get(key)===request)snapshotRequests.delete(key);});
+  snapshotRequests.set(key,request);return request;
+}
+async function readBalanceSnapshot(chain: Chain, address: string) {
   const owner = getAddress(address);
   const head = chain === 5042 ? await checkArcRpc(createArcRpc(arcConfigFromEnv()),arcConfigFromEnv()) : await checkBaseRpc(createBaseRpc(baseConfigFromEnv()),baseConfigFromEnv());
   const client = chainClient(chain);
@@ -127,17 +135,21 @@ async function escrowDepositReadyForPayout(record: Transaction) {
 }
 /** Persisted unsigned bytes and a wallet lease precede signing; persisted signed bytes precede every broadcast. */
 export async function advanceTransaction(id: string, receiptOnly = false):Promise<Transaction> {
-  try{return await advanceTransactionAttempt(id,receiptOnly);}
+  const repo=repository(),lease=crypto.randomUUID();
+  const startedAt=Date.now();
+  if(!receiptOnly&&!await repo.command<boolean>('recovery_acquire',{id,lease}))return repo.read<Transaction>({id});
+  try{return await advanceTransactionAttempt(id,receiptOnly,receiptOnly?undefined:lease);}
   catch(error){
+    await operationDiagnostic({requestId:id,channel:'worker',stage:'recovery',startedAt,error});
     if(error instanceof WalletChangeError){
       const repo=repository(),tx=await repo.read<Transaction>({id});
       if(tx?.recoveryVersion===1&&tx.signingStartedAt===undefined&&!tx.raw&&!tx.hash&&(!tx.escrowRef||['fund','deposit'].includes(tx.escrowRef.step))&&!tx.orderId)
         return repo.command<Transaction>('abort_changed_request',{id,reason:error.reason});
     }
     throw error;
-  }
+  }finally{if(!receiptOnly)await repo.command('recovery_release',{id,lease}).catch(()=>undefined);}
 }
-async function advanceTransactionAttempt(id:string,receiptOnly:boolean):Promise<Transaction>{
+async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:string):Promise<Transaction>{
   const repo=repository(); let record=await repo.read<Transaction>({id});
   if(!record)throw Error('Transaction missing.');
   if (["completed","reverted","cancelled"].includes(record.status)) return record;
@@ -392,7 +404,7 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean):Promise<
     }
   }
   if (!await escrowDepositReadyForPayout(record)) return record;
-  record=await repo.command<Transaction>("submitted",{id});
+  record=await repo.command<Transaction>("submitted",{id,lease});
   if(record.status!=='submitted'||record.broadcastPausedAt!==undefined)return record;
   // The signature and submitted state remain durable if broadcasting throws.
   const hash=await client.sendRawTransaction({serializedTransaction:record.raw as Hex});

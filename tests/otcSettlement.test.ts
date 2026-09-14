@@ -79,11 +79,11 @@ describe("OTC receipt verification and retry boundaries",()=>{
   });
   it("authorizes a verified Base payment without waiting for finality",async()=>{finalized=99n;await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
   it("only settles a canonical finalized split payment",async()=>{await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
-  it("rejects missing payment event proof",async()=>{receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command).not.toHaveBeenCalled();});
+  it("rejects missing payment event proof",async()=>{receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);});
   it("rejects the wrong actual transaction recipient",async()=>{(mocks.client.getTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({from:account.address,to:seller,value:BigInt(order.totalWei),input:paymentCall(order).data});await expect(advanceTransaction(record.id)).rejects.toThrow("does not match");});
   it("rejects a noncanonical receipt",async()=>{receipt!.blockHash=otherHash;await expect(advanceTransaction(record.id)).rejects.toThrow("not canonical");});
   it("keeps an unknown nonce consumption reserved",async()=>{receipt=null;nonce=1;await expect(advanceTransaction(record.id)).rejects.toThrow("External nonce change needs transaction evidence");expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
-  it("persists submitted state before rebroadcasting identical bytes after timeout",async()=>{receipt=null;nonce=0;(mocks.client.sendRawTransaction as ReturnType<typeof vi.fn>).mockImplementation(async()=>{expect(mocks.command).toHaveBeenCalledWith("submitted",{id:record.id});throw new Error("network timeout");});await expect(advanceTransaction(record.id)).rejects.toThrow("network timeout");await expect(advanceTransaction(record.id)).rejects.toThrow("network timeout");expect(mocks.client.sendRawTransaction).toHaveBeenCalledTimes(2);expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:record.raw});expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
+  it("persists submitted state before rebroadcasting identical bytes after timeout",async()=>{receipt=null;nonce=0;(mocks.client.sendRawTransaction as ReturnType<typeof vi.fn>).mockImplementation(async()=>{expect(mocks.command).toHaveBeenCalledWith("submitted",expect.objectContaining({id:record.id,lease:expect.any(String)}));throw new Error("network timeout");});await expect(advanceTransaction(record.id)).rejects.toThrow("network timeout");await expect(advanceTransaction(record.id)).rejects.toThrow("network timeout");expect(mocks.client.sendRawTransaction).toHaveBeenCalledTimes(2);expect(mocks.client.sendRawTransaction).toHaveBeenCalledWith({serializedTransaction:record.raw});expect(mocks.command).not.toHaveBeenCalledWith("settled",expect.anything());});
   it("does not rebroadcast if Base extra fees outgrow the allowance",async()=>{receipt=null;nonce=0;extraFee=10n**18n;await expect(advanceTransaction(record.id)).rejects.toThrow("configured cap");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
   it("does not broadcast if other wallet reservations are no longer covered",async()=>{receipt=null;nonce=0;wallet.holds.other=(10n**20n).toString();await expect(advanceTransaction(record.id)).rejects.toThrow("Signed transaction is underfunded");expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();});
 });
@@ -120,7 +120,7 @@ it.each(['valid','unfinalized','wrong-wallet','wrong-nonce','reorg'])('checks mi
  mocks.command.mockImplementation(async command=>{if(command==='reconcile_mined_nonce')record.status='cancelled';return structuredClone(record);});
  const {reconcileTransactionNonce}=await import('../lib/otc/recovery-runtime');
  if(mode==='valid'){expect((await reconcileTransactionNonce(record.id,minedHash)).status).toBe('cancelled');expect(mocks.command).toHaveBeenCalledWith('reconcile_mined_nonce',expect.objectContaining({id:record.id,hash:minedHash,block:'100'}));}
- else{await expect(reconcileTransactionNonce(record.id,minedHash)).rejects.toThrow();expect(mocks.command).not.toHaveBeenCalled();}
+ else{await expect(reconcileTransactionNonce(record.id,minedHash)).rejects.toThrow();expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);}
  expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();
 });
 describe("Base ETH escrow arrival verification",()=>{
@@ -134,15 +134,15 @@ describe("Base ETH escrow arrival verification",()=>{
     expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
     expect(mocks.client.getBlock).not.toHaveBeenCalledWith({blockTag:"finalized"});
   });
-  it.each([29,30])("only verifies incoming deposits after 30 seconds: %s",async age=>{
+  it.each([9,10])("only verifies incoming deposits after 10 seconds: %s",async age=>{
     await escrowSend();record.escrowRef!.step="deposit";
     const now=BigInt(Math.floor(Date.now()/1000));
     const original=mocks.client.getTransaction as ReturnType<typeof vi.fn>;
     const tx=await original();original.mockResolvedValue({...tx,blockHash:hash});
     mocks.client.getBlock=vi.fn(async(args:{blockNumber?:bigint;blockTag?:string}={})=>({hash,number:args.blockNumber??200n,timestamp:args.blockNumber===100n?now-BigInt(age):now}));
     await advanceTransaction(record.id,true);
-    if(age===30)expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
-    else expect(mocks.command).not.toHaveBeenCalled();
+    if(age===10)expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
+    else expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);
   });
   it("verifies a credited Base payment despite unrelated recipient spending",async()=>{
     await escrowSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);
@@ -154,7 +154,7 @@ describe("Base ETH escrow arrival verification",()=>{
   });
   it("rejects a changed receipt block",async()=>{
     await escrowSend();receipt!.blockHash=otherHash;
-    await expect(advanceTransaction(record.id,true)).rejects.toThrow("not canonical");expect(mocks.command).not.toHaveBeenCalled();
+    await expect(advanceTransaction(record.id,true)).rejects.toThrow("not canonical");expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);
   });
   it("records a canonical Base revert as failure without waiting for finality",async()=>{
     await escrowSend();receipt!.status="reverted";
@@ -170,14 +170,14 @@ describe("independent wallet transfers and retained verification locks",()=>{
   it("does not report Base inclusion for a mismatched transaction",async()=>{
     await setupSend();finalized=99n;
     (mocks.client.getTransaction as ReturnType<typeof vi.fn>).mockResolvedValue({from:seller,to:seller,value:10n,input:"0x"});
-    await expect(advanceTransaction(record.id,true)).rejects.toThrow("does not match");expect(mocks.command).not.toHaveBeenCalled();
+    await expect(advanceTransaction(record.id,true)).rejects.toThrow("does not match");expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);
   });
   it.each([5042,8453] as const)("settles chain %s sends with OTC disabled and the other chain unconfigured",async chain=>{
     await setupSend(chain);vi.stubEnv("OTC_ENABLED","false");vi.stubEnv("OTC_BASE_PAYMENT_ROUTER","");vi.stubEnv("OTC_FEE_WALLET","");vi.stubEnv("OTC_BASE_ROUTER_CODE_HASH","");
     vi.stubEnv(chain===5042?"BASE_MAINNET_RPC_URL":"ARC_MAINNET_RPC_URL","");
     await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});
   });
-  it("retains Arc reservations until finality is verified",async()=>{await setupSend(5042);finalized=99n;await advanceTransaction(record.id);expect(mocks.command).not.toHaveBeenCalled();});
+  it("retains Arc reservations until finality is verified",async()=>{await setupSend(5042);finalized=99n;await advanceTransaction(record.id);expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);});
   it("does not query Base finality even if that RPC method is unavailable",async()=>{await setupSend();(mocks.client.getBlock as ReturnType<typeof vi.fn>).mockImplementation(async(args:{blockTag?:string;blockNumber?:bigint})=>{if(args.blockTag==="finalized")throw Error("unavailable");return {number:args.blockNumber??200n,hash,timestamp:BigInt(Math.floor(Date.now()/1000))};});await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
   it("completes a Base withdrawal using exact canonical transfer evidence",async()=>{await setupSend();(mocks.client.getBalance as ReturnType<typeof vi.fn>).mockResolvedValue(10n**18n);await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true});});
 });
@@ -189,9 +189,9 @@ describe("ERC20 settlement locks",()=>{
   }
   it("completes only after finalized event and balance proof",async()=>{await tokenSend();await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",{id:record.id,expectedHash:record.hash,block:"100",success:true,settlement:{gasWei:'21000',output:{raw:'10',decimals:0}}});});
   it('settles a fee-on-transfer send with its actual delivered amount',async()=>{await tokenSend();receipt!.logs=[{address:seller,topics:encodeEventTopics({abi:transferAbi,eventName:'Transfer',args:{from:account.address,to:router}}),data:encodeAbiParameters([{type:'uint256'}],[9n])},{address:seller,topics:encodeEventTopics({abi:transferAbi,eventName:'Transfer',args:{from:account.address,to:seller}}),data:encodeAbiParameters([{type:'uint256'}],[1n])}];(mocks.client.readContract as ReturnType<typeof vi.fn>).mockImplementation(async({blockNumber,functionName,args}:{blockNumber:bigint;functionName:string;args:string[]})=>functionName==='decimals'?0:args[0].toLowerCase()===account.address.toLowerCase()?(blockNumber===99n?20n:10n):(blockNumber===99n?5n:14n));await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith('settled',expect.objectContaining({settlement:{gasWei:'21000',output:{raw:'9',decimals:0}}}));});
-  it("retains reservations when a successful receipt has no transfer",async()=>{await tokenSend();receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command).not.toHaveBeenCalled();});
-  it("retains reservations if recipient balance did not increase",async()=>{await tokenSend();(mocks.client.readContract as ReturnType<typeof vi.fn>).mockResolvedValue(5n);await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command).not.toHaveBeenCalled();});
-  it("retains reservations if historical token state is unavailable",async()=>{await tokenSend();(mocks.client.readContract as ReturnType<typeof vi.fn>).mockRejectedValue(Error("pruned"));await expect(advanceTransaction(record.id)).rejects.toThrow("pruned");expect(mocks.command).not.toHaveBeenCalled();});
+  it("retains reservations when a successful receipt has no transfer",async()=>{await tokenSend();receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);});
+  it("retains reservations if recipient balance did not increase",async()=>{await tokenSend();(mocks.client.readContract as ReturnType<typeof vi.fn>).mockResolvedValue(5n);await expect(advanceTransaction(record.id)).rejects.toThrow("not verified");expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);});
+  it("retains reservations if historical token state is unavailable",async()=>{await tokenSend();(mocks.client.readContract as ReturnType<typeof vi.fn>).mockRejectedValue(Error("pruned"));await expect(advanceTransaction(record.id)).rejects.toThrow("pruned");expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);});
 });
 
 
@@ -224,7 +224,7 @@ describe("Arc swap delivery",()=>{
  it("requires buy-and-burn delivery to the dead address, not the owner",async()=>{
    await setupSwap();record.swapOutput!.recipient="0x000000000000000000000000000000000000dEaD";
    await expect(advanceTransaction(record.id)).rejects.toThrow("Minimum swap output");
-   expect(mocks.command).not.toHaveBeenCalled();
+   expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);
  });
  it("verifies burn destination balance changes before completing",async()=>{
    await setupSwap();const dead="0x000000000000000000000000000000000000dEaD";
@@ -235,7 +235,7 @@ describe("Arc swap delivery",()=>{
    expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));
  });
  it("completes only when minimum output and real balance changes agree",async()=>{await setupSwap();await advanceTransaction(record.id);expect(mocks.command).toHaveBeenCalledWith("settled",expect.objectContaining({success:true}));});
- it("does not accept a successful receipt without output",async()=>{await setupSwap();receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("Minimum swap output");expect(mocks.command).not.toHaveBeenCalled();});
+ it("does not accept a successful receipt without output",async()=>{await setupSwap();receipt!.logs=[];await expect(advanceTransaction(record.id)).rejects.toThrow("Minimum swap output");expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);});
  it("rejects output below the accepted minimum",async()=>{await setupSwap();record.swapOutput!.minimum="11";await expect(advanceTransaction(record.id)).rejects.toThrow("Minimum swap output");});
  it("retains reservations if output metadata is missing",async()=>{await setupSwap();delete record.swapOutput;await expect(advanceTransaction(record.id)).rejects.toThrow("terms missing");});
 });
@@ -290,11 +290,11 @@ describe("Arc USDC swap settlement",()=>{
  it("retains the lock when the native balance cannot be reconciled",async()=>{
    await usdcSwap();mocks.client.getBalance=vi.fn(async()=>10n**18n);
    await expect(advanceTransaction(record.id,true)).rejects.toThrow("not verified");
-   expect(mocks.command).not.toHaveBeenCalled();
+   expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);
  });
  it("never rebroadcasts when a polling request cannot find the receipt",async()=>{
    await usdcSwap();receipt=null;nonce=0;await advanceTransaction(record.id,true);
-   expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();expect(mocks.command).not.toHaveBeenCalled();
+   expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);
  });
 });
 
@@ -320,7 +320,7 @@ it.each(["mined revert","awaiting receipt","CDP unavailable","wrong signature"])
    if(mode==="CDP unavailable")mocks.sign.mockRejectedValue(Error("timeout"));
    else mocks.sign.mockResolvedValue({signature:await account.signTransaction({...tx,value:1n})});
    await expect(advanceTransaction(record.id)).rejects.toThrow(mode==="CDP unavailable"?"timeout":"different transaction");
-   expect(mocks.command).not.toHaveBeenCalled();expect(wallet.activeTx).toBe(record.id);return;
+   expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);expect(wallet.activeTx).toBe(record.id);return;
  }
  if(mode==="awaiting receipt"){
    receipt=null;nonce=0;
@@ -376,7 +376,7 @@ it.each(['empty','funded','contract','calldata','unavailable'] as const)('requir
  mocks.client.getCode=vi.fn(async()=>mode==='contract'?'0x1234':'0x');
  mocks.client.getBalance=vi.fn(async()=>{if(mode==='unavailable')throw Error('unavailable');return mode==='funded'?1n:0n;});
  const {reconcileTransactionNonce}=await import('../lib/otc/recovery-runtime');
- if(mode==='unavailable'){await expect(reconcileTransactionNonce(record.id,minedHash)).rejects.toThrow();expect(mocks.command).not.toHaveBeenCalled();}
+ if(mode==='unavailable'){await expect(reconcileTransactionNonce(record.id,minedHash)).rejects.toThrow();expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);}
  else{await reconcileTransactionNonce(record.id,minedHash);expect(mocks.command).toHaveBeenCalledWith('reconcile_mined_nonce',expect.objectContaining({unfundedEscrowVerified:mode==='empty'}));}
  expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();
 });

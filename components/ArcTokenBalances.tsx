@@ -28,7 +28,7 @@ export function ArcTokenBalances({address,refreshKey=0,onTrade,busy=false}:{addr
       if(pending||document.visibilityState==='hidden')return;pending=true;
       try{await loadTokenBalances<TokenBalanceSnapshot>("/api/wallet/tokens",address,controller.signal,result=>{
         setData(previous=>{const tokens=retainTokenBalances(previous?.walletAddress.toLowerCase()===address.toLowerCase()?previous:null,result);return {...result,tokens,partial:result.partial||tokens.some(t=>t.stale)};});
-        if(!result.partial)setError("");
+        if(!(result.balancePartial??result.partial))setError("");
       });
       }catch{if(!controller.signal.aborted)setError("Token balances could not refresh.");}finally{pending=false;}
     };
@@ -41,7 +41,7 @@ export function ArcTokenBalances({address,refreshKey=0,onTrade,busy=false}:{addr
     {error&&<p className="otc-notice" role="status">{error} <button className="otc-inline-button" aria-label="Dismiss token balance notice" onClick={()=>setError("")}>×</button></p>}
     <div className="arc-holdings-grid">{data?.tokens.map(token=><HoldingCard key={token.address} token={token} onError={setError} onTrade={onTrade} busy={busy}/>)}</div>
     {!data&&!error&&<p className="otc-fine">Loading token balances…</p>}
-    {data?.partial&&<p className="otc-fine">Some token balances could not refresh. Last loaded balances remain visible.</p>}
+    {(data?.balancePartial??data?.partial)&&<p className="otc-fine">Some token balances could not refresh. Last loaded balances remain visible.</p>}
     {data&&!data.partial&&!data.tokens.length&&<p className="otc-fine">No other Arc token balances found.</p>}
   </section>;
 }

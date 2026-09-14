@@ -101,8 +101,8 @@ async function limit(ctx:MutationCtx,key:string,max:number){
   const data={key,count:row&&row.resetAt>now?row.count+1:1,resetAt:row&&row.resetAt>now?row.resetAt:now+3600_000};
   if(row)await ctx.db.patch(row._id,data);else await ctx.db.insert("walletExportLimits",data);
 }
-async function live(ctx:MutationCtx,g:Doc<"walletExportGrants">){
-  if(g.state==="revoked"||g.expiresAt<=Date.now())exportFail("EXPIRED");
+async function live(ctx:MutationCtx,g:Doc<"walletExportGrants">,acknowledgedClose=false){
+  if(!acknowledgedClose&&(g.state==="revoked"||g.expiresAt<=Date.now()))exportFail("EXPIRED");
   const account=await accountFor(ctx,g.provider,g.userId);
   if(account._id!==g.accountId||account.revision!==g.revision)exportFail("AUTHORIZATION");
   if(g.provider==="x"){
@@ -329,6 +329,7 @@ export const begin=mutation({args:{...base,keyHash:v.string()},handler:async(ctx
   }else{
     if(g.state!=="approved"||!g.approvedAt||Date.now()-g.approvedAt>EXPORT_APPROVAL_MS)throw Error("Export approval expired.");
     if((account.fenceUntil??0)>Date.now())throw Error("Another export is in progress.");
+    if((await ctx.db.query('arcPermitIntents').withIndex('by_wallet_expiry',q=>q.eq('wallet',account.address).gt('expiresAt',Date.now())).take(1)).length)exportFail('PENDING_TRANSACTIONS');
     for(const chain of [5042,8453] as const){const row=await ctx.db.query("otcRecords").withIndex("by_key",q=>q.eq("key",walletId(chain,account.address))).unique();if(row){const w=JSON.parse(row.json) as Wallet;if(w.activeTx||Object.values(w.holds).some(v=>BigInt(v)>0n)||Object.values(w.usdcHolds??{}).some(v=>BigInt(v)>0n))exportFail("PENDING_TRANSACTIONS");}}
     // Include orphaned records, scoped to this wallet rather than a global backlog.
     for(const state of ["prepared","signed","submitted"]){
@@ -348,7 +349,16 @@ export const relayed=mutation({args:{...base,keyHash:v.string()},handler:async(c
   return true;
 }});
 export const close=mutation({args:{...base,acknowledged:v.boolean()},handler:async(ctx,a)=>{
-  authorize(a.secret,"WALLET_EXPORT_SERVICE_SECRET");const {g,account}=await readGrant(ctx,a);
+  authorize(a.secret,"WALLET_EXPORT_SERVICE_SECRET");
+  exportDigest(a.ticketHash);exportDigest(a.browserHash);
+  const previous=await ctx.db.query('walletExportGrants').withIndex('by_ticket',q=>q.eq('ticketHash',a.ticketHash)).unique();
+  if(previous?.state==='revoked'&&previous.acknowledgedAt!==undefined){
+    if(previous.browserHash!==a.browserHash)exportFail('BROWSER_MISMATCH');
+    // A duplicate acknowledgment cannot reveal anything or extend a grant.
+    // Still recheck the account, session, browser generation and TG selection.
+    await live(ctx,previous,true);return;
+  }
+  const {g,account}=await readGrant(ctx,a);
   if(a.acknowledged&&g.state!=="relayed")throw Error("No export response was authorized.");
   await ctx.db.patch(g._id,{state:"revoked",oauthVerifier:undefined,oauthToken:undefined,publicKey:undefined,...(a.acknowledged?{acknowledgedAt:Date.now()}:{})});
   if(account.fenceGrant===g.ticketHash)await ctx.db.patch(account._id,{fenceGrant:undefined,fenceUntil:undefined});

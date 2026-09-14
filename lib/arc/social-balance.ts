@@ -40,5 +40,6 @@ export async function arcSocialBalance(wallet: `0x${string}`, identifier?: strin
       return `${displayEth(formatUnits(BigInt(snapshot.balanceWei),18))} Base ETH${usd?` (${usd})`:""}`;
     } catch { return "Base balance unavailable."; }
   })()]);
-  return { display: [usdc.display, ...holdings.tokens.map(t => `${balanceWithUsd(`${displayAmount(t.balance, 0)} ${t.symbol}`, t.usdValue ?? undefined)}${t.stale?" (last loaded)":""}`), ...(base?[base]:[]), ...(holdings.partial ? ["Some token balances could not refresh after retries. Try again or check a token by contract address."] : [])].join("\n\n") };
+  const knownFailed='balancePartial' in holdings?holdings.balancePartial:holdings.partial;
+  return { display: [usdc.display, ...holdings.tokens.map(t => `${balanceWithUsd(`${displayAmount(t.balance, 0)} ${t.symbol}`, t.usdValue ?? undefined)}${t.stale?" (last loaded)":""}`), ...(base?[base]:[]), ...(knownFailed ? ["Some token balances could not refresh after retries. Try again or check a token by contract address."] : [])].join("\n\n") };
 }

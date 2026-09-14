@@ -12,6 +12,7 @@ import {inputTransferTax,tokenDebit} from "./transfer-tax";
 import { exactAmount } from "./amounts";
 import { ARC_TOKEN_CATALOG } from "./token-catalog";
 import { estimatedTradeGasBudget } from "./trade-flow";
+import {signedSwapPermit} from './permit2-signing';
 import { prepareCall, type Call } from "../otc/runtime";
 
 export const PERMIT2=getAddress("0x000000000022D473030F116dDEE9F6B43aC78BA3");
@@ -29,6 +30,11 @@ const uniquePools=(pools:ArcPool[])=>[...new Map(pools.map(p=>[p.protocol+poolId
 async function quoteArcTrade(wallet:Address,input:TradeInput){
   const config=arcConfigFromEnv(),transport=arcTransport(config),rpc=createArcRpc(config,transport),client=createPublicClient({transport});
   const head=await checkArcRpc(rpc,config);
+  // Reject unfunded input before discovery. This is a fresh, pinned read, not
+  // the retained display balance; preparation and signing check it again.
+  const inputAsset=getAddress(native(input.tokenIn)?ARC_USDC:input.tokenIn);
+  const [inputBalance,inputDecimals]=await Promise.all([rpc.tokenBalance(inputAsset,wallet,head.number),rpc.decimals(inputAsset,head.number)]);
+  if(inputBalance<exactAmount(input.amount,inputDecimals))throw new Error(native(input.tokenIn)?'Not enough Arc USDC for this buy.':`Not enough ${ARC_TOKEN_CATALOG.find(t=>t.address.toLowerCase()===inputAsset.toLowerCase())?.symbol??'input tokens'} for this amount.`);
   const code=await rpc.code(ARC_ROUTER,head.number);
   if(!code||keccak256(code)!==ARC_ROUTER_CODE_HASH)throw new Error("Arc router code does not match the reviewed deployment.");
   if(native(input.tokenIn)&&native(input.tokenOut))throw new Error("Choose different assets.");
@@ -214,12 +220,12 @@ export async function previewArcTrade(wallet:Address,input:TradeInput,delivery: 
   const {q,rpc,client,head,verifiedHookPoolIds,inputTaxBps,routeHint}=await quoteArcTrade(wallet,input);
   const token=q.route.tokenIn;
   const balance=token===zeroAddress?await rpc.balance(wallet,head.number):await rpc.tokenBalance(token,wallet,head.number);
-  if(balance<tokenDebit(q.amountIn,inputTaxBps))throw new Error("Not enough tokens for the amount plus token tax. Use a smaller amount or 100%.");
+  if(balance<tokenDebit(q.amountIn,inputTaxBps))throw new Error(native(token)?'Not enough Arc USDC for this buy.':inputTaxBps?'Not enough tokens for the amount and token tax. Use a smaller amount or 100%.':'Not enough input tokens for this amount.');
   let call:Call,leg:"swap"|"allowance"="swap",stage="swap";
   const expiration=Math.floor(Date.now()/1000)+600;
   if(token!==zeroAddress){
     if(q.amountIn>=2n**160n)throw new Error("Amount exceeds Permit2 limits.");
-    const [approved,[permitted,until]]=await Promise.all([
+    const [approved,[permitted,until,permitNonce]]=await Promise.all([
       client.readContract({address:token,abi:allowanceAbi,functionName:"allowance",args:[wallet,PERMIT2],blockNumber:head.number}),
       client.readContract({address:PERMIT2,abi:permitAbi,functionName:"allowance",args:[wallet,token,ARC_ROUTER],blockNumber:head.number}),
     ]);
@@ -228,8 +234,11 @@ export async function previewArcTrade(wallet:Address,input:TradeInput,delivery: 
       leg="allowance";stage=approved>0n?"reset token approval":"approve token";
       call={from:wallet,to:token,value:0n,data:encodeFunctionData({abi:allowanceAbi,functionName:"approve",args:[PERMIT2,approved>0n?0n:q.amountIn]})};
     }else if(permitted<q.amountIn||until<BigInt(Math.floor(Date.now()/1000)+60)){
+      const combined=await signedSwapPermit(wallet,token,q.amountIn,Number(permitNonce),encodeArcSwap(q.route,q.amountIn,q.amountOutMinimum,BigInt(Math.floor(Date.now()/1000)+120),verifiedHookPoolIds,delivery));
+      if(combined)call={from:wallet,...combined};else{
       leg="allowance";stage="approve router";
       call={from:wallet,to:PERMIT2,value:0n,data:encodeFunctionData({abi:permitAbi,functionName:"approve",args:[token,ARC_ROUTER,q.amountIn,expiration]})};
+      }
     }else call={from:wallet,...encodeArcSwap(q.route,q.amountIn,q.amountOutMinimum,BigInt(Math.floor(Date.now()/1000)+120),verifiedHookPoolIds,delivery)};
   }else call={from:wallet,...encodeArcSwap(q.route,q.amountIn,q.amountOutMinimum,BigInt(Math.floor(Date.now()/1000)+120),verifiedHookPoolIds,delivery)};
   if (leg === "swap") {

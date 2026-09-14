@@ -15,6 +15,11 @@ import type { Transaction } from "../lib/otc/model";
 import { otcWorkerUrl } from "../lib/project-config";
 import { mutation, query, action, internalAction,internalMutation } from "./_generated/server";
 import { v } from "convex/values";
+import {recoveryTerminal,recoveryDelay,RECOVERY_LEASE_MS,BROADCAST_INTERVAL_MS} from '../lib/otc/recovery-policy';
+import {rememberToken} from './lib/tokenInventory';
+import {updateListingTotals} from './lib/listingTotals';
+import {parseTransaction,type Hex} from 'viem';
+import {tokenTransfer} from '../lib/otc/token-delivery';
 import { createListing, createQuote, acceptQuote, cancelListing, finishOrder, type Store, type RecordValue, type Order, type Listing } from "../lib/otc/model";
 import { prepareTransaction, signTransactionRecord, submitted, settled, retryPayout } from "../lib/otc/transactions";
 
@@ -70,6 +75,15 @@ export const command = mutation({
       },
       put: async record => {
         const row = await ctx.db.query("otcRecords").withIndex("by_key", q=>q.eq("key",record.id)).unique();
+        if(record.kind==='transaction'){
+          const previous=row?JSON.parse(row.json) as Transaction:null;
+          record.progressAt=previous?.progressAt??record.createdAt;
+          if(!previous||previous.status!==record.status||previous.signingStartedAt!==record.signingStartedAt||previous.hash!==record.hash||previous.broadcastAcknowledgedAt!==record.broadcastAcknowledgedAt||previous.blockNumber!==record.blockNumber)record.progressAt=now;
+          if(!recoveryTerminal(record.status)&&!await ctx.db.query('transactionRecovery').withIndex('by_key',q=>q.eq('key',record.id)).unique()){
+            await ctx.db.insert('transactionRecovery',{key:record.id,attempt:0,dueAt:now+5000});
+            await ctx.scheduler.runAfter(5000,internal.otc.recoverTransaction,{id:record.id});
+          }
+        }
         if(record.kind==="wallet"&&(record.activeTx||Object.values(record.holds).some(amount=>BigInt(amount)>0n)||Object.values(record.usdcHolds??{}).some(amount=>BigInt(amount)>0n)))await assertNoKeyExport(ctx,record.address);
         if(record.kind==="transaction"&&record.signingStartedAt!==undefined){
           const previous=row?JSON.parse(row.json) as Transaction:null;
@@ -79,13 +93,39 @@ export const command = mutation({
           status: "status" in record ? record.status : "wallet", updatedAt: now, json: JSON.stringify(record) };
         if (row) await ctx.db.replace(row._id, value); else await ctx.db.insert("otcRecords",value);
         if(record.kind==="order"&&record.status==="completed")await creditSale(ctx,record);
+        if(record.kind==='order')await updateListingTotals(ctx,record);
         if(record.kind==="transaction"&&record.status==="completed"&&record.hash&&record.blockNumber){
+          if(record.swapOutput){
+            await rememberToken(ctx,record.chainId,record.swapOutput.recipient??record.wallet,record.swapOutput.token);
+            if(record.swapOutput.inputToken)await rememberToken(ctx,record.chainId,record.wallet,record.swapOutput.inputToken);
+          }
+          if(record.leg==='send'){
+            const parsed=parseTransaction(record.unsigned as Hex),transfer=parsed.data?.startsWith('0xa9059cbb')?tokenTransfer(parsed.data,parsed.value):null;
+            if(transfer&&parsed.to){await rememberToken(ctx,record.chainId,record.wallet,parsed.to);await rememberToken(ctx,record.chainId,transfer.recipient,parsed.to);}
+          }
           const id=record.escrowRef?.step==="arc"?record.escrowRef.orderId:record.leg==="payout"?record.orderId:undefined;
-          if(id){const order=await store.get<Order>(id);if(order)await creditSale(ctx,order);}
+          if(id){const order=await store.get<Order>(id);if(order){await creditSale(ctx,order);await updateListingTotals(ctx,order);}}
         }
       },
     };
     switch(args.command) {
+      case 'recovery_acquire': {
+        const tx=await store.get<Transaction>(input.id);
+        if(!tx||recoveryTerminal(tx.status))return false;
+        const row=await ctx.db.query('transactionRecovery').withIndex('by_key',q=>q.eq('key',input.id)).unique();
+        if(row&&(row.leaseUntil??0)>now)return false;
+        if(row)await ctx.db.patch(row._id,{lease:input.lease,leaseUntil:now+RECOVERY_LEASE_MS});
+        else {
+          await ctx.db.insert('transactionRecovery',{key:input.id,attempt:0,dueAt:now+5000,lease:input.lease,leaseUntil:now+RECOVERY_LEASE_MS});
+          await ctx.scheduler.runAfter(5000,internal.otc.recoverTransaction,{id:input.id});
+        }
+        return true;
+      }
+      case 'recovery_release': {
+        const row=await ctx.db.query('transactionRecovery').withIndex('by_key',q=>q.eq('key',input.id)).unique();
+        if(row&&row.lease===input.lease)await ctx.db.patch(row._id,{lease:undefined,leaseUntil:undefined});
+        return null;
+      }
       case "operator_acquire": return acquireOperatorLease(store,input,now);
       case "operator_release": return releaseOperatorLease(store,input,now);
       case "escrow_arc_dust": return retainArcDust(store,input.listingId,input.balanceWei,input.block,now);
@@ -174,7 +214,15 @@ export const command = mutation({
       }
       case "prepare": return prepareTransaction(store,input,now);
       case "sign": return signTransactionRecord(store,input.id,input.raw,input.hash,now,input.unsigned);
-      case "submitted": return submitted(store,input.id,now);
+      case "submitted": {
+        if(input.lease){
+          const row=await ctx.db.query('transactionRecovery').withIndex('by_key',q=>q.eq('key',input.id)).unique();
+          if(row?.lease!==input.lease)throw Error('Recovery attempt changed. The saved transaction will be reconciled.');
+        }
+        const tx=await store.get<Transaction>(input.id);
+        if(tx?.lastBroadcastAt&&now-tx.lastBroadcastAt<BROADCAST_INTERVAL_MS)throw Error('Broadcast retry is already scheduled.');
+        return submitted(store,input.id,now);
+      }
       case "broadcast_ack": {
         const tx=await store.get<Transaction>(input.id);
         if(!tx||tx.hash!==input.hash)throw Error("Broadcast acknowledgement changed.");
@@ -248,6 +296,7 @@ export const wakeWorker = action({
 });
 
 export const tick = internalAction({args:{},handler:async(ctx)=>{
+  await ctx.runMutation(internal.walletData.ensure,{});
   await ctx.runMutation(internal.otc.ensureStats,{});
   const secret=process.env.OTC_SERVICE_SECRET;
   if(!secret)return;
@@ -257,4 +306,26 @@ export const tick = internalAction({args:{},handler:async(ctx)=>{
   if(!response.ok)throw new Error("OTC worker failed. Inspect pending jobs and worker logs.");
   const result=await response.json();
   if(result.failed>0)throw new Error(`OTC worker: ${result.failed} failed jobs; ${result.processed} processed.`);
+}});
+
+// One durable chain of retries per transaction. Scheduling does not depend on
+// the website response, and the minute sweep remains a separate safety net.
+export const rescheduleTransaction=internalMutation({args:{id:v.string()},handler:async(ctx,{id})=>{
+  const job=await ctx.db.query('transactionRecovery').withIndex('by_key',q=>q.eq('key',id)).unique();
+  if(!job)return;
+  const row=await ctx.db.query('otcRecords').withIndex('by_key',q=>q.eq('key',id)).unique();
+  if(!row||recoveryTerminal(row.status)){await ctx.db.delete(job._id);return;}
+  const delay=recoveryDelay(job.attempt);
+  await ctx.db.patch(job._id,{attempt:job.attempt+1,dueAt:Date.now()+delay});
+  await ctx.scheduler.runAfter(delay,internal.otc.recoverTransaction,{id});
+}});
+export const recoverTransaction=internalAction({args:{id:v.string()},handler:async(ctx,{id})=>{
+  try{
+    const secret=process.env.OTC_SERVICE_SECRET,url=new URL(otcWorkerUrl());
+    if(!secret||url.protocol!=='https:')throw Error('Recovery configuration missing.');
+    url.searchParams.set('transaction',id);
+    const response=await fetch(url,{method:'POST',headers:{authorization:`Bearer ${secret}`},signal:AbortSignal.timeout(65_000)});
+    if(!response.ok)console.warn('transaction_recovery_retry',{id,status:response.status});
+  }catch{console.warn('transaction_recovery_retry',{id,category:'worker_unavailable'});}
+  finally{await ctx.runMutation(internal.otc.rescheduleTransaction,{id});}
 }});

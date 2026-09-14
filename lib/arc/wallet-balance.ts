@@ -8,6 +8,7 @@ export function arcDisplayConfig() {
     rpcUrl: process.env.ARC_MAINNET_RPC_URL || "https://rpc.arc-scan.org",
     rpcFallbackUrls: process.env.ARC_INFURA_RPC_URL ? [process.env.ARC_INFURA_RPC_URL] : [],
     readOnlyRpcUrls: ["https://arguspad.io/api/rpc"],
+    quoteRpcUrls: [process.env.ARC_INFURA_RPC_URL,"https://arguspad.io/api/rpc",process.env.ARC_MAINNET_RPC_URL||"https://rpc.arc-scan.org"].filter((url):url is string=>Boolean(url)),
     checkpointNumber: process.env.ARC_CHECKPOINT_NUMBER || "18456078",
     checkpointHash: process.env.ARC_CHECKPOINT_HASH || "0xdd5a48032af8571d6a262f39e5cde7e6b91625aaa4330289f03e5a346dd3c358",
   });

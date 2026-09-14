@@ -63,9 +63,17 @@ export default defineSchema({
     lease: v.optional(v.string()), leaseUntil: v.optional(v.number()), nextAttemptAt: v.number(), createdAt: v.number(),
   }).index("by_request", ["requestId"]).index("by_due", ["delivered", "nextAttemptAt"]),
   otcSales: defineTable({orderId:v.string(),amount:v.string()}).index("by_order",["orderId"]),
+  transactionRecovery: defineTable({key:v.string(),attempt:v.number(),lease:v.optional(v.string()),leaseUntil:v.optional(v.number()),dueAt:v.number()}).index('by_key',['key']),
+  tokenInventory: defineTable({chainId:v.number(),wallet:v.string(),token:v.string(),symbol:v.optional(v.string()),name:v.optional(v.string()),balance:v.optional(v.string()),block:v.optional(v.string()),observedAt:v.optional(v.number())}).index('by_wallet',['chainId','wallet']).index('by_token',['chainId','wallet','token']),
+  tokenScanCursors: defineTable({chainId:v.number(),wallet:v.string(),block:v.string(),hash:v.string(),oldest:v.optional(v.string())}).index('by_wallet',['chainId','wallet']),
+  walletDataMigration: defineTable({key:v.string(),ready:v.boolean()}).index('by_key',['key']),
+  operationDiagnostics: defineTable({requestId:v.string(),channel:v.string(),stage:v.string(),category:v.string(),durationMs:v.number(),createdAt:v.number()}).index('by_time',['createdAt']).index('by_request',['requestId']),
+  arcPermitIntents: defineTable({key:v.string(),wallet:v.string(),token:v.string(),amount:v.string(),nonce:v.number(),expiresAt:v.number(),signature:v.optional(v.string())}).index('by_key',['key']).index('by_wallet_expiry',['wallet','expiresAt']),
+  otcListingTotals: defineTable({listingId:v.string(),sold:v.string(),deliveredPending:v.string(),receivedEthWei:v.string(),receivedUsdcUnits:v.string()}).index('by_listing',['listingId']),
+  otcOrderTotals: defineTable({orderId:v.string(),listingId:v.string(),sold:v.string(),deliveredPending:v.string(),receivedEthWei:v.string(),receivedUsdcUnits:v.string()}).index('by_order',['orderId']),
   otcMarketStats: defineTable({key:v.string(),soldUsdc:v.string(),ready:v.boolean()}).index("by_key",["key"]),
   otcRecords: defineTable({ key: v.string(), kind: v.string(), owner: v.string(), counterparty: v.optional(v.string()), status: v.string(), updatedAt: v.number(), json: v.string(), normalizedWallet:v.optional(v.string()), escrowAddress:v.optional(v.string()) })
-    .index("by_key", ["key"]).index("by_kind_status", ["kind", "status", "updatedAt"]).index("by_owner", ["owner", "kind"]).index("by_counterparty", ["counterparty", "kind"]).index("by_wallet_status",["normalizedWallet","kind","status"]).index("by_escrow",["escrowAddress"]),
+    .index("by_key", ["key"]).index("by_kind_status", ["kind", "status", "updatedAt"]).index("by_owner", ["owner", "kind"]).index('by_owner_status',['owner','kind','status','updatedAt']).index("by_counterparty", ["counterparty", "kind"]).index("by_wallet_status",["normalizedWallet","kind","status"]).index("by_escrow",["escrowAddress"]),
 
   walletContinuations: defineTable({
     owner: v.string(), source: v.union(v.literal("terminal"), v.literal("telegram")), scope: v.string(),

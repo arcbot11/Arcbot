@@ -2,7 +2,6 @@ import { arcSignerPath } from "@/lib/arc/public-policy";
 import { arcTokenInfo } from "@/lib/arc/token-info";
 import { arcSocialBalance } from "@/lib/arc/social-balance";
 import { repository } from "@/lib/otc/repository";
-import type { RecordValue } from "@/lib/otc/model";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { redactSignerDiagnostic } from "@/lib/signer-diagnostics";
@@ -265,9 +264,8 @@ export async function POST(request: NextRequest, context: { params: Promise<{ pa
       if(!input.token){
         // Current Arc trades live in the shared transaction store, including
         // Telegram-native wallets; the older wallet token index can lag it.
-        const records=await Promise.resolve().then(()=>repository().read<RecordValue[]>({owner:input.ownerReference.replace(/^x:/,"")})).catch(()=>[]);
-        known=[...new Set([...known,...records.flatMap(r=>r.kind==="transaction"&&r.chainId===5042&&r.wallet.toLowerCase()===input.expectedAddress.toLowerCase()
-          ?[r.swapOutput?.token,r.swapOutput?.inputToken].filter((t):t is string=>Boolean(t)):[])])];
+        const inventory=await repository().knownTokens(input.ownerReference.replace(/^x:/,""),input.expectedAddress).catch(()=>[]);
+        known=[...new Set([...known,...inventory])];
       }
       return NextResponse.json(await arcSocialBalance(input.expectedAddress as `0x${string}`, input.token, known));
     }

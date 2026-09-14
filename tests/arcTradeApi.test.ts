@@ -1,5 +1,6 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
 import {NextRequest} from "next/server";
+vi.mock('next/server',async original=>({...await original<typeof import('next/server')>(),after:vi.fn()}));
 import {serializeTransaction} from "viem";
 const m=vi.hoisted(()=>({owner:"alice",read:vi.fn(),command:vi.fn(),preview:vi.fn(),estimate:vi.fn(),convert:vi.fn(),advance:vi.fn(),balance:vi.fn(),plan:vi.fn()}));
 vi.mock("../lib/arc/trade-plan",()=>({resolveTradePlan:m.plan}));

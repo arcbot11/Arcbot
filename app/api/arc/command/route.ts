@@ -2,7 +2,8 @@ import {prepareBaseWithdrawal} from "@/lib/base/wallet-actions";
 import {ARC_SIGNED_PAUSED} from "@/lib/arc/social-timing";
 import {xBurnReceipt} from "@/lib/arc/burn-reply";
 import {transactionHistory} from "@/lib/otc/transaction-history";
-import {createHash} from "node:crypto";
+import {createHash,randomUUID} from "node:crypto";
+import {operationDiagnostic} from '@/lib/operation-diagnostics';
 import {NextRequest} from "next/server";
 import {getAddress,parseTransaction,type Hex} from "viem";
 import {z} from "zod";
@@ -51,8 +52,10 @@ export async function POST(request:NextRequest){
   const secret=process.env.WEB_AUTH_SECRET;
   if(!secret||!sameSecret(request.headers.get("authorization")??"",`Bearer ${secret}`))return json({error:"Unauthorized."},401);
   let preparing=false;
+  const diagnostic={requestId:randomUUID() as string,channel:'social' as const,stage:'authorization',startedAt:Date.now()};
   try{
     const {requestId}=z.object({requestId:z.string().min(1).max(200)}).strict().parse(await boundedJson(request,1024));
+    diagnostic.requestId='social:'+createHash('sha256').update(requestId).digest('hex');
     const auth=await socialAuthority(requestId),wallet=getAddress(auth.wallet),repo=repository();
     const paused=(tx:Transaction)=>tx.broadcastPausedAt!==undefined&&['signed','submitted'].includes(tx.status);
     const pending=(tx:Transaction)=>paused(tx)
@@ -144,6 +147,8 @@ export async function POST(request:NextRequest){
     }
     return json({ok:false,message:"Approval steps exceeded the request limit. Check wallet history."});
   }catch(e){
+    diagnostic.stage=preparing?'preparation':'recovery';
+    await operationDiagnostic({...diagnostic,error:e});
     const message=e instanceof Error?e.message:"Arc command failed.";
     const preparationError=tradePreparationError(e);
     if(preparing&&preparationError)return json({ok:false,message:preparationError});

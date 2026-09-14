@@ -1,4 +1,6 @@
 import {arcActionAmount} from "@/lib/arc/wallet-actions";
+import {operationDiagnostic} from '@/lib/operation-diagnostics';
+import {after} from 'next/server';
 import {resolveTradePlan,type TradeRequest} from "@/lib/arc/trade-plan";
 import {tradeMarket} from "@/lib/arc/markets";
 import {transactionStatus} from "@/lib/otc/transaction-history";
@@ -25,9 +27,11 @@ const schema=z.discriminatedUnion("action",[
 const mac=(s:string)=>createHmac("sha256",process.env.WEB_AUTH_SECRET!).update(`arc-trade:${s}`).digest("base64url");
 export async function POST(request:NextRequest){
   let readOnly=false;
+  const diagnostic={requestId:randomUUID(),channel:'web' as const,stage:'authorization',startedAt:Date.now()};let failure:unknown;
   try{
     const session=await websiteSession(request,true),input=schema.parse(await boundedJson(request,18000)),repo=repository();
     readOnly=input.action==="estimate"||input.action==="market";
+    diagnostic.stage=input.action;
     if(input.action==="market")return json(await tradeMarket(input.token));
     let plan:Awaited<ReturnType<typeof resolveTradePlan>>|undefined;
     if(input.action!=="confirm"&&input.intent){
@@ -60,5 +64,6 @@ export async function POST(request:NextRequest){
     try{await advanceTransaction(q.id);}catch{/* Durable transaction remains reserved for the worker. */}
     const result=await repo.read<Transaction>({id:q.id});
     return json(transactionStatus(result));
-  }catch(e){return webFailure(e,readOnly?"quote":undefined);}
+  }catch(e){failure=e;return webFailure(e,readOnly?"quote":undefined);}
+  finally{after(()=>operationDiagnostic({...diagnostic,...(failure===undefined?{}:{error:failure})}));}
 }

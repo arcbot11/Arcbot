@@ -47,7 +47,8 @@ export function transactionHistory(record:Transaction){
         details.push({label:"Approval limit",value:amount(record.chainId,token,limit)},{label:"Spender",value:spender});
       }
       if(call.functionName==="execute"&&record.leg==="swap"){
-        const [commands,inputs]=call.args;
+        let [commands,inputs]=call.args;
+        if(commands.startsWith('0x0a')){commands=`0x${commands.slice(4)}`;inputs=inputs.slice(1);}
         if(commands.startsWith("0x00")){
           const [,input,minimum,path]=decodeAbiParameters(parseAbiParameters("address,uint256,uint256,bytes,bool"),inputs[0]);
           details.push({label:"Input",value:amount(record.chainId,path.slice(0,42),input)},{label:"Minimum output",value:amount(record.chainId,`0x${path.slice(-40)}`,minimum)},{label:"Route",value:"V3"});
@@ -82,6 +83,8 @@ export function transactionHistory(record:Transaction){
 }
 export function transactionStatus(record:Transaction){
   return {id:record.id,status:record.status,leg:record.leg,hash:record.hash,
+    progressAt:record.progressAt??record.createdAt,
+    stage:['completed','reverted','cancelled'].includes(record.status)?record.status:record.broadcastPausedAt!==undefined?'paused':record.status==='submitted'?'verifying':record.raw?'submitting':record.signingStartedAt!==undefined?'signing':'preparing',
     ...(record.broadcastPausedAt!==undefined&&!['completed','reverted','cancelled'].includes(record.status)?{attention:'Signed transaction unresolved. Bot broadcasts are paused. It may still execute if funds return; resolve it before submitting another.'}:{}),
     ...(record.status==="submitted"&&record.chainId===8453&&record.leg==="send"&&record.confirmation?{confirmation:record.confirmation}:{}),
     ...(record.status==="completed"&&record.leg==="swap"?{details:transactionHistory(record).details}:{}),};

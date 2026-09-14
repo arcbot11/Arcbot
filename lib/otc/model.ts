@@ -57,6 +57,7 @@ export type Wallet = { kind: "wallet"; id: string; owner: string; address: strin
   holds: Record<string, string>; usdcHolds?: Record<string, string>; activeTx?: string; lastSettledBlock?: string; updatedAt: number };
 export type Transaction = { kind: "transaction"; id: string; owner: string; wallet: string; chainId: Chain;
   firstBroadcastAt?:number;lastBroadcastAt?:number;broadcastAttempts?:number;broadcastAcknowledgedAt?:number;
+  progressAt?:number;
   initialGasReserveWei?:string;
   /** Server-signed input-asset plan, retained across social approval recovery. */
   fundingPlan?:string;

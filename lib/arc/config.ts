@@ -13,6 +13,7 @@ const configuration = z.object({
   rpcUrl,
   rpcFallbackUrls: z.array(rpcUrl).default([]),
   readOnlyRpcUrls: z.array(rpcUrl).default([]),
+  quoteRpcUrls: z.array(rpcUrl).optional(),
   checkpointNumber: uint,
   checkpointHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
   maxHeadAgeSeconds: z.number().int().min(1).max(300).default(30),
@@ -35,6 +36,7 @@ export function arcConfigFromEnv(env: Record<string, string | undefined> = proce
   return arcConfig({ rpcUrl: env.ARC_MAINNET_RPC_URL,
     rpcFallbackUrls: [env.ARC_INFURA_RPC_URL].filter((url): url is string => Boolean(url)),
     readOnlyRpcUrls: ["https://arguspad.io/api/rpc"],
+    quoteRpcUrls: [env.ARC_INFURA_RPC_URL, "https://arguspad.io/api/rpc", env.ARC_MAINNET_RPC_URL].filter((url): url is string => Boolean(url)),
     checkpointNumber: env.ARC_CHECKPOINT_NUMBER, checkpointHash: env.ARC_CHECKPOINT_HASH,
     ...ARC_GAS_POLICY,
   });

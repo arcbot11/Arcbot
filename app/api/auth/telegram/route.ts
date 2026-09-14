@@ -15,6 +15,7 @@ const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 const json = (body: unknown, status = 200) => NextResponse.json(body, { status, headers: { "cache-control": "no-store" } });
 
 export async function POST(request: NextRequest) {
+  let stage='start';
   const secret = process.env.WEB_AUTH_SECRET, url = process.env.NEXT_PUBLIC_CONVEX_URL, site = process.env.NEXT_PUBLIC_SITE_URL;
   if (!secret || !url || !site) return json({ error: "Telegram sign-in is unavailable." }, 503);
   // Both initiation and exchange require a same-origin browser POST. No user identity comes from the browser.
@@ -22,6 +23,7 @@ export async function POST(request: NextRequest) {
     return json({ error: "Open the website directly to sign in." }, 403);
   try {
     const { action, returnTo, restart } = await boundedJson<{ action?: string; returnTo?: string; restart?: boolean }>(request, 512);
+    stage=['start','check','resume'].includes(action??'')?action!:'invalid_action';
     const family = browserHash(request, secret);
     if (!family) return json({ error: "Refresh the sign-in page and try again." }, 409);
     const client = new ConvexHttpClient(url);
@@ -67,6 +69,7 @@ export async function POST(request: NextRequest) {
     if (result.status !== "approved") return json({ status: result.status });
     return approved(result);
   } catch (error) {
+    console.warn('telegram_web_sign_in_retry',{stage,category:error instanceof RequestBodyError?'invalid_request':error instanceof Error&&/limit/i.test(error.message)?'rate_limit':'authorization_or_network'});
     if (error instanceof RequestBodyError) return json({ error: error.message }, error.status);
     if (error instanceof Error && error.message.includes("Sign-in limit reached")) return json({ error: "Sign-in limit reached. Try again in a minute." }, 429);
     return json({ error: "Telegram sign-in could not be checked. Try again." }, 503);

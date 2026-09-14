@@ -1,5 +1,6 @@
 import { custom } from "viem";
 import type { ArcConfig } from "./config";
+import {roleEndpoints,rpcRole} from './rpc-role';
 import { traceRead, traceReadOutput, TraceReadError, type TraceRead } from "./trace-call";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -32,11 +33,17 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
   const traceAllowedUntil = new Map<string, number>();
   const validationEvidence=new Map<string,{chain:unknown;checkpoint:unknown}>();
   const inFlightReads=new Map<string,Promise<unknown>>();
+  async function observedCall(url:string,method:string,params:readonly unknown[]){
+    const started=Date.now();let category='ok';
+    try{return await rawCall(url,method,params);}
+    catch(error){category=error instanceof RpcFailure?(error.retryable?'provider_unavailable':'request_rejected'):'invalid_response';throw error;}
+    finally{if(category!=='ok'||Date.now()-started>1500)console.info('arc_rpc',{role:rpcRole(method,traceFallback),provider:url===config.rpcUrl?'primary':config.rpcFallbackUrls.includes(url)?'fallback':'gateway',method,durationMs:Date.now()-started,category});}
+  }
   async function call(url:string,method:string,params:readonly unknown[]=[]):Promise<unknown>{
-    if(method==="eth_sendRawTransaction")return rawCall(url,method,params);
+    if(method==="eth_sendRawTransaction")return observedCall(url,method,params);
     const key=JSON.stringify([url,method,params]),existing=inFlightReads.get(key);
     if(existing)return existing;
-    const request=rawCall(url,method,params);inFlightReads.set(key,request);
+    const request=observedCall(url,method,params);inFlightReads.set(key,request);
     try{return await request;}finally{if(inFlightReads.get(key)===request)inFlightReads.delete(key);}
   }
   async function rawCall(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
@@ -138,18 +145,22 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
     // Direct arbitrary trace requests stay unauthorized. Only scoped eth_call
     // fallbacks enter readCall's internal trace path.
     const trace=traceFallback&&method==="eth_call"&&Array.isArray(params)?traceRead(params):null;
-    // Argus currently serves contract calls that the supplied Infura project rejects for quota.
-    const backups = broadcast ? config.rpcFallbackUrls : method === "eth_call"
-      ? [...config.readOnlyRpcUrls, ...config.rpcFallbackUrls]
-      : [...config.rpcFallbackUrls, ...config.readOnlyRpcUrls];
-    const endpoints = [...new Set([config.rpcUrl, ...backups])];
+    const endpoints = roleEndpoints(config,rpcRole(method,traceFallback),method);
     const transientReads: string[] = [];
     for (const url of endpoints) {
       const methodKey = `${url}:${method}`;
       if (!broadcast && !trace && (methodUnavailableUntil.get(methodKey) ?? 0) > Date.now()) continue;
       try { await validate(url); } catch { continue; }
       // Do not fail over after a broadcast attempt: its outcome may be unknown.
-      if (broadcast) return call(url, method, params as unknown[]);
+      if (broadcast) {
+        try{return await call(url,method,params as unknown[]);}
+        catch(error){
+          // Never fail over inside this request. A later durable recovery can
+          // resubmit the same saved bytes on another validated write provider.
+          if(error instanceof RpcFailure&&error.retryable)unavailableUntil.set(url,Date.now()+30_000);
+          throw error;
+        }
+      }
       // Reuse only the identity checks just performed, within the existing
       // five-second validation window. Prices, balances and latest blocks are fresh.
       const evidence=(verifiedUntil.get(url)??0)>Date.now()?validationEvidence.get(url):undefined;
