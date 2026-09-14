@@ -9,10 +9,16 @@ vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>m.rpc,checkArcRpc:async()=>({num
 vi.mock("../lib/arc/quotes",async orig=>({...await orig<typeof import("../lib/arc/quotes")>(),quoteRoutes:m.quotes}));
 vi.mock("../lib/arc/routing",async orig=>({...await orig<typeof import("../lib/arc/routing")>(),ARC_ROUTER_CODE_HASH:keccak256("0x6000")}));
 vi.mock("../lib/otc/runtime",()=>({chainClient:()=>({readContract:m.read}),prepareCall:m.prepare}));
-import {clearTradeDiscoveryCache,previewArcTrade,arcSellAmountForUsdc,PERMIT2} from "../lib/arc/trading";
+import {clearTradeDiscoveryCache,previewArcTrade,estimateArcReferenceTrade,arcSellAmountForUsdc,PERMIT2} from "../lib/arc/trading";
 const wallet="0x1111111111111111111111111111111111111111",token="0x2222222222222222222222222222222222222222",pool="0x4444444444444444444444444444444444444444",usdc="0x3600000000000000000000000000000000000000";
 beforeEach(()=>{clearTradeDiscoveryCache();vi.clearAllMocks();m.discovery.mockResolvedValue(null);m.approved=0n;m.permitted=0n;m.rpc.code.mockResolvedValue("0x6000");m.rpc.decimals.mockImplementation(async(a:string)=>a===usdc?6:18);m.rpc.balance.mockResolvedValue(100n*10n**18n);m.rpc.tokenBalance.mockResolvedValue(100n*10n**18n);m.read.mockImplementation(async(x:{functionName:string;args:unknown[]})=>x.functionName==="getPool"?(x.args[2]===3000?pool:zeroAddress):x.args.length===3?[m.permitted,BigInt(Math.floor(Date.now()/1000)+1000),0n]:m.approved);m.prepare.mockImplementation(async(callChain:number,call:unknown)=>({unsigned:"0x02",gasWei:"100",reserveWei:"100",snapshot:{balanceWei:"100000000000000000000",block:"1",nonce:0,pendingNonce:0},call}));m.quotes.mockImplementation(async(routes:unknown[],amount:bigint)=>{const route=routes[0] as {pools:{protocol:string}[]};return {quotes:route.pools[0].protocol==="v3"?[{route,amountIn:amount,amountOut:20n*10n**18n,amountOutMinimum:19n*10n**18n,expiresAt:Date.now()+30000}]:[]};});});
 afterEach(()=>vi.unstubAllEnvs());
+it('can value held quote assets without authorizing an unfunded reference USDC spend',async()=>{
+ m.rpc.tokenBalance.mockResolvedValue(0n);
+ const input={tokenIn:'native',tokenOut:token,amount:'10',slippageBps:100};
+ expect((await estimateArcReferenceTrade(wallet,input)).amountOut).toBe('20');expect(m.prepare).not.toHaveBeenCalled();
+ await expect(previewArcTrade(wallet,input)).rejects.toThrow('Not enough Arc USDC');expect(m.prepare).not.toHaveBeenCalled();
+});
 it('keeps ordinary USDC trades on the direct discovery path',async()=>{
  await previewArcTrade(wallet,{tokenIn:'native',tokenOut:token,amount:'10',slippageBps:100});
  expect(m.discovery).toHaveBeenCalledTimes(1);

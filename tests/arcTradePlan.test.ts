@@ -4,13 +4,21 @@ const m=vi.hoisted(()=>({market:vi.fn(),estimate:vi.fn(),sell:vi.fn(),balance:vi
 vi.mock("../lib/arc/markets",()=>({tradeMarket:m.market,marketScope:()=>"arc-mainnet"}));
 vi.mock("../lib/arc/config",()=>({arcConfigFromEnv:()=>({})}));
 vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>({tokenBalance:m.held,block:m.block}),checkArcRpc:async()=>({number:1n,hash:"same"})}));
-vi.mock("../lib/arc/trading",()=>({estimateArcTrade:m.estimate,arcSellAmountForUsdc:m.sell}));
+vi.mock("../lib/arc/trading",()=>({estimateArcReferenceTrade:m.estimate,arcSellAmountForUsdc:m.sell}));
 vi.mock("../lib/arc/wallet-tokens",()=>({arcSelectedTokenBalance:m.balance}));
 import {resolveTradePlan,chooseBuyFunding,type TradeRequest} from "../lib/arc/trade-plan";
 const buy:TradeRequest={side:"buy",token:target,amount:"20",unit:"usd",slippageBps:100};
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","plan-secret");m.market.mockResolvedValue({token:target,paired:true,quote:{address:quote,symbol:"ARGUS",decimals:18}});m.held.mockResolvedValue(500n*10n**18n);m.block.mockResolvedValue({hash:"same"});m.estimate.mockResolvedValue({amountOut:"100"});m.sell.mockResolvedValue("2000");m.balance.mockResolvedValue({maxSellRaw:"1000000000000000000000",decimals:18});});
 afterEach(()=>{vi.unstubAllEnvs();vi.useRealTimers();});
 describe("paired funding plans",()=>{
+ it('buys and sells through a newly discovered non-ARGUS pair',async()=>{
+   const arcash='0x0bffa97f774824e9da843699aedd2835cb1b8022';
+   m.market.mockResolvedValue({token:target,paired:true,quote:{address:arcash,symbol:'ARCASH',decimals:8}});
+   m.held.mockResolvedValue(200n*10n**8n);
+   const held=await resolveTradePlan(wallet,buy);expect(held.trade).toMatchObject({tokenIn:arcash,amount:'100'});expect(held.funding.inputSymbol).toBe('ARCASH');
+   m.held.mockResolvedValue(0n);const funded=await resolveTradePlan(wallet,buy);expect(funded.trade.tokenIn).toBe('native');expect(funded.funding.quoteSymbol).toBe('ARCASH');
+   const sell=await resolveTradePlan(wallet,{...buy,side:'sell',unit:'tokens',amount:'12'});expect(sell.trade.tokenOut).toBe(arcash);expect(sell.funding.outputSymbol).toBe('ARCASH');
+ });
  it("uses held ARGUS and returns the exact spending asset for display",async()=>{const p=await resolveTradePlan(wallet,buy);expect(p.trade).toMatchObject({tokenIn:quote,tokenOut:target,amount:"100"});expect(p.funding).toMatchObject({inputSymbol:"ARGUS",inputAmount:"100",mode:"quote"});});
  it("uses USDC for the entire buy when ARGUS is insufficient",async()=>{m.held.mockResolvedValue(99n*10n**18n);const p=await resolveTradePlan(wallet,buy);expect(p.trade).toMatchObject({tokenIn:"native",amount:"20",tokenOut:target});expect(p.funding.mode).toBe("usdc");});
  it("skips the conversion lookup when no ARGUS is held",async()=>{m.held.mockResolvedValue(0n);expect((await resolveTradePlan(wallet,buy)).funding.inputSymbol).toBe("USDC");expect(m.estimate).not.toHaveBeenCalled();});

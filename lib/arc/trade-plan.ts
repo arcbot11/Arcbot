@@ -4,7 +4,7 @@ import {arcConfigFromEnv} from "./config";
 import {createArcRpc,checkArcRpc} from "./rpc";
 import {exactAmount} from "./amounts";
 import {tradeMarket,marketScope,type TradeMarket} from "./markets";
-import {estimateArcTrade,arcSellAmountForUsdc,type TradeInput} from "./trading";
+import {estimateArcReferenceTrade,arcSellAmountForUsdc,type TradeInput} from "./trading";
 import {arcSelectedTokenBalance} from "./wallet-tokens";
 
 export type TradeRequest = {side:"buy"|"sell";token:string;amount:string;unit:"usd"|"tokens"|"percent"|"quote";funding?:"auto"|"usdc"|"quote";expectedQuote?:string;slippageBps:number};
@@ -56,7 +56,7 @@ export async function resolveTradePlan(wallet:Address,request:TradeRequest,optio
       available=await fundingBalance(wallet,market);
       if(request.unit==="quote")quoteAmount=exactAmount(request.amount,market.quote.decimals);
       else if(available>0n){
-        const conversion=await estimateArcTrade(wallet,{tokenIn:"native",tokenOut:market.quote.address,amount:request.amount,slippageBps:request.slippageBps});
+        const conversion=await estimateArcReferenceTrade(wallet,{tokenIn:"native",tokenOut:market.quote.address,amount:request.amount,slippageBps:request.slippageBps});
         quoteAmount=exactAmount(conversion.amountOut,market.quote.decimals);
       }
     }

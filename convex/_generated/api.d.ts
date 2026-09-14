@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as arcPermits from "../arcPermits.js";
 import type * as arcRpcDiagnostics from "../arcRpcDiagnostics.js";
 import type * as arcTokenCatalog from "../arcTokenCatalog.js";
 import type * as arcTransferTest from "../arcTransferTest.js";
@@ -25,8 +26,10 @@ import type * as graduationAnnouncements from "../graduationAnnouncements.js";
 import type * as launchDrafts from "../launchDrafts.js";
 import type * as legacyClaims from "../legacyClaims.js";
 import type * as legacyLaunch from "../legacyLaunch.js";
+import type * as lib_listingTotals from "../lib/listingTotals.js";
 import type * as lib_telegramUnlink from "../lib/telegramUnlink.js";
 import type * as lib_terminalFeeReceipts from "../lib/terminalFeeReceipts.js";
+import type * as lib_tokenInventory from "../lib/tokenInventory.js";
 import type * as lib_walletExportGuard from "../lib/walletExportGuard.js";
 import type * as lib_walletExportIndexes from "../lib/walletExportIndexes.js";
 import type * as lib_xReplyQueueSchema from "../lib/xReplyQueueSchema.js";
@@ -34,10 +37,7 @@ import type * as lib_xUnverifiedReplyLimit from "../lib/xUnverifiedReplyLimit.js
 import type * as lifetimeVolume from "../lifetimeVolume.js";
 import type * as llm from "../llm.js";
 import type * as marketData from "../marketData.js";
-import type * as walletData from "../walletData.js";
-import type * as walletInventory from "../walletInventory.js";
 import type * as operationDiagnostics from "../operationDiagnostics.js";
-import type * as arcPermits from "../arcPermits.js";
 import type * as otc from "../otc.js";
 import type * as registry from "../registry.js";
 import type * as retiredTokenCleanup from "../retiredTokenCleanup.js";
@@ -48,9 +48,11 @@ import type * as telegramWallets from "../telegramWallets.js";
 import type * as telegramWebAuth from "../telegramWebAuth.js";
 import type * as walletCommands from "../walletCommands.js";
 import type * as walletContinuations from "../walletContinuations.js";
+import type * as walletData from "../walletData.js";
 import type * as walletExportEnrollment from "../walletExportEnrollment.js";
 import type * as walletExportMaintenance from "../walletExportMaintenance.js";
 import type * as walletExports from "../walletExports.js";
+import type * as walletInventory from "../walletInventory.js";
 import type * as wallets from "../wallets.js";
 import type * as webAuth from "../webAuth.js";
 import type * as xFloodProtection from "../xFloodProtection.js";
@@ -70,6 +72,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  arcPermits: typeof arcPermits;
   arcRpcDiagnostics: typeof arcRpcDiagnostics;
   arcTokenCatalog: typeof arcTokenCatalog;
   arcTransferTest: typeof arcTransferTest;
@@ -87,8 +90,10 @@ declare const fullApi: ApiFromModules<{
   launchDrafts: typeof launchDrafts;
   legacyClaims: typeof legacyClaims;
   legacyLaunch: typeof legacyLaunch;
+  "lib/listingTotals": typeof lib_listingTotals;
   "lib/telegramUnlink": typeof lib_telegramUnlink;
   "lib/terminalFeeReceipts": typeof lib_terminalFeeReceipts;
+  "lib/tokenInventory": typeof lib_tokenInventory;
   "lib/walletExportGuard": typeof lib_walletExportGuard;
   "lib/walletExportIndexes": typeof lib_walletExportIndexes;
   "lib/xReplyQueueSchema": typeof lib_xReplyQueueSchema;
@@ -96,10 +101,7 @@ declare const fullApi: ApiFromModules<{
   lifetimeVolume: typeof lifetimeVolume;
   llm: typeof llm;
   marketData: typeof marketData;
-  walletData: typeof walletData;
-  walletInventory: typeof walletInventory;
   operationDiagnostics: typeof operationDiagnostics;
-  arcPermits: typeof arcPermits;
   otc: typeof otc;
   registry: typeof registry;
   retiredTokenCleanup: typeof retiredTokenCleanup;
@@ -110,9 +112,11 @@ declare const fullApi: ApiFromModules<{
   telegramWebAuth: typeof telegramWebAuth;
   walletCommands: typeof walletCommands;
   walletContinuations: typeof walletContinuations;
+  walletData: typeof walletData;
   walletExportEnrollment: typeof walletExportEnrollment;
   walletExportMaintenance: typeof walletExportMaintenance;
   walletExports: typeof walletExports;
+  walletInventory: typeof walletInventory;
   wallets: typeof wallets;
   webAuth: typeof webAuth;
   xFloodProtection: typeof xFloodProtection;

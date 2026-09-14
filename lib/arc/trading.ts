@@ -27,14 +27,15 @@ const native=(a:string)=>a==="native"||a.toLowerCase()===ARC_USDC.toLowerCase()|
 const uniquePools=(pools:ArcPool[])=>[...new Map(pools.map(p=>[p.protocol+poolId(p),p])).values()].sort((a,b)=>Number(b.protocol==="v4"&&b.hooks!==zeroAddress)-Number(a.protocol==="v4"&&a.hooks!==zeroAddress)||Number(b.protocol==="v3")-Number(a.protocol==="v3")).slice(0,100);
 
 /** Exact-input routes only. Candidate pool identities are verified on chain by quoteRoutes. */
-async function quoteArcTrade(wallet:Address,input:TradeInput){
+async function quoteArcTrade(wallet:Address,input:TradeInput,requireInputFunds=true){
   const config=arcConfigFromEnv(),transport=arcTransport(config),rpc=createArcRpc(config,transport),client=createPublicClient({transport});
   const head=await checkArcRpc(rpc,config);
   // Reject unfunded input before discovery. This is a fresh, pinned read, not
   // the retained display balance; preparation and signing check it again.
-  const inputAsset=getAddress(native(input.tokenIn)?ARC_USDC:input.tokenIn);
+  if(requireInputFunds){const inputAsset=getAddress(native(input.tokenIn)?ARC_USDC:input.tokenIn);
   const [inputBalance,inputDecimals]=await Promise.all([rpc.tokenBalance(inputAsset,wallet,head.number),rpc.decimals(inputAsset,head.number)]);
   if(inputBalance<exactAmount(input.amount,inputDecimals))throw new Error(native(input.tokenIn)?'Not enough Arc USDC for this buy.':`Not enough ${ARC_TOKEN_CATALOG.find(t=>t.address.toLowerCase()===inputAsset.toLowerCase())?.symbol??'input tokens'} for this amount.`);
+  }
   const code=await rpc.code(ARC_ROUTER,head.number);
   if(!code||keccak256(code)!==ARC_ROUTER_CODE_HASH)throw new Error("Arc router code does not match the reviewed deployment.");
   if(native(input.tokenIn)&&native(input.tokenOut))throw new Error("Choose different assets.");
@@ -184,7 +185,15 @@ async function quoteArcTrade(wallet:Address,input:TradeInput){
 }
 
 export async function estimateArcTrade(wallet:Address,input:TradeInput){
-  const {q,rpc,client,head,inputTaxBps,routeHint}=await quoteArcTrade(wallet,input);
+  return estimateTrade(wallet,input,true);
+}
+/** Price reference for choosing held quote tokens. This does not prepare,
+ * authorize or sign a spend of the reference USDC amount. */
+export async function estimateArcReferenceTrade(wallet:Address,input:TradeInput){
+  return estimateTrade(wallet,input,false);
+}
+async function estimateTrade(wallet:Address,input:TradeInput,requireInputFunds:boolean){
+  const {q,rpc,client,head,inputTaxBps,routeHint}=await quoteArcTrade(wallet,input,requireInputFunds);
   const decimals=q.route.tokenOut===zeroAddress?18:await rpc.decimals(q.route.tokenOut,head.number);
   const indexed=ARC_TOKEN_CATALOG.find(token=>token.address.toLowerCase()===q.route.tokenOut.toLowerCase());
   const symbol=native(q.route.tokenOut)?"USDC":indexed?.symbol??await client.readContract({address:q.route.tokenOut,abi:parseAbi(["function symbol() view returns (string)"]),functionName:"symbol",blockNumber:head.number}).catch(()=>null);
