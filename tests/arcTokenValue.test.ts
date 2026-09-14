@@ -1,5 +1,8 @@
-import {afterEach,expect,it,vi} from "vitest";
+import {afterEach,beforeEach,expect,it,vi} from "vitest";
+const paired=vi.hoisted(()=>vi.fn());
+vi.mock("../lib/arc/paired-token-price",()=>({pairedTokenPrice:paired}));
 import {formatTokenUsd,tokenUsdEstimate} from "../lib/arc/token-value";
+beforeEach(()=>paired.mockReset().mockResolvedValue(null));
 afterEach(()=>vi.unstubAllGlobals());
 let counter=50;
 const address=()=>`0x${(++counter).toString(16).padStart(40,"0")}`;
@@ -20,4 +23,24 @@ it("keeps missing prices separate from zero and formats tiny holdings",()=>{
 it("returns unavailable on explorer failure",async()=>{
   vi.stubGlobal("fetch",vi.fn().mockRejectedValue(Error("offline")));
   expect((await tokenUsdEstimate(address(),"100")).usdValue).toBeNull();
+});
+it("converts a paired token through its quote asset's USD price",async()=>{
+  const token=address(),quote=address();
+  vi.stubGlobal("fetch",vi.fn(async(url:string)=>({ok:true,json:async()=>url.endsWith(quote)?{address:quote,priceUsd:0.5}:{address:token,priceUsd:null}})));
+  paired.mockResolvedValue({quoteAddress:quote,quotePerToken:0.2,pricedAt:"2026-09-14T16:00:00.000Z"});
+  expect(await tokenUsdEstimate(token,"1000")).toMatchObject({usdValue:100});
+  expect(paired).toHaveBeenCalledTimes(1);
+});
+it("converts nested pairs and treats only canonical USDC as one dollar",async()=>{
+  const token=address(),quote=address();
+  vi.stubGlobal("fetch",vi.fn(async(url:string)=>({ok:true,json:async()=>({address:url.split('/').at(-1),priceUsd:null})})));
+  paired.mockImplementation(async(key:string)=>({quoteAddress:key===token?quote:"0x3600000000000000000000000000000000000000",quotePerToken:key===token?2:3,pricedAt:"2026-09-14T16:00:00.000Z"}));
+  expect((await tokenUsdEstimate(token,"10")).usdValue).toBe(60);
+});
+it("stops cyclic paired markets without inventing a USD value",async()=>{
+  const token=address(),quote=address();
+  vi.stubGlobal("fetch",vi.fn(async()=>({ok:false})));
+  paired.mockImplementation(async(key:string)=>({quoteAddress:key===token?quote:token,quotePerToken:2,pricedAt:"2026-09-14T16:00:00.000Z"}));
+  expect((await tokenUsdEstimate(token,"10")).usdValue).toBeNull();
+  expect(paired).toHaveBeenCalledTimes(2);
 });

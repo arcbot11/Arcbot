@@ -1,6 +1,8 @@
 import {ConvexHttpClient} from 'convex/browser';
 import {makeFunctionReference} from 'convex/server';
+import {tradeSimulationFailure} from './arc/trade-errors';
 export function failureCategory(error:unknown){
+  if(tradeSimulationFailure(error))return 'simulation_rejected';
   const message=error instanceof Error?error.message:'';
   if(/insufficient|not enough|underfunded/i.test(message))return 'insufficient_funds';
   if(/nonce|replacement/i.test(message))return 'nonce_changed';

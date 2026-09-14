@@ -11,6 +11,7 @@ function fixture(handle: (url: string, method: string, params?:any[]) => any) {
   vi.stubGlobal("fetch", vi.fn(async (url: string, options: any) => {
     const { method, params } = JSON.parse(options.body); calls.push({ url, method, params });
     const override = handle(url, method,params);
+    if(override instanceof Response)return override;
     const result = override ?? (method === "eth_chainId" ? "0x13b2" : method === "eth_getBlockByNumber" ? { number: "0xa", hash, timestamp: `0x${Math.floor(Date.now() / 1000).toString(16)}` } : "0x2");
     return new Response(JSON.stringify(result?.error ? result : { result }));
   }));
@@ -54,6 +55,38 @@ describe("Arc RPC failover", () => {
     });
     expect(await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"})).toBe(2n);
     expect(attempts).toBe(2);expect(f.calls.filter(c=>c.method==="eth_getBalance").map(c=>c.url)).toEqual([primary]);
+  });
+  it("revalidates a recovered gateway after five seconds instead of blocking it for a minute",async()=>{
+    let now=Date.now(),outage=true;
+    vi.spyOn(Date,"now").mockImplementation(()=>now);
+    const f=fixture((url,method)=>{
+      if(url!==primary)throw Error("offline");
+      if(method==="eth_chainId"&&outage)return {error:{code:-32603,message:"upstream unreachable"}};
+    });
+    const address="0x1111111111111111111111111111111111111111";
+    await expect(f.client.getBalance({address})).rejects.toThrow();
+    outage=false;now+=4000;
+    await expect(f.client.getBalance({address})).rejects.toThrow();
+    expect(f.calls.filter(c=>c.url===primary&&c.method==="eth_getBalance")).toHaveLength(0);
+    now+=1001;
+    expect(await f.client.getBalance({address})).toBe(2n);
+    expect(f.calls.filter(c=>c.url===primary&&c.method==="eth_getBlockByNumber")).toHaveLength(2);
+  });
+  it.each(["header not found","block not found","missing trie node","state is not available"])("fails over a missing pinned state read (%s) without changing its block",async message=>{
+    const f=fixture((url,method)=>url===primary&&method==="eth_getBalance"?{error:{code:-32000,message}}:undefined);
+    expect(await f.client.getBalance({address:"0x1111111111111111111111111111111111111111",blockNumber:10n})).toBe(2n);
+    expect(f.calls.filter(c=>c.method==="eth_getBalance").map(c=>[c.url,c.params[1]])).toEqual([[primary,"0xa"],[secondary,"0xa"]]);
+  });
+  it("fails over a null block response but preserves a missing receipt as null",async()=>{
+    const f=fixture((url,method,params)=>{
+      if(method==="eth_getTransactionReceipt")return new Response(JSON.stringify({result:null}));
+      if(method==="eth_getBlockByNumber"&&params?.[0]==="0xb")return url===primary
+        ?new Response(JSON.stringify({result:null})):{number:"0xb",hash,timestamp:`0x${Math.floor(Date.now()/1000).toString(16)}`};
+    });
+    expect(await f.client.request({method:"eth_getBlockByNumber",params:["0xb",false]})).toMatchObject({number:"0xb"});
+    expect(f.calls.filter(c=>c.method==="eth_getBlockByNumber"&&c.params[0]==="0xb").map(c=>c.url)).toEqual([primary,secondary]);
+    expect(await f.client.request({method:"eth_getTransactionReceipt",params:[hash as `0x${string}`]})).toBeNull();
+    expect(f.calls.filter(c=>c.method==="eth_getTransactionReceipt")).toHaveLength(1);
   });
   it("cools down failed providers and validates them again before recovery", async () => {
     let now=Date.now(), offline=true;
@@ -134,7 +167,34 @@ describe("Arc RPC failover", () => {
   it("bounds transient read retries even if every upstream stays unavailable", async () => {
     const f = fixture((_url, method) => method === "eth_call" ? { error: { code: -32603, message: "upstream unreachable" } } : undefined);
     await expect(f.client.request({ method: "eth_call", params: [{}, "latest"] })).rejects.toThrow();
-    expect(f.calls.filter(c => c.method === "eth_call")).toHaveLength(9);
+    expect(f.calls.filter(c => c.method === "eth_call")).toHaveLength(15);
+  });
+  it("recovers a gateway after three consecutive short call failures",async()=>{
+    let attempts=0;
+    const f=fixture((url,method)=>{
+      if(method!=="eth_call")return;
+      if(url!==readOnly)return {error:{code:-32600,message:"quota"}};
+      return ++attempts<=3?{error:{code:-32603,message:"upstream unreachable"}}:"0x1234";
+    });
+    expect(await f.client.request({method:"eth_call",params:[{},"0xa"]})).toBe("0x1234");
+    expect(attempts).toBe(4);
+    expect(f.calls.filter(c=>c.method==="eth_call").every(c=>c.params[1]==="0xa")).toBe(true);
+  });
+  it("does not retry a connection timeout after checking other providers",async()=>{
+    const f=fixture((_url,method)=>{if(method==="eth_call")throw Error("connection timeout");});
+    await expect(f.client.request({method:"eth_call",params:[{},"0xa"]})).rejects.toThrow();
+    expect(f.calls.filter(c=>c.method==="eth_call")).toHaveLength(3);
+  });
+  it("stops retrying if a brief upstream miss becomes a connection timeout",async()=>{
+    let attempts=0;
+    const f=fixture((url,method)=>{
+      if(method!=="eth_call")return;
+      if(url!==readOnly)return {error:{code:-32600,message:"quota"}};
+      if(++attempts===1)return {error:{code:-32603,message:"upstream unreachable"}};
+      throw Error("connection timeout");
+    });
+    await expect(f.client.request({method:"eth_call",params:[{},"0xa"]})).rejects.toThrow();
+    expect(attempts).toBe(2);
   });
   it("does not let one failing token block other contract reads",async()=>{
     const bad="0x1111111111111111111111111111111111111111",good="0x2222222222222222222222222222222222222222";

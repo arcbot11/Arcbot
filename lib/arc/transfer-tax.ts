@@ -4,6 +4,11 @@ import type {ArcRpc} from "./rpc";
 // Reviewed legacy Argus implementation. Its transfer surcharge is paid by the
 // sender in addition to the requested transfer; currentTaxes can only decrease.
 const LEGACY_IMPLEMENTATION_HASH="0x46b01b3c45ac40c07d1104fb0f0a87f4cddda4eba4de5bff1ca3a03a3c2932f2";
+// ARCASH's implementation has identical executable bytecode to the reviewed
+// legacy implementation; only its Solidity metadata trailer differs. Pin the
+// complete hash rather than accepting arbitrary code with matching tax getters.
+const ARCASH_IMPLEMENTATION_HASH="0x7ee51ac03f824643a98fe84cdc4816553a4f98f75ba619a5dd4f0bff7240cccf";
+const legacyImplementations=new Set([LEGACY_IMPLEMENTATION_HASH,ARCASH_IMPLEMENTATION_HASH]);
 const abi=parseAbi(["function currentTaxes() view returns(uint16,uint16)","function isExempt(address) view returns(bool)"]);
 export function tokenDebit(amount:bigint,bps:number){return amount+amount*BigInt(bps)/10000n;}
 export function maximumSell(budget:bigint,bps:number){
@@ -17,7 +22,7 @@ async function legacyTransferTax(rpc:ArcRpc,token:Address,owner:Address,block:bi
   const code=await rpc.code(token,block);
   const clone=/^0x363d3d373d3d3d363d73([0-9a-f]{40})5af43d82803e903d91602b57fd5bf3$/i.exec(code??"");
   const implementation=clone?await rpc.code(getAddress(`0x${clone[1]}`),block):code;
-  if(!implementation||keccak256(implementation)!==LEGACY_IMPLEMENTATION_HASH)return 0;
+  if(!implementation||!legacyImplementations.has(keccak256(implementation)))return 0;
   const read=async(functionName:"currentTaxes"|"isExempt",args:readonly Address[]=[])=>decodeFunctionResult({abi,functionName,data:await rpc.call({from:owner,to:token,value:0n,data:encodeFunctionData({abi,functionName,args} as never)},block)});
   const [rates,exempt,toExempt]=await Promise.all([read("currentTaxes"),read("isExempt",[owner]),recipient?read("isExempt",[recipient]):false]);
   if(exempt||toExempt)return 0;

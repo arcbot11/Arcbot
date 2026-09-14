@@ -1,5 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
-import {tradePreparationError} from "../arc/trade-errors";
+import {tradePreparationError,tradeSimulationFailure} from "../arc/trade-errors";
 import { getAddress } from "viem";
 import { repository } from "./repository";
 import { ConvexHttpClient } from "convex/browser";
@@ -30,6 +30,12 @@ export function webFailure(error:unknown,operation?:"quote") {
   if(error instanceof WebError) return json({error:error.message},error.status);
   const tradeError=tradePreparationError(error);
   if(tradeError)return json({error:tradeError},400);
+  if(operation==="quote"){
+    const simulation=tradeSimulationFailure(error);
+    if(simulation)return json({error:simulation==="minimum_output"
+      ?"The simulated output is below the quoted minimum. Refresh the quote. No payment was sent."
+      :"The trade simulation was rejected. Refresh the quote or try a smaller amount. No payment was sent."},400);
+  }
   const original=error instanceof Error?error.message:"";
   const message=(/Uncaught Error: ([^\n]+)/.exec(original)?.[1] ?? original).trim();
   if(["Trade funding changed or expired. Get a new estimate before submitting.","This token's quote asset is not supported yet.","This token uses a different quote asset. Check its trading pair.","Quote asset decimals changed. Try again."].includes(message))return json({error:message},400);

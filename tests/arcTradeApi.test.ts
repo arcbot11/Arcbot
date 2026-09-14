@@ -24,6 +24,25 @@ describe("website Arc trade boundary",()=>{
    const response=await POST(request({...input,action:"estimate"}));
    expect(await response.json()).toEqual({error:"Could not get an exact quote. Try again. No payment was sent."});expect(m.command).not.toHaveBeenCalled();
  });
+ it("does not imply a payment exists when preview fails before confirmation",async()=>{
+   m.preview.mockRejectedValueOnce(Error("private provider diagnostic https://rpc.example/key"));
+   const response=await POST(request(input));
+   expect(await response.json()).toEqual({error:"Could not get an exact quote. Try again. No payment was sent."});
+   expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+ });
+ it("explains a nested router minimum-output failure without leaking provider details",async()=>{
+   const cause=Object.assign(Error("Arc RPC rejected request"),{code:3,data:`0x8b063d73${"0".repeat(63)}2${"0".repeat(63)}1`});
+   m.preview.mockRejectedValueOnce(Error("private provider diagnostic https://rpc.example/key",{cause}));
+   const response=await POST(request(input));
+   expect(await response.json()).toEqual({error:"The simulated output is below the quoted minimum. Refresh the quote. No payment was sent."});
+   expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+ });
+ it("still warns about uncertain confirmation failures",async()=>{
+   const q=await(await POST(request(input))).json();
+   m.command.mockRejectedValueOnce(Error("storage connection lost"));
+   const response=await POST(request({action:"confirm",quote:q.quote}));
+   expect(await response.json()).toEqual({error:"Request could not be confirmed. Check order or transaction history before retrying."});
+ });
  it.each(["estimate","preview"])("uses and displays frozen ARGUS funding during %s",async action=>{
    const funding={inputSymbol:"ARGUS",inputAmount:"100",outputSymbol:"BABYARGUS",mode:"quote"};
    const trade={tokenIn:"0xece5ca8bf9220718e5727754026757512212cb3c",tokenOut:input.tokenOut,amount:"100",slippageBps:100};

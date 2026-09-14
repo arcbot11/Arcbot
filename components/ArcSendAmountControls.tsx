@@ -2,7 +2,7 @@
 import {useEffect,useState} from "react";
 import {formatUnits} from "viem";
 import {displayTokenAmount,isUsdcAsset} from "@/lib/amount-display";
-import {formatTokenUsd} from "@/lib/arc/token-value";
+import {formatTokenUsd} from "@/lib/arc/token-value-format";
 
 type Balance={address:string;balance:string;raw:string;maxSellRaw:string;decimals:number;usdValue?:number|null};
 export function ArcSendAmountControls({wallet,asset,availableUsdc,disabled,value,unit,percentage,onChange,onUnit,onPercentage,refreshKey=0}:{

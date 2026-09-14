@@ -1,14 +1,27 @@
 import {describe,expect,it,vi} from "vitest";
-import {encodeFunctionResult,decodeFunctionData,parseAbi} from "viem";
+import {encodeFunctionResult,decodeFunctionData,parseAbi,keccak256} from "viem";
 import {inputTransferTax,outputTransferTax,maximumSell,tokenDebit} from "../lib/arc/transfer-tax";
 import type {ArcRpc} from "../lib/arc/rpc";
 import type {Hex} from "viem";
 import runtime from "./fixtures/argus-legacy-runtime.json";
+import arcashRuntime from "./fixtures/arcash-legacy-runtime.json";
 const abi=parseAbi(["function currentTaxes() view returns(uint16,uint16)","function isExempt(address) view returns(bool)"]);
-function taxRpc(bps:number,exempt=false){return {code:vi.fn().mockResolvedValueOnce(runtime.clone).mockResolvedValueOnce(runtime.implementation),call:vi.fn(async({data}:{data:Hex})=>{
+function taxRpc(bps:number,exempt=false,fixture=runtime,buyBps=100){return {code:vi.fn().mockResolvedValueOnce(fixture.clone).mockResolvedValueOnce(fixture.implementation),call:vi.fn(async({data}:{data:Hex})=>{
   const d=decodeFunctionData({abi,data});
-  return d.functionName==="currentTaxes"?encodeFunctionResult({abi,functionName:d.functionName,result:[100,bps]}):encodeFunctionResult({abi,functionName:d.functionName,result:exempt});
+  return d.functionName==="currentTaxes"?encodeFunctionResult({abi,functionName:d.functionName,result:[buyBps,bps]}):encodeFunctionResult({abi,functionName:d.functionName,result:exempt});
 })} as unknown as ArcRpc;}
+it("pins ARCASH's metadata-only variant of the reviewed executable bytecode",()=>{
+  const executable=(code:string)=>code.slice(0,-4-parseInt(code.slice(-4),16)*2);
+  expect(executable(arcashRuntime.implementation)).toBe(executable(runtime.implementation));
+  expect(arcashRuntime.implementation).not.toBe(runtime.implementation);
+  expect(keccak256(arcashRuntime.implementation as Hex)).toBe("0x7ee51ac03f824643a98fe84cdc4816553a4f98f75ba619a5dd4f0bff7240cccf");
+});
+it.each([300,100,0])("reads ARCASH's current buy and sell tax at %s bps",async bps=>{
+  const token="0x0bffa97f774824e9da843699aedd2835cb1b8022",owner="0x2222222222222222222222222222222222222222",recipient="0x3333333333333333333333333333333333333333";
+  expect(await outputTransferTax(taxRpc(bps,false,arcashRuntime,bps),token,owner,recipient,100n)).toBe(bps);
+  expect(await inputTransferTax(taxRpc(bps,false,arcashRuntime,bps),token,owner,100n,recipient)).toBe(bps);
+  expect(await outputTransferTax(taxRpc(bps,true,arcashRuntime,bps),token,owner,recipient,100n)).toBe(0);
+});
 it.each([100,50,0])("reads a fresh legacy tax rate of %s bps",async bps=>{
   expect(await inputTransferTax(taxRpc(bps),"0xece5ca8bf9220718e5727754026757512212cb3c","0x2222222222222222222222222222222222222222",100n)).toBe(bps);
 });

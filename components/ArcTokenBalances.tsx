@@ -5,15 +5,32 @@ import {displayTokenAmount,isUsdcAsset} from "@/lib/amount-display";
 import type { ArcTokenBalance } from "@/lib/arc/wallet-tokens";
 import { retainTokenBalances } from "@/lib/token-balance-display";
 import { loadTokenBalances, type TokenBalanceSnapshot } from "@/lib/load-token-balances";
+import { loadTokenPrice } from "@/lib/load-token-price";
 
 type TradeAction=(side:"buy"|"sell",token:string)=>void;
 export function HoldingCard({token,onError,onTrade,busy}:{token:ArcTokenBalance;onError:(message:string)=>void;onTrade?:TradeAction;busy:boolean}){
   const [copied,setCopied]=useState(false);
+  const [price,setPrice]=useState<{address:string;priceUsd:number;pricedAt:string|null}|null>(null);
+  useEffect(()=>{
+    if(isUsdcAsset(token.address))return;
+    let cancelled=false;
+    const refresh=async()=>{
+      if(document.hidden)return;
+      const result=await loadTokenPrice(token.address);
+      if(!cancelled&&result)setPrice({address:token.address.toLowerCase(),...result});
+    };
+    if(token.usdValue==null)void refresh();
+    const timer=setInterval(()=>void refresh(),60000);
+    return()=>{cancelled=true;clearInterval(timer);};
+  },[token.address,token.usdValue]);
   const balance=displayTokenAmount(token.balance,token.address);
-  const usdValue=!isUsdcAsset(token.address)&&token.usdValue!=null?formatBalanceUsd(token.usdValue):undefined;
+  const fallback=price?.address===token.address.toLowerCase()?price:null;
+  const estimatedUsd=token.usdValue??(fallback?Number(token.balance)*fallback.priceUsd:null);
+  const pricedAt=token.usdValue!=null?token.pricedAt:fallback?.pricedAt;
+  const usdValue=!isUsdcAsset(token.address)&&estimatedUsd!=null?formatBalanceUsd(estimatedUsd):undefined;
   return <article className="arc-holding-card">
     <div className="arc-holding-top"><div className="arc-holding-mark" aria-hidden="true">{token.symbol.slice(0,2).toUpperCase()}</div><div><h3>{token.symbol}</h3><p>{token.name}</p></div><span className="arc-holding-chain">ARC</span></div>
-    <div className="arc-holding-amount"><span>Balance</span><strong>{balance} {token.symbol}{usdValue&&<> <small title={token.pricedAt?`USD estimate · Price as of ${token.pricedAt}`:"USD estimate"}>({usdValue})</small></>}</strong></div>
+    <div className="arc-holding-amount"><span>Balance</span><strong>{balance} {token.symbol}{usdValue&&<> <small title={pricedAt?`USD estimate · Price as of ${pricedAt}`:"USD estimate"}>({usdValue})</small></>}</strong></div>
     {token.stale&&<p className="otc-fine">Last loaded balance. Refresh pending.</p>}
     <div className="arc-holding-contract"><span>Contract address</span><button type="button" onClick={async()=>{try{await navigator.clipboard.writeText(token.address);setCopied(true);}catch{onError("Could not copy the contract address. Select and copy it below.");}}} aria-label={`Copy ${token.symbol} contract address`}>{copied?"Copied":"Copy CA"}</button><code>{token.address}</code></div>
     <a className="arc-text-link" href={`https://www.arcexplorer.org/token/${token.address}`} target="_blank" rel="noreferrer">View on explorer ↗</a>

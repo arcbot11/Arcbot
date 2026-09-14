@@ -5,7 +5,7 @@ import {completedTrade} from "@/lib/arc/trade-result";
 import {displayTokenAmount,isUsdcAsset} from "@/lib/amount-display";
 import { ArcTokenPicker } from "./ArcTokenPicker";
 import {useState,useEffect,useRef,type ReactNode} from "react";
-import {formatTokenUsd} from "@/lib/arc/token-value";
+import {formatTokenUsd} from "@/lib/arc/token-value-format";
 import {formatUnits} from "viem";
 import {readTransactionStatus} from "@/lib/arc/transaction-progress";
 import { executeTradeFlow, type TradeFlowQuote as Quote } from "@/lib/arc/trade-flow";
@@ -87,7 +87,7 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{},onBusyChan
   return <fieldset disabled={disabled||busy} className={`otc-form-panel arc-trade-controls${disabled?" wallet-preview-disabled":""}`}>
     <legend>{side==="buy"?"Buy":side==="sell"?"Sell":"Swap"}</legend>
     <ArcTokenPicker label={side==="swap"?"From token":"Token"} value={token} disabled={disabled||busy} onChange={address=>{setToken(address);}}/>
-    {token&&authenticated&&<p className="otc-fine" aria-live="polite">{selectedBalance?(side==="buy"?`${displayTokenAmount(selectedBalance.balance,token)} ${selectedBalance.symbol||"tokens"}${!isUsdcAsset(token)&&Number.isFinite(selectedBalance.usdValue)&&(selectedBalance.usdValue??0)>0?` · ${formatTokenUsd(selectedBalance.usdValue)}`:""}`:`Balance: ${displayTokenAmount(selectedBalance.balance,token)}${isUsdcAsset(token)?" USDC":formatTokenUsd(selectedBalance.usdValue)?` · ${formatTokenUsd(selectedBalance.usdValue)}`:""}`):balanceFailed?"Balance unavailable.":"Loading balance…"}</p>}
+    {token&&authenticated&&<p className="otc-fine" aria-live="polite">{side!=="swap"&&<>You have:<br/></>}{selectedBalance?(side==="buy"?`${displayTokenAmount(selectedBalance.balance,token)} ${selectedBalance.symbol||"tokens"}${!isUsdcAsset(token)&&Number.isFinite(selectedBalance.usdValue)&&(selectedBalance.usdValue??0)>0?` · ${formatTokenUsd(selectedBalance.usdValue)}`:""}`:`Balance: ${displayTokenAmount(selectedBalance.balance,token)}${isUsdcAsset(token)?" USDC":formatTokenUsd(selectedBalance.usdValue)?` · ${formatTokenUsd(selectedBalance.usdValue)}`:""}`):balanceFailed?"Balance unavailable.":"Loading balance…"}</p>}
     {side==="swap"&&<ArcTokenPicker label="To token" value={output==="native"?"":output} disabled={disabled||busy} onChange={address=>{setOutput(address);}}/>}
     {side==="sell"&&<p className="otc-fine">{receiveSymbol?`Receive ${receiveSymbol}.`:token?"Checking receive asset…":"Select a token to see what you receive."}</p>}
     {side==="buy"&&paired&&<p className="otc-fine">Uses {market?.quote.symbol??funding?.quoteSymbol} when it covers the buy. Otherwise uses USDC.</p>}

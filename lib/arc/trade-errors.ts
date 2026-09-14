@@ -1,3 +1,17 @@
+/** Inspect bounded error causes without exposing provider diagnostics. */
+export function tradeSimulationFailure(error:unknown):"minimum_output"|"reverted"|undefined {
+  const seen=new Set<object>();let current=error,reverted=false;
+  for(let depth=0;depth<12&&typeof current==="object"&&current!==null&&!seen.has(current);depth++){
+    seen.add(current);
+    const e=current as {code?:unknown;name?:unknown;message?:unknown;data?:unknown;cause?:unknown};
+    // V4TooLittleReceived(uint256 minimum,uint256 received), from the router.
+    if(typeof e.data==="string"&&/^0x8b063d73[0-9a-f]{128}$/i.test(e.data))return "minimum_output";
+    if(e.code===3||e.name==="ContractFunctionRevertedError"||typeof e.message==="string"&&/execution reverted/i.test(e.message))reverted=true;
+    current=e.cause;
+  }
+  return reverted?"reverted":undefined;
+}
+
 /** Fixed local preparation errors. Never expose provider diagnostics or URLs. */
 export function tradePreparationError(error:unknown):string|undefined {
   const message=error instanceof Error?error.message:"";

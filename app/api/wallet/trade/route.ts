@@ -30,7 +30,9 @@ export async function POST(request:NextRequest){
   const diagnostic={requestId:randomUUID(),channel:'web' as const,stage:'authorization',startedAt:Date.now()};let failure:unknown;
   try{
     const session=await websiteSession(request,true),input=schema.parse(await boundedJson(request,18000)),repo=repository();
-    readOnly=input.action==="estimate"||input.action==="market";
+    // Preview may obtain an exact Permit2 signature, but cannot submit a
+    // payment or create a transaction. Only confirm can leave pending work.
+    readOnly=input.action!=="confirm";
     diagnostic.stage=input.action;
     if(input.action==="market")return json(await tradeMarket(input.token));
     let plan:Awaited<ReturnType<typeof resolveTradePlan>>|undefined;
