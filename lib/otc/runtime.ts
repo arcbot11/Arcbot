@@ -43,7 +43,9 @@ export function otcConfiguration(_requireEnabled = true) {
   return { router, feeRecipient, routerCodeHash, arc: arcConfigFromEnv(), base: baseConfigFromEnv() };
 }
 export function chainClient(chain: Chain) {
-  return createPublicClient({ transport: chain === 5042 ? arcTransport(arcConfigFromEnv()) : baseTransport(baseConfigFromEnv()) });
+  // Execution and settlement retain normal eth_call semantics. Trace fallback
+  // is for discovery and quotes, never evidence of affordability or delivery.
+  return createPublicClient({ transport: chain === 5042 ? arcTransport(arcConfigFromEnv(),{traceFallback:false}) : baseTransport(baseConfigFromEnv()) });
 }
 export async function balanceSnapshot(chain: Chain, address: string) {
   const owner = getAddress(address);

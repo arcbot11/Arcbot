@@ -1,5 +1,6 @@
 import { custom } from "viem";
 import type { ArcConfig } from "./config";
+import { traceRead, traceReadOutput, TraceReadError, type TraceRead } from "./trace-call";
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -8,25 +9,27 @@ const isBlock = (value: unknown): value is { number: string; hash: string; times
 
 const reads = new Set(["eth_chainId", "eth_blockNumber", "eth_getBlockByNumber", "eth_getBlockByHash", "eth_getBalance", "eth_getCode", "eth_getTransactionCount", "eth_call", "eth_estimateGas", "eth_gasPrice", "eth_maxPriorityFeePerGas", "eth_feeHistory", "eth_getLogs", "eth_getTransactionReceipt", "eth_getTransactionByHash", "debug_traceCall", "debug_traceTransaction"]);
 class RpcFailure extends Error {
-  readonly code:number;readonly retryable:boolean;readonly data?:unknown;readonly transient:boolean;readonly cooldownMs:number;
-  constructor(message:string,code:number,retryable:boolean,data?:unknown,transient=false,cooldownMs=5000){super(message);this.code=code;this.retryable=retryable;this.data=data;this.transient=transient;this.cooldownMs=cooldownMs;}
+  readonly code:number;readonly retryable:boolean;readonly data?:unknown;readonly transient:boolean;readonly cooldownMs:number;readonly traceFallback:boolean;
+  constructor(message:string,code:number,retryable:boolean,data?:unknown,transient=false,cooldownMs=5000,traceFallback=false){super(message);this.code=code;this.retryable=retryable;this.data=data;this.transient=transient;this.cooldownMs=cooldownMs;this.traceFallback=traceFallback;}
 }
 
 const transports=new Map<string,ReturnType<typeof createArcTransport>>();
 export function clearArcTransportCache(){transports.clear();}
-export function arcTransport(config:ArcConfig){
-  const key=JSON.stringify(config,(_,value)=>typeof value==="bigint"?value.toString():value);
+export function arcTransport(config:ArcConfig,options:{traceFallback?:boolean}={}){
+  const traceFallback=options.traceFallback!==false;
+  const key=JSON.stringify([config,traceFallback],(_,value)=>typeof value==="bigint"?value.toString():value);
   let transport=transports.get(key);
-  if(!transport){if(transports.size>=16)transports.delete(transports.keys().next().value!);transport=createArcTransport(config);transports.set(key,transport);}
+  if(!transport){if(transports.size>=16)transports.delete(transports.keys().next().value!);transport=createArcTransport(config,traceFallback);transports.set(key,transport);}
   return transport;
 }
 
 /** Validated read failover; a broadcast is attempted on exactly one provider. */
-function createArcTransport(config: ArcConfig) {
+function createArcTransport(config: ArcConfig, traceFallback: boolean) {
   const verifiedUntil = new Map<string, number>();
   const unavailableUntil = new Map<string, number>();
   const validating = new Map<string, Promise<void>>();
   const methodUnavailableUntil = new Map<string, number>();
+  const traceAllowedUntil = new Map<string, number>();
   const validationEvidence=new Map<string,{chain:unknown;checkpoint:unknown}>();
   const inFlightReads=new Map<string,Promise<unknown>>();
   async function call(url:string,method:string,params:readonly unknown[]=[]):Promise<unknown>{
@@ -42,20 +45,53 @@ function createArcTransport(config: ArcConfig) {
       response = await fetch(url, { method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(12000) });
     } catch { throw new RpcFailure("Arc RPC connection unavailable", -32098, true, undefined, true); }
-    if (!response.ok) throw new RpcFailure(`Arc RPC HTTP ${response.status}`, -32098, [401, 403, 408, 429].includes(response.status) || response.status >= 500, undefined, response.status === 408 || response.status >= 500,[401,403,429].includes(response.status)?60000:5000);
+    if (!response.ok) throw new RpcFailure(`Arc RPC HTTP ${response.status}`, -32098, [401, 403, 408, 429].includes(response.status) || response.status >= 500, undefined, response.status === 408 || response.status >= 500,[401,403,429].includes(response.status)?60000:5000,[408,429].includes(response.status)||response.status>=500);
     let body: unknown;
     try { body = await response.json(); } catch { throw new RpcFailure("Invalid Arc RPC response", -32098, true); }
     if (!isRecord(body)) throw new RpcFailure("Invalid Arc RPC response", -32098, true);
     if (body.error) {
       if (!isRecord(body.error)) throw new RpcFailure("Invalid Arc RPC error", -32098, true);
       const code = Number(body.error.code), message = String(body.error.message || "RPC error");
-      const retryable = code === -32601 || /quota|rate.?limit|too many requests|temporarily unavailable|upstream|method_not_served/i.test(message) || (isRecord(body.error.data) && body.error.data.reason === "unreachable");
+      const executionFailure = code === 3 || /execution reverted|out of gas|outoffunds|insufficient (?:funds|balance)|invalid opcode/i.test(message);
+      const authorizationFailure = /unauthori[sz]ed|forbidden|invalid (?:api|project) key|access denied|not authorized/i.test(message);
+      const retryable = !executionFailure && (code === -32601 || /quota|rate.?limit|too many requests|temporarily unavailable|upstream|method_not_served/i.test(message) || (isRecord(body.error.data) && body.error.data.reason === "unreachable"));
       // Never include endpoint URLs or provider diagnostics that might expose keys.
       const transient = /temporarily unavailable|upstream/i.test(message) || (isRecord(body.error.data) && body.error.data.reason === "unreachable");
-      throw new RpcFailure(retryable ? "Arc RPC capacity or method unavailable" : "Arc RPC rejected request", code, retryable, retryable ? undefined : body.error.data, transient,code===-32601||/quota|rate.?limit|too many requests|method_not_served/i.test(message)?60000:5000);
+      throw new RpcFailure(retryable ? "Arc RPC capacity or method unavailable" : "Arc RPC rejected request", code, retryable, retryable ? undefined : body.error.data, transient,code===-32601||/quota|rate.?limit|too many requests|method_not_served/i.test(message)?60000:5000,retryable&&!authorizationFailure);
     }
     if (!Object.prototype.hasOwnProperty.call(body, "result")) throw new RpcFailure("Missing Arc RPC result", -32098, true);
     return body.result;
+  }
+  // Cool down only the method that actually failed. A quota on eth_call must
+  // not suppress a working trace_call, or vice versa.
+  async function readAttempt(url:string,method:string,params:readonly unknown[]):Promise<unknown>{
+    try{return await call(url,method,params);}catch(error){
+      if(error instanceof RpcFailure&&error.retryable&&!error.transient){
+        const until=Date.now()+error.cooldownMs;
+        methodUnavailableUntil.set(`${url}:${method}`,until);
+        if(method==="eth_call"){
+          if(error.traceFallback)traceAllowedUntil.set(url,until);else traceAllowedUntil.delete(url);
+        }
+      }
+      throw error;
+    }
+  }
+  async function readCall(url:string,method:string,params:readonly unknown[],trace:TraceRead|null):Promise<unknown>{
+    if((methodUnavailableUntil.get(`${url}:${method}`)??0)<=Date.now()){
+      try{return await readAttempt(url,method,params);}catch(error){
+        if(!trace||!(error instanceof RpcFailure)||!error.traceFallback)throw error;
+      }
+    }else if(!trace||(traceAllowedUntil.get(url)??0)<=Date.now())throw new RpcFailure("Arc RPC method cooling down",-32098,true);
+    if(!trace||(methodUnavailableUntil.get(`${url}:trace_call`)??0)>Date.now())throw new RpcFailure("Arc simulation method unavailable",-32098,true);
+    try{
+      return traceReadOutput(await readAttempt(url,"trace_call",[trace.call,["trace"],trace.block]),trace);
+    }catch(error){
+      if(error instanceof TraceReadError){
+        if(error.retryable)methodUnavailableUntil.set(`${url}:trace_call`,Date.now()+5000);
+        throw new RpcFailure(error.message,error.code,error.retryable,error.data);
+      }
+      throw error;
+    }
   }
   async function verify(url: string) {
     // A transient identity-read miss is not proof that an otherwise healthy
@@ -99,6 +135,9 @@ function createArcTransport(config: ArcConfig) {
   return custom({ request: async ({ method, params }) => {
     const broadcast = method === "eth_sendRawTransaction";
     if (!broadcast && !reads.has(method)) throw new RpcFailure("Arc RPC method not authorized", -32601, false);
+    // Direct arbitrary trace requests stay unauthorized. Only scoped eth_call
+    // fallbacks enter readCall's internal trace path.
+    const trace=traceFallback&&method==="eth_call"&&Array.isArray(params)?traceRead(params):null;
     // Argus currently serves contract calls that the supplied Infura project rejects for quota.
     const backups = broadcast ? config.rpcFallbackUrls : method === "eth_call"
       ? [...config.readOnlyRpcUrls, ...config.rpcFallbackUrls]
@@ -107,7 +146,7 @@ function createArcTransport(config: ArcConfig) {
     const transientReads: string[] = [];
     for (const url of endpoints) {
       const methodKey = `${url}:${method}`;
-      if (!broadcast && (methodUnavailableUntil.get(methodKey) ?? 0) > Date.now()) continue;
+      if (!broadcast && !trace && (methodUnavailableUntil.get(methodKey) ?? 0) > Date.now()) continue;
       try { await validate(url); } catch { continue; }
       // Do not fail over after a broadcast attempt: its outcome may be unknown.
       if (broadcast) return call(url, method, params as unknown[]);
@@ -116,13 +155,12 @@ function createArcTransport(config: ArcConfig) {
       const evidence=(verifiedUntil.get(url)??0)>Date.now()?validationEvidence.get(url):undefined;
       if(evidence&&method==="eth_chainId")return evidence.chain;
       if(evidence&&method==="eth_getBlockByNumber"&&Array.isArray(params)&&params[0]===`0x${config.checkpointNumber.toString(16)}`&&params[1]===false)return evidence.checkpoint;
-      try { return await call(url, method, params as unknown[]); }
+      try { return await readCall(url, method, (params ?? []) as unknown[],trace); }
       catch (error) {
         if (!(error instanceof RpcFailure) || !error.retryable) throw error;
         if (error.transient) transientReads.push(url);
         // An upstream miss can be specific to this calldata or block. Do not
         // poison every other token's eth_call while this exact read retries.
-        if(!error.transient)methodUnavailableUntil.set(methodKey, Date.now() + error.cooldownMs);
       }
     }
     // A gateway can briefly lose its upstream while serving a fresh block.
@@ -132,15 +170,13 @@ function createArcTransport(config: ArcConfig) {
       for(let attempt=0;attempt<2;attempt++){
       await new Promise(resolve => setTimeout(resolve, (attempt+1)*500));
       for (const url of transientReads) {
-        if((methodUnavailableUntil.get(`${url}:${method}`)??0)>Date.now())continue;
+        if(!trace&&(methodUnavailableUntil.get(`${url}:${method}`)??0)>Date.now())continue;
         try { await validate(url); } catch { continue; }
         try {
-          const result = await call(url, method, params as unknown[]);
-          methodUnavailableUntil.delete(`${url}:${method}`);
+          const result = await readCall(url, method, (params ?? []) as unknown[],trace);
           return result;
         } catch (error) {
           if (!(error instanceof RpcFailure) || !error.retryable) throw error;
-          if(!error.transient)methodUnavailableUntil.set(`${url}:${method}`,Date.now()+error.cooldownMs);
         }
       }
       }
