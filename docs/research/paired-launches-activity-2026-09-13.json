@@ -1,0 +1,46 @@
+{
+  "at": "2026-09-13T18:57:44.578Z",
+  "block": "20696063",
+  "pools": [
+    {
+      "symbol": "BABYARGUS",
+      "poolId": "0x814b3c9f4dcdba75ff7eb014c45ca9f27a448113e14af3b326bd2c6be099d8c7",
+      "swapsInLast10000Blocks": 1,
+      "recent": [
+        {
+          "hash": "0x9fd53f0e30a9bee96fd2aea279b6a13167de9b0454c4500b1721f3188526353e",
+          "block": "20687587",
+          "status": "success",
+          "from": "0x16ecc3849b0cab6625e741bc4f2242ca8d860520",
+          "to": "0x919c548ea8a779e0e551ef35f6aba65565b140a7",
+          "selector": "0x39ecce49",
+          "amount0": "-10361357838516930710959646",
+          "amount1": "70074801515402055702463",
+          "argusTransfers": [
+            {
+              "from": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+              "to": "0xDA419D518f16Fb2482212156f55277F9EfA891b6",
+              "amount": "700.748015154020557024"
+            },
+            {
+              "from": "0x8366a39CC670B4001A1121B8F6A443A643e40951",
+              "to": "0x919c548Ea8A779e0E551eF35f6aba65565b140a7",
+              "amount": "69374.053500248035145439"
+            },
+            {
+              "from": "0x919c548Ea8A779e0E551eF35f6aba65565b140a7",
+              "to": "0x6A3bAcAa6493734c1Ac221EBF42CF530A96C1e02",
+              "amount": "69374.053500248035145439"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "symbol": "FEG",
+      "poolId": "0xab606b841bbef12853d522394935ddad94f327eb27d6ffae67a0eba6bd9b7298",
+      "swapsInLast10000Blocks": 0,
+      "recent": []
+    }
+  ]
+}

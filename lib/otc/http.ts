@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import {tradePreparationError} from "../arc/trade-errors";
 import { getAddress } from "viem";
 import { repository } from "./repository";
 import { ConvexHttpClient } from "convex/browser";
@@ -27,8 +28,11 @@ export async function websiteSession(request:NextRequest,write=false,requireRece
 export const json=(data:unknown,status=200)=>NextResponse.json(data,{status,headers:{"cache-control":"no-store"}});
 export function webFailure(error:unknown,operation?:"quote") {
   if(error instanceof WebError) return json({error:error.message},error.status);
+  const tradeError=tradePreparationError(error);
+  if(tradeError)return json({error:tradeError},400);
   const original=error instanceof Error?error.message:"";
   const message=(/Uncaught Error: ([^\n]+)/.exec(original)?.[1] ?? original).trim();
+  if(["Trade funding changed or expired. Get a new estimate before submitting.","This token's quote asset is not supported yet.","This token uses a different quote asset. Check its trading pair.","Quote asset decimals changed. Try again."].includes(message))return json({error:message},400);
   console.error("otc_request_failed",message);
   if(operation==="quote"&&message==="Price or gas estimate expired.")
     return json({error:"The quote expired while loading. Get a new quote. No payment was sent."},400);

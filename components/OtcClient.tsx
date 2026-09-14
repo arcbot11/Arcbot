@@ -1,4 +1,5 @@
 "use client";
+import {WebResponseError} from "@/lib/web-response-error";
 import { ActiveStatus } from "./ActiveStatus";
 import { EthUsdValue } from "./EthUsdValue";
 import { PersistentNotices, usePersistentNotices } from "./PersistentNotices";
@@ -29,7 +30,7 @@ export async function webPost(path:string,body:unknown,session:OtcSession|null,s
   const statusRead = path === "/api/otc" && (action === "purchase_status" || action === "listing_status");
   if (!statusRead && session?.reauthAt && Date.now() >= session.reauthAt * 1000) throw new Error("Sign in again before making another transaction.");
   const response=await fetch(path,{method:"POST",headers:{"content-type":"application/json","x-argus-csrf":session?.csrfToken??""},body:JSON.stringify(body),signal});
-  const result=await response.json();if(!response.ok)throw new Error(result.error??"Request failed.");return result;
+  const result=await response.json();if(!response.ok)throw new WebResponseError(typeof result.error==="string"?result.error:"Request failed.");return result;
 }
 function listingNotice(message:string){
   const phrase=message.includes("Follow it on your wallet page.")?"Follow it on your wallet page.":"view your OTC listings in your wallet",index=message.indexOf(phrase);

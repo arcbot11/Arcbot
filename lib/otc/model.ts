@@ -58,6 +58,9 @@ export type Wallet = { kind: "wallet"; id: string; owner: string; address: strin
 export type Transaction = { kind: "transaction"; id: string; owner: string; wallet: string; chainId: Chain;
   firstBroadcastAt?:number;lastBroadcastAt?:number;broadcastAttempts?:number;broadcastAcknowledgedAt?:number;
   initialGasReserveWei?:string;
+  /** Server-signed input-asset plan, retained across social approval recovery. */
+  fundingPlan?:string;
+  tradeRouteHint?:string;
   failureReason?:import('./external-spending').WalletChangeReason;
   nonceSearch?:{low:string;high:string;anchor:string;anchorHash:string};
   externalReplacement?:boolean;

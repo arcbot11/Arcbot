@@ -8,6 +8,7 @@ export const ARGUS_PORTALS = [
   {address:"0x07a688a001f416cc433c68ff56aa26bc5131cc6e",words:10},
   {address:"0xa36c443a797771df82533b8b4a86f0affd970862",words:10},
   {address:"0x7a17ab0106c46c0be30623f3eb7f299cc0058338",words:9},
+  {address:"0xb021be536808f551b31789422fd28a6c9c6e97da",words:11,registry:"0xfa4552dd491acc08051725fe522f4cfeaec8edc6"},
 ] as const;
 const manager="0x8366a39cc670b4001a1121b8f6a443a643e40951";
 export const discoveryAbi=parseAbi([
@@ -17,6 +18,7 @@ export const discoveryAbi=parseAbi([
  "function portal() view returns(address)","function splitter() view returns(address)",
  "function poolManager() view returns(address)","function quoteAsset() view returns(address)",
  "function poolFee() view returns(uint24)","function tickSpacing() view returns(int24)",
+ "function registry() view returns(address)",
 ]);
 export const quotedLaunchAbi=parseAbi(["function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256,int24,address)"]);
 const oldAbi=parseAbi(["function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256)"]);
@@ -31,6 +33,7 @@ export async function discoverArgusPool(token:Address,rpc:ArcRpc,block:bigint){
   const record=decodeFunctionResult({abi:portal.words===11?quotedLaunchAbi:portal.words===10?discoveryAbi:oldAbi,functionName:'launches',data:raw});
   if(record[0]===zeroAddress)continue;
   if(portal.words>=10&&await read(portal.address,'LAUNCH_STRUCT_WORDS')!==portal.words)throw new Error('Unexpected Argus Portal format.');
+  if('registry' in portal&&!same(String(await read(portal.address,'registry')),portal.registry))throw new Error('Argus Portal registry mismatch.');
   const locker=record[3],hook=record[4],splitter=record[5];
   for(const address of [hook,locker,splitter]){const code=await rpc.code(address,block);if(address===zeroAddress||!code||code==='0x')throw new Error('Argus token contract code missing.');}
   const [hookToken,hookPortal,hookSplitter,hookManager,quote,fee,spacing,id]=await Promise.all(['token','portal','splitter','poolManager','quoteAsset','poolFee','tickSpacing','poolId'].map(name=>read(hook,name as Parameters<typeof read>[1])));

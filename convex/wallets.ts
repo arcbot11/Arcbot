@@ -1575,14 +1575,17 @@ export const resolveHeldTokenTicker = internalAction({
 });
 
 export const listWalletTokenAddresses = internalQuery({
-  args: { walletId: v.id("cryptoWallets") },
-  handler: async (ctx, { walletId }) => {
+  args: { walletId: v.id("cryptoWallets"), forBalances: v.optional(v.boolean()) },
+  handler: async (ctx, { walletId, forBalances }) => {
     const tokens = await ctx.db
       .query("walletTokenIndex")
       .withIndex("by_wallet", (q) => q.eq("walletId", walletId))
       .collect();
     const visible: string[] = [];
     for (const item of tokens) {
+      // Holdings are not ticker-index recommendations: duplicate/unindexed
+      // contracts still belong to this wallet and need balance reads.
+      if (forBalances) { visible.push(item.tokenAddress); continue; }
       if (isTokenIndexExcluded(item.tokenAddress) || !canIndexArcToken(item.tokenAddress, item.symbol)) continue;
       if (!item.involvedByLaunch) visible.push(item.tokenAddress);
       else {
@@ -3768,10 +3771,12 @@ Tap the link above to view holdings.`,
     if (command.kind === "show_balance") {
       try {
         if (args.source === "telegram" || (args.source ?? "x") === "x") {
+          const knownTokens=command.token?undefined:await ctx.runQuery(internal.wallets.listWalletTokenAddresses,{walletId:wallet._id,forBalances:true});
           const balance = await signerRequest<{ display: string }>("/v1/wallets/balance", {
             chainId: WALLET_HOME_CHAIN_ID, walletRef: wallet.signerWalletRef, expectedAddress: wallet.address,
             ownerReference: `x:${args.xUserId}`, ...(command.token ? { token: command.token } : {}),
-          }, 60_000);
+            ...(knownTokens?{knownTokens}:{}),
+          }, 180_000);
           return { ok: true, message: `Balances\n${balance.display}${args.source === "telegram" ? "" : `\n\nYour wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`}` };
         }
         await ctx.runMutation(internal.registry.ensureInitialized, {});

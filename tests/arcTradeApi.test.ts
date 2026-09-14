@@ -1,7 +1,8 @@
 import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
 import {NextRequest} from "next/server";
 import {serializeTransaction} from "viem";
-const m=vi.hoisted(()=>({owner:"alice",read:vi.fn(),command:vi.fn(),preview:vi.fn(),estimate:vi.fn(),convert:vi.fn(),advance:vi.fn(),balance:vi.fn()}));
+const m=vi.hoisted(()=>({owner:"alice",read:vi.fn(),command:vi.fn(),preview:vi.fn(),estimate:vi.fn(),convert:vi.fn(),advance:vi.fn(),balance:vi.fn(),plan:vi.fn()}));
+vi.mock("../lib/arc/trade-plan",()=>({resolveTradePlan:m.plan}));
 vi.mock("../lib/otc/http",async original=>({...await original<typeof import("../lib/otc/http")>(),websiteSession:vi.fn(async()=>({owner:m.owner,walletAddress:"0x1111111111111111111111111111111111111111"}))}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.command})}));
 vi.mock("../lib/arc/trading",()=>({previewArcTrade:m.preview,estimateArcTrade:m.estimate,arcSellAmountForUsdc:m.convert}));
@@ -12,6 +13,39 @@ const input={action:"preview",tokenIn:"native",tokenOut:"0x222222222222222222222
 beforeEach(()=>{vi.clearAllMocks();m.owner="alice";vi.stubEnv("WEB_AUTH_SECRET","test-secret");m.read.mockResolvedValue(null);m.preview.mockResolvedValue({unsigned:serializeTransaction({type:"eip1559",chainId:5042,nonce:0,gas:21000n,maxFeePerGas:1n,maxPriorityFeePerGas:0n,to:"0x2222222222222222222222222222222222222222",value:1n}),reserveWei:"110",gasWei:"10",expiresAt:Date.now()+30000,leg:"swap",stage:"swap",snapshot:{balanceWei:"1000"}});m.balance.mockResolvedValue({nonce:0,pendingNonce:0,balanceWei:"1000",block:"1"});});
 afterEach(()=>{vi.unstubAllEnvs();vi.useRealTimers();});
 describe("website Arc trade boundary",()=>{
+ it("returns a useful unsupported-pair error during an estimate",async()=>{
+   m.plan.mockRejectedValueOnce(Error("This token's quote asset is not supported yet."));
+   const response=await POST(request({...input,action:"estimate",intent:"buy"}));
+   expect(await response.json()).toEqual({error:"This token's trading pair is not supported yet."});expect(m.command).not.toHaveBeenCalled();
+ });
+ it("does not ask users to check transaction history for a failed read-only quote",async()=>{
+   m.estimate.mockRejectedValueOnce(Error("private provider diagnostic https://rpc.example/key"));
+   const response=await POST(request({...input,action:"estimate"}));
+   expect(await response.json()).toEqual({error:"Could not get an exact quote. Try again. No payment was sent."});expect(m.command).not.toHaveBeenCalled();
+ });
+ it.each(["estimate","preview"])("uses and displays frozen ARGUS funding during %s",async action=>{
+   const funding={inputSymbol:"ARGUS",inputAmount:"100",outputSymbol:"BABYARGUS",mode:"quote"};
+   const trade={tokenIn:"0xece5ca8bf9220718e5727754026757512212cb3c",tokenOut:input.tokenOut,amount:"100",slippageBps:100};
+   m.plan.mockResolvedValue({trade,funding,fundingPlan:"frozen-plan"});
+   m.estimate.mockResolvedValue({minimumOut:"99"});
+   const response=await POST(request({...input,action,intent:"buy",fundingPlan:"frozen-plan"}));
+   expect(response.status).toBe(200);expect(await response.json()).toMatchObject({funding,fundingPlan:"frozen-plan"});
+   expect(m.plan).toHaveBeenCalledWith(expect.any(String),expect.objectContaining({side:"buy",amount:"10",unit:"usd"}),{fundingPlan:"frozen-plan",routeHint:undefined});
+   expect(action==="estimate"?m.estimate:m.preview).toHaveBeenCalledWith(expect.any(String),trade);
+   expect(m.command).not.toHaveBeenCalled();
+ });
+ it("persists the funding plan on confirmation for recovery",async()=>{
+   m.plan.mockResolvedValue({trade:input,funding:{inputSymbol:"ARGUS"},fundingPlan:"saved-plan"});
+   const q=await(await POST(request({...input,intent:"buy"}))).json();
+   m.read.mockResolvedValueOnce(null).mockResolvedValueOnce({id:"trade:test",status:"prepared",leg:"swap"});
+   expect((await POST(request({action:"confirm",quote:q.quote}))).status).toBe(200);
+   expect(m.command).toHaveBeenCalledWith("prepare",expect.objectContaining({fundingPlan:"saved-plan"}));
+ });
+ it("does not prepare a transaction when funding authorization fails",async()=>{
+   m.plan.mockRejectedValueOnce(Error("Trade funding changed or expired. Get a new estimate before submitting."));
+   expect((await POST(request({...input,intent:"buy",fundingPlan:"wrong-plan"}))).status).not.toBe(200);
+   expect(m.preview).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
+ });
  it.each(["estimate","preview"])("converts USD sells before %s using the authenticated wallet",async action=>{
    m.convert.mockResolvedValue("123.456789012345678901");
    m.estimate.mockResolvedValue({minimumOut:"9.8"});

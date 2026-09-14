@@ -3,6 +3,12 @@ import { executeTradeFlow, estimatedTradeGasBudget, ARC_TRADE_GAS_BUDGET_WEI, ty
 const quote = (stage = "approve token", changes: Partial<TradeFlowQuote> = {}): TradeFlowQuote => ({ quote: stage, stage, amountOut: "100", minimumOut: "99", protocol: "v3", gasWei: "10", expiresAt: Date.now() + 60000, ...changes });
 const io = () => ({ confirm: vi.fn(), preview: vi.fn(), wait: vi.fn(async () => {}), active: () => true, progress: vi.fn() });
 describe("automatic trade setup", () => {
+  it("carries the funding plan through approvals and rejects a changed funding asset",async()=>{
+    const calls=io();calls.confirm.mockResolvedValue({id:"approval",leg:"allowance",status:"completed"});
+    calls.preview.mockResolvedValue(quote("swap",{fundingPlan:"different-plan"}));
+    await expect(executeTradeFlow(quote("approve token",{amountIn:"100",fundingPlan:"ARGUS-plan",routeHint:"route"}),calls)).rejects.toThrow("funding changed");
+    expect(calls.preview).toHaveBeenCalledWith("100","route","ARGUS-plan");expect(calls.confirm).toHaveBeenCalledTimes(1);
+  });
   it('does not overwrite an approval revoked externally after confirmation',async()=>{
     const calls=io();calls.confirm.mockResolvedValue({id:'a',leg:'allowance',status:'completed'});calls.preview.mockResolvedValue(quote('approve token'));
     await expect(executeTradeFlow(quote('approve token'),calls)).rejects.toThrow('approval changed');

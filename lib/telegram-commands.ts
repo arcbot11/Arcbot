@@ -5,8 +5,8 @@ import { normalizeLeadingQuantity, normalizeTokenFirstBuy, hasMalformedNumericGr
 
 export const TELEGRAM_HELP = "Argos Bot\nYour Arc Chain wallet.\n\nUse the buttons or a full /command. Arc gas is paid in USDC. Token names accept a ticker or contract address. Sends require a full wallet address.";
 export const TELEGRAM_FORMATS: Record<string, string> = {
-  buy: "Buy with Arc USDC:\n/buy 10 USDC ARGOS\n/buy $10 ARGOS",
-  sell: "Sell for Arc USDC:\n/sell 100 ARGOS\n/sell $10 ARGOS\n/sell 50% ARGOS\n/sell all ARGOS",
+  buy: "Buy Arc tokens:\n/buy 10 USDC ARGOS\n/buy $10 ARGOS\n\nPaired tokens use their quote asset when it covers a dollar buy, otherwise USDC. To choose the spend asset: /buy 100 ARGUS of BABYARGUS",
+  sell: "Sell Arc tokens:\n/sell 100 ARGOS\n/sell $10 ARGOS\n/sell 50% ARGOS\n/sell all ARGOS\n\nReceive the token's trading asset: USDC for ordinary tokens, ARGUS for ARGUS-paired tokens.",
   swap: "Swap Arc tokens:\n/swap 100 ARGOS for TOKEN\n/swap $10 ARGOS for TOKEN\n/swap 50% ARGOS for TOKEN\n/swap all ARGOS for TOKEN",
   send: "Send Arc tokens:\n/send 10 USDC to ADDRESS\n/send 100 ARGOS to ADDRESS\n/send $10 ARGOS to ADDRESS\n/send 50% ARGOS to ADDRESS\nReplace ADDRESS with a full 0x wallet address.",
   withdraw: "Withdraw Base ETH:\n/withdraw 0.001 ETH to ADDRESS\n/withdraw $10 to ADDRESS\nReplace ADDRESS with a full 0x wallet address. Base gas is paid in ETH.",
@@ -74,6 +74,8 @@ export function telegramWalletCommand(name: string, args: string): WalletCommand
     return {kind:"send",chainId:8453,amount,unit:match[1]?"eth":"usd",recipient:match[3]};
   }
   if (name === "buy") {
+    const pair=args.match(new RegExp(`^${number}\\s+${token}\\s+(?:(?:worth\\s+of|of)\\s+)?${token}$`,"i"));
+    if(pair&&Number(pair[1])>0&&Number.isFinite(Number(pair[1]))&&!/^(?:ETH|WETH)$/i.test(pair[2]))return {kind:"buy",amount:pair[1],unit:"pair",pairAsset:pair[2],token:pair[3],slippageBps};
     match = args.match(new RegExp(`^(?:\\$${number}|${number}\\s+USDC)\\s+(?:of\\s+)?${token}$`, "i"));
     if (!match) return null;
     const amount = match[1] || match[2];

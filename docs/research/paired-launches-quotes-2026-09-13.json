@@ -1,0 +1,93 @@
+{
+  "at": "2026-09-13T18:57:14.606Z",
+  "quotes": [
+    {
+      "name": "1 ARGUS to Baby Argus",
+      "block": "20696022",
+      "quotes": [
+        {
+          "amountOut": "145.133237691657617528",
+          "minimumOut": "141.504906749366177089",
+          "executionBlocker": "Hook requires a reviewed adapter and sender-specific simulation"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "name": "1000 Baby Argus to ARGUS",
+      "block": "20696029",
+      "quotes": [
+        {
+          "amountOut": "6.618709851045948164",
+          "minimumOut": "6.453242104769799459",
+          "executionBlocker": "Hook requires a reviewed adapter and sender-specific simulation"
+        }
+      ],
+      "rejected": []
+    },
+    {
+      "name": "10 USDC to Baby Argus via ARGUS fee 10000",
+      "block": "20696035",
+      "quotes": [
+        {
+          "amountOut": "729697.585948842178146838",
+          "minimumOut": "711455.146300121123693167",
+          "executionBlocker": "Hook requires a reviewed adapter and sender-specific simulation"
+        }
+      ],
+      "rejected": []
+    }
+  ],
+  "errors": [],
+  "discovery": {
+    "pool": {
+      "protocol": "v4",
+      "currency0": "0xe4894eC09505aB0FCF357005dF4866F1D90Ae489",
+      "currency1": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "fee": 10000,
+      "tickSpacing": 200,
+      "hooks": "0x1B3399f62A01506143e7317AdFe2250633aEe044"
+    },
+    "portal": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+    "hook": "0x1B3399f62A01506143e7317AdFe2250633aEe044",
+    "splitter": "0xDA419D518f16Fb2482212156f55277F9EfA891b6",
+    "locker": "0xC5420EA1a0F0F5E0daF9Bc60e9E8E67F952Ea5D6",
+    "poolId": "0x814b3c9f4dcdba75ff7eb014c45ca9f27a448113e14af3b326bd2c6be099d8c7",
+    "block": "20696005"
+  },
+  "argusTaxes": [
+    100,
+    100
+  ],
+  "exemptions": [
+    {
+      "address": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+      "exempt": false
+    },
+    {
+      "address": "0x4fca4a51ab4f23a7447b3284fbd7d73289a89fb1",
+      "exempt": false
+    },
+    {
+      "address": "0x8366a39cc670b4001a1121b8f6a443a643e40951",
+      "exempt": false
+    },
+    {
+      "address": "0x1B3399f62A01506143e7317AdFe2250633aEe044",
+      "exempt": false
+    },
+    {
+      "address": "0xDA419D518f16Fb2482212156f55277F9EfA891b6",
+      "exempt": false
+    }
+  ],
+  "argusUsdcPools": [
+    {
+      "protocol": "v3",
+      "address": "0x6A3bAcAa6493734c1Ac221EBF42CF530A96C1e02",
+      "currency0": "0x3600000000000000000000000000000000000000",
+      "currency1": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "fee": 10000
+    }
+  ]
+}

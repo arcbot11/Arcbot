@@ -19,7 +19,7 @@ describe("Telegram command-only interface", () => {
     expect(telegramInput("/buy", true)?.name).toBe("buy");
   });
   it.each([
-    ["buy", "10 USDC ARGOS", {kind:"buy", amount:"10",unit:"usd",token:"ARGOS"}],
+    ["buy", "10 USDC ARGOS", {kind:"buy", amount:"10",unit:"pair",pairAsset:"USDC",token:"ARGOS"}],
     ["buy", "$10 ARGOS", {kind:"buy", amount:"10",unit:"usd",token:"ARGOS"}],
     ["sell", "100 ARGOS", {kind:"sell",amount:"100",unit:"token"}],
     ["sell", "$10 ARGOS", {kind:"sell",amount:"10",unit:"usd"}],
@@ -165,7 +165,7 @@ describe("Telegram update execution boundary", () => {
   it("sends only a parsed Arc command through the authorized wallet path",async()=>{
     const ctx=await run("/buy 10 USDC ARGOS");
     const call=ctx.runAction.mock.calls.find(c=>getFunctionName(c[0])==="wallets:executeCommand");
-    expect(call?.[1]).toMatchObject({xUserId:"99",source:"telegram",telegramUpdateId:"42",parsedCommandJson:expect.stringContaining('"unit":"usd"')});
+    expect(call?.[1]).toMatchObject({xUserId:"99",source:"telegram",telegramUpdateId:"42",parsedCommandJson:expect.stringContaining('"pairAsset":"USDC"')});
   });
 });
 

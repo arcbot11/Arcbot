@@ -23,7 +23,7 @@ it.each([
 it.each([
   ["buy", "$10 $ARGOS", { kind: "buy", amount: "10", token: "ARGOS", unit: "usd" }],
   ["buy", "twenty-five dollars of $ARGOS", { kind: "buy", amount: "25", token: "ARGOS", unit: "usd" }],
-  ["buy", "ARGOS with 20 USDC", { kind: "buy", amount: "20", token: "ARGOS", unit: "usd" }],
+  ["buy", "ARGOS with 20 USDC", { kind: "buy", amount: "20", token: "ARGOS", unit: "pair", pairAsset: "USDC" }],
   ["buy", "$ARGOS for $20", { kind: "buy", amount: "20", token: "ARGOS", unit: "usd" }],
   ["sell", "half of my $ARGOS", { kind: "sell", amount: "50", unit: "percent", token: "ARGOS" }],
   ["sell", "1,234.56 $ARGOS", { kind: "sell", amount: "1234.56", unit: "token", token: "ARGOS" }],

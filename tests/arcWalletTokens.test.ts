@@ -4,6 +4,8 @@ vi.mock("../lib/arc/wallet-balance",()=>({arcDisplayConfig:()=>({})}));
 vi.mock("../lib/arc/transport",()=>({arcTransport:()=>()=>({})}));
 vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>({code:async()=>"0x",tokenBalance:m.balance,decimals:m.decimals,block:m.block}),checkArcRpc:async()=>({number:100n,hash:"canonical"})}));
 vi.mock("../lib/arc/token-value",()=>({tokenUsdEstimate:m.value}));
+vi.mock("../lib/arc/pinned-token-addresses.json",()=>({default:[]}));
+vi.mock("../lib/arc/token-catalog",async original=>({...await original<typeof import("../lib/arc/token-catalog")>(),ARC_TOKEN_CATALOG:[{address:"0xece5ca8bf9220718e5727754026757512212cb3c",symbol:"ARGUS",name:"Argus"}]}));
 import { arcTokenBalances, arcSelectedTokenBalance } from "../lib/arc/wallet-tokens";
 const token="0xece5ca8bf9220718e5727754026757512212cb3c";
 let counter=1;
@@ -53,5 +55,48 @@ describe("Arc token balance display",()=>{
   });
   it("rejects balances from a changed block",async()=>{
     m.block.mockResolvedValue({hash:"changed"});await expect(arcTokenBalances(owner())).rejects.toThrow("block changed");
+  });
+  it("retries transient explorer failures before relying on the catalog",async()=>{
+    m.fetch.mockRejectedValueOnce(Error("offline"));
+    expect((await arcTokenBalances(owner())).tokens[0].symbol).toBe("ARGUS");
+    expect(m.fetch).toHaveBeenCalledTimes(2);
+  });
+  it("retries empty discovery and probes indexed holdings if it stays empty",async()=>{
+    m.fetch.mockResolvedValue({ok:true,json:async()=>({items:[]})});
+    expect((await arcTokenBalances(owner())).tokens[0].symbol).toBe("ARGUS");
+    expect(m.fetch).toHaveBeenCalledTimes(3);
+  });
+  it("reads subsequent pages and does not truncate holdings at 250",async()=>{
+    const items=Array.from({length:260},(_,i)=>({address:`0x${(1000+i).toString(16).padStart(40,"0")}`,symbol:`T${i}`}));
+    m.fetch.mockResolvedValueOnce({ok:true,json:async()=>({items:items.slice(0,150),next_page_params:{page:2}})})
+      .mockResolvedValueOnce({ok:true,json:async()=>({items:items.slice(150),next_page_params:null})});
+    const result=await arcTokenBalances(owner());
+    expect(result.tokens).toHaveLength(260);expect(result.partial).toBe(false);
+    expect(m.fetch.mock.calls[1][0]).toContain("?page=2");
+  });
+  it("retries a failed token without repeating reads of successful siblings",async()=>{
+    const other="0x3333333333333333333333333333333333333333";let tries=0;
+    m.fetch.mockResolvedValue({ok:true,json:async()=>({items:[{address:token,symbol:"ARGUS"},{address:other,symbol:"OTHER"}]})});
+    m.balance.mockImplementation(async address=>{if(address.toLowerCase()===token&&tries++<2)throw Error("offline");return 12345n;});
+    const result=await arcTokenBalances(owner());
+    expect(result.tokens).toHaveLength(2);expect(result.partial).toBe(false);
+    expect(m.balance.mock.calls.filter(([a])=>a.toLowerCase()===other)).toHaveLength(1);
+    expect(tries).toBe(3);
+  });
+  it("retains failed holdings as stale, but removes a confirmed zero",async()=>{
+    const address=owner();await arcTokenBalances(address);
+    m.balance.mockRejectedValue(Error("offline"));
+    expect(await arcTokenBalances(address,[],true)).toMatchObject({partial:true,tokens:[{symbol:"ARGUS",balance:"12.345",stale:true}]});
+    m.balance.mockResolvedValue(0n);
+    const next=await arcTokenBalances(address,[],true);
+    expect(next.tokens).toEqual([]);expect(next.verifiedAddresses[0].toLowerCase()).toBe(token);
+  });
+  it("does not share previous balances across wallet addresses",async()=>{
+    await arcTokenBalances(owner());m.balance.mockRejectedValue(Error("offline"));
+    expect((await arcTokenBalances(owner())).tokens).toEqual([]);
+  });
+  it("coalesces concurrent forced refreshes",async()=>{
+    const address=owner();await Promise.all([arcTokenBalances(address,[],true),arcTokenBalances(address,[],true)]);
+    expect(m.fetch).toHaveBeenCalledTimes(1);
   });
 });

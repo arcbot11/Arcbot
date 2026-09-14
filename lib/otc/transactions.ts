@@ -42,7 +42,7 @@ export async function retryPayout(store:Store,input:{id:string;owner:string;atte
   await store.put(order);
   return order;
 }
-export async function prepareTransaction(store: Store, input: { id: string; owner: string; wallet: string; chainId: Chain; leg: Transaction["leg"]; orderId?: string; sourceRequestId?: string; swapOutput?: {token:string;minimum:string;recipient?:string}; unsigned: string; reserveWei: string; balanceWei: string; baseUsdcBalance?:string; block: string }, now: number, escrow = false) {
+export async function prepareTransaction(store: Store, input: { id: string; owner: string; wallet: string; chainId: Chain; leg: Transaction["leg"]; orderId?: string; sourceRequestId?: string; fundingPlan?:string;tradeRouteHint?:string;swapOutput?: {token:string;minimum:string;recipient?:string}; unsigned: string; reserveWei: string; balanceWei: string; baseUsdcBalance?:string; block: string }, now: number, escrow = false) {
   const previous = await store.get<Transaction>(input.id);
   if (previous) { if (previous.wallet !== input.wallet || previous.owner !== input.owner) throw new Error("Transaction identity mismatch."); return previous; }
   const w = await wallet(store, input.chainId, input.wallet, input.owner, now);
@@ -74,8 +74,11 @@ export async function prepareTransaction(store: Store, input: { id: string; owne
     }
   }
   w.activeTx = input.id; w.updatedAt = now;
+  if(input.fundingPlan!==undefined&&(typeof input.fundingPlan!=="string"||input.fundingPlan.length>6000))throw Error("Invalid trade funding plan.");
   const tx: Transaction = { kind: "transaction", id: input.id, owner: input.owner, wallet: input.wallet, chainId: input.chainId, leg: input.leg, ...(input.orderId ? { orderId: input.orderId } : {}), holdId, ...(input.swapOutput ? {swapOutput:input.swapOutput} : {}), ...(input.sourceRequestId ? {sourceRequestId:input.sourceRequestId} : {}), unsigned: input.unsigned, recoveryVersion:1, status: "prepared", createdAt: now, updatedAt: now };
   if(input.chainId===8453&&input.leg==="send"&&!escrow){const parsed=parseTransaction(input.unsigned as Hex);tx.initialGasReserveWei=(BigInt(input.reserveWei)-(parsed.value??0n)).toString();}
+  if(input.fundingPlan)tx.fundingPlan=input.fundingPlan;
+  if(input.tradeRouteHint){if(typeof input.tradeRouteHint!=="string"||input.tradeRouteHint.length>6000)throw Error("Invalid trade route hint.");tx.tradeRouteHint=input.tradeRouteHint;}
   await store.put(w); await store.put(tx); return tx;
 }
 export async function signTransactionRecord(store: Store, id: string, raw: string, hash: string, now: number,expectedUnsigned?:string) {

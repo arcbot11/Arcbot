@@ -1,6 +1,6 @@
 import {describe,expect,it,vi} from "vitest";
 import {encodeFunctionResult,decodeFunctionData,parseAbi} from "viem";
-import {inputTransferTax,maximumSell,tokenDebit} from "../lib/arc/transfer-tax";
+import {inputTransferTax,outputTransferTax,maximumSell,tokenDebit} from "../lib/arc/transfer-tax";
 import type {ArcRpc} from "../lib/arc/rpc";
 import type {Hex} from "viem";
 import runtime from "./fixtures/argus-legacy-runtime.json";
@@ -14,6 +14,10 @@ it.each([100,50,0])("reads a fresh legacy tax rate of %s bps",async bps=>{
 });
 it("does not surcharge an exempt sender",async()=>{
   expect(await inputTransferTax(taxRpc(100,true),"0xece5ca8bf9220718e5727754026757512212cb3c","0x2222222222222222222222222222222222222222",100n)).toBe(0);
+});
+it("uses the buy rate for V3 output rather than the sell surcharge",async()=>{
+ expect(await outputTransferTax(taxRpc(500),"0xece5ca8bf9220718e5727754026757512212cb3c","0x2222222222222222222222222222222222222222","0x3333333333333333333333333333333333333333",100n)).toBe(100);
+ expect(await outputTransferTax(taxRpc(500,true),"0xece5ca8bf9220718e5727754026757512212cb3c","0x2222222222222222222222222222222222222222","0x3333333333333333333333333333333333333333",100n)).toBe(0);
 });
 describe("tax-inclusive sell budgets",()=>{
   it.each([0,1,100,1000,10000])("finds the largest sell that fits a budget at %s bps",bps=>{

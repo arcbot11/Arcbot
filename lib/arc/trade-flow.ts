@@ -1,4 +1,4 @@
-export type TradeFlowQuote = { quote: string; routeHint?:string; amountIn?:string; stage: string; amountOut: string; minimumOut: string; protocol: string; gasWei: string; tradeGasBudgetWei?: string; expiresAt: number };
+export type TradeFlowQuote = { quote: string; fundingPlan?:string;funding?:import("./trade-plan").FundingDetails;routeHint?:string; amountIn?:string; stage: string; amountOut: string; minimumOut: string; protocol: string; gasWei: string; tradeGasBudgetWei?: string; expiresAt: number };
 type Result = TransactionStatus & {leg:string};
 export const tradeGasBudget = (quote: TradeFlowQuote) => quote.tradeGasBudgetWei ? BigInt(quote.tradeGasBudgetWei) : BigInt(quote.gasWei) * (quote.stage === "swap" ? 1n : 4n);
 export const ARC_TRADE_GAS_BUDGET_WEI = "10000000000000000"; // Default allowance; higher verified estimates are supported.
@@ -16,7 +16,7 @@ const decimal = (value: string) => {
 export async function executeTradeFlow(initial: TradeFlowQuote, io: {
   confirm: (quote: string) => Promise<Result>;
   status?: (id:string) => Promise<TransactionStatus>;
-  preview: (amountIn?:string,routeHint?:string) => Promise<TradeFlowQuote>;
+  preview: (amountIn?:string,routeHint?:string,fundingPlan?:string) => Promise<TradeFlowQuote>;
   wait: () => Promise<void>;
   active: () => boolean;
   progress: (message: string) => void;
@@ -27,6 +27,7 @@ export async function executeTradeFlow(initial: TradeFlowQuote, io: {
   for (let step = 0; step < 4; step++) {
     if (!io.active()) throw new Error("Trade paused. Check transaction history before continuing.");
     if (Date.now() >= current.expiresAt) throw new Error("Quote expired. Submit the trade again.");
+    if(current.fundingPlan!==initial.fundingPlan)throw Error("Trade funding changed. No new transaction was submitted. Get a new estimate.");
     if(completedApprovals.has(current.stage)||completedApprovals.has('approve token')&&current.stage==='reset token approval')
       throw Error('Token approval changed after confirmation. Review a new trade.');
     // A refreshed server quote can authorize its higher estimated gas. The
@@ -47,7 +48,7 @@ export async function executeTradeFlow(initial: TradeFlowQuote, io: {
     spent += BigInt(current.gasWei);
     if (!io.active()) throw new Error("Trade paused. Check transaction history before continuing.");
     io.progress("Refreshing trade quote…");
-    current = await io.preview(initial.amountIn,current.routeHint);
+    current = initial.fundingPlan?await io.preview(initial.amountIn,current.routeHint,initial.fundingPlan):await io.preview(initial.amountIn,current.routeHint);
   }
   return { quote: current, message: "Trade setup changed. Check transaction history before submitting again." };
 }

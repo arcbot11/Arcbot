@@ -9,15 +9,16 @@ beforeEach(() => { vi.clearAllMocks(); m.native.mockResolvedValue({ balanceWei: 
 it("returns public chain balances without authentication or private records", async () => {
   const response = await request();
   expect(response.status).toBe(200);
+  expect(response.headers.get("Cache-Control")).toBe("no-store");
   expect(await response.json()).toEqual({ walletAddress: address, balanceWei: "10000000000000000000", tokens: [], partial: false });
-  expect(m.native).toHaveBeenCalledWith(address); expect(m.tokens).toHaveBeenCalledWith(address);
+  expect(m.native).toHaveBeenCalledWith(address); expect(m.tokens).toHaveBeenCalledWith(address,[],false);
 });
 it("rejects invalid addresses before reading the chain", async () => {
   expect((await request("invalid")).status).toBe(400); expect(m.native).not.toHaveBeenCalled(); expect(m.tokens).not.toHaveBeenCalled();
 });
 it("preserves USDC balances when token discovery fails", async () => {
   m.tokens.mockRejectedValue(Error("private provider URL"));
-  expect(await (await request()).json()).toEqual({ walletAddress: address, balanceWei: "10000000000000000000", tokens: [], partial: true });
+  expect(await (await request()).json()).toEqual({ walletAddress: address, balanceWei: "10000000000000000000", tokens: [], partial: true,verifiedAddresses:[] });
 });
 it("does not report a failed native read as a zero balance", async () => {
   m.native.mockRejectedValue(Error("unavailable"));

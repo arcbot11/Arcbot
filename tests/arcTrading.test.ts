@@ -72,6 +72,16 @@ it("prepares a discovered hooked V4 buy with six-decimal USDC",async()=>{
 it("reuses pool discovery but refreshes executable quotes",async()=>{await previewArcTrade(wallet,{tokenIn:"native",tokenOut:token,amount:"10",slippageBps:100});const count=m.quotes.mock.calls.length;await previewArcTrade(wallet,{tokenIn:"native",tokenOut:token,amount:"20",slippageBps:100});expect(m.discovery).toHaveBeenCalledTimes(1);expect(m.quotes.mock.calls.length).toBeGreaterThan(count);});
 
 import {poolId,type V4Pool} from "../lib/arc/routing";
+it("uses a recorded paired market without searching the explorer or unrelated V3 pools",async()=>{
+ const quote='0x7777777777777777777777777777777777777777';
+ const hooked:V4Pool={protocol:'v4',currency0:token,currency1:quote,fee:10000,tickSpacing:200,hooks:'0x9999999999999999999999999999999999999999'};
+ m.discovery.mockImplementation(async a=>a===token?{pool:hooked,poolId:poolId(hooked)}:null);
+ m.quotes.mockImplementation(async(routes:unknown[],amount:bigint)=>({quotes:(routes as import('../lib/arc/routing').Route[]).map(route=>({route,amountIn:amount,amountOut:10n**18n,amountOutMinimum:9n*10n**17n,expiresAt:Date.now()+30000}))}));
+ await previewArcTrade(wallet,{tokenIn:quote,tokenOut:token,amount:'1',slippageBps:100});
+ const {discoverArcV3Pools}=await import('../lib/arc/discovery');
+ expect(discoverArcV3Pools).not.toHaveBeenCalled();expect(m.read.mock.calls.some(([c])=>c.functionName==='getPool')).toBe(false);
+ expect(m.quotes).toHaveBeenCalledTimes(1);
+});
 
 it.each(['buy','sell'])('routes a %s through a verified non-USDC quote asset without substituting the input currency',async side=>{
  const quote='0x7777777777777777777777777777777777777777';

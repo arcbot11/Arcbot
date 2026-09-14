@@ -89,7 +89,7 @@ export const walletRequestSchema = z.object({
 
 export const balanceRequestSchema = z.object({
   chainId: z.literal(5042), walletRef: address, expectedAddress: address, ownerReference,
-  token: z.string().min(1).max(50).optional(), knownTokens: z.array(address).max(100).optional(),
+  token: z.string().min(1).max(50).optional(), knownTokens: z.array(address).max(5000).optional(),
 }).strict();
 
 export const executionRequestSchema = z.object({

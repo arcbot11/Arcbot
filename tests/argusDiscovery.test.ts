@@ -8,7 +8,7 @@ const token='0xA4824D1927ccC6B562a2d3BD5f7FBeC4ca045629',hook='0xe6D9817363fc91c
 const pool:V4Pool={protocol:'v4',currency0:ARC_USDC,currency1:token,fee:10000,tickSpacing:200,hooks:hook};
 function fixture(overrides:Record<string,unknown>={},portalIndex=0){
  const portal=ARGUS_PORTALS[portalIndex];
- const values={LAUNCH_STRUCT_WORDS:portal.words,token,portal:portal.address,splitter,poolManager:'0x8366a39cc670b4001a1121b8f6a443a643e40951',quoteAsset:ARC_USDC,poolFee:10000,tickSpacing:200,poolId:poolId(pool),...overrides};
+ const values={LAUNCH_STRUCT_WORDS:portal.words,registry:'registry' in portal?portal.registry:zeroAddress,token,portal:portal.address,splitter,poolManager:'0x8366a39cc670b4001a1121b8f6a443a643e40951',quoteAsset:ARC_USDC,poolFee:10000,tickSpacing:200,poolId:poolId(pool),...overrides};
  return {code:vi.fn(async()=> '0x6000'),call:vi.fn(async(call:{to:string;data:`0x${string}`},block:bigint)=>{
   expect(block).toBe(100n);const d=decodeFunctionData({abi:discoveryAbi,data:call.data});
   if(d.functionName==='launches'){
@@ -22,7 +22,8 @@ function fixture(overrides:Record<string,unknown>={},portalIndex=0){
  })} as unknown as ArcRpc;
 }
 describe('Argus per-token discovery',()=>{
- it.each([0,1,2,3])('discovers current and older Portal records: %i',async i=>{const result=await discoverArgusPool(token,fixture({},i),100n);expect(result?.portal).toBe(ARGUS_PORTALS[i].address);expect(result?.poolId).toBe(poolId(pool));});
+ it.each([0,1,2,3,4])('discovers current and older Portal records: %i',async i=>{const result=await discoverArgusPool(token,fixture({},i),100n);expect(result?.portal).toBe(ARGUS_PORTALS[i].address);expect(result?.poolId).toBe(poolId(pool));});
+ it('distinguishes Portal 7 from other eleven-word records',async()=>{await expect(discoverArgusPool(token,fixture({registry:locker},4),100n)).rejects.toThrow('registry mismatch');});
  it('rejects a different quote asset in the 11-word launch record',async()=>{await expect(discoverArgusPool(token,fixture({recordQuote:locker}),100n)).rejects.toThrow('quote asset mismatch');});
  it('discovers a non-USDC quoted launch without changing either currency',async()=>{const custom:V4Pool={...pool,currency0:locker};const result=await discoverArgusPool(token,fixture({quoteAsset:locker,recordQuote:locker,poolId:poolId(custom)}),100n);expect(result?.pool).toEqual(custom);});
  it('rejects a quote token without deployed code',async()=>{const rpc=fixture({quoteAsset:locker,recordQuote:locker,poolId:poolId({...pool,currency0:locker})});vi.mocked(rpc.code).mockImplementation(async address=>address.toLowerCase()===locker?'0x':'0x6000');await expect(discoverArgusPool(token,rpc,100n)).rejects.toThrow();});

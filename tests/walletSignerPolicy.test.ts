@@ -11,7 +11,7 @@ const address = (digit: string) => `0x${digit.repeat(40)}`;
 describe("wallet signer operation policy", () => {
   it("accepts only a Arc contract for token identity reads", () => {
     expect(tokenMetadataRequestSchema.parse({
-      chainId: 4663,
+      chainId: 5042,
       token: "0xb128cAb0842d5725D1eAC657Acd2dDd023c86b07",
     }).token).toBe("0xb128cAb0842d5725D1eAC657Acd2dDd023c86b07");
     expect(() => tokenMetadataRequestSchema.parse({ chainId: 1, token: "ETH" })).toThrow();

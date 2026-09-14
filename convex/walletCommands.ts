@@ -520,14 +520,15 @@ export function parseWalletCommand(raw: string): WalletCommand {
     const token = tradeToken(text, "buy");
     const usd = text.match(new RegExp(`\\$${NUMBER}|${NUMBER}\\s*(?:usdc|usd|dollars?)\\b`, "i"));
     const eth = text.match(new RegExp(`${NUMBER}\\s*(?:eth|weth)\\b`, "i"));
-    const pair = token ? text.match(tokenPattern(`${NUMBER}\\s+((?!of\\b|worth\\b|usd\\b|dollars?\\b|eth\\b|weth\\b)[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:(?:worth\\s+of|of)\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
+    const pair = token ? text.match(tokenPattern(`${NUMBER}\\s+\\$?((?!of\\b|worth\\b|usd\\b|dollars?\\b|eth\\b|weth\\b)[a-zA-Z][a-zA-Z0-9]{0,31})\\s+(?:(?:worth\\s+of|of)\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
     const tokenAmount = token ? text.match(new RegExp(`\\bbuy\\s+${NUMBER}\\s+(?:of\\s+)?\\$?${token.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i")) : null;
     const slippage = slippageBps(text);
     if (slippage < 0) return { kind: "unknown", reason: "Slippage must be between 0.1% and 10%." };
     if (!token || (!usd && !eth && !pair && !tokenAmount)) return { kind: "unknown", reason: "A buy needs an amount and a token ticker or contract address." };
+    const explicitUsdc=pair?.[2].toUpperCase()==="USDC"&&!usd?.[1];
     return {
       kind: "buy", amount: cleanAmount(usd ? usd[1] || usd[2] : eth ? eth[1] : pair ? pair[1] : tokenAmount![1]),
-      unit: usd ? "usd" : eth ? "eth" : pair ? "pair" : "token", token, ...(pair && !usd && !eth ? { pairAsset: cleanToken(pair[2]) } : {}), slippageBps: slippage,
+      unit: explicitUsdc?"pair":usd ? "usd" : eth ? "eth" : pair ? "pair" : "token", token, ...(pair && (explicitUsdc||!usd && !eth) ? { pairAsset: cleanToken(pair[2]) } : {}), slippageBps: slippage,
     };
   }
   if (/\bsell\b/i.test(text)) {

@@ -35,12 +35,12 @@ it("includes discovered token balances and marks incomplete discovery", async ()
   mocks.tokens.mockResolvedValue({ tokens: [{ balance: "15", symbol: "TOKEN", address: owner }], partial: true });
   const result = await arcSocialBalance(owner);
   expect(result.display).toContain("15 TOKEN");
-  expect(result.display).toContain("Some token balances are unavailable");
+  expect(result.display).toContain("Some token balances could not refresh after retries");
   expect(result.display).not.toContain("ETH");
 });
 it("passes wallet-known and pinned ARGOS contracts to discovery even when the explorer omits them", async () => {
   await arcSocialBalance(owner, undefined, [owner]);
-  expect(mocks.tokens).toHaveBeenCalledWith(owner, expect.arrayContaining([owner,"0xe86688530c456e099732f953ed7aa7c583026680"]));
+  expect(mocks.tokens).toHaveBeenCalledWith(owner, expect.arrayContaining([owner,"0xe86688530c456e099732f953ed7aa7c583026680"]),true);
 });
 it("rejects an unverified chain or changed balance block", async () => {
   mocks.block.mockResolvedValue({ hash: "0xchanged" });
@@ -95,4 +95,16 @@ it("formats a requested token with a price based on its full balance",async()=>{
 it("preserves tiny nonzero tokens instead of showing zero",async()=>{
  mocks.tokens.mockResolvedValue({tokens:[{balance:"0.000123456",symbol:"SMALL",address:owner,usdValue:0.5}],partial:false});
  expect((await arcSocialBalance(owner)).display).toContain("0.000123 SMALL ($0.50)");
+});
+it("still shows tokens when the native USDC read fails",async()=>{
+ mocks.balance.mockRejectedValue(Error("offline"));mocks.tokens.mockResolvedValue({tokens:[{balance:"12",symbol:"TOKEN",address:owner}],partial:false});
+ const result=await arcSocialBalance(owner);expect(result.display).toContain("12 TOKEN");expect(result.display).toContain("USDC balance could not refresh");expect(mocks.balance).toHaveBeenCalledTimes(3);
+});
+it("keeps USDC and Base readable when token loading fails",async()=>{
+ mocks.tokens.mockRejectedValue(Error("offline"));mocks.base.mockResolvedValue({balanceWei:"10000000000000000"});
+ const result=await arcSocialBalance(owner);expect(result.display).toContain("10.50 USDC");expect(result.display).toContain("0.01 Base ETH");
+});
+it("marks retained balances instead of presenting them as a fresh read",async()=>{
+ mocks.tokens.mockResolvedValue({tokens:[{balance:"12",symbol:"TOKEN",address:owner,stale:true}],partial:true});
+ expect((await arcSocialBalance(owner)).display).toContain("12 TOKEN (last loaded)");
 });

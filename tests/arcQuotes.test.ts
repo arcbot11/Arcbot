@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { decodeFunctionData, encodeFunctionResult, zeroAddress, type Hex } from "viem";
+import { decodeFunctionData, encodeFunctionResult, zeroAddress,parseAbi, type Hex } from "viem";
+import legacyRuntime from "./fixtures/argus-legacy-runtime.json";
 import { arcConfig } from "../lib/arc/config.ts";
 import { quoteAbi, quoteRoutes } from "../lib/arc/quotes.ts";
 import type { ArcRpc } from "../lib/arc/rpc.ts";
@@ -29,6 +30,27 @@ function mockRpc() {
   };
 }
 describe("Arc quotes", () => {
+  it("quotes the second hop using ARGUS actually delivered after its V3 buy tax",async()=>{
+    const rpc=mockRpc(),original=rpc.call.getMockImplementation()!;
+    rpc.code.mockImplementation(async()=>"0x1234");
+    // Direct deployment of the reviewed implementation keeps this fixture small.
+    const code=vi.fn(async(address:string)=>address===b?legacyRuntime.implementation:"0x1234");
+    const taxAbi=parseAbi(["function currentTaxes() view returns(uint16,uint16)","function isExempt(address) view returns(bool)"]);
+    rpc.call.mockImplementation(async(tx,block)=>{
+      if(tx.data.startsWith('0x')&&code.mock.calls.some(([address])=>address===b)){
+        try{const d=decodeFunctionData({abi:taxAbi,data:tx.data});return encodeFunctionResult({abi:taxAbi,functionName:d.functionName,result:d.functionName==="isExempt"?false:[100,500]} as never);}catch{/* pool call */}
+      }
+      const decoded=decodeFunctionData({abi:quoteAbi,data:tx.data});
+      if(decoded.functionName==="quoteExactInputSingle"){
+        expect(decoded.args[0].exactAmount).toBe(990n);
+        return encodeFunctionResult({abi:quoteAbi,functionName:"quoteExactInputSingle",result:[1980n,60000n]});
+      }
+      return original(tx,block);
+    });
+    const destination="0x0000000000000000000000000000000000000040";
+    const result=await quoteRoutes([{tokenIn:a,tokenOut:destination,pools:[v3,{...v4,currency0:b,currency1:destination}]}],100n,100,a,{...rpc,code} as unknown as ArcRpc,config,now);
+    expect(result.rejected).toEqual([]);expect(result.quotes[0].amountOut).toBe(1980n);expect(result.quotes[0].amountOutMinimum).toBe(1960n);
+  });
   it("reuses the caller's verified head while checking pools and the final block hash", async () => {
     const rpc = mockRpc();
     const head = {number:2n,hash,timestamp:1000n};

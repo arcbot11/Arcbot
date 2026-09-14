@@ -12,7 +12,7 @@ export function maximumSell(budget:bigint,bps:number){
   if(tokenDebit(amount+1n,bps)<=budget)amount++;
   return amount;
 }
-export async function inputTransferTax(rpc:ArcRpc,token:Address,owner:Address,block:bigint,recipient?:Address){
+async function legacyTransferTax(rpc:ArcRpc,token:Address,owner:Address,block:bigint,recipient?:Address,buy=false){
   if(token===zeroAddress||token.toLowerCase()==="0x3600000000000000000000000000000000000000")return 0;
   const code=await rpc.code(token,block);
   const clone=/^0x363d3d373d3d3d363d73([0-9a-f]{40})5af43d82803e903d91602b57fd5bf3$/i.exec(code??"");
@@ -21,7 +21,10 @@ export async function inputTransferTax(rpc:ArcRpc,token:Address,owner:Address,bl
   const read=async(functionName:"currentTaxes"|"isExempt",args:readonly Address[]=[])=>decodeFunctionResult({abi,functionName,data:await rpc.call({from:owner,to:token,value:0n,data:encodeFunctionData({abi,functionName,args} as never)},block)});
   const [rates,exempt,toExempt]=await Promise.all([read("currentTaxes"),read("isExempt",[owner]),recipient?read("isExempt",[recipient]):false]);
   if(exempt||toExempt)return 0;
-  const [,sellBps]=rates as readonly [number,number];
-  if(!Number.isInteger(sellBps)||sellBps<0||sellBps>10000)throw new Error("Invalid on-chain token tax.");
-  return sellBps;
+  const bps=(rates as readonly [number,number])[buy?0:1];
+  if(!Number.isInteger(bps)||bps<0||bps>10000)throw new Error("Invalid on-chain token tax.");
+  return bps;
 }
+export const inputTransferTax=(rpc:ArcRpc,token:Address,owner:Address,block:bigint,recipient?:Address)=>legacyTransferTax(rpc,token,owner,block,recipient);
+/** V3 pool output for the reviewed legacy token deducts the buy tax from delivery. */
+export const outputTransferTax=(rpc:ArcRpc,token:Address,pool:Address,recipient:Address,block:bigint)=>legacyTransferTax(rpc,token,pool,block,recipient,true);

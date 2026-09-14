@@ -7,6 +7,8 @@ vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.com
 vi.mock("../lib/otc/runtime",()=>({advanceTransaction:m.advance,prepareCall:m.prepare,chainClient:()=>({readContract:m.contract})}));
 vi.mock("../lib/arc/trading",()=>({previewArcTrade:m.trade,arcSellAmountForUsdc:m.convert}));
 vi.mock("../lib/arc/wallet-tokens",()=>({arcSelectedTokenBalance:m.balance}));
+vi.mock("../lib/arc/markets",()=>({tradeMarket:async(token:string)=>({token,paired:false,quote:{address:"0x3600000000000000000000000000000000000000",symbol:"USDC",decimals:6}}),marketScope:()=>"test"}));
+vi.mock("../lib/arc/config",()=>({ARC_USDC:"0x3600000000000000000000000000000000000000",arcConfigFromEnv:()=>({})}));
 import {POST} from "../app/api/arc/command/route";
 const wallet="0x1111111111111111111111111111111111111111",recipient="0x2222222222222222222222222222222222222222";
 let command:unknown;
@@ -14,6 +16,15 @@ const request=(secret="secret")=>new NextRequest("https://www.argosbot.io/api/ar
 beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","secret");command={kind:"send",unit:"usd",amount:"10",recipient};m.auth.mockImplementation(async()=>({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()}));m.read.mockResolvedValue(null);m.prepare.mockResolvedValue({unsigned:"0x02",reserveWei:"10000000000000000100",snapshot:{balanceWei:"20000000000000000000",block:"1"}});m.command.mockImplementation(async(_kind,tx)=>({...tx,status:"prepared"}));m.advance.mockResolvedValue({status:"submitted",hash:"txhash"});});
 afterEach(()=>vi.unstubAllEnvs());
 describe("Arc social execution boundary",()=>{
+ it("rejects excessive slippage immediately without preparing or reserving",async()=>{
+   command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:2000};
+   expect(await(await POST(request())).json()).toEqual({ok:false,message:"Use slippage between 0% and 10%."});
+   expect(m.trade).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+ });
+ it("does not turn an uncertain existing transaction into a slippage rejection",async()=>{
+   m.read.mockResolvedValue({chainId:5042,status:"submitted",leg:"swap"});m.advance.mockRejectedValue(Error("Invalid slippage."));
+   expect(await(await POST(request())).json()).toMatchObject({pending:true});
+ });
  it("does not prepare another step after Telegram is unlinked",async()=>{
    m.auth.mockResolvedValue({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now(),source:"telegram",recoveryOnly:true});
    expect(await(await POST(request())).json()).toMatchObject({ok:false,message:expect.stringContaining("unlinked")});
@@ -52,14 +63,15 @@ describe("Arc social execution boundary",()=>{
  ])("returns a definite preparation error immediately: %s",async message=>{
    command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:100};
    m.trade.mockRejectedValue(Error(message));
-   expect(await(await POST(request())).json()).toEqual({ok:false,message});
+   const expected=message==="No supported liquid Arc route found."?"No supported trading route has liquidity for this token pair.":["Unsupported Argus pool configuration.","Hook execution requires a reviewed adapter"].includes(message)?"This token's trading pair is not supported yet.":message;
+   expect(await(await POST(request())).json()).toEqual({ok:false,message:expected});
    expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
  });
  it("reports an unsupported swap immediately even after a completed approval",async()=>{
    command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:100};
    m.read.mockResolvedValueOnce({chainId:5042,status:"completed",leg:"allowance",unsigned:serializeTransaction({type:'eip1559',chainId:5042,to:recipient,nonce:1,gas:21000n,maxFeePerGas:1n,maxPriorityFeePerGas:0n,data:encodeFunctionData({abi:parseAbi(['function approve(address,uint256)']),functionName:'approve',args:[wallet,10n]})})}).mockResolvedValue(null);
    m.trade.mockRejectedValue(Error("Unsupported Argus pool configuration."));
-   expect(await(await POST(request())).json()).toEqual({ok:false,message:"Unsupported Argus pool configuration."});
+   expect(await(await POST(request())).json()).toEqual({ok:false,message:"This token's trading pair is not supported yet."});
    expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
  });
  it.each(["RPC timed out","Malformed RPC response"])("keeps transient preparation failures retryable: %s",async message=>{

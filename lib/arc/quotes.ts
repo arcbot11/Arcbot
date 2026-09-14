@@ -3,6 +3,8 @@ import type { ArcConfig } from "./config.ts";
 import { checkArcRpc, type ArcRpc, type ArcBlock } from "./rpc.ts";
 import { minimumOutput, mixedRouteSupported, poolId, routeCurrencies, v3Path, v4Path, type Route } from "./routing.ts";
 import { retryableOperatorPreviewError } from "./operator-preview";
+import {outputTransferTax} from "./transfer-tax";
+import {ARC_ROUTER} from "./routing";
 
 export const V3_FACTORY = "0xf0db7b58379503491d857db50ac9ece64c653918" as const;
 export const V3_QUOTER = "0x7dfd4f31be6814d2906bde155c3e1b146eac1468" as const;
@@ -53,13 +55,13 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
     if (!pending) { pending = rpc.code(address, head.number).then(code => { if (!code || code === "0x") throw new Error("Contract code missing"); }); codeCache.set(key, pending); }
     return pending;
   };
-  const quotePath = async (route: Route, amountIn: bigint): Promise<{amountOut: bigint; gasEstimate: bigint}> => {
+  const quotePath = async (route: Route, amountIn: bigint,recipient:Address=sender): Promise<{amountOut: bigint; gasEstimate: bigint}> => {
       const currencies = routeCurrencies(route);
       if (route.pools.some(p => p.protocol !== route.pools[0].protocol)) {
         if (!mixedRouteSupported(route)) throw Error("Mixed routes require ERC-20 currencies");
         let output=amountIn,gasEstimate=0n;
         for(let i=0;i<route.pools.length;i++){
-          const result=await quotePath({tokenIn:currencies[i],tokenOut:currencies[i+1],pools:[route.pools[i]]},output);
+          const result=await quotePath({tokenIn:currencies[i],tokenOut:currencies[i+1],pools:[route.pools[i]]},output,i===route.pools.length-1?recipient:ARC_ROUTER);
           if(result.amountOut<=0n)throw Error("No intermediate output");
           output=result.amountOut;gasEstimate+=result.gasEstimate;
         }
@@ -77,6 +79,10 @@ export async function quoteRoutes(routes: Route[], amountIn: bigint, slippageBps
         }
         const result = await call(V3_QUOTER, "quoteExactInput", [v3Path(route), amountIn]) as readonly [bigint, readonly bigint[], readonly number[], bigint];
         amountOut = result[0]; gasEstimate = result[3];
+        const last=route.pools.at(-1)!;
+        if(last.protocol!=="v3")throw Error("Invalid V3 route");
+        const buyTax=await outputTransferTax(rpc,route.tokenOut,last.address,recipient,head.number);
+        amountOut-=amountOut*BigInt(buyTax)/10000n;
       } else {
         if (amountIn >= 2n ** 128n) throw new Error("V4 input exceeds uint128");
         await requireCode(V4_QUOTER); await requireCode(V4_STATE_VIEW);

@@ -1,6 +1,8 @@
 import { arcSignerPath } from "@/lib/arc/public-policy";
 import { arcTokenInfo } from "@/lib/arc/token-info";
 import { arcSocialBalance } from "@/lib/arc/social-balance";
+import { repository } from "@/lib/otc/repository";
+import type { RecordValue } from "@/lib/otc/model";
 import { NextRequest, NextResponse } from "next/server";
 import { ZodError } from "zod";
 import { redactSignerDiagnostic } from "@/lib/signer-diagnostics";
@@ -73,7 +75,7 @@ export async function POST(request: NextRequest, context: { params: Promise<{ pa
   try {
     const path = (await context.params).path.join("/");
     if (!arcSignerPath(path)) return NextResponse.json({ error: "Operation not supported." }, { status: 410 });
-    const body = await boundedJson(request, 16_384);
+    const body = await boundedJson(request, path === "v1/wallets/balance" ? 262_144 : 16_384);
 
     if (path === "v1/automated-fees/infrastructure-status") {
       return NextResponse.json(await automatedFeeInfrastructureStatus());
@@ -259,7 +261,15 @@ export async function POST(request: NextRequest, context: { params: Promise<{ pa
       if (input.walletRef.toLowerCase() !== input.expectedAddress.toLowerCase()) throw new Error("wallet reference mismatch");
       const expected = await provisionWallet(input.ownerReference);
       if (expected.address.toLowerCase() !== input.expectedAddress.toLowerCase()) throw new Error("wallet owner mismatch");
-      return NextResponse.json(await arcSocialBalance(input.expectedAddress as `0x${string}`, input.token, input.knownTokens));
+      let known=input.knownTokens??[];
+      if(!input.token){
+        // Current Arc trades live in the shared transaction store, including
+        // Telegram-native wallets; the older wallet token index can lag it.
+        const records=await Promise.resolve().then(()=>repository().read<RecordValue[]>({owner:input.ownerReference.replace(/^x:/,"")})).catch(()=>[]);
+        known=[...new Set([...known,...records.flatMap(r=>r.kind==="transaction"&&r.chainId===5042&&r.wallet.toLowerCase()===input.expectedAddress.toLowerCase()
+          ?[r.swapOutput?.token,r.swapOutput?.inputToken].filter((t):t is string=>Boolean(t)):[])])];
+      }
+      return NextResponse.json(await arcSocialBalance(input.expectedAddress as `0x${string}`, input.token, known));
     }
     if (path === "v1/tokens/metadata") {
       const input = tokenMetadataRequestSchema.parse(body);

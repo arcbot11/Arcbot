@@ -1,4 +1,5 @@
 import {discoverArcV3Pools} from "./discovery";
+import {cachedArgusPool,clearMarketCache} from "./markets";
 import {createRouteHint,readRouteHint} from "./route-hint";
 import { createPublicClient, encodeFunctionData, getAddress, zeroAddress, parseAbi, keccak256, formatUnits, type Address } from "viem";
 import { arcTransport } from "./transport";
@@ -16,11 +17,10 @@ import { prepareCall, type Call } from "../otc/runtime";
 export const PERMIT2=getAddress("0x000000000022D473030F116dDEE9F6B43aC78BA3");
 const allowanceAbi=parseAbi(["function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"]);
 const permitAbi=parseAbi(["function allowance(address,address,address) view returns (uint160,uint48,uint48)","function approve(address,address,uint160,uint48)"]);
-const discoveryCache=new Map<string,{expires:number;block:bigint;hash:string;result:Awaited<ReturnType<typeof discoverArgusPool>>}>();
 const v3Candidates=new Map<string,{expires:number;address:Address}>();
 const explorerCandidates=new Map<string,{expires:number;request:Promise<V3Pool[]>}>();
 const routeCache=new Map<string,{expires:number;cacheExpires:number;route:Route;verifiedHookPoolIds:string[];block:bigint;hash:string}>();
-export function clearTradeDiscoveryCache(){discoveryCache.clear();v3Candidates.clear();routeCache.clear();explorerCandidates.clear();}
+export function clearTradeDiscoveryCache(){clearMarketCache();v3Candidates.clear();routeCache.clear();explorerCandidates.clear();}
 export type TradeInput={tokenIn:string;tokenOut:string;amount:string;slippageBps:number;routeHint?:string};
 const native=(a:string)=>a==="native"||a.toLowerCase()===ARC_USDC.toLowerCase()||a===zeroAddress;
 const uniquePools=(pools:ArcPool[])=>[...new Map(pools.map(p=>[p.protocol+poolId(p),p])).values()].sort((a,b)=>Number(b.protocol==="v4"&&b.hooks!==zeroAddress)-Number(a.protocol==="v4"&&a.hooks!==zeroAddress)||Number(b.protocol==="v3")-Number(a.protocol==="v3")).slice(0,100);
@@ -62,21 +62,43 @@ async function quoteArcTrade(wallet:Address,input:TradeInput){
   const next:Address[]=[];
   await Promise.all(frontier.filter(token=>!seen.has(token.toLowerCase())).map(async token=>{
     seen.add(token.toLowerCase());
-    const key=scope+token,cached=discoveryCache.get(key);
-    let result:Awaited<ReturnType<typeof discoverArgusPool>>;
-    if(cached&&cached.expires>Date.now()&&cached.block<=head.number&&(await rpc.block(cached.block)).hash===cached.hash)result=cached.result;
-    else{
-      result=await discoverArgusPool(token,rpc,head.number);
-      if((await rpc.block(head.number)).hash!==head.hash)throw new Error("Discovery block changed.");
-      if(discoveryCache.size>=500)discoveryCache.delete(discoveryCache.keys().next().value!);
-      discoveryCache.set(key,{expires:Date.now()+(result?60000:15000),block:head.number,hash:head.hash,result});
-    }
+    const result=await cachedArgusPool(token,rpc,head,scope);
     if(result){discoveries.push(result);const quote=result.pool.currency0.toLowerCase()===token.toLowerCase()?result.pool.currency1:result.pool.currency0;if(!native(quote)){specialQuoteAssets.add(getAddress(quote));if(!seen.has(quote.toLowerCase()))next.push(getAddress(quote));}}
   }));
   frontier=[...new Set(next)];
   }
   const quoteTokens=[...specialQuoteAssets];
   const verifiedHookPoolIds:string[]=discoveries.map(d=>d.poolId);
+  // Paired launches already identify their market. Try that market and its
+  // verified USDC connector before exploring unrelated pools or the explorer.
+  if(quoteTokens.length){
+    const tokenIn=getAddress(native(input.tokenIn)?ARC_USDC:input.tokenIn),tokenOut=getAddress(native(input.tokenOut)?ARC_USDC:input.tokenOut);
+    const pools:ArcPool[]=discoveries.map(d=>d.pool);
+    let routes=findRoutes(tokenIn,tokenOut,uniquePools(pools));
+    if(!routes.length){
+      const connectors=await Promise.all(quoteTokens.flatMap(quote=>[100,500,3000,10000].map(async fee=>{
+        const [currency0,currency1]=[quote,getAddress(ARC_USDC)].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1);
+        const key=scope+[currency0,currency1].sort().join()+fee,cached=v3Candidates.get(key);
+        const address=cached&&cached.expires>Date.now()?cached.address:await client.readContract({address:V3_FACTORY,abi:quoteAbi,functionName:"getPool",args:[currency0,currency1,fee],blockNumber:head.number});
+        if(v3Candidates.size>=1000)v3Candidates.delete(v3Candidates.keys().next().value!);
+        if(!cached||cached.expires<=Date.now())v3Candidates.set(key,{expires:Date.now()+15000,address});
+        return address===zeroAddress?null:{protocol:"v3" as const,address,currency0,currency1,fee};
+      })));
+      pools.push(...connectors.filter((p):p is V3Pool=>p!==null));
+      routes=findRoutes(tokenIn,tokenOut,uniquePools(pools));
+    }
+    if(routes.length){
+      const result=await quoteRoutes(routes.slice(0,32),exactAmount(input.amount,await rpc.decimals(tokenIn,head.number)),input.slippageBps,wallet,rpc,config,Date.now(),head);
+      const q=result.quotes.filter(q=>q.route.pools.every(p=>p.protocol!=="v4"||p.hooks===zeroAddress||verifiedHookPoolIds.includes(poolId(p)))).sort((a,b)=>a.amountOut>b.amountOut?-1:a.amountOut<b.amountOut?1:0)[0];
+      if(q){
+        const verifiedRoute={expires:Date.now()+5*60000,route:q.route,verifiedHookPoolIds,block:head.number,hash:head.hash};
+        if(routeCache.size>=500)routeCache.delete(routeCache.keys().next().value!);
+        routeCache.set(routeKey,{...verifiedRoute,cacheExpires:Date.now()+60000});
+        const first=q.route.pools[0],inputTaxBps=first.protocol==="v3"?await inputTransferTax(rpc,q.route.tokenIn,wallet,head.number,first.address):0;
+        return {q,rpc,client,head,verifiedHookPoolIds,inputTaxBps,routeHint:createRouteHint(verifiedRoute,hintContext)};
+      }
+    }
+  }
   const allPools: ArcPool[] = [];
   for(const protocol of ["v3","v4"] as const){
     // A USDC request must never be rewritten to an arbitrary pool quote token.
@@ -128,9 +150,10 @@ async function quoteArcTrade(wallet:Address,input:TradeInput){
       candidates.sort((a,b)=>hooks(b)-hooks(a)||a.pools.length-b.pools.length);
       routes.push(...candidates.slice(0,32));
     }
-    for(const currency of new Set(routes.map(r=>r.tokenIn))){
+    for(const pair of new Set(routes.map(r=>JSON.stringify([r.tokenIn,r.tokenOut])))){
+      const [currency,destination]=JSON.parse(pair) as [Address,Address];
       const units=currency===tokenIn?amountIn:exactAmount(input.amount,currency===zeroAddress?18:await rpc.decimals(currency,head.number));
-      groups.push(...(await quoteRoutes(routes.filter(r=>r.tokenIn===currency),units,input.slippageBps,wallet,rpc,config,Date.now(),head)).quotes.filter(q=>!q.executionBlocker||q.route.pools.every(p=>p.protocol!=="v4"||p.hooks===zeroAddress||verifiedHookPoolIds.includes(poolId(p)))));
+      groups.push(...(await quoteRoutes(routes.filter(r=>r.tokenIn===currency&&r.tokenOut===destination),units,input.slippageBps,wallet,rpc,config,Date.now(),head)).quotes.filter(q=>!q.executionBlocker||q.route.pools.every(p=>p.protocol!=="v4"||p.hooks===zeroAddress||verifiedHookPoolIds.includes(poolId(p)))));
     }
 
   }

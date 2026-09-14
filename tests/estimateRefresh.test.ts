@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 import { startEstimateRefresh } from "../lib/arc/estimate-refresh";
+import {WebResponseError} from "../lib/web-response-error";
 beforeEach(() => { vi.useFakeTimers(); vi.setSystemTime(0); });
 afterEach(() => { vi.clearAllTimers(); vi.useRealTimers(); });
 function setup(autoRefresh = true) {
@@ -58,4 +59,26 @@ it("bounds retries when the provider returns already-expired estimates", async (
   startEstimateRefresh(options); await vi.advanceTimersByTimeAsync(120_000);
   expect(options.request.mock.calls.length).toBeLessThanOrEqual(16);
   expect(options.status).toHaveBeenLastCalledWith("Estimates paused. Change the amount to refresh.");
+});
+it("shows a sanitized website error and retains it after the idle window",async()=>{
+ const options=setup();options.request.mockRejectedValue(new WebResponseError("No supported trading route has liquidity for this token pair."));
+ startEstimateRefresh(options);await vi.advanceTimersByTimeAsync(150_000);
+ expect(options.status).toHaveBeenLastCalledWith("No supported trading route has liquidity for this token pair.");expect(options.request).toHaveBeenCalledTimes(1);
+});
+it("does not expose raw network errors in an estimate",async()=>{
+ const options=setup();options.request.mockRejectedValue(Error("provider https://rpc.example/secret-key"));startEstimateRefresh(options);await vi.advanceTimersByTimeAsync(500);
+ expect(options.status).toHaveBeenLastCalledWith("Estimate unavailable. Change the amount to retry.");
+});
+it("lets a paired quote finish after two minutes but starts no further refresh",async()=>{
+ const options=setup();let resolve!:(value:{expiresAt:number;minimumOut:string})=>void;
+ options.request.mockImplementation(()=>new Promise(done=>{resolve=done;}));
+ startEstimateRefresh({...options,finishInFlightAfterIdle:true});await vi.advanceTimersByTimeAsync(150_000);
+ expect(options.request.mock.calls[0][0].aborted).toBe(false);
+ resolve({expiresAt:180_000,minimumOut:"12"});await vi.advanceTimersByTimeAsync(1);
+ expect(options.estimate).toHaveBeenLastCalledWith({expiresAt:180_000,minimumOut:"12"});
+ await vi.advanceTimersByTimeAsync(30_000);expect(options.request).toHaveBeenCalledTimes(1);expect(options.status).toHaveBeenLastCalledWith("Estimates paused. Change the amount to refresh.");
+});
+it("input changes still abort a paired quote beyond the idle window",async()=>{
+ const options=setup();options.request.mockImplementation(()=>new Promise(()=>{}));const stop=startEstimateRefresh({...options,finishInFlightAfterIdle:true});
+ await vi.advanceTimersByTimeAsync(130_000);stop();expect(options.request.mock.calls[0][0].aborted).toBe(true);
 });

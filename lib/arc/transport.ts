@@ -8,8 +8,8 @@ const isBlock = (value: unknown): value is { number: string; hash: string; times
 
 const reads = new Set(["eth_chainId", "eth_blockNumber", "eth_getBlockByNumber", "eth_getBlockByHash", "eth_getBalance", "eth_getCode", "eth_getTransactionCount", "eth_call", "eth_estimateGas", "eth_gasPrice", "eth_maxPriorityFeePerGas", "eth_feeHistory", "eth_getLogs", "eth_getTransactionReceipt", "eth_getTransactionByHash", "debug_traceCall", "debug_traceTransaction"]);
 class RpcFailure extends Error {
-  readonly code:number;readonly retryable:boolean;readonly data?:unknown;readonly transient:boolean;
-  constructor(message:string,code:number,retryable:boolean,data?:unknown,transient=false){super(message);this.code=code;this.retryable=retryable;this.data=data;this.transient=transient;}
+  readonly code:number;readonly retryable:boolean;readonly data?:unknown;readonly transient:boolean;readonly cooldownMs:number;
+  constructor(message:string,code:number,retryable:boolean,data?:unknown,transient=false,cooldownMs=5000){super(message);this.code=code;this.retryable=retryable;this.data=data;this.transient=transient;this.cooldownMs=cooldownMs;}
 }
 
 const transports=new Map<string,ReturnType<typeof createArcTransport>>();
@@ -27,13 +27,22 @@ function createArcTransport(config: ArcConfig) {
   const unavailableUntil = new Map<string, number>();
   const validating = new Map<string, Promise<void>>();
   const methodUnavailableUntil = new Map<string, number>();
-  async function call(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
+  const validationEvidence=new Map<string,{chain:unknown;checkpoint:unknown}>();
+  const inFlightReads=new Map<string,Promise<unknown>>();
+  async function call(url:string,method:string,params:readonly unknown[]=[]):Promise<unknown>{
+    if(method==="eth_sendRawTransaction")return rawCall(url,method,params);
+    const key=JSON.stringify([url,method,params]),existing=inFlightReads.get(key);
+    if(existing)return existing;
+    const request=rawCall(url,method,params);inFlightReads.set(key,request);
+    try{return await request;}finally{if(inFlightReads.get(key)===request)inFlightReads.delete(key);}
+  }
+  async function rawCall(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
     let response: Response;
     try {
       response = await fetch(url, { method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(12000) });
     } catch { throw new RpcFailure("Arc RPC connection unavailable", -32098, true, undefined, true); }
-    if (!response.ok) throw new RpcFailure(`Arc RPC HTTP ${response.status}`, -32098, [401, 403, 408, 429].includes(response.status) || response.status >= 500, undefined, response.status === 408 || response.status >= 500);
+    if (!response.ok) throw new RpcFailure(`Arc RPC HTTP ${response.status}`, -32098, [401, 403, 408, 429].includes(response.status) || response.status >= 500, undefined, response.status === 408 || response.status >= 500,[401,403,429].includes(response.status)?60000:5000);
     let body: unknown;
     try { body = await response.json(); } catch { throw new RpcFailure("Invalid Arc RPC response", -32098, true); }
     if (!isRecord(body)) throw new RpcFailure("Invalid Arc RPC response", -32098, true);
@@ -43,7 +52,7 @@ function createArcTransport(config: ArcConfig) {
       const retryable = code === -32601 || /quota|rate.?limit|too many requests|temporarily unavailable|upstream|method_not_served/i.test(message) || (isRecord(body.error.data) && body.error.data.reason === "unreachable");
       // Never include endpoint URLs or provider diagnostics that might expose keys.
       const transient = /temporarily unavailable|upstream/i.test(message) || (isRecord(body.error.data) && body.error.data.reason === "unreachable");
-      throw new RpcFailure(retryable ? "Arc RPC capacity or method unavailable" : "Arc RPC rejected request", code, retryable, retryable ? undefined : body.error.data, transient);
+      throw new RpcFailure(retryable ? "Arc RPC capacity or method unavailable" : "Arc RPC rejected request", code, retryable, retryable ? undefined : body.error.data, transient,code===-32601||/quota|rate.?limit|too many requests|method_not_served/i.test(message)?60000:5000);
     }
     if (!Object.prototype.hasOwnProperty.call(body, "result")) throw new RpcFailure("Missing Arc RPC result", -32098, true);
     return body.result;
@@ -51,12 +60,15 @@ function createArcTransport(config: ArcConfig) {
   async function verify(url: string) {
     const chain = await call(url, "eth_chainId");
     if (chain !== "0x13b2") throw new RpcFailure("Arc RPC chain mismatch", -32098, true);
-    const checkpoint = await call(url, "eth_getBlockByNumber", [`0x${config.checkpointNumber.toString(16)}`, false]);
+    const [checkpoint,head] = await Promise.all([
+      call(url, "eth_getBlockByNumber", [`0x${config.checkpointNumber.toString(16)}`, false]),
+      call(url, "eth_getBlockByNumber", ["latest", false]),
+    ]);
     if (!isBlock(checkpoint) || BigInt(checkpoint.number) !== config.checkpointNumber || checkpoint.hash.toLowerCase() !== config.checkpointHash.toLowerCase()) throw new RpcFailure("Arc RPC checkpoint mismatch", -32098, true);
-    const head = await call(url, "eth_getBlockByNumber", ["latest", false]);
     const age = isBlock(head) ? Math.floor(Date.now() / 1000) - Number(head.timestamp) : NaN;
     if (!isBlock(head) || !Number.isFinite(age) || age < -5 || age > config.maxHeadAgeSeconds || BigInt(head.number) < config.checkpointNumber) throw new RpcFailure("Arc RPC head is stale", -32098, true);
     verifiedUntil.set(url, Date.now() + Math.min(5000, Math.max(0, (config.maxHeadAgeSeconds - age) * 1000)));
+    validationEvidence.set(url,{chain,checkpoint});
   }
   async function validate(url: string) {
     if ((unavailableUntil.get(url) ?? 0) > Date.now()) throw new RpcFailure("Arc RPC cooling down", -32098, true);
@@ -65,7 +77,8 @@ function createArcTransport(config: ArcConfig) {
     if (pending) return pending;
     const check = verify(url).catch(error => {
       verifiedUntil.delete(url);
-      unavailableUntil.set(url, Date.now() + 10000);
+      validationEvidence.delete(url);
+      unavailableUntil.set(url, Date.now() + Math.max(10000,error instanceof RpcFailure?error.cooldownMs:0));
       throw error;
     }).finally(() => validating.delete(url));
     validating.set(url, check);
@@ -86,11 +99,16 @@ function createArcTransport(config: ArcConfig) {
       try { await validate(url); } catch { continue; }
       // Do not fail over after a broadcast attempt: its outcome may be unknown.
       if (broadcast) return call(url, method, params as unknown[]);
+      // Reuse only the identity checks just performed, within the existing
+      // five-second validation window. Prices, balances and latest blocks are fresh.
+      const evidence=(verifiedUntil.get(url)??0)>Date.now()?validationEvidence.get(url):undefined;
+      if(evidence&&method==="eth_chainId")return evidence.chain;
+      if(evidence&&method==="eth_getBlockByNumber"&&Array.isArray(params)&&params[0]===`0x${config.checkpointNumber.toString(16)}`&&params[1]===false)return evidence.checkpoint;
       try { return await call(url, method, params as unknown[]); }
       catch (error) {
         if (!(error instanceof RpcFailure) || !error.retryable) throw error;
         if (error.transient) transientReads.push(url);
-        methodUnavailableUntil.set(methodKey, Date.now() + 5000);
+        methodUnavailableUntil.set(methodKey, Date.now() + error.cooldownMs);
       }
     }
     // A gateway can briefly lose its upstream while serving a fresh block.

@@ -1,4 +1,6 @@
 import {arcActionAmount} from "@/lib/arc/wallet-actions";
+import {resolveTradePlan,type TradeRequest} from "@/lib/arc/trade-plan";
+import {tradeMarket} from "@/lib/arc/markets";
 import {transactionStatus} from "@/lib/otc/transaction-history";
 import { randomUUID,createHmac } from "node:crypto";
 import { NextRequest } from "next/server";
@@ -11,29 +13,39 @@ import { repository } from "@/lib/otc/repository";
 import { balanceSnapshot,advanceTransaction } from "@/lib/otc/runtime";
 import { locked,walletId,type Wallet,type Transaction } from "@/lib/otc/model";
 export const runtime="nodejs";
-export const maxDuration=120;
+export const maxDuration=300;
 const asset=z.union([z.literal("native"),z.string().regex(/^0x[0-9a-fA-F]{40}$/)]);
+const planning={intent:z.enum(["buy","sell"]).optional(),fundingPlan:z.string().max(6000).optional()};
 const schema=z.discriminatedUnion("action",[
-  z.object({action:z.literal("estimate"),tokenIn:asset,tokenOut:asset,amount:z.string().max(60),amountUnit:z.enum(["tokens","usd"]).default("tokens"),routeHint:z.string().max(6000).optional(),slippageBps:z.number().int().min(0).max(1000)}).strict(),
-  z.object({action:z.literal("preview"),tokenIn:asset,tokenOut:asset,amount:z.string().max(60),amountUnit:z.enum(["tokens","usd"]).default("tokens"),routeHint:z.string().max(6000).optional(),slippageBps:z.number().int().min(0).max(1000)}).strict(),
+  z.object({action:z.literal("market"),token:z.string().regex(/^0x[0-9a-fA-F]{40}$/)}).strict(),
+  z.object({action:z.literal("estimate"),tokenIn:asset,tokenOut:asset,amount:z.string().max(60),amountUnit:z.enum(["tokens","usd"]).default("tokens"),routeHint:z.string().max(6000).optional(),slippageBps:z.number().int().min(0).max(1000),...planning}).strict(),
+  z.object({action:z.literal("preview"),tokenIn:asset,tokenOut:asset,amount:z.string().max(60),amountUnit:z.enum(["tokens","usd"]).default("tokens"),routeHint:z.string().max(6000).optional(),slippageBps:z.number().int().min(0).max(1000),...planning}).strict(),
   z.object({action:z.literal("confirm"),quote:z.string().max(16000)}).strict(),
 ]);
 const mac=(s:string)=>createHmac("sha256",process.env.WEB_AUTH_SECRET!).update(`arc-trade:${s}`).digest("base64url");
 export async function POST(request:NextRequest){
+  let readOnly=false;
   try{
     const session=await websiteSession(request,true),input=schema.parse(await boundedJson(request,18000)),repo=repository();
-    if(input.action!=="confirm"&&input.amountUnit==="usd"){
+    readOnly=input.action==="estimate"||input.action==="market";
+    if(input.action==="market")return json(await tradeMarket(input.token));
+    let plan:Awaited<ReturnType<typeof resolveTradePlan>>|undefined;
+    if(input.action!=="confirm"&&input.intent){
+      const request:TradeRequest={side:input.intent,token:input.intent==="buy"?input.tokenOut:input.tokenIn,amount:input.amount,unit:input.intent==="buy"?"usd":input.amountUnit,slippageBps:input.slippageBps};
+      plan=await resolveTradePlan(session.walletAddress,request,{fundingPlan:input.fundingPlan,routeHint:input.routeHint});
+    }
+    if(input.action!=="confirm"&&!plan&&input.amountUnit==="usd"){
       const native=(asset:string)=>["native",zeroAddress,"0x3600000000000000000000000000000000000000"].includes(asset.toLowerCase());
       if(!native(input.tokenIn))input.amount=await arcActionAmount(session.walletAddress,getAddress(input.tokenIn),input.amount,"usd",input.routeHint);
     }
-    if(input.action==="estimate")return json(await estimateArcTrade(session.walletAddress,input));
+    if(input.action==="estimate")return json({...await estimateArcTrade(session.walletAddress,plan?.trade??input),...(plan?{funding:plan.funding,fundingPlan:plan.fundingPlan}:{})});
     if(input.action==="preview"){
-      const p=await previewArcTrade(session.walletAddress,input);
+      const p=await previewArcTrade(session.walletAddress,plan?.trade??input);
       const w=await repo.read<Wallet|null>({id:walletId(5042,session.walletAddress)});
       if(w?.activeTx||BigInt(p.snapshot.balanceWei)-(w?locked(w):0n)<BigInt(p.reserveWei))throw new WebError("Not enough available funds or a wallet transaction is pending.");
-      const quote={id:`trade:${randomUUID()}`,owner:session.owner,wallet:session.walletAddress,chainId:5042,leg:p.leg,swapOutput:p.swapOutput,unsigned:p.unsigned,reserveWei:p.reserveWei,expiresAt:p.expiresAt};
+      const quote={id:`trade:${randomUUID()}`,owner:session.owner,wallet:session.walletAddress,chainId:5042,leg:p.leg,swapOutput:p.swapOutput,unsigned:p.unsigned,reserveWei:p.reserveWei,expiresAt:p.expiresAt,...(plan?{fundingPlan:plan.fundingPlan}:{})};
       const payload=Buffer.from(JSON.stringify(quote)).toString("base64url");
-      return json({quote:`${payload}.${mac(payload)}`,routeHint:p.routeHint,stage:p.stage,amountIn:p.amountIn,amountOut:p.amountOut,minimumOut:p.minimumOut,protocol:p.protocol,gasWei:p.gasWei,tradeGasBudgetWei:p.tradeGasBudgetWei,expiresAt:p.expiresAt});
+      return json({quote:`${payload}.${mac(payload)}`,routeHint:p.routeHint,stage:p.stage,amountIn:p.amountIn,amountOut:p.amountOut,minimumOut:p.minimumOut,protocol:p.protocol,gasWei:p.gasWei,tradeGasBudgetWei:p.tradeGasBudgetWei,expiresAt:p.expiresAt,...(plan?{funding:plan.funding,fundingPlan:plan.fundingPlan}:{})});
     }
     const [payload,signature,extra]=input.quote.split(".");
     if(!payload||!signature||extra||!sameSecret(signature,mac(payload)))throw new WebError("Invalid trade quote.");
@@ -48,5 +60,5 @@ export async function POST(request:NextRequest){
     try{await advanceTransaction(q.id);}catch{/* Durable transaction remains reserved for the worker. */}
     const result=await repo.read<Transaction>({id:q.id});
     return json(transactionStatus(result));
-  }catch(e){return webFailure(e);}
+  }catch(e){return webFailure(e,readOnly?"quote":undefined);}
 }

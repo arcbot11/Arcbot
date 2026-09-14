@@ -8,9 +8,9 @@ import { hasMalformedNumericGrouping } from "../lib/command-amount-language";
 const address = "0x1111111111111111111111111111111111111111";
 beforeEach(() => vi.mocked(openRouter).mockReset().mockResolvedValue('{"kind":"irrelevant"}'));
 it.each(["ONE", "HALF", "TWENTY", "$ONE", "$HALF"])("preserves the token-first buy target %s", async token => {
-  expect(telegramWalletCommand("buy", `${token} with 20 USDC`)).toMatchObject({ kind: "buy", token: token.replace(/^\$/, ""), amount: "20", unit: "usd" });
+  expect(telegramWalletCommand("buy", `${token} with 20 USDC`)).toMatchObject({ kind: "buy", token: token.replace(/^\$/, ""), amount: "20", unit: "pair",pairAsset:"USDC" });
   const { intent } = await parseXWalletIntentWithDiagnostics(`@TheArgosBot buy ${token} with 20 USDC`, false);
-  expect(intent).toMatchObject({ kind: "command", command: { kind: "buy", token: token.replace(/^\$/, ""), amount: "20", unit: "usd" } });
+  expect(intent).toMatchObject({ kind: "command", command: { kind: "buy", token: token.replace(/^\$/, ""), amount: "20", unit: "pair",pairAsset:"USDC" } });
 });
 it.each(["1.234,56", "1,234.56,78", "1e3", "1E-3", "1.2.3"])("rejects unsupported or ambiguous amount %s before AI", async amount => {
   expect(hasMalformedNumericGrouping(`buy $${amount} of ARGOS`)).toBe(true);

@@ -19,6 +19,28 @@ function fixture(handle: (url: string, method: string) => any) {
 }
 afterEach(() => { clearArcTransportCache(); vi.unstubAllGlobals(); vi.restoreAllMocks(); });
 describe("Arc RPC failover", () => {
+  it("combines identical concurrent reads without caching subsequent balances",async()=>{
+    const f=fixture(()=>undefined),address="0x1111111111111111111111111111111111111111";
+    await Promise.all(Array.from({length:5},()=>f.client.getBalance({address})));
+    expect(f.calls.filter(c=>c.method==="eth_getBalance")).toHaveLength(1);
+    await f.client.getBalance({address});expect(f.calls.filter(c=>c.method==="eth_getBalance")).toHaveLength(2);
+  });
+  it("reuses current identity evidence but fetches latest blocks again",async()=>{
+    const f=fixture(()=>undefined);
+    await f.client.getChainId();await f.client.getBlock({blockNumber:10n});await f.client.getBlock({blockTag:"latest"});
+    expect(f.calls.filter(c=>c.method==="eth_chainId")).toHaveLength(1);
+    expect(f.calls.filter(c=>c.method==="eth_getBlockByNumber"&&c.params[0]==="0xa")).toHaveLength(1);
+    expect(f.calls.filter(c=>c.method==="eth_getBlockByNumber"&&c.params[0]==="latest")).toHaveLength(2);
+  });
+  it("does not retry a quota-exhausted method every five seconds",async()=>{
+    let now=Date.now();vi.spyOn(Date,"now").mockImplementation(()=>now);
+    const f=fixture((url,method)=>url===primary&&method==="eth_call"?{error:{code:-32600,message:"quota"}}:undefined);
+    await f.client.request({method:"eth_call",params:[{},"latest"]});now+=15000;
+    await f.client.request({method:"eth_call",params:[{},"latest"]});
+    expect(f.calls.filter(c=>c.url===primary&&c.method==="eth_call")).toHaveLength(1);
+    now+=60000;await f.client.request({method:"eth_call",params:[{},"latest"]});
+    expect(f.calls.filter(c=>c.url===primary&&c.method==="eth_call")).toHaveLength(2);
+  });
   it("shares provider validation across concurrent reads", async () => {
     const f = fixture(() => undefined);
     await Promise.all(Array.from({length:8},()=>f.client.getBalance({address:"0x1111111111111111111111111111111111111111"})));

@@ -1,0 +1,38 @@
+{
+  "at": "2026-09-13T19:20:07.602Z",
+  "block": "0x13bd65c",
+  "cases": [
+    {
+      "name": "ARGUS to BABYARGUS",
+      "status": "simulated",
+      "quoted": "145.133237691657617528",
+      "input": "1",
+      "debited": "1",
+      "received": "145.133237691657617528"
+    },
+    {
+      "name": "BABYARGUS to ARGUS",
+      "status": "simulated",
+      "quoted": "6.618709851045948164",
+      "input": "1000",
+      "debited": "1000",
+      "received": "6.618709851045948164"
+    },
+    {
+      "name": "USDC to ARGUS",
+      "status": "simulated",
+      "quoted": "5004.685568823774930712",
+      "input": "10",
+      "debited": "10",
+      "received": "5004.685568823774930712"
+    },
+    {
+      "name": "USDC to ARGUS to BABYARGUS",
+      "status": "simulated",
+      "quoted": "725751.362373957017261281",
+      "input": "10",
+      "debited": "10",
+      "received": "725751.362373957017261281"
+    }
+  ]
+}

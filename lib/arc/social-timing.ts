@@ -1,4 +1,4 @@
-export const ARC_COMMAND_HTTP_TIMEOUT_MS=240_000;
+export const ARC_COMMAND_HTTP_TIMEOUT_MS=305_000;
 // Bound authorization for creating additional transactions; existing submissions
 // remain observable beyond this window until their outcome is verified.
 export const ARC_COMMAND_AUTHORIZATION_MS=30*60_000;

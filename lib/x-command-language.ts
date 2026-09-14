@@ -36,6 +36,7 @@ export function completeXCommand(text:string){
   const end="(?:\\s+(?:with\\s+)?(?:[0-9]+(?:\\.[0-9]+)?%\\s+slippage|slippage\\s+[0-9]+(?:\\.[0-9]+)?%))?(?:,?\\s+(?:please|thanks|thank you))?[.!?]*$";
   return [
     `^buy\\s+${dollars}\\s+${asset}(?:\\s+and\\s+(?:burn(?:\\s+it)?|send(?:\\s+it)?\\s+to\\s+${recipient}))?`,
+    `^buy\\s+${number}\\s+${token}\\s+(?:of|worth\\s+of)\\s+${token}`,
     `^(?:sell|burn)\\s+${quantity}\\s+${asset}`,
     `^send\\s+${quantity}\\s+${asset}\\s+to\\s+${recipient}`,
     `^swap\\s+${quantity}\\s+${asset}\\s+(?:for|to|into)\\s+${token}`,
