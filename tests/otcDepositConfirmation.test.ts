@@ -3,7 +3,7 @@ import { serializeTransaction } from "viem";
 import { otcDepositConfirmed } from "../lib/otc/deposit-confirmation";
 import type { Transaction } from "../lib/otc/model";
 
-function fixture(age = 30) {
+function fixture(age = 10) {
   const wallet = "0x1111111111111111111111111111111111111111";
   const to = "0x2222222222222222222222222222222222222222";
   const hash = `0x${"ab".repeat(32)}`;
@@ -21,11 +21,12 @@ function fixture(age = 30) {
   return { client, deposit, block, head, receipt, tx, check };
 }
 describe("OTC incoming Base confirmation window", () => {
-  it.each([[29,false],[30,true],[60,true]])("at %s seconds returns %s", async(age,expected)=>{
+  it.each([[9,false],[10,true],[30,true],[60,true]])("at %s seconds returns %s", async(age,expected)=>{
     expect(await fixture(age as number).check()).toBe(expected);
   });
   it("rejects a stale RPC head",async()=>{const f=fixture(90);f.head.timestamp=969n;expect(await f.check()).toBe(false);});
   it("requires the chain to advance through the window",async()=>{const f=fixture();f.head.timestamp=999n;expect(await f.check()).toBe(false);});
+  it("requires wall-clock maturity even if the RPC head is ahead",async()=>{const f=fixture(9);f.head.timestamp=1001n;expect(await f.check()).toBe(false);});
   it("rejects an unchanged head",async()=>{const f=fixture();f.head.number=100n;expect(await f.check()).toBe(false);});
   it("rejects future RPC timestamps",async()=>{const f=fixture();f.head.timestamp=1006n;expect(await f.check()).toBe(false);});
   it("rejects a reorganization during verification",async()=>{const f=fixture();f.client.getBlock.mockResolvedValueOnce(f.block).mockResolvedValueOnce(f.head).mockResolvedValueOnce({...f.block,hash:"0xother"});expect(await f.check()).toBe(false);});
@@ -37,7 +38,7 @@ describe("OTC incoming Base confirmation window", () => {
   it("does not authorize a different transaction type",async()=>{const f=fixture();f.deposit.escrowRef!.step="seller";expect(await f.check()).toBe(false);expect(f.client.getTransactionReceipt).not.toHaveBeenCalled();});
 });
 
-it.each([29,30])("waits through the same window before accepting a failed deposit: %s",async age=>{
+it.each([9,10])("waits through the same window before accepting a failed deposit: %s",async age=>{
  const f=fixture(age);f.receipt.status="reverted";
- expect(await otcDepositConfirmed(f.client as unknown as Parameters<typeof otcDepositConfirmed>[0],f.deposit,1_000_000,"reverted")).toBe(age===30);
+ expect(await otcDepositConfirmed(f.client as unknown as Parameters<typeof otcDepositConfirmed>[0],f.deposit,1_000_000,"reverted")).toBe(age===10);
 });

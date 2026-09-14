@@ -1,7 +1,7 @@
 import { parseTransaction, type Hex, type PublicClient } from "viem";
 import type { Transaction } from "./model";
 
-export const OTC_DEPOSIT_WAIT_SECONDS = 30n;
+export const OTC_DEPOSIT_WAIT_SECONDS = 10n;
 type Client = Pick<PublicClient, "getTransactionReceipt" | "getTransaction" | "getBlock">;
 
 /** A short confirmation window, not Ethereum finality. Never authorize from elapsed time alone. */

@@ -40,6 +40,18 @@ async function complete(store:Memory,listing:Listing,step:EscrowStep,order?:Orde
 }
 async function funded(){const f=await setup();await complete(f.store,f.listing,"fund");f.listing=await advanceEscrowState(f.store,f.listing.id,undefined,now) as Listing;return f;}
 
+it("clears setup notes only after funding is verified and persists the change",async()=>{
+ const {store,listing}=await setup();
+ listing.escrow!.note="Escrow wallet setup is pending. Listing funds remain reserved in your wallet.";
+ await store.put(listing);
+ await advanceEscrowState(store,listing.id,undefined,now);
+ expect((await store.get<Listing>(listing.id))!.escrow!.note).toBe(listing.escrow!.note);
+ await complete(store,listing,"fund");
+ await advanceEscrowState(store,listing.id,undefined,now);
+ const saved=(await store.get<Listing>(listing.id))!;
+ expect(saved.status).toBe("active");expect(saved.escrow!.note).toBeUndefined();
+});
+
 async function pendingStep(store:Memory,listing:Listing,step:EscrowStep,order?:Order){
  const call=await escrowCall(store,listing,step,order);
  return prepareEscrowStep(store,{listingId:listing.id,orderId:order?.id,step,unsigned:serializeTransaction({type:'eip1559',chainId:call.chainId,to:call.to,value:call.value,data:call.data,nonce:0,gas:21000n,maxFeePerGas:1n,maxPriorityFeePerGas:0n}),gasWei:G.toString(),reserveWei:(call.value+G).toString(),balanceWei:(100n*W).toString(),block:'100'},now);

@@ -103,7 +103,7 @@ export async function advanceEscrowState(store:Store,listingId:string,orderId:st
   const {listing,order}=await escrowRecords(store,listingId,orderId);
   if(order&&["completed","expired","payment_failed"].includes(order.status))return order;
   if(!order){
-    if(listing.status==="funding"&&await completedStep(store,listing,"fund")){listing.status="active";await updateListingHold(store,listing,now);}
+    if(listing.status==="funding"&&await completedStep(store,listing,"fund")){listing.status="active";delete listing.escrow!.note;await updateListingHold(store,listing,now);}
     if(listing.status==="closing"){
       const arc=await completedStep(store,listing,"return_arc");
       if(arc){

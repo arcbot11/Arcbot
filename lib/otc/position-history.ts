@@ -20,7 +20,10 @@ export function positionHistory(listing: Listing, orders: Order[], wallet?: Wall
   const closed = ["cancelled","filled"].includes(listing.status) && !settlementLocked;
   // Unknown original amounts in legacy records must not be reported as zero returns.
   const returned = closed && listing.originalAmount !== undefined ? BigInt(listing.originalAmount) - sold : null;
-  return {...listing, sold: sold.toString(), pendingDelivery:pendingDelivery.toString(),closingAfterSettlement:listing.status==="active"&&sold>0n&&BigInt(listing.available)<MIN_USDC, receivedEthWei: received.ETH.toString(), receivedUsdcUnits: received.USDC.toString(),
+  // Older funded records can retain this setup-only message. Preserve other recovery notes.
+  const escrow = listing.escrow ? {...listing.escrow} : undefined;
+  if (escrow && listing.status !== "funding" && escrow.note === "Escrow wallet setup is pending. Listing funds remain reserved in your wallet.") delete escrow.note;
+  return {...listing, ...(escrow ? {escrow} : {}), sold: sold.toString(), pendingDelivery:pendingDelivery.toString(),closingAfterSettlement:listing.status==="active"&&sold>0n&&BigInt(listing.available)<MIN_USDC, receivedEthWei: received.ETH.toString(), receivedUsdcUnits: received.USDC.toString(),
     returnedUsdc: listing.escrow?.returnedWei ? (BigInt(listing.escrow.returnedWei)/10n**12n).toString() : returned !== null && returned >= 0n ? returned.toString() : null,
     settlementLocked, canCancel: !settlementLocked&&(canAbortFunding||listing.status==='active'&&!wallet?.activeTx)};
 }
