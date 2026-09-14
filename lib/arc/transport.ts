@@ -58,11 +58,23 @@ function createArcTransport(config: ArcConfig) {
     return body.result;
   }
   async function verify(url: string) {
-    const chain = await call(url, "eth_chainId");
+    // A transient identity-read miss is not proof that an otherwise healthy
+    // provider is unusable for every wallet. Retry quick upstream failures;
+    // connection timeouts still fail over without multiplying their delay.
+    const identityRead=async(method:string,params:readonly unknown[] = [])=>{
+      for(let attempt=0;;attempt++){
+        try{return await call(url,method,params);}
+        catch(error){
+          if(attempt===2||!(error instanceof RpcFailure)||!error.transient||error.message==="Arc RPC connection unavailable")throw error;
+          await new Promise(resolve=>setTimeout(resolve,(attempt+1)*500));
+        }
+      }
+    };
+    const chain = await identityRead("eth_chainId");
     if (chain !== "0x13b2") throw new RpcFailure("Arc RPC chain mismatch", -32098, true);
     const [checkpoint,head] = await Promise.all([
-      call(url, "eth_getBlockByNumber", [`0x${config.checkpointNumber.toString(16)}`, false]),
-      call(url, "eth_getBlockByNumber", ["latest", false]),
+      identityRead("eth_getBlockByNumber", [`0x${config.checkpointNumber.toString(16)}`, false]),
+      identityRead("eth_getBlockByNumber", ["latest", false]),
     ]);
     if (!isBlock(checkpoint) || BigInt(checkpoint.number) !== config.checkpointNumber || checkpoint.hash.toLowerCase() !== config.checkpointHash.toLowerCase()) throw new RpcFailure("Arc RPC checkpoint mismatch", -32098, true);
     const age = isBlock(head) ? Math.floor(Date.now() / 1000) - Number(head.timestamp) : NaN;
@@ -78,7 +90,7 @@ function createArcTransport(config: ArcConfig) {
     const check = verify(url).catch(error => {
       verifiedUntil.delete(url);
       validationEvidence.delete(url);
-      unavailableUntil.set(url, Date.now() + Math.max(10000,error instanceof RpcFailure?error.cooldownMs:0));
+      unavailableUntil.set(url, Date.now() + Math.max(10000,error instanceof RpcFailure?(error.transient?60000:error.cooldownMs):0));
       throw error;
     }).finally(() => validating.delete(url));
     validating.set(url, check);
@@ -108,15 +120,19 @@ function createArcTransport(config: ArcConfig) {
       catch (error) {
         if (!(error instanceof RpcFailure) || !error.retryable) throw error;
         if (error.transient) transientReads.push(url);
-        methodUnavailableUntil.set(methodKey, Date.now() + error.cooldownMs);
+        // An upstream miss can be specific to this calldata or block. Do not
+        // poison every other token's eth_call while this exact read retries.
+        if(!error.transient)methodUnavailableUntil.set(methodKey, Date.now() + error.cooldownMs);
       }
     }
     // A gateway can briefly lose its upstream while serving a fresh block.
-    // Prefer working alternatives, then retry that same read once. Preserve
+    // Prefer working alternatives, then retry that same read twice. Preserve
     // its exact params/block; never retry a broadcast or a quota/revert here.
     if (!broadcast && transientReads.length) {
-      await new Promise(resolve => setTimeout(resolve, 350));
+      for(let attempt=0;attempt<2;attempt++){
+      await new Promise(resolve => setTimeout(resolve, (attempt+1)*500));
       for (const url of transientReads) {
+        if((methodUnavailableUntil.get(`${url}:${method}`)??0)>Date.now())continue;
         try { await validate(url); } catch { continue; }
         try {
           const result = await call(url, method, params as unknown[]);
@@ -124,7 +140,9 @@ function createArcTransport(config: ArcConfig) {
           return result;
         } catch (error) {
           if (!(error instanceof RpcFailure) || !error.retryable) throw error;
+          if(!error.transient)methodUnavailableUntil.set(`${url}:${method}`,Date.now()+error.cooldownMs);
         }
+      }
       }
     }
     throw new RpcFailure("No healthy Arc RPC supports this request", -32098, true);

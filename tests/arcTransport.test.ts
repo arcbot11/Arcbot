@@ -6,11 +6,11 @@ import { arcTransport, clearArcTransportCache } from "../lib/arc/transport";
 const hash = `0x${"ab".repeat(32)}`;
 const primary = "https://primary.example", secondary = "https://secondary.example", readOnly = "https://read.example";
 const config = arcConfig({ rpcUrl: primary, rpcFallbackUrls: [secondary], readOnlyRpcUrls: [readOnly], checkpointNumber: "10", checkpointHash: hash });
-function fixture(handle: (url: string, method: string) => any) {
+function fixture(handle: (url: string, method: string, params?:any[]) => any) {
   const calls: { url: string; method: string; params: unknown[] }[] = [];
   vi.stubGlobal("fetch", vi.fn(async (url: string, options: any) => {
     const { method, params } = JSON.parse(options.body); calls.push({ url, method, params });
-    const override = handle(url, method);
+    const override = handle(url, method,params);
     const result = override ?? (method === "eth_chainId" ? "0x13b2" : method === "eth_getBlockByNumber" ? { number: "0xa", hash, timestamp: `0x${Math.floor(Date.now() / 1000).toString(16)}` } : "0x2");
     return new Response(JSON.stringify(result?.error ? result : { result }));
   }));
@@ -47,6 +47,14 @@ describe("Arc RPC failover", () => {
     expect(f.calls.filter(c=>c.method==="eth_chainId")).toHaveLength(1);
     expect(f.calls.filter(c=>c.method==="eth_getBlockByNumber")).toHaveLength(2);
   });
+  it("recovers a transient checkpoint lookup before cooling down a healthy provider",async()=>{
+    let attempts=0;
+    const f=fixture((url,method,params)=>{
+      if(url===primary&&method==="eth_getBlockByNumber"&&params?.[0]==="0xa"&&++attempts===1)return {error:{code:-32603,message:"upstream unreachable"}};
+    });
+    expect(await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"})).toBe(2n);
+    expect(attempts).toBe(2);expect(f.calls.filter(c=>c.method==="eth_getBalance").map(c=>c.url)).toEqual([primary]);
+  });
   it("cools down failed providers and validates them again before recovery", async () => {
     let now=Date.now(), offline=true;
     vi.spyOn(Date,"now").mockImplementation(()=>now);
@@ -54,7 +62,7 @@ describe("Arc RPC failover", () => {
     await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});
     await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});
     expect(f.calls.filter(c=>c.url===primary)).toHaveLength(1);
-    now+=11000;offline=false;
+    now+=61000;offline=false;
     await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});
     expect(f.calls.filter(c=>c.url===primary&&c.method==="eth_getBlockByNumber")).toHaveLength(2);
     expect(f.calls.at(-1)?.url).toBe(primary);
@@ -126,7 +134,29 @@ describe("Arc RPC failover", () => {
   it("bounds transient read retries even if every upstream stays unavailable", async () => {
     const f = fixture((_url, method) => method === "eth_call" ? { error: { code: -32603, message: "upstream unreachable" } } : undefined);
     await expect(f.client.request({ method: "eth_call", params: [{}, "latest"] })).rejects.toThrow();
-    expect(f.calls.filter(c => c.method === "eth_call")).toHaveLength(6);
+    expect(f.calls.filter(c => c.method === "eth_call")).toHaveLength(9);
+  });
+  it("does not let one failing token block other contract reads",async()=>{
+    const bad="0x1111111111111111111111111111111111111111",good="0x2222222222222222222222222222222222222222";
+    const f=fixture((url,method,params)=>{
+      if(method!=="eth_call")return;
+      if(url!==readOnly)return {error:{code:-32600,message:"project ID exceeded quota"}};
+      if(params?.[0].to===bad)return {error:{code:-32603,message:"upstream unreachable"}};
+      return "0x1234";
+    });
+    await expect(f.client.request({method:"eth_call",params:[{to:bad},"0xa"]})).rejects.toThrow();
+    expect(await f.client.request({method:"eth_call",params:[{to:good},"0xa"]})).toBe("0x1234");
+    expect(f.calls.filter(c=>c.method==="eth_call"&&c.url===readOnly&&c.params[0]&& (c.params[0] as {to:string}).to===good)).toHaveLength(1);
+  });
+  it("stops retrying a transient provider if it subsequently reports quota",async()=>{
+    let reads=0;
+    const f=fixture((url,method)=>{
+      if(method!=="eth_call")return;
+      if(url!==primary)return {error:{code:-32600,message:"quota"}};
+      return ++reads===1?{error:{code:-32603,message:"upstream unreachable"}}:{error:{code:-32600,message:"quota"}};
+    });
+    await expect(f.client.request({method:"eth_call",params:[{},"0xa"]})).rejects.toThrow();
+    expect(reads).toBe(2);
   });
 });
 

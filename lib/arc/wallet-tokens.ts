@@ -14,6 +14,8 @@ type Result={tokens:ArcTokenBalance[];partial:boolean;block:string;verifiedAddre
 const cache=new Map<string,{expires:number;request:Promise<Result>}>();
 const pending=new Map<string,Promise<Result>>();
 const snapshots=new Map<string,Result>();
+const fallbackScans=new Map<string,{offset:number;nextAt:number}>();
+const FALLBACK_BATCH_SIZE=16;
 const metadataAbi=parseAbi(["function symbol() view returns (string)","function name() view returns (string)"]);
 
 export async function arcSelectedTokenBalance(ownerAddress:string,tokenAddress:string){
@@ -84,14 +86,29 @@ async function readBalances(owner:`0x${string}`,known:string[]):Promise<Result>{
   }
   partial=!discoveryComplete;
   if(!discoveryComplete||candidates.size===0){
-    for(const token of ARC_TOKEN_CATALOG)candidates.set(token.address.toLowerCase(),token);
+    // A failed indexer must not trigger hundreds of contract reads on every
+    // page refresh. Rotate fallback probes; known holdings are always checked.
+    partial=true;
+    let scan=fallbackScans.get(owner);
+    if(!scan){
+      if(fallbackScans.size>=100)fallbackScans.delete(fallbackScans.keys().next().value!);
+      scan={offset:0,nextAt:0};fallbackScans.set(owner,scan);
+    }
+    if(Date.now()>=scan.nextAt){
+      for(const token of ARC_TOKEN_CATALOG.slice(scan.offset,scan.offset+FALLBACK_BATCH_SIZE))candidates.set(token.address.toLowerCase(),token);
+      scan.offset=scan.offset+FALLBACK_BATCH_SIZE>=ARC_TOKEN_CATALOG.length?0:scan.offset+FALLBACK_BATCH_SIZE;
+      scan.nextAt=Date.now()+15000;
+    }
   }
-  for(const address of known)if(isAddress(address)&&!candidates.has(address.toLowerCase()))candidates.set(address.toLowerCase(),ARC_TOKEN_CATALOG.find(t=>t.address.toLowerCase()===address.toLowerCase())??{});
+  const prioritized=new Map<string,{symbol?:string;name?:string}>();
+  for(const address of known)if(isAddress(address,{strict:false}))prioritized.set(address.toLowerCase(),candidates.get(address.toLowerCase())??ARC_TOKEN_CATALOG.find(t=>t.address.toLowerCase()===address.toLowerCase())??{});
+  for(const [address,metadata] of candidates)if(!prioritized.has(address))prioritized.set(address,metadata);
+  candidates.clear();for(const [address,metadata] of prioritized)candidates.set(address,metadata);
   candidates.delete(CANONICAL_ARC_USDC);candidates.delete("0x0000000000000000000000000000000000000000");
   const config=arcDisplayConfig(),transport=arcTransport(config),rpc=createArcRpc(config,transport),client=createPublicClient({transport});
   const head=await retryBalanceRead(()=>checkArcRpc(rpc,config)),tokens:ArcTokenBalance[]=[],verifiedAddresses:string[]=[],queue=[...candidates.entries()];
   // Limit concurrency, not the number of holdings. Retry only the failed token.
-  await Promise.all(Array.from({length:Math.min(10,queue.length)},async()=>{
+  await Promise.all(Array.from({length:Math.min(4,queue.length)},async()=>{
     while(queue.length){const [raw,metadata]=queue.shift()!;const token=getAddress(raw);
       try{
         const balance=await retryBalanceRead(()=>rpc.tokenBalance(token,owner,head.number));if(balance===0n){verifiedAddresses.push(token);continue;}

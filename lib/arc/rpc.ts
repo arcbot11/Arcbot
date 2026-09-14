@@ -53,12 +53,14 @@ export function createArcRpc(config: ArcConfig, transport = arcTransport(config)
   };
 }
 
-export async function checkArcRpc(rpc: Pick<ArcRpc, "chainId" | "block">, config: ArcConfig, now = Date.now()): Promise<ArcBlock> {
+export async function checkArcRpc(rpc: Pick<ArcRpc, "chainId" | "block">, config: ArcConfig, now?: number): Promise<ArcBlock> {
   if (await rpc.chainId() !== ARC_CHAIN_ID) throw new Error("RPC is not Arc mainnet (5042)");
   const checkpoint = await rpc.block(config.checkpointNumber);
   if (checkpoint.number !== config.checkpointNumber || checkpoint.hash.toLowerCase() !== config.checkpointHash.toLowerCase()) throw new Error("Arc checkpoint mismatch");
   const head = await rpc.block();
-  const age = BigInt(Math.floor(now / 1000)) - head.timestamp;
+  // Network validation can take seconds. Compare the returned head with the
+  // clock after the reads, not before a slow/failed provider connection.
+  const age = BigInt(Math.floor((now ?? Date.now()) / 1000)) - head.timestamp;
   if (head.number < checkpoint.number || age < -5n || age > BigInt(config.maxHeadAgeSeconds)) throw new Error("Arc RPC head is stale or invalid");
   return head;
 }

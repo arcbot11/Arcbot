@@ -44,6 +44,14 @@ async function journal() {
 afterEach(async () => { await Promise.all(directories.splice(0).map((d) => rm(d, { recursive: true, force: true }))); });
 
 describe("Arc amounts and network identity", () => {
+  it("checks head time after a slow provider lookup rather than before it",async()=>{
+    let clock=now;const spy=vi.spyOn(Date,"now").mockImplementation(()=>clock);
+    try{
+      const rpc=rpcFixture();rpc.chainId.mockImplementation(async()=>{clock+=12000;return 5042;});
+      rpc.block.mockImplementation(async number=>({number:number??100n,hash:blockHash,timestamp:BigInt(clock/1000)}));
+      expect((await checkArcRpc(rpc,config)).number).toBe(100n);
+    }finally{spy.mockRestore();}
+  });
   it.each(["1e6", "-1", "+1", "01", "1,000", "NaN", "0", "1.0000001"])("rejects ambiguous or inexact six-decimal amount %s", (value) => {
     expect(() => exactAmount(value, 6)).toThrow();
   });

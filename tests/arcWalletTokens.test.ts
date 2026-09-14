@@ -7,6 +7,7 @@ vi.mock("../lib/arc/token-value",()=>({tokenUsdEstimate:m.value}));
 vi.mock("../lib/arc/pinned-token-addresses.json",()=>({default:[]}));
 vi.mock("../lib/arc/token-catalog",async original=>({...await original<typeof import("../lib/arc/token-catalog")>(),ARC_TOKEN_CATALOG:[{address:"0xece5ca8bf9220718e5727754026757512212cb3c",symbol:"ARGUS",name:"Argus"}]}));
 import { arcTokenBalances, arcSelectedTokenBalance } from "../lib/arc/wallet-tokens";
+import { ARC_TOKEN_CATALOG } from "../lib/arc/token-catalog";
 const token="0xece5ca8bf9220718e5727754026757512212cb3c";
 let counter=1;
 const owner=()=>`0x${(counter++).toString(16).padStart(40,"0")}`;
@@ -98,5 +99,24 @@ describe("Arc token balance display",()=>{
   it("coalesces concurrent forced refreshes",async()=>{
     const address=owner();await Promise.all([arcTokenBalances(address,[],true),arcTokenBalances(address,[],true)]);
     expect(m.fetch).toHaveBeenCalledTimes(1);
+  });
+  it("paces and rotates catalog fallback while always reading known contracts",async()=>{
+    const length=ARC_TOKEN_CATALOG.length;
+    ARC_TOKEN_CATALOG.push(...Array.from({length:40},(_,i)=>({...ARC_TOKEN_CATALOG[0],address:`0x${(8000+i).toString(16).padStart(40,"0")}`,symbol:`T${i}`})));
+    let now=Date.now();const clock=vi.spyOn(Date,"now").mockImplementation(()=>now);
+    try{
+      const address=owner(),known="0x9999999999999999999999999999999999999999";
+      m.fetch.mockResolvedValue({ok:true,json:async()=>({items:[]})});m.balance.mockResolvedValue(0n);
+      expect((await arcTokenBalances(address,[known],true)).partial).toBe(true);
+      const first=m.balance.mock.calls.map(([token])=>token.toLowerCase());expect(first).toHaveLength(17);expect(first[0]).toBe(known);
+      m.balance.mockClear();await arcTokenBalances(address,[known],true);
+      expect(m.balance.mock.calls.map(([token])=>token.toLowerCase())).toEqual([known]);
+      now+=16000;m.balance.mockClear();await arcTokenBalances(address,[known],true);
+      const next=m.balance.mock.calls.map(([token])=>token.toLowerCase());expect(next).toHaveLength(17);expect(next[0]).toBe(known);expect(next.slice(1).some(t=>first.includes(t))).toBe(false);
+    }finally{clock.mockRestore();ARC_TOKEN_CATALOG.splice(length);}
+  });
+  it("does not multiply retries after the transport has exhausted its providers",async()=>{
+    m.balance.mockRejectedValue(Error("No healthy Arc RPC supports this request"));
+    expect((await arcTokenBalances(owner())).partial).toBe(true);expect(m.balance).toHaveBeenCalledTimes(1);
   });
 });
