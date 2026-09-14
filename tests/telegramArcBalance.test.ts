@@ -79,12 +79,13 @@ it("formats holdings as whole tokens with USD beside the amount",async()=>{
  const result=await arcSocialBalance(owner);
  expect(result.display).toContain("12,345 ARGOS ($45.68)");expect(result.display).not.toContain("987654");
 });
-it("lists Arc tokens before Base ETH and keeps their links on Arc Explorer",async()=>{
+it("lists Arc tokens before Base ETH without individual explorer links",async()=>{
  mocks.tokens.mockResolvedValue({tokens:[{balance:"12345",symbol:"ARGOS",address:owner,usdValue:45.67}],partial:false});
  mocks.base.mockResolvedValue({balanceWei:"10000000000000000"});
  const display=socialAddressLinks((await arcSocialBalance(owner)).display);
  expect(display.indexOf("12,345 ARGOS ($45.67)")).toBeLessThan(display.indexOf("0.01 Base ETH"));
- expect(display).toContain(`https://www.arcexplorer.org/token/${owner}`);
+ expect(display).not.toContain("arcexplorer.org/token/");
+ expect(display).not.toContain(owner);
  expect(display).not.toContain("basescan");
 });
 it("formats a requested token with a price based on its full balance",async()=>{
