@@ -188,7 +188,7 @@ export function OtcClient(){
   const ready=Boolean(session?.authenticated&&!inputError&&!balanceError);
   return <div className="otc-workspace">
     {!formOpen&&<PersistentNotices notices={notices} dismiss={dismiss} renderMessage={renderNotice}/>}
-    {<div className="otc-metrics"><article><span>Available Arc USDC</span><strong>{market?.available?units(market.stats.available):"—"}</strong></article><article><span>Lowest premium</span><strong>{pct(market?.stats.lowestBps??null)}</strong></article><article><span>Average premium <small>weighted by available USDC</small></span><strong>{pct(market?.stats.averageBps??null)}</strong></article><article><span>USDC sold</span><strong>{market?.available&&market.stats.soldUsdc!=null?units(market.stats.soldUsdc):"—"}</strong></article></div>}
+    {<div className="otc-metrics"><article><span>Available Arc USDC</span><strong>{market?.available?units(market.stats.available):"—"}</strong></article><article><span>Lowest premium</span><strong>{pct(market?.stats.lowestBps??null)}</strong></article><article><span>USDC sold</span><strong>{market?.available&&market.stats.soldUsdc!=null?units(market.stats.soldUsdc):"—"}</strong></article></div>}
     <p className="market-refresh-status" role="status">{marketError?"Market refresh failed. Displayed listings may be outdated. Retrying…":""}</p>
     <div className="otc-single">
       {<section className="otc-book"><div className="otc-panel-title"><h2>Listings</h2><button className="arc-button" onClick={()=>openForm("sell")}>Sell USDC</button></div>
