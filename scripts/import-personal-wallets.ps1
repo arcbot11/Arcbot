@@ -1,10 +1,54 @@
-param([ValidateRange(1,9999)][int]$StartAt=1, [ValidateRange(1,9999)][int]$EndAt=8, [switch]$CheckOnly, [switch]$FromClipboard, [switch]$ValidateOnly, [switch]$SelfTest)
+param([ValidateRange(1,9999)][int]$StartAt=1, [ValidateRange(1,9999)][int]$EndAt=8, [ValidatePattern('^(Personal|tempwallet)[1-9][0-9]{0,3}$')][string]$Name, [switch]$CheckOnly, [switch]$FromClipboard, [switch]$ValidateOnly, [switch]$SelfTest)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $helperPath = Join-Path $PSScriptRoot 'import-personal-wallet.mjs'
 $envPath = Join-Path $projectRoot '.env.local'
 $nodePath = (Get-Command node -ErrorAction Stop).Source
 if (-not (Test-Path -LiteralPath $envPath)) { throw 'Missing project .env.local.' }
+
+function Read-ImportPrivateKey {
+    param([string]$AccountName)
+    $secret = New-Object Security.SecureString
+    Write-Host "Private key for ${AccountName} (Ctrl+V to paste, Enter to submit): " -NoNewline
+    try {
+        while ($true) {
+            $key = [Console]::ReadKey($true)
+            $control = ($key.Modifiers -band [ConsoleModifiers]::Control) -ne 0
+            $shift = ($key.Modifiers -band [ConsoleModifiers]::Shift) -ne 0
+            if (($control -and $key.Key -eq [ConsoleKey]::C) -or [int]$key.KeyChar -eq 3) {
+                throw 'Import cancelled. No key was submitted.'
+            }
+            if ($key.Key -eq [ConsoleKey]::Enter) {
+                Write-Host ''
+                return $secret
+            }
+            if ($key.Key -eq [ConsoleKey]::Backspace) {
+                if ($secret.Length -gt 0) { $secret.RemoveAt($secret.Length - 1); Write-Host "`b `b" -NoNewline }
+                continue
+            }
+            if (($control -and $key.Key -eq [ConsoleKey]::V) -or [int]$key.KeyChar -eq 22 -or ($shift -and $key.Key -eq [ConsoleKey]::Insert)) {
+                $pasted = Get-Clipboard -Raw
+                try {
+                    if ($pasted) {
+                        $pasted = $pasted.Trim()
+                        if ($secret.Length + $pasted.Length -gt 256) { throw 'Input is too long. Copy only the private key and retry.' }
+                        foreach ($character in $pasted.ToCharArray()) { $secret.AppendChar($character); Write-Host '*' -NoNewline }
+                    }
+                } finally { $pasted = $null }
+                continue
+            }
+            if (-not [char]::IsControl($key.KeyChar)) {
+                if ($secret.Length -ge 256) { throw 'Input is too long. Copy only the private key and retry.' }
+                $secret.AppendChar($key.KeyChar)
+                Write-Host '*' -NoNewline
+            }
+        }
+    } catch {
+        $secret.Dispose()
+        Write-Host ''
+        throw
+    }
+}
 
 function Invoke-PersonalImport {
     param([string]$AccountName, [Security.SecureString]$Secret)
@@ -66,11 +110,12 @@ if ($SelfTest) {
 }
 if (-not $ValidateOnly) { Invoke-PersonalImport -AccountName '--check' }
 if ($CheckOnly) { return }
-if ($EndAt -lt $StartAt) { throw 'EndAt must be at least StartAt. For one wallet, set both to the same number.' }
+if ($Name -and ($PSBoundParameters.ContainsKey('StartAt') -or $PSBoundParameters.ContainsKey('EndAt'))) { throw 'Use either Name or StartAt/EndAt.' }
+if (-not $Name -and $EndAt -lt $StartAt) { throw 'EndAt must be at least StartAt. For one wallet, set both to the same number.' }
 Write-Host 'Importing personal CDP wallets. Keys are hidden. Ctrl+C stops the process.'
 Write-Host 'Only names and public addresses are saved. No website, X, or Telegram links are created.'
-for ($number=$StartAt; $number -le $EndAt; $number++) {
-    $accountName = 'Personal' + $number
+$accountNames = if ($Name) { @($Name) } else { @($StartAt..$EndAt | ForEach-Object { 'Personal' + $_ }) }
+foreach ($accountName in $accountNames) {
     if ($FromClipboard) {
         [void](Read-Host "Copy the key for $accountName, then press Enter here (do not paste it)")
         $clipboardKey = Get-Clipboard -Raw
@@ -78,7 +123,7 @@ for ($number=$StartAt; $number -le $EndAt; $number++) {
         try { $secureKey = ConvertTo-SecureString $clipboardKey -AsPlainText -Force }
         finally { $clipboardKey = $null }
     } else {
-        $secureKey = Read-Host "Private key for $accountName" -AsSecureString
+        $secureKey = Read-ImportPrivateKey -AccountName $accountName
     }
     try { Invoke-PersonalImport -AccountName $(if ($ValidateOnly) { '--validate' } else { $accountName }) -Secret $secureKey }
     finally { $secureKey.Dispose() }
