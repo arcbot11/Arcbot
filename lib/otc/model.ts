@@ -68,11 +68,12 @@ export type Transaction = { kind: "transaction"; id: string; owner: string; wall
   broadcastPausedAt?:number;
   escrowRef?: {listingId:string;orderId?:string;step:string;sourceHold?:string;reserveWei?:string}; sourceRequestId?: string;
   swapOutput?: {token:string;minimum:string;recipient?:string;inputToken?:string;inputAmount?:string};
+  launchStep?: import("../launches/execution-types").LaunchStepTerms;
   creatorClaim?: {token:string;splitter:string};
-  settlement?: {gasWei:string;output?:{raw:string;decimals?:number};claims?:Array<{token:string;raw:string}>};
+  settlement?: {launch?:import("../launches/execution-types").VerifiedLaunch;gasWei:string;output?:{raw:string;decimals?:number};claims?:Array<{token:string;raw:string}>};
   /** Read-only observation; not a settled transaction or permission to release holds. */
   confirmation?: {status:"success"|"reverted";blockNumber:string};
-  orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance" | "claim"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted" | "cancelled";
+  orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance" | "claim" | "launch"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted" | "cancelled";
   recoveryVersion?:1; signingStartedAt?:number;signingRevision?:number;previousSigned?:import("./signed-recovery").SignedAttempt[];nonceConflict?:{hash:string;block:string};
   unsigned: string; raw?: string; hash?: string; blockNumber?: string; note?: string; createdAt: number; updatedAt: number };
 export type RecordValue = Listing | Order | Wallet | Transaction;

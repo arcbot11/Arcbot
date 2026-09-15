@@ -10,7 +10,7 @@ export const launchEvents = parseAbi([
   "event TokenCreated(address indexed token,address indexed creator,string name,string symbol,bytes32 poolId,string imageURI,string website,string twitter,string telegram)",
   "event PartsDeployed(address indexed token,address locker,address hook,address splitter)",
 ]);
-type Log = { address: Address; data: Hex; topics: [Hex, ...Hex[]] };
+type Log = { address: Address; data: Hex; topics: [] | [Hex, ...Hex[]] };
 export type LaunchEvidence = {
   chainId:number; hash:Hex; from:Address; to:Address; input:Hex; value:bigint;
   receipt:{transactionHash:Hex;status:"success"|"reverted";blockNumber:bigint;blockHash:Hex;logs:Log[]};
@@ -23,7 +23,7 @@ export function verifyLaunchReceipt(identity:LaunchIdentity,input:LaunchInput,pr
   const fail=():never=>{throw new LaunchError("LAUNCH_VERIFICATION","Launch evidence does not match the approved draft.");};
   if(evidence.chainId!==5042||!same(preview.portal,PORTAL6)||!same(preview.creator,identity.address)||
     !same(preview.fingerprint,launchFingerprint(identity,p))||!same(evidence.from,identity.address)||!same(evidence.to,PORTAL6)||
-    evidence.value!==0n||!same(evidence.input,encodeLaunch(p,preview.tokenSalt,preview.hookSalt))||
+    evidence.value!==0n||!same(evidence.input,encodeLaunch(p,preview.tokenSalt,preview.hookSalt,preview.quote))||
     r.status!=="success"||!same(r.transactionHash,evidence.hash)||r.blockNumber!==evidence.canonicalBlock.number||!same(r.blockHash,evidence.canonicalBlock.hash))fail();
   const events=r.logs.filter(log=>same(log.address,PORTAL6)).flatMap(log=>{
     try{return [decodeEventLog({abi:launchEvents,data:log.data,topics:log.topics})];}catch{return [];}
@@ -31,7 +31,7 @@ export function verifyLaunchReceipt(identity:LaunchIdentity,input:LaunchInput,pr
   const created=events.filter(e=>e.eventName==="TokenCreated"),parts=events.filter(e=>e.eventName==="PartsDeployed");
   if(created.length!==1||parts.length!==1)fail();
   const c=created[0].args,d=parts[0].args;
-  const currencies=[ARC_USDC,preview.predictedToken].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1);
+  const currencies=[preview.quote?.address ?? ARC_USDC,preview.predictedToken].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1);
   const expectedPool=poolId({protocol:"v4",currency0:currencies[0],currency1:currencies[1],hooks:preview.predictedHook,fee:10000,tickSpacing:200});
   if(!same(c.token,preview.predictedToken)||!same(c.creator,identity.address)||c.name!==p.name||c.symbol!==p.symbol||
     c.imageURI!==p.imageURI||c.website!==p.website||c.twitter!==p.twitter||c.telegram!==p.telegram||!same(c.poolId,expectedPool)||

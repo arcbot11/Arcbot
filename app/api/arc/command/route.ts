@@ -1,3 +1,5 @@
+import {runSocialLaunch} from "@/lib/launches/social-service";
+import {LaunchError} from "@/lib/launches/policy";
 import {prepareBaseWithdrawal} from "@/lib/base/wallet-actions";
 import {runCreatorClaim} from "@/lib/launches/fee-service";
 import {FeeClaimError} from "@/lib/launches/fees";
@@ -17,7 +19,8 @@ import {resolveTradePlan,type TradeRequest} from "@/lib/arc/trade-plan";
 import {tradePreparationError} from "@/lib/arc/trade-errors";
 import {ARC_USDC} from "@/lib/arc/config";
 import {arcActionAmount,prepareArcSend,checkArcAvailable} from "@/lib/arc/wallet-actions";
-import {resolveSocialToken as token,SocialTokenResolutionError} from "@/lib/arc/social-token-resolution";
+import {indexedSocialToken as token} from "@/lib/arc/indexed-social-token";
+import {SocialTokenResolutionError} from "@/lib/arc/social-token-resolution";
 import {repository} from "@/lib/otc/repository";
 import {advanceTransaction,prepareCall} from "@/lib/otc/runtime";
 import {type Transaction} from "@/lib/otc/model";
@@ -73,9 +76,13 @@ export async function POST(request:NextRequest){
       }
     }
     const command=JSON.parse(auth.command) as WalletCommand;
+    if(command.kind==="launch"){
+      try{return json(await runSocialLaunch(auth,requestId,command));}
+      catch(error){if(error instanceof LaunchError)return json({ok:false,message:error.message});throw error;}
+    }
     if(command.kind==="claim_fees"){
       try{
-        const target=command.token?token(command.token):undefined;
+        const target=command.token?await token(command.token):undefined;
         if(target==="native")throw new FeeClaimError("Specify your launched token, not USDC.");
         const result=await runCreatorClaim(auth.owner,wallet,requestId,target?getAddress(target):undefined,requestId,!auth.recoveryOnly&&Date.now()-auth.createdAt<=ARC_COMMAND_AUTHORIZATION_MS);
         return json({...result,processing:result.pending});
@@ -125,12 +132,12 @@ export async function POST(request:NextRequest){
         if(buying&&command.unit!=="usd"&&!(command.unit==="pair"&&(command.kind==="buy"||command.pairAsset?.toUpperCase()==="USDC")))throw new Error("To buy, post with a dollar amount and a ticker or contract address. Example: Buy $10 of $ARGOS or Buy $10 of ADDRESS.");
         if(command.kind==="sell"&&!["usd","token","percent"].includes(command.unit))throw new Error("Specify a USDC value, token amount, or percentage to sell.");
         if(command.kind==="swap_token_for_token"&&!["token","usd","percent"].includes(command.unit))throw new Error("Specify a token amount, USDC value, or percentage to swap.");
-        const target=token(command.kind==="swap_token_for_token"?command.fromToken:command.token);
-        const outputToken=buying?target:command.kind==="swap_token_for_token"?token(command.toToken):"native";
+        const target=await token(command.kind==="swap_token_for_token"?command.fromToken:command.token);
+        const outputToken=buying?target:command.kind==="swap_token_for_token"?await token(command.toToken):"native";
         const delivery=command.kind==="buy_and_send"?getAddress(command.recipient):command.kind==="buy_and_burn";
         if(typeof delivery==="string"&&BigInt(delivery)<=2n)throw new Error("Use a valid recipient wallet.");
         if(!legacyTrade&&(command.kind==="buy"||command.kind==="sell")){
-          const explicitQuote=command.kind==="buy"&&command.unit==="pair"?token(command.pairAsset??""):undefined;
+          const explicitQuote=command.kind==="buy"&&command.unit==="pair"?await token(command.pairAsset??""):undefined;
           const explicitUsdc=explicitQuote==="native"||explicitQuote?.toLowerCase()===ARC_USDC;
           const request:TradeRequest={side:command.kind,token:target,amount:command.amount,unit:command.unit==="token"?"tokens":command.unit==="pair"?(explicitUsdc?"usd":"quote"):command.unit as "usd"|"percent",slippageBps:command.slippageBps,...(explicitQuote?{funding:explicitUsdc?"usdc":"quote",...(!explicitUsdc?{expectedQuote:explicitQuote}:{})}: {})};
           const plan=await resolveTradePlan(wallet,request,{context:requestId,fundingPlan,routeHint:tradeRouteHint});fundingPlan=plan.fundingPlan;
@@ -142,7 +149,7 @@ export async function POST(request:NextRequest){
         await checkArcAvailable(wallet,prepared);
       }else if(command.kind==="send"||command.kind==="burn"){
         if(command.unit==="eth")throw new Error(auth.source==="telegram"?"Use /withdraw to send Base ETH.":"Use Telegram or the website to withdraw Base ETH.");
-        prepared=await prepareArcSend(wallet,{asset:command.token?token(command.token):"native",recipient:command.kind==="burn"?"0x000000000000000000000000000000000000dEaD":command.recipient,amount:command.amount,amountUnit:command.unit==="usd"?"usd":"tokens",...(command.unit==="percent"?{percentage:Number(command.amount)}:{})});
+        prepared=await prepareArcSend(wallet,{asset:command.token?await token(command.token):"native",recipient:command.kind==="burn"?"0x000000000000000000000000000000000000dEaD":command.recipient,amount:command.amount,amountUnit:command.unit==="usd"?"usd":"tokens",...(command.unit==="percent"?{percentage:Number(command.amount)}:{})});
       }else throw new Error("Command not supported. Use buy, sell, send, or burn with explicit amounts.");
       // Storage may succeed even if its response is lost. From here onward, recover
       // the durable transaction rather than declaring a preparation failure.

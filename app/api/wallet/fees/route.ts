@@ -14,7 +14,9 @@ export async function GET(request:NextRequest){
     const address=secret&&sameSecret(request.headers.get("authorization")??"",`Bearer ${secret}`)
       ?getAddress(z.string().regex(/^0x[\da-f]{40}$/i).parse(request.nextUrl.searchParams.get("wallet")))
       :getAddress((await websiteSession(request)).walletAddress);
-    return json({wallet:address,tokens:await creatorTokens(address)});
+    const diagnostics:{incomplete?:boolean}={};
+    const tokens=await creatorTokens(address,diagnostics);
+    return json({wallet:address,tokens,incomplete:!!diagnostics.incomplete});
   }catch(error){return failure(error);}
 }
 export async function POST(request:NextRequest){

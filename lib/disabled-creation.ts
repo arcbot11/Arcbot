@@ -1,5 +1,7 @@
+import { LAUNCH_EXECUTION_ENABLED } from "./launches/policy";
 /** Match creation requests, not token symbols that happen to use these words. */
 export function disabledCreationRequest(text: string): boolean {
+  if(LAUNCH_EXECUTION_ENABLED)return false;
   const clean=text.replace(/"[^"\n]*"|“[^”\n]*”/g," ").replace(/\$[\w]+|0x[a-fA-F0-9]{40}/g,"TOKEN").replace(/^\s*(?:@\w+\s+)*/,"").trim();
   return /^(?:launch(?:es|ing)?|deploy(?:ment|ing)?)\b/i.test(clean)
     || /\b(?:please|and|then|also|can you|could you|would you|help me|i want to|i would like to)\s+(?:please\s+)?(?:launch|deploy)\b/i.test(clean)
@@ -8,9 +10,11 @@ export function disabledCreationRequest(text: string): boolean {
     || /\b(?:new token|token request|need a coin|need a token deployed)\b/i.test(clean);
 }
 export function disabledCreationKind(kind: unknown): boolean {
+  if(kind==="launch"&&LAUNCH_EXECUTION_ENABLED)return false;
   return typeof kind === "string" && /(?:^|[_:])launch(?:$|[_:])/.test(kind);
 }
 export function suppressCreationReply(text: string): boolean {
+  if(LAUNCH_EXECUTION_ENABLED)return !text.trim();
   return !text.trim() || disabledCreationRequest(text)
     || /\/launch\/|\b(?:token|coin)\s+(?:was\s+|is\s+)?launched\b|\blaunch\s+(?:confirmed|successful|completed|request|workflow|format|integration)\b|\bcommands:[^\n]*\blaunch\b/i.test(text);
 }

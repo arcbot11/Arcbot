@@ -19,8 +19,10 @@ export class FeeClaimError extends Error {}
 export type CreatorFeeToken = {token:Address;portal:Address;splitter:Address;quote:Address};
 /** API metadata is only a discovery hint. Authority comes from the launch record and deployed clone. */
 export async function verifyCreatorToken(wallet:Address, token:Address, rpc:ArcRpc, block:bigint):Promise<CreatorFeeToken> {
+  let readFailure:unknown;
   for (const [index,portal] of [PORTAL6,PORTAL7].entries()) {
-    const data=await rpc.call({from:zeroAddress,to:portal,data:encodeFunctionData({abi:quotedLaunchAbi,functionName:"launches",args:[token]}),value:0n},block);
+    let data:Hex;
+    try{data=await rpc.call({from:zeroAddress,to:portal,data:encodeFunctionData({abi:quotedLaunchAbi,functionName:"launches",args:[token]}),value:0n},block);}catch(error){readFailure=error;continue;}
     if(data==="0x")continue;
     if(data.length!==706)throw new FeeClaimError("Unexpected creator record. Claim not prepared.");
     const record=decodeFunctionResult({abi:quotedLaunchAbi,functionName:"launches",data});
@@ -34,6 +36,7 @@ export async function verifyCreatorToken(wallet:Address, token:Address, rpc:ArcR
     if(!same(creator,wallet)||!same(actualToken,token)||!same(quote,record[10]))throw new FeeClaimError("Creator fee contract identity mismatch.");
     return {token,portal,splitter,quote};
   }
+  if(readFailure)throw Error("Creator record could not be read. Retry shortly.");
   throw new FeeClaimError("No supported creator launch found for this token.");
 }
 export function assertClaimCall(wallet:string, splitter:string, call:{to?:string|null;data?:Hex;value?:bigint}) {

@@ -1,3 +1,5 @@
+import {ConvexHttpClient} from "convex/browser";
+import {makeFunctionReference} from "convex/server";
 import { createHash } from "node:crypto";
 import { decodeFunctionResult, encodeFunctionData, getAddress, type Address } from "viem";
 import { arcConfigFromEnv } from "../arc/config";
@@ -8,19 +10,24 @@ import type { Transaction } from "../otc/model";
 import { FeeClaimError, feeAbi, verifyCreatorToken } from "./fees";
 import { PORTAL7 } from "./contracts";
 
-export async function creatorTokens(wallet:Address) {
-  const response=await fetch("https://arguspad.io/api/tokens",{cache:"no-store",signal:AbortSignal.timeout(15000)});
-  if(!response.ok)throw new Error("Creator discovery unavailable.");
-  const rows:unknown=await response.json();
-  if(!Array.isArray(rows))throw new Error("Creator discovery unavailable.");
-  const candidates=rows.filter((r):r is {address:string;symbol:string;creator:string}=>!!r&&typeof r==="object"&&typeof r.creator==="string"&&r.creator.toLowerCase()===wallet.toLowerCase()&&typeof r.address==="string"&&/^0x[\da-f]{40}$/i.test(r.address));
+export async function creatorTokens(wallet:Address,diagnostics?:{incomplete?:boolean}) {
+  const discoveries=await Promise.allSettled([
+    fetch("https://arguspad.io/api/tokens",{cache:"no-store",signal:AbortSignal.timeout(15000)}).then(async r=>{if(!r.ok)throw Error("Creator discovery unavailable.");const rows:unknown=await r.json();if(!Array.isArray(rows))throw Error("Creator discovery unavailable.");return rows;}),
+    process.env.NEXT_PUBLIC_CONVEX_URL?new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL).query(makeFunctionReference<"query">("launchExecution:creatorTokens"),{address:wallet}):Promise.resolve([]),
+  ]);
+  const rows:unknown[]=discoveries.flatMap(r=>r.status==="fulfilled"&&Array.isArray(r.value)?r.value:[]);
+  if(discoveries[0].status==="rejected"&&!(rows as unknown[]).length)throw Error("Creator discovery unavailable. Retry shortly.");
+  const candidates=rows.filter((r):r is {address:string;symbol:string;creator:string}=>!!r&&typeof r==="object"&&"creator" in r&&"address" in r&&"symbol" in r&&typeof r.creator==="string"&&r.creator.toLowerCase()===wallet.toLowerCase()&&typeof r.address==="string"&&/^0x[\da-f]{40}$/i.test(r.address));
   if(!candidates.length)return [];
   const config=arcConfigFromEnv(),rpc=createArcRpc(config),head=await checkArcRpc(rpc,config);
+  let failures=0;
   const result:Array<{token:string;symbol:string}>=[];
-  for(const candidate of candidates){
+  for(const candidate of [...new Map(candidates.map(c=>[c.address.toLowerCase(),c])).values()]){
     try{const verified=await verifyCreatorToken(wallet,getAddress(candidate.address),rpc,head.number);result.push({token:verified.token,symbol:typeof candidate.symbol==="string"?candidate.symbol.slice(0,32):"Token"});}
-    catch(error){if(!(error instanceof FeeClaimError))throw error;}
+    catch(error){if(!(error instanceof FeeClaimError))failures++;}
   }
+  if(diagnostics)diagnostics.incomplete=failures>0||discoveries.some(r=>r.status==="rejected");
+  if(failures&&!result.length)throw Error("Creator tokens could not be verified. Retry shortly.");
   return result;
 }
 export async function prepareCreatorClaim(wallet:Address,token:Address) {

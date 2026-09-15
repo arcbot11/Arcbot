@@ -6,7 +6,7 @@ import { launchPreparationEnabled, LAUNCH_DRAFT_TTL_MS, LAUNCH_PREVIEW_MS } from
 
 const args = { secret: v.string(), owner: v.string(), address: v.string(), requestId: v.string() };
 type Args = { secret: string; owner: string; address: string; requestId: string };
-async function authorize(ctx: QueryCtx | MutationCtx, a: Args) {
+export async function authorize(ctx: QueryCtx | MutationCtx, a: Args) {
   if (!launchPreparationEnabled()) throw Error("Launch preparation is disabled.");
   const secret = process.env.WEB_AUTH_SECRET;
   if (!secret || secret.length < 32 || a.secret !== secret) throw Error("Unauthorized.");
@@ -59,7 +59,7 @@ export const read = query({ args, handler: async (ctx, a) => {
 } });
 export const update = mutation({ args: { ...args, revision: v.number(), inputJson: v.string() }, handler: async (ctx, a) => {
   const identity = await authorize(ctx, a), row = await find(ctx, a), now = Date.now();
-  if (!row || row.address !== identity.address || row.status === "cancelled" || row.expiresAt <= now)
+  if (!row || row.address !== identity.address || ["cancelled","executing","completed"].includes(row.status) || row.expiresAt <= now)
     throw Error("Launch draft expired or was cancelled.");
   if (!Number.isSafeInteger(a.revision) || a.revision < 1 || a.inputJson.length > 4096) throw Error("Invalid launch draft update.");
   const input = parseLaunchInput(JSON.parse(a.inputJson)), fingerprint = launchFingerprint(identity, input);
@@ -75,11 +75,11 @@ export const update = mutation({ args: { ...args, revision: v.number(), inputJso
 } });
 export const beginPreparation = mutation({ args, handler: async (ctx, a) => {
   const identity = await authorize(ctx, a), row = await find(ctx, a), now = Date.now();
-  if (!row || row.address !== identity.address || row.status === "cancelled" || row.expiresAt <= now) throw Error("Launch draft expired or was cancelled.");
+  if (!row || row.address !== identity.address || ["cancelled","executing","completed"].includes(row.status) || row.expiresAt <= now) throw Error("Launch draft expired or was cancelled.");
   const recent = await ctx.db.query("launchDrafts").withIndex("by_owner", q => q.eq("owner", a.owner)).order("desc").take(50);
   if (recent.some(r => (r.preparingUntil ?? 0) > now || (r.nextPreviewAt ?? 0) > now)) throw Error("Launch preparation is already running. Wait before retrying.");
   const prepareToken = crypto.randomUUID();
-  await ctx.db.patch(row._id, { prepareToken, preparingUntil: now + 60_000, nextPreviewAt: now + 5000 });
+  await ctx.db.patch(row._id, { prepareToken, preparingUntil: now + 200_000, nextPreviewAt: now + 5000 });
   return { ...publicDraft(row), prepareToken };
 } });
 export const endPreparation = mutation({ args: { ...args, prepareToken: v.string() }, handler: async (ctx, a) => {
@@ -88,7 +88,7 @@ export const endPreparation = mutation({ args: { ...args, prepareToken: v.string
 } });
 export const savePreview = mutation({ args: { ...args, revision: v.number(), prepareToken: v.string(), previewJson: v.string() }, handler: async (ctx, a) => {
   const identity = await authorize(ctx, a), row = await find(ctx, a), now = Date.now();
-  if (!row || row.address !== identity.address || row.status === "cancelled" || row.expiresAt <= now || row.revision !== a.revision
+  if (!row || row.address !== identity.address || ["cancelled","executing","completed"].includes(row.status) || row.expiresAt <= now || row.revision !== a.revision
     || !row.prepareToken || row.prepareToken !== a.prepareToken || (row.preparingUntil ?? 0) <= now)
     throw Error("Launch draft changed or expired. Prepare again.");
   if (a.previewJson.length > 24_000) throw Error("Launch preview is too large.");
@@ -103,6 +103,7 @@ export const savePreview = mutation({ args: { ...args, revision: v.number(), pre
 export const cancel = mutation({ args, handler: async (ctx, a) => {
   const identity = await authorize(ctx, a), row = await find(ctx, a);
   if (!row || row.address !== identity.address) throw Error("Launch draft not found.");
+  if (["executing","completed"].includes(row.status)) throw Error("An accepted launch cannot be cancelled as a draft.");
   if (row.status !== "cancelled") await ctx.db.patch(row._id, { status: "cancelled", previewJson: undefined, revision: row.revision + 1, updatedAt: Date.now(), prepareToken: undefined, preparingUntil: undefined });
   return publicDraft((await ctx.db.get(row._id))!);
 } });

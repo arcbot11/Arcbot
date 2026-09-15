@@ -2,12 +2,12 @@ import { parseLaunchInput, type LaunchInput } from "./input";
 import type { LaunchPreview } from "./prepare";
 
 export type LaunchDraft = {
-  requestId: string; address: string; revision: number; status: "draft" | "prepared" | "cancelled";
+  requestId: string; address: string; revision: number; run?: import("./execution-types").LaunchRun; status: "draft" | "prepared" | "cancelled" | "executing" | "completed";
   input: LaunchInput; tokenSalt: string; fingerprint: string; preview: LaunchPreview | null;
   expiresAt: number; executionEnabled: false;
 };
 export type LaunchForm = {
-  name: string; symbol: string; imageURI: string; description: string;
+  pairToken?: LaunchInput["pairToken"]; name: string; symbol: string; imageURI: string; description: string;
   website: string; twitter: string; telegram: string; allocationText: string; devBuyUSDC: string;
 };
 export const emptyLaunchForm: LaunchForm = {
@@ -23,8 +23,8 @@ export function allocationSummary(input: LaunchInput) {
   ].map(row => ({ ...row, percent: `${row.bps / 100}%` }));
 }
 export function draftForm(input: LaunchInput): LaunchForm {
-  const { name, symbol, imageURI, description, website, twitter, telegram, devBuyUSDC } = input;
-  return { name, symbol, imageURI, description, website, twitter, telegram, devBuyUSDC,
+  const { pairToken, name, symbol, imageURI, description, website, twitter, telegram, devBuyUSDC } = input;
+  return { pairToken, name, symbol, imageURI, description, website, twitter, telegram, devBuyUSDC,
     allocationText: `${input.creatorBps / 100}% creator, ${input.burnBps / 100}% burn, ${input.dividendBps / 100}% holders, ${input.liquidityBps / 100}% liquidity` };
 }
 export function currentLaunchPreview(draft: LaunchDraft, now: number) {

@@ -14,7 +14,7 @@ function amount(chain:number,address:string,raw:bigint,verifiedDecimals?:number,
   const exact=formatUnits(raw,decimals);
   return `${native&&chain===8453?displayEth(exact):gas?exact:displayAmount(exact,symbol==="USDC"?2:0)} ${symbol??address}`;
 }
-const labels:Record<string,string>={claim:"Claim fees",topup:"Base gas recovery",arc_topup:"Arc gas recovery",send:"Send",swap:"Swap",allowance:"Token approval",approval:"Payment approval",payment:"OTC payment",payout:"OTC payout",fund:"Fund OTC position",return_arc:"Return remaining USDC",gas:"Deposit settlement gas",deposit:"Deposit OTC payment",arc:"Deliver Arc USDC",seller:"Pay seller",fee:"Service fee",return_gas:"Return unused gas"};
+const labels:Record<string,string>={launch:"Token launch",claim:"Claim fees",topup:"Base gas recovery",arc_topup:"Arc gas recovery",send:"Send",swap:"Swap",allowance:"Token approval",approval:"Payment approval",payment:"OTC payment",payout:"OTC payout",fund:"Fund OTC position",return_arc:"Return remaining USDC",gas:"Deposit settlement gas",deposit:"Deposit OTC payment",arc:"Deliver Arc USDC",seller:"Pay seller",fee:"Service fee",return_gas:"Return unused gas"};
 
 /** Display-only projection. Never expose signed bytes or treat a quote as a receipt. */
 export function transactionHistory(record:Transaction){
@@ -25,6 +25,7 @@ export function transactionHistory(record:Transaction){
   let note=["completed","reverted"].includes(record.status)?undefined:record.leg==="swap"?record.note?.replace(/Reserved funds remain locked\./gi,"").trim():record.note;
   if(record.chainId===8453&&record.leg==="send"&&!record.escrowRef&&!record.orderId&&note==="Settlement blocked: network fees exceed the allowed gas budget. Operator assistance is required.")note="Withdrawal is waiting for a network fee recheck. It will retry automatically.";
   const result={id:record.id,chainId:record.chainId,leg:record.leg,escrowStep:record.escrowRef?.step,title:labels[record.escrowRef?.step??record.leg]??`OTC ${record.escrowRef?.step?.replaceAll("_"," ")??record.leg}`,status:record.status,hash:record.hash,note,createdAt:record.createdAt,blockNumber:record.blockNumber,details};
+  if(record.launchStep){result.title=record.launchStep.kind==="launch"?"Token launch":record.launchStep.kind==="approval"?"Launch approval":"Set holder rewards";details.push({label:"Token",value:record.launchStep.input.symbol});if(record.settlement?.launch){const outcome=record.settlement.launch;details.push({label:"Received",value:`${displayAmount(formatUnits(BigInt(outcome.devBuyReceived),18),0)} ${record.launchStep.input.symbol}`});const quote=record.launchStep.preview.quote;details.push({label:"Spent",value:`${formatUnits(BigInt(outcome.quoteSpent),quote?.decimals??6)} ${quote?.symbol??"USDC"}`});}}
   if(record.swapOutput?.recipient?.toLowerCase()==="0x000000000000000000000000000000000000dead"){
     result.title="Buy and burn";details.push({label:"Burn destination",value:record.swapOutput.recipient});
   }else if(record.swapOutput?.recipient){

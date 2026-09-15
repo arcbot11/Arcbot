@@ -7,7 +7,7 @@ export function expiredSwap(record:Transaction,now=Date.now()){
   try{const tx=parseTransaction(record.unsigned as Hex);const {args}=decodeFunctionData({abi:routerAbi,data:tx.data!});return args[2]<=BigInt(Math.floor(now/1000));}catch{return false;}
 }
 export function staleUnsigned(record:Transaction,now=Date.now()){
-  return expiredSwap(record,now)||(["send","allowance","claim"].includes(record.leg)&&now-record.createdAt>=15*60_000);
+  return expiredSwap(record,now)||(["send","allowance","claim","launch"].includes(record.leg)&&now-record.createdAt>=15*60_000);
 }
 export function neverSigned(tx:Transaction){return tx.recoveryVersion===1&&tx.status==="prepared"&&tx.signingStartedAt===undefined&&!tx.raw&&!tx.hash&&!tx.previousSigned?.length;}
 /** Atomic with cancellation. Once entered, even a timed-out CDP call remains locked. */

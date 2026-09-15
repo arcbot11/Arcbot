@@ -129,3 +129,13 @@ it.each(["valid","reverted","wrong-chain","wrong-creator","wrong-calldata","reor
   if(mode==="valid")expect(verifyLaunchReceipt(f.options.identity,input,p,evidence)).toMatchObject({token:p.predictedToken,creator,portal:PORTAL6,poolId:pool});
   else expect(()=>verifyLaunchReceipt(f.options.identity,input,p,evidence)).toThrow("Launch evidence");
 });
+
+it("starts preview expiry after slow discovery and retains verified image evidence",async()=>{
+  const f=fixture(),start=f.options.now;let clock=start;
+  const now=vi.spyOn(Date,"now").mockImplementation(()=>clock);
+  const original=f.options.rpc.call;
+  f.options.rpc.call=async(...args)=>{const r=await original(...args);if(decodeFunctionData({abi,data:args[0].data}).functionName==="predictToken")clock+=35000;return r;};
+  f.options.rpc.block=async(number=200n)=>({number,hash:toHex(10n,{size:32}),timestamp:BigInt(Math.floor(clock/1000))});
+  const image={imageURI:f.options.input.imageURI,sha256:"a".repeat(64),width:400,height:400};
+  try{const preview=await prepareLaunch({...f.options,now:undefined,image});expect(preview.createdAt).toBe(start+35000);expect(preview.expiresAt-preview.createdAt).toBe(30000);expect(preview.image).toEqual(image);}finally{now.mockRestore();}
+});

@@ -12,11 +12,15 @@ const intakeFilterGuardState = v.object({
 });
 
 export default defineSchema({
-  // Preparation only. There is no signing state, scheduler, or execution mutation.
+  // Execution stays gated in code; accepted terms and recovery are durable.
+  launchRuns: defineTable({requestId:v.string(),owner:v.string(),address:v.string(),status:v.string(),json:v.string(),updatedAt:v.number()})
+    .index("by_owner_request",["owner","requestId"]).index("by_address_status",["address","status"]),
+  verifiedBotLaunches: defineTable({address:v.string(),creator:v.string(),symbol:v.string(),json:v.string(),createdAt:v.number()})
+    .index("by_address",["address"]).index("by_creator",["creator"]),
   launchDrafts: defineTable({
     requestId: v.string(), owner: v.string(), address: v.string(), inputJson: v.string(),
     fingerprint: v.string(), tokenSalt: v.string(), revision: v.number(),
-    status: v.union(v.literal("draft"), v.literal("prepared"), v.literal("cancelled")),
+    status: v.union(v.literal("draft"), v.literal("prepared"), v.literal("executing"), v.literal("completed"), v.literal("cancelled")),
     previewJson: v.optional(v.string()), prepareToken: v.optional(v.string()), preparingUntil: v.optional(v.number()),
     nextPreviewAt: v.optional(v.number()), createdAt: v.number(), updatedAt: v.number(), expiresAt: v.number(),
   }).index("by_owner_request", ["owner", "requestId"]).index("by_owner", ["owner"]).index("by_expiry", ["expiresAt"]),

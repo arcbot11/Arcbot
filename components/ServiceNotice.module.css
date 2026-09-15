@@ -1,0 +1,16 @@
+.notice {
+  position: relative;
+  padding: 14px clamp(16px, 5vw, 72px);
+  border-bottom: 1px solid #ae8949;
+  background: #332710;
+  color: #fff0ce;
+  font-size: 14px;
+  line-height: 1.6;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+.notice p {
+  max-width: 1200px;
+  margin: 0 auto;
+}

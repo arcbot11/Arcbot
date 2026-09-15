@@ -1,3 +1,4 @@
+import { LaunchError } from "../lib/launches/policy";
 import { arcPublicCommand, arcPublicSource } from "../lib/arc/public-policy";
 import {ARC_COMMAND_HTTP_TIMEOUT_MS,arcPendingRetryDelay,arcServiceResult} from "../lib/arc/social-timing";
 import { arcWalletUrl, arcCommandResponse } from "../lib/public-links";
@@ -319,7 +320,7 @@ function commandSummary(command: WalletCommand) {
     return `Upgraded ${assetLabel(command.token)} to automated creator-fee processing.`;
   if (command.kind === "launch") {
     const pair =
-      command.pairToken && !/^eth$/i.test(command.pairToken)
+      command.pairToken && !/^(?:\$?USDC|0x3600000000000000000000000000000000000000)$/i.test(command.pairToken)
         ? `, paired with ${safeAddress(command.pairToken) ? addressUrl(command.pairToken) : `$${command.pairToken.replace(/^\$/, "")}`}`
         : "";
     const fees = command.holderFeeSharing
@@ -3710,7 +3711,7 @@ export const executeCommand = internalAction({
         &&(!retiredFeatureEnabled()||!retiredFeatureEnabled()))
         return {ok:false,message:"Token creation is unavailable."};
     } catch (error) {
-      return { ok: false, message: safeFailure(error) };
+      return { ok: false, message: error instanceof LaunchError ? error.message : safeFailure(error) };
     }
     const userContext = await ctx.runQuery(internal.wallets.getXUserAndWallet, {
       xUserId: args.xUserId,
@@ -3864,6 +3865,10 @@ Your wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`,
       if(!destination||!safeAddress(destination))return {ok:false,message:"Recipient wallet could not be resolved. Use an X handle or wallet address."};
       command={...command,recipient:destination};
     }
+    if(command.kind==="launch"){
+      if(source!=="x")return {ok:false,message:"Use an X launch command or the launch page."};
+      command={...command,launchSource:{text:args.text,imageURI:args.mediaUrl??args.text.match(/https:\/\/pbs\.twimg\.com\/[^\s]+|ipfs:\/\/[^\s]+/)?.[0]??""}};
+    }
     const requestId =
       args.requestId || `x:${args.sourcePostId}:${command.kind}`;
     const reserved = await ctx.runMutation(
@@ -3880,7 +3885,7 @@ Your wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`,
         channel: args.channel || "x_reply",
       },
     );
-    if((source==="x"||source==="telegram")&&["claim_fees","buy","sell","send","burn","swap_token_for_token","buy_and_send","buy_and_burn","buy_top_five"].includes(command.kind)){
+    if((source==="x"||source==="telegram")&&["launch","claim_fees","buy","sell","send","burn","swap_token_for_token","buy_and_send","buy_and_burn","buy_top_five"].includes(command.kind)){
       return await ctx.runAction(internal.wallets.continueArcCommand,{requestId});
     }
     if (!reserved.inserted) {

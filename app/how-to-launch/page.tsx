@@ -8,7 +8,7 @@ export const metadata = {
 
 const parameters = [
   ["Name and ticker", "Choose a name of up to 32 UTF-8 bytes and a ticker of up to 10 letters or numbers. Tickers are uppercase. USDC is reserved.", "Name: Example Token · Ticker: EXAMPLE"],
-  ["Image", "Provide a token image. Preparation requires a pinned IPFS image URI; an ordinary image link must be uploaded and pinned first.", "Use a square logo that remains clear at small sizes."],
+  ["Image", "Provide a token image. Use a direct X photo URL or a pinned IPFS image URI. Preparation verifies that the image loads.", "Use a square logo that remains clear at small sizes."],
   ["Description and links", "Description: up to 280 characters. Website, X and Telegram links are optional. Use HTTPS links, each no longer than 100 characters.", "Description: A community token on Arc."],
   ["Buy and sell tax", "Both are fixed at 1%. The pool fee is separate. Tax rates and allocation are permanent once launched.", "Buy tax: 1% · Sell tax: 1%"],
   ["Reward allocation", "Split 100% between creator, buyback and burn, dividends, and liquidity. Any unspecified remainder goes to the creator. With no allocation specified, the creator receives 100% of the allocatable share.", "50% creator, 25% dividends, 25% liquidity"],
@@ -35,7 +35,7 @@ export default function HowToLaunch(){
     <p>Allocation divides collected revenue after Argus’s share. It is not an extra percentage added to the trade tax. Review the resolved percentages before proceeding.</p>
     <div className="arc-command-list">{allocations.map(([input,result],i)=><article key={input}><span>{i+1}</span><h2>{input}</h2><div><p>{result}</p></div></article>)}</div>
     <h2>A complete example</h2>
-    <p>Name: Example Token. Ticker: EXAMPLE. Pinned image: your token logo. Description: A community token on Arc. Dev buy: 25 USDC. Allocation: half creator, half dividends.</p>
+    <p>Name: Example Token. Ticker: EXAMPLE. Image: your token logo. Description: A community token on Arc. Dev buy: 25 USDC. Allocation: half creator, half dividends.</p>
     <p>This resolves to 1% buy tax, 1% sell tax, 50% creator, 50% dividends, a 100,000-token dividend minimum, and a 25 USDC developer-buy budget plus gas.</p>
     <h2>What happens during preparation</h2>
     <ol><li>Choose the creator wallet and enter the token details.</li><li>Review the exact allocation and USDC budget.</li><li>Check whether reward configuration or USDC approval is required. A launch with unmet prerequisites is not shown as successfully simulated.</li><li>Simulate against Portal #6 and refresh expired estimates. RPC failure is not a successful check.</li><li>When execution is enabled, verify the mined launch, creator and pool before reporting completion. A submitted transaction alone is not confirmation.</li></ol>

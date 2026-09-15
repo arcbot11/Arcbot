@@ -23,8 +23,13 @@ it("derives wallet identity from the session and requires write authentication",
   expect(m.session).toHaveBeenCalledWith(expect.anything(), true);
   expect(m.mutation).toHaveBeenCalledWith(expect.anything(), { owner: "tg:1", address, secret: "secret", requestId });
 });
-it.each(["execute", "sign", "broadcast", "confirm"])("has no %s operation", async action => {
+it.each(["execute", "sign", "broadcast", "confirm"])("rejects an incomplete or unsupported %s operation", async action => {
   const r = await POST(post({ action, requestId })); expect(r.status).toBe(400); expect(m.mutation).not.toHaveBeenCalled();
+});
+it.each(["execute", "resume"])("keeps valid %s requests disabled before accepting or signing", async action => {
+  const r = await POST(post({ action, requestId, ...(action === "execute" ? { revision: 1 } : {}) }));
+  expect(r.status).toBe(400); expect(await r.text()).toContain("Launch execution is disabled");
+  expect(m.mutation).not.toHaveBeenCalled();
 });
 it("rejects caller-supplied identity instead of trusting it", async () => {
   const r = await POST(post({ action: "cancel", requestId, owner: "2", address }));

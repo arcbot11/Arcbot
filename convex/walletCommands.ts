@@ -1,3 +1,6 @@
+import { launchPairFromXText } from "../lib/launches/x-pair";
+import { launchAllocationFromXText } from "../lib/launches/x-allocation";
+import type { Allocation } from "../lib/launches/allocation";
 import {explicitArcSwap} from "../lib/arc-swap-command";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 import { tokenPattern, tokenCharacterCount, sliceTokenText } from "../lib/token-pattern";
@@ -39,6 +42,8 @@ export type WalletCommand =
       pairToken?: string;
       feeRecipient?: string;
       holderFeeSharing?: boolean;
+      allocation?: Allocation;
+      launchSource?: { text: string; imageURI: string };
       selfBurnBps?: number;
       devBuy?: { amount: string; unit: "eth" | "usd" | "pair" };
     }
@@ -247,10 +252,10 @@ export function launchFeeOptionsFromText(text: string) {
 
 export function normalizeLaunchFeeOptions(command: WalletCommand, text: string): WalletCommand {
   if (command.kind !== "launch") return command;
-  const options = launchFeeOptionsFromText(text);
-  // These security-sensitive fields are always grounded deterministically in
-  // the original post. Structured AI output cannot invent or broaden them.
-  return { ...command, feeRecipient: options.feeRecipient, holderFeeSharing: options.holderFeeSharing,selfBurnBps:options.selfBurnBps };
+  // Ignore model-supplied splits and legacy redirection flags. Derive all four
+  // shares from the original post; unspecified rewards belong to its creator.
+  const allocation = launchAllocationFromXText(text);
+  return { ...command, allocation, pairToken: launchPairFromXText(text), feeRecipient: undefined, holderFeeSharing: undefined, selfBurnBps: undefined };
 }
 
 export function normalizeXUrl(value: string) {

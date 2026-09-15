@@ -1,3 +1,4 @@
+import {assertLaunchEnabled,assertLaunchTransaction} from "../launches/execution-checks";
 import { BASE_USDC, baseUsdcAbi } from "../base/usdc";
 import { getAddress, keccak256, parseAbi, encodeFunctionData, stringToHex, parseTransaction, type Hex } from "viem";
 import { tokenTransfer } from "./token-delivery";
@@ -42,13 +43,13 @@ export async function retryPayout(store:Store,input:{id:string;owner:string;atte
   await store.put(order);
   return order;
 }
-export async function prepareTransaction(store: Store, input: { id: string; owner: string; wallet: string; chainId: Chain; leg: Transaction["leg"]; orderId?: string; sourceRequestId?: string; fundingPlan?:string;tradeRouteHint?:string;creatorClaim?:Transaction["creatorClaim"];swapOutput?: {token:string;minimum:string;recipient?:string}; unsigned: string; reserveWei: string; balanceWei: string; baseUsdcBalance?:string; block: string }, now: number, escrow = false) {
+export async function prepareTransaction(store: Store, input: { id: string; owner: string; wallet: string; chainId: Chain; leg: Transaction["leg"]; orderId?: string; sourceRequestId?: string; fundingPlan?:string;tradeRouteHint?:string;launchStep?:Transaction["launchStep"];creatorClaim?:Transaction["creatorClaim"];swapOutput?: {token:string;minimum:string;recipient?:string}; unsigned: string; reserveWei: string; balanceWei: string; baseUsdcBalance?:string; block: string }, now: number, escrow = false) {
   const previous = await store.get<Transaction>(input.id);
   if (previous) { if (previous.wallet !== input.wallet || previous.owner !== input.owner) throw new Error("Transaction identity mismatch."); return previous; }
   const w = await wallet(store, input.chainId, input.wallet, input.owner, now);
   checkSnapshot(w, input.block);
   let holdId = input.id;
-  if (!["send","swap","allowance","claim"].includes(input.leg)) {
+  if (!["send","swap","allowance","claim","launch"].includes(input.leg)) {
     const order = input.orderId ? await store.get<Order>(input.orderId) : null;
     if (!order) throw new Error("Order missing.");
     const approval = input.leg === "approval";
@@ -76,7 +77,8 @@ export async function prepareTransaction(store: Store, input: { id: string; owne
   w.activeTx = input.id; w.updatedAt = now;
   if(input.fundingPlan!==undefined&&(typeof input.fundingPlan!=="string"||input.fundingPlan.length>6000))throw Error("Invalid trade funding plan.");
   if(input.leg==="claim"&&(input.chainId!==5042||!input.creatorClaim||input.orderId||escrow))throw Error("Invalid creator claim.");
-  const tx: Transaction = { kind: "transaction", id: input.id, owner: input.owner, wallet: input.wallet, chainId: input.chainId, leg: input.leg, ...(input.orderId ? { orderId: input.orderId } : {}), holdId, ...(input.creatorClaim?{creatorClaim:input.creatorClaim}:{}), ...(input.swapOutput ? {swapOutput:input.swapOutput} : {}), ...(input.sourceRequestId ? {sourceRequestId:input.sourceRequestId} : {}), unsigned: input.unsigned, recoveryVersion:1, status: "prepared", createdAt: now, updatedAt: now };
+  if(input.leg==="launch"){assertLaunchEnabled();if(!input.launchStep||input.chainId!==5042||input.orderId||escrow)throw Error("Invalid launch step.");assertLaunchTransaction(input.owner,input.wallet,input.unsigned as Hex,input.launchStep);}
+  const tx: Transaction = { kind: "transaction", id: input.id, owner: input.owner, wallet: input.wallet, chainId: input.chainId, leg: input.leg, ...(input.orderId ? { orderId: input.orderId } : {}), holdId, ...(input.launchStep?{launchStep:input.launchStep}:{}), ...(input.creatorClaim?{creatorClaim:input.creatorClaim}:{}), ...(input.swapOutput ? {swapOutput:input.swapOutput} : {}), ...(input.sourceRequestId ? {sourceRequestId:input.sourceRequestId} : {}), unsigned: input.unsigned, recoveryVersion:1, status: "prepared", createdAt: now, updatedAt: now };
   if(input.chainId===8453&&input.leg==="send"&&!escrow){const parsed=parseTransaction(input.unsigned as Hex);tx.initialGasReserveWei=(BigInt(input.reserveWei)-(parsed.value??0n)).toString();}
   if(input.fundingPlan)tx.fundingPlan=input.fundingPlan;
   if(input.tradeRouteHint){if(typeof input.tradeRouteHint!=="string"||input.tradeRouteHint.length>6000)throw Error("Invalid trade route hint.");tx.tradeRouteHint=input.tradeRouteHint;}
@@ -122,7 +124,7 @@ export async function settled(store: Store, id: string, block: string, success: 
   const w = await wallet(store, tx.chainId, tx.wallet, tx.owner, now);
   if (w.activeTx !== id) throw new Error("Wallet transaction lease mismatch.");
   delete w.activeTx; w.lastSettledBlock = block; w.updatedAt = now;
-  if (["send","swap","allowance","claim","payment"].includes(tx.leg)) delete w.holds[tx.holdId];
+  if (["send","swap","allowance","claim","launch","payment"].includes(tx.leg)) delete w.holds[tx.holdId];
   if (["payment","send"].includes(tx.leg) && w.usdcHolds) delete w.usdcHolds[tx.holdId];
   await store.put(w);
   delete tx.note;

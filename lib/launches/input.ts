@@ -1,3 +1,4 @@
+import { launchImageURI } from "./image";
 import { z } from "zod";
 import { formatUnits, getAddress, keccak256, parseUnits, toHex, type Address } from "viem";
 import { LaunchError, LAUNCH_TAX_BPS, LAUNCH_DIVIDEND_MINIMUM_TOKENS } from "./policy";
@@ -12,12 +13,15 @@ const link = cleanText(100).refine(s => {
   try { const u = new URL(s); return u.protocol === "https:" && !u.username && !u.password && !/\s/.test(s); }
   catch { return false; }
 }, "Use an HTTPS link.").default("");
-// Storage/pinning integration is separate. Never fetch a caller-controlled URL here.
-const imageURI = z.string().regex(/^ipfs:\/\/(Qm[1-9A-HJ-NP-Za-km-z]{44}|b[a-z2-7]{20,120})$/, "Use a pinned IPFS image URI.");
+// Pure validation only. Preparation verifies the remote image separately.
+const imageURI = z.string().transform((value, ctx) => {
+  try { return launchImageURI(value); } catch { ctx.addIssue({ code: "custom", message: "Use an X photo URL or a pinned IPFS image URI." }); return z.NEVER; }
+});
 const schema = z.object({
   name: cleanText(32).refine(s => s.length > 0 && !/[\r\n\t]/.test(s) && new TextEncoder().encode(s).length <= 32, "Use a name of at most 32 UTF-8 bytes."),
   symbol: z.string().transform(s => s.trim().toUpperCase()).pipe(z.string().regex(/^[A-Z0-9]{1,10}$/))
     .refine(s => s !== "USDC", "USDC is reserved for the chain currency."),
+  pairToken: z.enum(["USDC", "ARGUS", "ARCASH"]).default("USDC"),
   imageURI, description: cleanText(280).default(""), website: link, twitter: link, telegram: link,
   buyTaxBps: z.literal(LAUNCH_TAX_BPS).default(LAUNCH_TAX_BPS), sellTaxBps: z.literal(LAUNCH_TAX_BPS).default(LAUNCH_TAX_BPS),
   creatorBps: bps, burnBps: bps, dividendBps: bps, liquidityBps: bps,

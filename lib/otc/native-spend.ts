@@ -1,3 +1,4 @@
+import {launchNativeSpend} from "../launches/execution-checks";
 import { ARC_USDC } from "../arc/config";
 import { USDC_SCALE } from "../arc/amounts";
 import { tokenTransfer } from "./token-delivery";
@@ -5,7 +6,7 @@ import type { Hex } from "viem";
 
 /** Arc's ERC-20 USDC and native gas currency spend the same balance. */
 export function nativeSpend(chainId: number, call: {to?: string | null; value?: bigint; data?: Hex}) {
-  const value = call.value ?? 0n;
+  const value = (call.value ?? 0n) + (chainId === 5042 ? launchNativeSpend(call) : 0n);
   if (chainId !== 5042 || call.to?.toLowerCase() !== ARC_USDC.toLowerCase()
     || !call.data?.startsWith("0xa9059cbb")) return value;
   const transfer = tokenTransfer(call.data, value);

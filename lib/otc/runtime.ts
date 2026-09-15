@@ -196,6 +196,7 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
     record=await repo.command<Transaction>("sign",{id,raw:signature,hash,unsigned:record.unsigned});
   }
   if (!record.raw) {
+    if(record.leg==="launch") await (await import("../launches/service")).assertLaunchSigning(record);
     const snapshot=await balanceSnapshot(record.chainId,record.wallet);
     if (!await escrowDepositReadyForPayout(record)) return record;
     if(record.sourceRequestId){
@@ -260,10 +261,14 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
   });
   if (receipt) {
     const arrivedBaseNative=record.chainId===8453&&record.leg==="send"&&receipt.status==="success"&&(!tx.data||tx.data==="0x")&&(tx.value??0n)>0n;
-    const settlement:Transaction["settlement"]=record.chainId===5042&&(record.leg==="claim"||record.leg==="swap"||record.leg==="send"&&tx.data&&tx.data!=="0x")?{gasWei:(receipt.gasUsed*receipt.effectiveGasPrice).toString()}:undefined;
+    const settlement:Transaction["settlement"]=record.chainId===5042&&(record.leg==="launch"||record.leg==="claim"||record.leg==="swap"||record.leg==="send"&&tx.data&&tx.data!=="0x")?{gasWei:(receipt.gasUsed*receipt.effectiveGasPrice).toString()}:undefined;
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt is not canonical.");
     const chainTx=await client.getTransaction({hash:record.hash as Hex});
     if (chainTx.from.toLowerCase()!==record.wallet.toLowerCase() || chainTx.to?.toLowerCase()!==tx.to?.toLowerCase() || chainTx.value!==(tx.value??0n) || chainTx.input!==(tx.data??"0x")) throw new Error("Receipt transaction does not match the order.");
+    if(receipt.status==="success"&&record.leg==="launch"){
+      if(!record.launchStep||!settlement)throw Error("Launch verification terms missing.");
+      settlement.launch=await (await import("../launches/verify-mined")).verifyMinedLaunchStep(record.owner,record.wallet,record.hash as Hex,record.launchStep);
+    }
     if(receipt.status==="success"&&record.leg==="claim"){
       if(!record.creatorClaim||!settlement)throw Error("Claim verification terms missing.");
       assertClaimCall(record.wallet,record.creatorClaim.splitter,tx);

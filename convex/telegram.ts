@@ -1,4 +1,5 @@
 import {safeExportError} from "../lib/key-export/errors";
+import { ARC_SERVICE_NOTICE } from "../lib/service-notice";
 import { suppressCreationReply } from "../lib/disabled-creation";
 import {makeFunctionReference} from "convex/server";
 import { socialAddressLinks } from "../lib/social-address-links";
@@ -579,6 +580,7 @@ export const processUpdate = internalAction({
         } else if (input.name === "link") reply = "X is already linked. Use /usex to select it.";
         state = await ctx.runQuery(internal.telegramWallets.context, { telegramUserId, telegramChatId: chatId });
         const label = telegramWalletLabel(state.selected, state.xUsername, Boolean(state.native && state.link));
+        if (input.name === "start") await sendMessage(chatId, ARC_SERVICE_NOTICE);
         await sendMessage(chatId, [label, reply, ["start", "help", "unlink"].includes(input.name) && state.selected ? TELEGRAM_HELP : ""].filter(Boolean).join("\n\n"), input.name === "help" ? undefined : await fundedWalletMenu(ctx, state));
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "completed" });
         return;

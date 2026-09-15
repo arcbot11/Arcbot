@@ -1,0 +1,69 @@
+{
+  "checkedAt": "2026-09-15T16:59:39.371Z",
+  "rows": [
+    {
+      "provider": "primary/arcscan",
+      "host": "rpc.arc-scan.org",
+      "label": "chain",
+      "method": "eth_chainId",
+      "at": "2026-09-15T16:59:38.935Z",
+      "error": "TypeError",
+      "networkCode": "ECONNRESET",
+      "ms": 164
+    },
+    {
+      "provider": "primary/arcscan",
+      "host": "rpc.arc-scan.org",
+      "label": "latest",
+      "method": "eth_getBlockByNumber",
+      "at": "2026-09-15T16:59:38.972Z",
+      "error": "TypeError",
+      "networkCode": "ECONNRESET",
+      "ms": 134
+    },
+    {
+      "provider": "infura",
+      "host": "arc-mainnet.infura.io",
+      "label": "latest",
+      "method": "eth_getBlockByNumber",
+      "at": "2026-09-15T16:59:38.973Z",
+      "http": 401,
+      "type": "text/plain; charset=utf-8",
+      "error": "Non-JSON response",
+      "title": "",
+      "ms": 253
+    },
+    {
+      "provider": "infura",
+      "host": "arc-mainnet.infura.io",
+      "label": "chain",
+      "method": "eth_chainId",
+      "at": "2026-09-15T16:59:38.972Z",
+      "http": 401,
+      "type": "text/plain; charset=utf-8",
+      "error": "Non-JSON response",
+      "title": "",
+      "ms": 256
+    },
+    {
+      "provider": "argus",
+      "host": "arguspad.io",
+      "label": "chain",
+      "method": "eth_chainId",
+      "at": "2026-09-15T16:59:38.973Z",
+      "http": 502,
+      "type": "application/json",
+      "ms": 379
+    },
+    {
+      "provider": "argus",
+      "host": "arguspad.io",
+      "label": "latest",
+      "method": "eth_getBlockByNumber",
+      "at": "2026-09-15T16:59:38.973Z",
+      "http": 502,
+      "type": "application/json",
+      "ms": 397
+    }
+  ]
+}
