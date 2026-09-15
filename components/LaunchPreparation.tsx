@@ -1,6 +1,6 @@
+"use client";
+
 import { LAUNCH_EXECUTION_ENABLED } from "@/lib/launches/policy";
-
-
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useWalletSession, type WalletSession } from "./WalletSessionProvider";
 import { WalletSignInButton } from "./WalletSignInButton";
