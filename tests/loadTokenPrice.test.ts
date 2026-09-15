@@ -2,10 +2,11 @@ import { afterEach, expect, it, vi } from "vitest";
 import { loadTokenPrice } from "../lib/load-token-price";
 afterEach(()=>vi.unstubAllGlobals());
 it("coalesces card prices and checks the returned contract",async()=>{
+  const pricedAt=new Date().toISOString();
   const token="0x1111111111111111111111111111111111111111";
-  const fetch=vi.fn(async()=>Response.json({token,priceUsd:0.5,pricedAt:null}));
+  const fetch=vi.fn(async()=>Response.json({token,priceUsd:0.5,pricedAt}));
   vi.stubGlobal("fetch",fetch);
-  expect(await Promise.all([loadTokenPrice(token),loadTokenPrice(token)])).toEqual([{priceUsd:0.5,pricedAt:null},{priceUsd:0.5,pricedAt:null}]);
+  expect(await Promise.all([loadTokenPrice(token),loadTokenPrice(token)])).toEqual([{priceUsd:0.5,pricedAt},{priceUsd:0.5,pricedAt}]);
   expect(fetch).toHaveBeenCalledTimes(1);
   expect(await loadTokenPrice("0x2222222222222222222222222222222222222222")).toBeNull();
 });

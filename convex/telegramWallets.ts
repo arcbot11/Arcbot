@@ -57,8 +57,9 @@ export const intakeGuard = internalQuery({ args: { updateId: v.string() }, handl
 export const select = internalMutation({ args: { updateId: v.string(), selected: v.union(v.literal("tg"), v.literal("x")) }, handler: async (ctx, a) => {
   const update = await intake(ctx, a.updateId);
   const state = await walletContext(ctx, update.telegramUserId!, update.telegramChatId!);
-  if (a.selected === "tg" ? !state.native : !state.link) throw Error("Link that wallet first.");
+  if (a.selected === "tg" ? !state.native : !state.link) return { selected: false as const, message: a.selected === "tg" ? "Create your Telegram-linked wallet first. Use /createtg." : "Link your X wallet first. Use /link." };
   await saveSelection(ctx, update.telegramUserId!, a.selected, update.createdAt);
+  return { selected: true as const };
 } });
 export const creationContext = internalQuery({ args: { updateId: v.string() }, handler: async (ctx, a) => {
   const update = await intake(ctx, a.updateId);

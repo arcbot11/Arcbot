@@ -1,3 +1,4 @@
+import { pendingPurchases as filterPendingPurchases, PENDING_PURCHASE_STATUSES } from "../lib/otc/pending-purchases";
 import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement,authorizeGasRecovery} from "../lib/otc/gas-recovery";
 import {assertNoKeyExport} from "./lib/walletExportGuard";
 import {walletExportIndexes} from "./lib/walletExportIndexes";
@@ -252,6 +253,15 @@ async function readMarket(ctx:QueryCtx){
   const market=publicMarket(listings.map(row=>JSON.parse(row.json) as Listing),stats?.soldUsdc??"0");
   return {...market,stats:{...market.stats,soldUsdc:stats?.ready?stats.soldUsdc:undefined}};
 }
+export const pendingPurchases = query({
+  args: { secret:v.string(), owner:v.string(), wallet:v.string() },
+  handler: async(ctx,args)=>{
+    authorize(args.secret);
+    const rows=(await Promise.all(PENDING_PURCHASE_STATUSES.map(status=>ctx.db.query("otcRecords")
+      .withIndex("by_owner_status",q=>q.eq("owner",args.owner).eq("kind","order").eq("status",status)).collect()))).flat();
+    return filterPendingPurchases(rows.map(row=>JSON.parse(row.json)),args.owner,args.wallet);
+  },
+});
 export const read = query({
   args: { secret: v.string(), id: v.optional(v.string()), owner: v.optional(v.string()), work: v.optional(v.boolean()) },
   handler: async (ctx,args) => {

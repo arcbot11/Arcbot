@@ -1,5 +1,6 @@
 "use client";
 import {WebResponseError} from "@/lib/web-response-error";
+import {OtcPurchaseAccess,settlingPurchaseLabel} from "./OtcPurchaseAccess";
 import { ActiveStatus } from "./ActiveStatus";
 import { EthUsdValue } from "./EthUsdValue";
 import { PersistentNotices, usePersistentNotices } from "./PersistentNotices";
@@ -59,6 +60,38 @@ export function OtcClient(){
   const previewRequest=useRef<AbortController|null>(null);
   const dialog=useRef<HTMLDialogElement>(null);
   const [formOpen,setFormOpen]=useState(false);
+  const [ownPending,setOwnPending]=useState<{wallet:string;listingIds:string[]}|null>(null);
+  const trackingRef=useRef(processingPurchase);trackingRef.current=processingPurchase;
+  const completedPurchases=useRef(new Set<string>());
+  const recoveryWallet=session?.authenticated?session.walletAddress?.toLowerCase():undefined;
+  useEffect(()=>{
+    setProcessingPurchase(null);setQuote(null);setFormOpen(false);setOwnPending(null);
+    setPurchaseProgress(null);setCancelEligibility(null);completedPurchases.current.clear();trackingRef.current=null;
+    if(!recoveryWallet)return;
+    const controller=new AbortController();let pending=false;
+    const restore=async()=>{
+      if(pending)return;pending=true;
+      try{
+        const response=await fetch("/api/otc?scope=pending_purchases",{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(15000)])});
+        const data=await response.json();
+        if(controller.signal.aborted)return;
+        if(!response.ok||data.walletAddress?.toLowerCase()!==recoveryWallet||!Array.isArray(data.orders)){setOwnPending(null);return;}
+        const orders=data.orders as (Quote&{listingId:string})[];
+        setOwnPending({wallet:recoveryWallet,listingIds:orders.map(order=>order.listingId)});
+        const order=orders.find(order=>!order.received&&!completedPurchases.current.has(order.id));
+        if(order&&!trackingRef.current){
+          const tracking={id:order.id,listingId:order.listingId,amount:order.amount,wallet:data.walletAddress};
+          trackingRef.current=tracking;purchaseDone.current=false;
+          setProcessingPurchase(tracking);setQuote(order);setSelected(order.listingId);
+          setAmount(formatUnits(BigInt(order.amount),6));setTab("buy");setFormOpen(true);
+          setPurchaseSuccessDismissed(false);
+        }
+      }catch{if(!controller.signal.aborted)setOwnPending(null);}
+      finally{pending=false;}
+    };
+    void restore();const timer=setInterval(()=>void restore(),10000);
+    return()=>{controller.abort();clearInterval(timer);};
+  },[recoveryWallet]);
   const [listingBalance,setListingBalance]=useState<{walletAddress:string;availableWei:string}|null>(null);
   const [balanceFailed,setBalanceFailed]=useState(false),[balanceRevision,setBalanceRevision]=useState(0);
   useEffect(()=>{
@@ -109,7 +142,7 @@ export function OtcClient(){
   useEffect(()=>{void refresh();const timer=setInterval(()=>void refresh(),10_000);return()=>{clearInterval(timer);marketRequest.current?.abort();marketRequest.current=null;};},[refresh]);
   useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
   useEffect(()=>{
-    if(!processingPurchase||!session?.authenticated||session.walletAddress!==processingPurchase.wallet)return;
+    if(!processingPurchase||!session?.authenticated||session.walletAddress?.toLowerCase()!==processingPurchase.wallet.toLowerCase())return;
     const controller=new AbortController();let pending=false;
     const check=async()=>{
       if(pending)return;pending=true;
@@ -120,11 +153,13 @@ export function OtcClient(){
         setPurchaseActivityAt(order?.progress?.active?order.progress.updatedAt??0:0);
         if(order?.progress){setPurchaseProgress(order.progress);setNotice(order.progress.message);}
         if(order?.received||order?.status==="completed"){
+          completedPurchases.current.add(processingPurchase.id);
           purchaseDone.current=true;
           setProcessingPurchase(null);setQuote(current=>current?.id===processingPurchase.id?{...current,received:true,payoutHash:order.payoutHash}:current);setBalanceRevision(value=>value+1);
           setNotice(`Purchase confirmed. Received ${units(processingPurchase.amount)} Arc USDC. Follow it on your wallet page.`);
           void refresh();
         }else if(order&&["payment_failed","refunded","cancelled","expired"].includes(order.status)){
+          completedPurchases.current.add(processingPurchase.id);
           setProcessingPurchase(null);setQuote(null);
           setNotice(order.note??"Purchase was not paid. Request a new quote.");
         }
@@ -191,17 +226,18 @@ export function OtcClient(){
     {<div className="otc-metrics"><article><span>Available Arc USDC</span><strong>{market?.available?units(market.stats.available):"—"}</strong></article><article><span>Lowest premium</span><strong>{pct(market?.stats.lowestBps??null)}</strong></article><article><span>USDC sold</span><strong>{market?.available&&market.stats.soldUsdc!=null?units(market.stats.soldUsdc):"—"}</strong></article></div>}
     <p className="market-refresh-status" role="status">{marketError?"Market refresh failed. Displayed listings may be outdated. Retrying…":""}</p>
     <div className="otc-single">
-      {<section className="otc-book"><div className="otc-panel-title"><h2>Listings</h2><button className="arc-button" onClick={()=>openForm("sell")}>Sell USDC</button></div>
+      <OtcPurchaseAccess wallet={processingPurchase?.wallet} activeWallet={recoveryWallet} open={formOpen} onView={()=>{setTab("buy");setFormOpen(true);}}/>
+      {<section className="otc-book"><div className="otc-panel-title"><h2>Listings</h2><button className="arc-button" disabled={busy||!!processingPurchase} onClick={()=>openForm("sell")}>Sell USDC</button></div>
         <div className="otc-market-cards">{market?.listings.map(l=>{
           const cost=listingCostPercent(l.premiumBps),percent=(value:number)=>`${value.toLocaleString(undefined,{maximumFractionDigits:6})}%`;
           const own=l.seller.toLowerCase()===session?.walletAddress?.toLowerCase();
-          const ownPurchase=session?.authenticated&&processingPurchase?.listingId===l.id&&processingPurchase.wallet.toLowerCase()===session.walletAddress?.toLowerCase();
+          const ownPurchase=session?.authenticated&&((processingPurchase?.listingId===l.id&&processingPurchase.wallet.toLowerCase()===session.walletAddress?.toLowerCase())||(ownPending?.wallet===recoveryWallet&&ownPending?.listingIds.includes(l.id)));
           return <article className="otc-market-card" key={l.id}>
             <div className="otc-market-amount"><span>Available Arc USDC</span><h3>{units(l.available)} <small>USDC</small></h3></div>
             <p className="otc-market-seller">Seller <Link href={`/wallet/${l.seller}`} title={l.seller}>{l.seller.slice(0,6)}…{l.seller.slice(-4)}</Link></p>
             <dl><div><dt>Premium</dt><dd>{pct(l.premiumBps)}</dd></div><div><dt>Service fee</dt><dd>{SERVICE_FEE_BPS/100}%</dd></div><div className="otc-market-total"><dt>Premium + fee</dt><dd>+{percent(cost.aboveFaceValue)}</dd></div><div><dt>Total cost</dt><dd>{(cost.total/100).toFixed(3)}x face value</dd></div></dl>
             
-            <button className="arc-button" disabled={marketError||busy||!!processingPurchase||l.settling||BigInt(l.available)<10000000n} onClick={()=>openForm("buy",l.id)}>{l.settling?(ownPurchase?"Purchase Processing":"Another Purchase Is Processing"):own?"Your listing":"Buy USDC ↗"}</button>
+            <button className="arc-button" disabled={marketError||busy||!!processingPurchase||l.settling||BigInt(l.available)<10000000n} onClick={()=>openForm("buy",l.id)}>{l.settling?(settlingPurchaseLabel(!!ownPurchase,!session?.authenticated||ownPending?.wallet===recoveryWallet)):own?"Your listing":"Buy USDC ↗"}</button>
             {own&&<button type="button" className="otc-inline-button" disabled={marketError||busy||!!processingPurchase||l.settling} onClick={async()=>{
               const result=await run({action:"cancel",listingId:l.id});
               if(result){setBalanceRevision(value=>value+1);setNotice(result.status==="closing"?"Listing is closing. Follow it on your wallet page.":result.status==="cancelled"?"Listing cancelled. Follow it on your wallet page.":"Check this listing on your wallet page.");}
@@ -231,7 +267,7 @@ export function OtcClient(){
           {inputError&&<p className="otc-fine" role="status">{inputError}</p>}
           <button className="arc-button" disabled={busy||!!processingPurchase||!(ready||(tab==="sell"&&pendingListing&&session?.authenticated))} type="submit">{processingPurchase?<ActiveStatus text="Processing" active={now-purchaseActivityAt<90_000}/>:busy?<ActiveStatus text={tab==="buy"?"Preparing quote":"Preparing listing"} active={busy}/>:tab==="buy"?"Get exact quote":pendingListing?"Retry original listing":listingPreview?"Confirm listing":"Review Listing"}</button>
         </form>}
-        {quote&&<div className="otc-quote"><div className="otc-panel-title"><h3>Your quote</h3>{!busy&&!processingPurchase&&!purchaseReceived&&<button type="button" className="otc-inline-button" onClick={()=>{setQuote(null);setPremiumAccepted(null);}}>Back</button>}{purchaseReceived?<span>Received</span>:!processingPurchase&&<span>{Math.max(0,Math.ceil((quote.expiresAt-now)/1000))}s left</span>}</div><PersistentNotices notices={purchaseReceived?(purchaseSuccessDismissed?[]:[`Purchase confirmed. Received ${units(quote.amount)} Arc USDC. Follow it on your wallet page.`]):notices} dismiss={message=>{if(purchaseReceived)setPurchaseSuccessDismissed(true);dismiss(message);}} renderMessage={renderNotice}/><dl><dt>{purchaseReceived?"You received":"You receive"}</dt><dd>{units(quote.amount)} Arc USDC</dd><dt>Premium</dt><dd>{pct(quote.premiumBps)}</dd><dt>Fee</dt><dd>{(quote.serviceFeeBps??SERVICE_FEE_BPS)/100}%</dd><dt>{purchaseReceived?"Quoted total cost":"Total cost"}</dt><dd>{ethUnits((BigInt(quote.totalWei)+quoteGas(quote)).toString())} ETH <EthUsdValue wei={(BigInt(quote.totalWei)+quoteGas(quote)).toString()}/></dd></dl>{purchaseReceived&&quote.payoutHash&&<a className="arc-text-link" href={`https://www.arcexplorer.org/tx/${quote.payoutHash}`} target="_blank" rel="noreferrer">Arc payout</a>}{!purchaseReceived&&<><p className="otc-fine">Your Base ETH payment goes to an escrow wallet. Once confirmed, you receive the exact Arc USDC quoted.</p><label className="otc-premium-ack"><input type="checkbox" checked={premiumAccepted?.quoteId===quote.id&&premiumAccepted.premiumBps===quote.premiumBps} disabled={busy||now>=quote.expiresAt} onChange={e=>setPremiumAccepted(e.target.checked?{quoteId:quote.id,premiumBps:quote.premiumBps}:null)}/><span>I understand I’m paying a {pct(quote.premiumBps)} premium.</span></label><button className="arc-button" aria-busy={busy||!!processingPurchase} disabled={busy||!!processingPurchase||selectedListing?.settling||now>=quote.expiresAt||quote.status!=="quoted"||premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps} onClick={async()=>{if(inFlight.current||processingPurchase||!session?.walletAddress||premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps)return;for(const notice of notices){if(/^This listing (has|no longer has)/.test(notice))dismiss(notice);}purchaseDone.current=false;setCancelEligibility(null);setPurchaseProgress(null);setNotice("Preparing Base ETH payment");setPurchaseActivityAt(Date.now());setProcessingPurchase({id:quote.id,listingId:selected,amount:quote.amount,wallet:session.walletAddress});const result=await run({action:"accept",orderId:quote.id});if(purchaseDone.current)return;if(!result){setNotice("Confirming purchase status. Follow it on your wallet page.");return;}if(result.status==="completed"){setProcessingPurchase(null);setQuote({...result,received:true});setBalanceRevision(value=>value+1);setNotice(`Purchase confirmed. Received ${units(result.amount)} Arc USDC. Follow it on your wallet page.`);}else if(result.status==="quoted"||result.status==="expired"){setProcessingPurchase(null);setNotice("Purchase was not submitted. Request a new quote.");}else{setQuote(result);setNotice("Purchase processing. Follow it on your wallet page.");}}}>{busy||processingPurchase?<ActiveStatus text="Processing" active={busy||now-purchaseActivityAt<90_000}/>:"Confirm purchase"}</button>{processingPurchase&&!busy&&session?.walletAddress===processingPurchase.wallet&&cancelEligibility?.id===processingPurchase.id&&now-cancelEligibility.checkedAt<10_000&&<button type="button" className="otc-inline-button" onClick={async()=>{if(inFlight.current||Date.now()-cancelEligibility.checkedAt>=10_000)return;setCancelEligibility(null);const result=await run({action:"cancel_purchase",orderId:processingPurchase.id});if(result?.status==="payment_failed"){setProcessingPurchase(null);setQuote(null);setNotice("Purchase cancelled before payment. No funds sent.");}}}>Cancel unpaid purchase</button>}</>}</div>}
+        {quote&&<div className="otc-quote"><div className="otc-panel-title"><h3>Your quote</h3>{!busy&&!processingPurchase&&!purchaseReceived&&<button type="button" className="otc-inline-button" onClick={()=>{setQuote(null);setPremiumAccepted(null);}}>Back</button>}{purchaseReceived?<span>Received</span>:!processingPurchase&&<span>{Math.max(0,Math.ceil((quote.expiresAt-now)/1000))}s left</span>}</div><PersistentNotices notices={purchaseReceived?(purchaseSuccessDismissed?[]:[`Purchase confirmed. Received ${units(quote.amount)} Arc USDC. Follow it on your wallet page.`]):notices} dismiss={message=>{if(purchaseReceived)setPurchaseSuccessDismissed(true);dismiss(message);}} renderMessage={renderNotice}/><dl><dt>{purchaseReceived?"You received":"You receive"}</dt><dd>{units(quote.amount)} Arc USDC</dd><dt>Premium</dt><dd>{pct(quote.premiumBps)}</dd><dt>Fee</dt><dd>{(quote.serviceFeeBps??SERVICE_FEE_BPS)/100}%</dd><dt>{purchaseReceived?"Quoted total cost":"Total cost"}</dt><dd>{ethUnits((BigInt(quote.totalWei)+quoteGas(quote)).toString())} ETH <EthUsdValue wei={(BigInt(quote.totalWei)+quoteGas(quote)).toString()}/></dd></dl>{purchaseReceived&&quote.payoutHash&&<a className="arc-text-link" href={`https://www.arcexplorer.org/tx/${quote.payoutHash}`} target="_blank" rel="noreferrer">Arc payout</a>}{!purchaseReceived&&<><p className="otc-fine">Your Base ETH payment goes to an escrow wallet. Once confirmed, you receive the exact Arc USDC quoted.</p><label className="otc-premium-ack"><input type="checkbox" checked={premiumAccepted?.quoteId===quote.id&&premiumAccepted.premiumBps===quote.premiumBps} disabled={busy||now>=quote.expiresAt} onChange={e=>setPremiumAccepted(e.target.checked?{quoteId:quote.id,premiumBps:quote.premiumBps}:null)}/><span>I understand I’m paying a {pct(quote.premiumBps)} premium.</span></label><button className="arc-button" aria-busy={busy||!!processingPurchase} disabled={busy||!!processingPurchase||selectedListing?.settling||now>=quote.expiresAt||quote.status!=="quoted"||premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps} onClick={async()=>{if(inFlight.current||processingPurchase||!session?.walletAddress||premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps)return;for(const notice of notices){if(/^This listing (has|no longer has)/.test(notice))dismiss(notice);}purchaseDone.current=false;setCancelEligibility(null);setPurchaseProgress(null);setNotice("Preparing Base ETH payment");setPurchaseActivityAt(Date.now());trackingRef.current={id:quote.id,listingId:selected,amount:quote.amount,wallet:session.walletAddress};setProcessingPurchase(trackingRef.current);const result=await run({action:"accept",orderId:quote.id});if(purchaseDone.current)return;if(!result){setNotice("Confirming purchase status. Follow it on your wallet page.");return;}if(result.status==="completed"){setProcessingPurchase(null);setQuote({...result,received:true});setBalanceRevision(value=>value+1);setNotice(`Purchase confirmed. Received ${units(result.amount)} Arc USDC. Follow it on your wallet page.`);}else if(result.status==="quoted"||result.status==="expired"){setProcessingPurchase(null);setNotice("Purchase was not submitted. Request a new quote.");}else{setQuote(result);setNotice("Purchase processing. Follow it on your wallet page.");}}}>{busy||processingPurchase?<ActiveStatus text="Processing" active={busy||now-purchaseActivityAt<90_000}/>:"Confirm purchase"}</button>{processingPurchase&&!busy&&session?.walletAddress===processingPurchase.wallet&&cancelEligibility?.id===processingPurchase.id&&now-cancelEligibility.checkedAt<10_000&&<button type="button" className="otc-inline-button" onClick={async()=>{if(inFlight.current||Date.now()-cancelEligibility.checkedAt>=10_000)return;setCancelEligibility(null);const result=await run({action:"cancel_purchase",orderId:processingPurchase.id});if(result?.status==="payment_failed"){setProcessingPurchase(null);setQuote(null);setNotice("Purchase cancelled before payment. No funds sent.");}}}>Cancel unpaid purchase</button>}</>}</div>}
         
       </section>}
       </dialog>

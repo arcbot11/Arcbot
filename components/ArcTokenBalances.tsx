@@ -6,10 +6,13 @@ import type { ArcTokenBalance } from "@/lib/arc/wallet-tokens";
 import { retainTokenBalances } from "@/lib/token-balance-display";
 import { loadTokenBalances, type TokenBalanceSnapshot } from "@/lib/load-token-balances";
 import { loadTokenPrice } from "@/lib/load-token-price";
+import { freshDisplayPrice } from "@/lib/price-freshness";
 
 type TradeAction=(side:"buy"|"sell",token:string)=>void;
 export function HoldingCard({token,onError,onTrade,busy}:{token:ArcTokenBalance;onError:(message:string)=>void;onTrade?:TradeAction;busy:boolean}){
   const [copied,setCopied]=useState(false);
+  const [now,setNow]=useState(Date.now());
+  useEffect(()=>{const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[]);
   const [price,setPrice]=useState<{address:string;priceUsd:number;pricedAt:string|null}|null>(null);
   useEffect(()=>{
     if(isUsdcAsset(token.address))return;
@@ -19,14 +22,15 @@ export function HoldingCard({token,onError,onTrade,busy}:{token:ArcTokenBalance;
       const result=await loadTokenPrice(token.address);
       if(!cancelled&&result)setPrice({address:token.address.toLowerCase(),...result});
     };
-    if(token.usdValue==null)void refresh();
+    if(token.usdValue==null||!freshDisplayPrice(token.pricedAt))void refresh();
     const timer=setInterval(()=>void refresh(),60000);
     return()=>{cancelled=true;clearInterval(timer);};
-  },[token.address,token.usdValue]);
+  },[token.address,token.usdValue,token.pricedAt]);
   const balance=displayTokenAmount(token.balance,token.address);
-  const fallback=price?.address===token.address.toLowerCase()?price:null;
-  const estimatedUsd=token.usdValue??(fallback?Number(token.balance)*fallback.priceUsd:null);
-  const pricedAt=token.usdValue!=null?token.pricedAt:fallback?.pricedAt;
+  const fallback=price?.address===token.address.toLowerCase()&&freshDisplayPrice(price.pricedAt,now)?price:null;
+  const useSnapshot=token.usdValue!=null&&freshDisplayPrice(token.pricedAt,now)&&(!fallback||Date.parse(token.pricedAt!)>=Date.parse(fallback.pricedAt!));
+  const estimatedUsd=useSnapshot?token.usdValue:(fallback?Number(token.balance)*fallback.priceUsd:null);
+  const pricedAt=useSnapshot?token.pricedAt:fallback?.pricedAt;
   const usdValue=!isUsdcAsset(token.address)&&estimatedUsd!=null?formatBalanceUsd(estimatedUsd):undefined;
   return <article className="arc-holding-card">
     <div className="arc-holding-top"><div className="arc-holding-mark" aria-hidden="true">{token.symbol.slice(0,2).toUpperCase()}</div><div><h3>{token.symbol}</h3><p>{token.name}</p></div><span className="arc-holding-chain">ARC</span></div>

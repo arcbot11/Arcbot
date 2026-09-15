@@ -556,8 +556,8 @@ export const processUpdate = internalAction({
           await ctx.runAction(internal.telegramWallets.create, { updateId: args.updateId });
           reply = "TG wallet ready. This wallet is permanently linked to your Telegram account.";
         } else if (input.name === "usetg" || input.name === "usex") {
-          await ctx.runMutation(internal.telegramWallets.select, { updateId: args.updateId, selected: input.name === "usetg" ? "tg" : "x" });
-          reply = "Wallet selected.";
+          const selection = await ctx.runMutation(internal.telegramWallets.select, { updateId: args.updateId, selected: input.name === "usetg" ? "tg" : "x" });
+          reply = selection.selected ? "Wallet selected." : selection.message;
         } else if (input.name === "unlink") {
           const revoked = await ctx.runMutation(internal.telegram.unlinkUpdate, { updateId: args.updateId });
           reply = revoked ? "X unlinked from Telegram. Your X wallet and funds are unchanged." : "The original X link is no longer active. No current link was changed.";

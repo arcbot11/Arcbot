@@ -2,6 +2,7 @@
 import { isAddress } from "viem";
 import { ARC_USDC } from "./config";
 import { pairedTokenPrice } from "./paired-token-price";
+import { freshDisplayPrice } from "../price-freshness";
 export { formatTokenUsd } from "./token-value-format";
 
 type Price = { priceUsd: number; pricedAt: string | null };
@@ -15,7 +16,7 @@ async function readPrice(key: string, visited: Set<string>, signal: AbortSignal)
     });
     if (response.ok) {
       const data = await response.json();
-      if (typeof data.address === "string" && data.address.toLowerCase() === key && typeof data.priceUsd === "number" && Number.isFinite(data.priceUsd) && data.priceUsd > 0)
+      if (typeof data.address === "string" && data.address.toLowerCase() === key && typeof data.priceUsd === "number" && Number.isFinite(data.priceUsd) && data.priceUsd > 0 && typeof data.pricedAt === "string" && freshDisplayPrice(data.pricedAt))
         return { priceUsd: data.priceUsd, pricedAt: typeof data.pricedAt === "string" ? data.pricedAt : null };
     }
   } catch { /* A missing indexer price can still have a verifiable paired market. */ }
@@ -26,7 +27,7 @@ async function readPrice(key: string, visited: Set<string>, signal: AbortSignal)
   if (!quote) return null;
   const priceUsd = paired.quotePerToken * quote.priceUsd;
   const pricedAt = quote.pricedAt && Date.parse(quote.pricedAt) < Date.parse(paired.pricedAt) ? quote.pricedAt : paired.pricedAt;
-  return Number.isFinite(priceUsd) && priceUsd > 0 ? { priceUsd, pricedAt } : null;
+  return Number.isFinite(priceUsd) && priceUsd > 0 && freshDisplayPrice(pricedAt) ? { priceUsd, pricedAt } : null;
 }
 
 const prices=new Map<string,{expires:number;request:Promise<{priceUsd:number;pricedAt:string|null}|null>}>();
@@ -47,6 +48,7 @@ export async function tokenUsdEstimate(address:string,balance:string){
     if(prices.size>=500)prices.delete(prices.keys().next().value!);
     entry={expires:Infinity,request};prices.set(key,entry);
   }
-  const price=await entry.request,value=price?Number(balance)*price.priceUsd:NaN;
+  const cached=await entry.request;
+  const price=cached&&(key===ARC_USDC.toLowerCase()||freshDisplayPrice(cached.pricedAt))?cached:null,value=price?Number(balance)*price.priceUsd:NaN;
   return {usdValue:Number.isFinite(value)?value:null,pricedAt:price?.pricedAt??null};
 }

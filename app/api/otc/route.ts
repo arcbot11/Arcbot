@@ -1,4 +1,5 @@
 import { purchaseProgress } from "@/lib/otc/purchase-progress";
+import { pendingPurchases } from "@/lib/otc/pending-purchases";
 import { settlementFailure } from "@/lib/otc/settlement-error";
 import { getAddress, zeroAddress } from "viem";
 import { settlementSteps } from "@/lib/otc/escrow-model";
@@ -40,6 +41,18 @@ const bodySchema=z.discriminatedUnion("action",[
   z.object({action:z.literal("retry_payout"),orderId:id,attempt:z.number().int().min(0)}).strict(),
 ]);
 export async function GET(request:NextRequest) {
+  if(request.nextUrl.searchParams.get("scope")==="pending_purchases"){
+    try{
+      const session=await websiteSession(request),repo=repository();
+      const records=await repo.pendingPurchases(session.owner,session.walletAddress);
+      const orders=await Promise.all(pendingPurchases(records,session.owner,session.walletAddress).map(async order=>{
+        const payoutId=order.escrow?`escrow:${order.id}:arc:${order.escrow.attempts?.arc??0}`:`tx:${order.id}:payout${order.payoutAttempt?`:${order.payoutAttempt}`:""}`;
+        const tx=await repo.read<Transaction|null>({id:payoutId});
+        return {...publicOrder(order),listingId:order.listingId,received:arcOrderReceived(order,tx?[tx]:[])};
+      }));
+      return json({walletAddress:session.walletAddress,orders});
+    }catch(error){return webFailure(error);}
+  }
   if(request.nextUrl.searchParams.get("scope")==="wallet"){
     try {
       const session=await websiteSession(request),repo=repository();

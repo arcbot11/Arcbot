@@ -1,5 +1,6 @@
 "use client";
 import { ActiveStatus } from "./ActiveStatus";
+import { currentValuation } from "@/lib/price-freshness";
 import {startEstimateRefresh} from "@/lib/arc/estimate-refresh";
 import {completedTrade} from "@/lib/arc/trade-result";
 import {displayTokenAmount,isUsdcAsset} from "@/lib/amount-display";
@@ -38,7 +39,9 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{},onBusyChan
   useEffect(()=>{setCompletion(null);},[side,token,output,amount,amountUnit,slippage,walletAddress,authenticated]);
   const [tokenBalance,setTokenBalance]=useState<{wallet:string;address:string;symbol?:string;balance:string;raw:string;maxSellRaw?:string;sellTaxBps?:number;decimals:number;usdValue?:number|null;pricedAt?:string|null}|null>(null);
   const [balanceFailed,setBalanceFailed]=useState(false);
-  const selectedBalance=authenticated&&tokenBalance?.wallet.toLowerCase()===walletAddress?.toLowerCase()&&tokenBalance?.address.toLowerCase()===token.toLowerCase()?tokenBalance:null;
+  const [priceClock,setPriceClock]=useState(Date.now());
+  useEffect(()=>{const timer=setInterval(()=>setPriceClock(Date.now()),1000);return()=>clearInterval(timer);},[]);
+  const selectedBalance=authenticated&&tokenBalance?.wallet.toLowerCase()===walletAddress?.toLowerCase()&&tokenBalance?.address.toLowerCase()===token.toLowerCase()?currentValuation(tokenBalance,priceClock):null;
   useEffect(()=>{
     setTokenBalance(null);setBalanceFailed(false);
     if(disabled||busy||!authenticated||!walletAddress||!/^0x[0-9a-fA-F]{40}$/.test(token))return;

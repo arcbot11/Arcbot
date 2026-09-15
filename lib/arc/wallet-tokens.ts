@@ -1,6 +1,7 @@
 import { createPublicClient, formatUnits, getAddress, isAddress, parseAbi } from "viem";
 import {inputTransferTax,maximumSell} from "./transfer-tax";
 import { tokenUsdEstimate } from "./token-value";
+import { currentValuation } from "../price-freshness";
 import { arcDisplayConfig } from "./wallet-balance";
 import { arcTransport } from "./transport";
 import { checkArcRpc, createArcRpc } from "./rpc";
@@ -36,6 +37,9 @@ export async function arcSelectedTokenBalance(ownerAddress:string,tokenAddress:s
 }
 
 export function arcTokenBalances(address:string,known:string[]=[],fresh=false):Promise<Result>{
+  return cachedTokenBalances(address,known,fresh).then(result=>({...result,tokens:result.tokens.map(token=>currentValuation(token))}));
+}
+function cachedTokenBalances(address:string,known:string[]=[],fresh=false):Promise<Result>{
   const owner=getAddress(address),key=owner+[...new Set(known.map(a=>a.toLowerCase()))].sort().join();
   const running=pending.get(key);if(running)return running;
   const hit=cache.get(key);if(!fresh&&hit&&hit.expires>Date.now())return hit.request;

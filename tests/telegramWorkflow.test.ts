@@ -60,7 +60,7 @@ describe("Telegram update execution boundary", () => {
   afterEach(()=>{vi.unstubAllGlobals();vi.unstubAllEnvs();});
   async function run(text:string,callback=false,result: {ok:boolean;message:string;pending?:boolean;deferred?:boolean;processing?:boolean}={ok:true,message:"Arc transaction confirmed."}) {
     const ctx={
-      runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegram:consumeRateLimit"?true:getFunctionName(ref)==="telegram:consumeLinkNonce"?{status:"linked"}:getFunctionName(ref)==="walletExports:requestTelegramConfirmation"?{code:"abcdef12"}:getFunctionName(ref)==="walletExports:startTelegram"?{url:"https://keys.argosbot.io/api/key-export/view#ticket=test"}:null),
+      runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegram:consumeRateLimit"?true:getFunctionName(ref)==="telegramWallets:select"?{selected:true}:getFunctionName(ref)==="telegram:consumeLinkNonce"?{status:"linked"}:getFunctionName(ref)==="walletExports:requestTelegramConfirmation"?{code:"abcdef12"}:getFunctionName(ref)==="walletExports:startTelegram"?{url:"https://keys.argosbot.io/api/key-export/view#ticket=test"}:null),
       runQuery:vi.fn(async()=>({valid:true,link:{_id:"link1",ownerXUserId:"99"}})),
       runAction:vi.fn(async(_ref:Parameters<typeof getFunctionName>[0],_args:Record<string,unknown>)=>result),
     };
@@ -68,6 +68,15 @@ describe("Telegram update execution boundary", () => {
     await (processUpdate as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{updateId:"42",updateJson:JSON.stringify(update)});
     return ctx;
   }
+  it.each(["usetg","usex"])("gives linking instructions for an unlinked %s wallet without transaction warnings",async command=>{
+    const message=command==="usetg"?"Create your Telegram-linked wallet first. Use /createtg.":"Link your X wallet first. Use /link.";
+    const ctx={runMutation:vi.fn(async(ref:Parameters<typeof getFunctionName>[0])=>getFunctionName(ref)==="telegram:consumeRateLimit"?true:getFunctionName(ref)==="telegramWallets:select"?{selected:false,message}:null),runQuery:vi.fn(async()=>({native:null,link:null,selected:null})),runAction:vi.fn()};
+    await (processUpdate as unknown as {_handler:(ctx:unknown,args:unknown)=>Promise<void>})._handler(ctx,{updateId:"unlinked",updateJson:JSON.stringify({message:{message_id:2,text:"/"+command,from:{id:1},chat:{id:1,type:"private"}}})});
+    const sent=vi.mocked(fetch).mock.calls.map(c=>JSON.parse(String(c[1]?.body)).text).join("\n");
+    expect(sent).toContain(message);expect(sent).not.toMatch(/Check wallet activity|Result unavailable|Wallet selected/);
+    expect(ctx.runAction).not.toHaveBeenCalled();
+    expect(ctx.runMutation).toHaveBeenLastCalledWith(expect.anything(),{updateId:"unlinked",status:"completed"});
+  });
   it("asks for typed confirmation before creating any TG verification link",async()=>{
     const ctx=await run("/export");const calls=ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]));
     expect(calls).toContain("walletExports:requestTelegramConfirmation");expect(calls).not.toContain("walletExports:startTelegram");
