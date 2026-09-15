@@ -9,9 +9,9 @@ import { prepareCall, advanceTransaction } from "../otc/runtime";
 import { launchIdentity } from "./input";
 import { prepareLaunch } from "./prepare";
 import { verifyLaunchImage } from "./image-preflight";
-import { assertLaunchEnabled, assertLaunchTransaction, launchCall } from "./execution-checks";
+import { assertLaunchEnabled, assertLaunchTransaction, assertLaunchAuthorization, launchCall } from "./execution-checks";
 import { launchTransactionId, type LaunchRun, type LaunchStepTerms } from "./execution-types";
-import { LaunchError } from "./policy";
+import { LaunchError, retryableLaunchError, LAUNCH_TOTAL_GAS_WEI } from "./policy";
 
 export function launchBackend(owner:string,address:string,requestId:string){
   const url=process.env.NEXT_PUBLIC_CONVEX_URL,secret=process.env.WEB_AUTH_SECRET;
@@ -24,7 +24,7 @@ export function launchBackend(owner:string,address:string,requestId:string){
 export async function advanceLaunch(owner:string,address:string,requestId:string):Promise<LaunchRun>{
   assertLaunchEnabled();
   try{return await advanceLaunchAttempt(owner,address,requestId);}catch(error){
-    if(error instanceof LaunchError){const backend=launchBackend(owner,address,requestId),run=await backend.read();
+    if(error instanceof LaunchError && !retryableLaunchError(error)){const backend=launchBackend(owner,address,requestId),run=await backend.read();
       if(run?.status==="running"){const id=run.steps.at(-1),tx=id?await repository().read<Transaction|null>({id}):null;
         if(tx?.status==="prepared"&&tx.recoveryVersion===1&&tx.signingStartedAt===undefined&&!tx.raw&&!tx.hash)await repository().command("cancel_unsigned_trade",{id,owner});
         return backend.mutate<LaunchRun>("stopUnstarted",{note:error.message});}
@@ -46,19 +46,20 @@ async function advanceLaunchAttempt(owner:string,address:string,requestId:string
       if(tx.launchStep!.kind==="launch")return backend.mutate<LaunchRun>("reconcile");
       continue;
     }
+    assertLaunchAuthorization(run);
     const image=await verifyLaunchImage(run.input.imageURI);
     if(image.sha256!==run.preview.image?.sha256)throw new LaunchError("IMAGE_CHANGED","Launch image changed. Review a new draft.");
     const identity=launchIdentity(owner,address),config=arcConfigFromEnv();
     const wallet=await repo.read<Wallet|null>({id:walletId(5042,address)});
     const preview=await prepareLaunch({identity,input:run.input,tokenSalt:run.preview.tokenSalt,config,rpc:createArcRpc(config),image,
-      reservedWei:wallet?locked(wallet):0n,activeTransaction:!!wallet?.activeTx,frozenQuote:run.preview.quote});
+      reservedWei:wallet?locked(wallet):0n,activeTransaction:!!wallet?.activeTx,frozenQuote:run.preview.quote,verifiedHook:run.preview});
     if(preview.predictedToken!==run.preview.predictedToken||preview.predictedHook!==run.preview.predictedHook||preview.predictedSplitter!==run.preview.predictedSplitter)throw Error("Launch contract predictions changed.");
     const step=preview.steps[0],terms:LaunchStepTerms={requestId,index,kind:step.kind,input:run.input,preview};
     // Keep every accepted setup/launch attempt inside a total 0.5 USDC gas cap.
     let previousGas=0n;
     for(const previousId of run.steps){const previous=await repo.read<Transaction|null>({id:previousId});if(previous){const parsed=parseTransaction(previous.unsigned as Hex);previousGas+=BigInt(previous.settlement?.gasWei??String((parsed.gas??0n)*(parsed.maxFeePerGas??0n)));}}
-    const prepared=await prepareCall(5042,{from:identity.address,...launchCall(terms)});
-    if(previousGas+BigInt(prepared.gasWei)>500_000_000_000_000_000n)throw new LaunchError("GAS_LIMIT","Launch gas exceeds the accepted 0.5 USDC total allowance. Review before continuing.");
+    const prepared=await prepareCall(5042,{from:identity.address,...launchCall(terms)},false,false,{owner,terms});
+    if(previousGas+BigInt(prepared.gasWei)>LAUNCH_TOTAL_GAS_WEI)throw new LaunchError("GAS_LIMIT","Launch gas exceeds the accepted 0.5 USDC total allowance. Review before continuing.");
     await backend.mutate("step",{index,id});
     tx=await repo.command<Transaction>("prepare",{id,owner,wallet:identity.address,chainId:5042,leg:"launch",launchStep:terms,
       unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,balanceWei:prepared.snapshot.balanceWei,block:prepared.snapshot.block,
@@ -75,12 +76,13 @@ export async function assertLaunchSigning(tx:Transaction){
   assertLaunchTransaction(tx.owner,tx.wallet,tx.unsigned as Hex,terms);
   const run=await launchBackend(tx.owner,tx.wallet,terms.requestId).read();
   if(!run||run.status!=="running"||run.steps[terms.index]!==tx.id||JSON.stringify(run.input)!==JSON.stringify(terms.input)||JSON.stringify(run.preview.quote)!==JSON.stringify(terms.preview.quote))throw Error("Launch authorization changed.");
+  assertLaunchAuthorization(run);
   const image=await verifyLaunchImage(run.input.imageURI);
   if(image.sha256!==run.preview.image?.sha256)throw new LaunchError("IMAGE_CHANGED","Launch image changed after review.");
   const config=arcConfigFromEnv(),rpc=createArcRpc(config),w=await repository().read<Wallet>({id:walletId(5042,tx.wallet)});
   const preview=await prepareLaunch({identity:launchIdentity(tx.owner,tx.wallet),input:run.input,tokenSalt:run.preview.tokenSalt,config,rpc,image,frozenQuote:run.preview.quote,
-    reservedWei:locked(w)-BigInt(w.holds[tx.holdId]??"0"),activeTransaction:!!w.activeTx&&w.activeTx!==tx.id});
+    reservedWei:locked(w)-BigInt(w.holds[tx.holdId]??"0"),activeTransaction:!!w.activeTx&&w.activeTx!==tx.id,verifiedHook:run.preview});
   const expected=preview.steps.find(s=>s.kind===terms.kind),parsed=parseTransaction(tx.unsigned as Hex);
   if(!expected||expected.call.data!==parsed.data||expected.call.to.toLowerCase()!==parsed.to?.toLowerCase()||terms.kind==="launch"&&preview.status!=="simulated")throw Error("Launch prerequisites changed before signing.");
-  if(BigInt(expected.gas??"0")>(parsed.gas??0n))throw Error("Launch gas estimate changed. No new signature was requested.");
+  if(BigInt(expected.estimatedGas??expected.gas??"0")>(parsed.gas??0n))throw new LaunchError("GAS_LIMIT", "Launch gas exceeds the saved allowance. Review a new draft.");
 }

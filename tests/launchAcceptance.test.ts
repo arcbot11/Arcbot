@@ -18,6 +18,17 @@ it("accepts one immutable run and schedules recovery exactly once",async()=>{
   const f=fixture();await f.call(execution.accept);await f.call(execution.accept);
   expect(f.tables.launchRuns).toHaveLength(1);expect(f.ctx.scheduler.runAfter).toHaveBeenCalledTimes(1);expect(f.tables.launchDrafts[0]).toMatchObject({status:"executing",revision:3});
 });
+it("freezes X authorization expiry at the original command time",async()=>{
+  const f=fixture(),createdAt=Date.now()-600000;
+  f.tables.walletRequests=[{requestId:"x-launch",source:"x",ownerXUserId:owner,kind:"launch",_creationTime:createdAt}];
+  const run=await f.call(execution.accept,{sourceRequestId:"x-launch"});
+  expect(run.authorizationExpiresAt).toBe(createdAt+1800000);
+});
+it("rejects an already expired X command before accepting a run",async()=>{
+  const f=fixture();f.tables.walletRequests=[{requestId:"x-launch",source:"x",ownerXUserId:owner,kind:"launch",_creationTime:Date.now()-1800001}];
+  await expect(f.call(execution.accept,{sourceRequestId:"x-launch"})).rejects.toThrow("authorization expired");
+  expect(f.tables.launchRuns).toHaveLength(0);
+});
 it.each(["expiry","revision","image","preparing","owner"])("rejects invalid acceptance: %s",async reason=>{
   const f=fixture(),d=f.tables.launchDrafts[0],extra:Row={};
   if(reason==="expiry")d.expiresAt=0;if(reason==="revision")extra.revision=1;if(reason==="owner")extra.owner="2";
@@ -56,4 +67,14 @@ it("adds a verified token to the directory without replacing an existing ticker"
   f.tables.otcRecords.push({key:id,status:"completed",json:JSON.stringify({owner,wallet:address,status:"completed",launchStep:{requestId,kind:"launch"},hash:"0x123",
     settlement:{launch:{hash:"0x123",token:address,creator:address}}})});
   await f.call(execution.reconcile);expect(f.tables.verifiedBotLaunches).toHaveLength(1);expect(f.tables.tokenRegistry).toEqual([{symbol:"EX",address:"existing",normalizedAddress:"existing"}]);
+});
+
+it("stopping an unsigned run terminates its draft in the same mutation",async()=>{
+ const f=fixture();await f.call(execution.accept);const run=await f.call(execution.stopUnstarted,{note:"Authorization expired"});
+ expect(run.status).toBe("blocked");expect(f.tables.launchDrafts[0].status).toBe("cancelled");
+});
+it.each(["reverted","cancelled"])("reconciling a %s step terminates its draft",async status=>{
+ const f=fixture();await f.call(execution.accept);const id=`launch:1:${requestId}:0`;await f.call(execution.step,{index:0,id});
+ f.tables.otcRecords.push({key:id,status,json:JSON.stringify({owner,wallet:address,status,launchStep:{requestId,kind:"approval"}})});
+ expect((await f.call(execution.reconcile)).status).toBe("blocked");expect(f.tables.launchDrafts[0].status).toBe("cancelled");
 });

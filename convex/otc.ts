@@ -137,6 +137,14 @@ export const command = mutation({
       case "escrow_gas_allowance": return authorizeGasRecovery(store,input.listingId,input.orderId,input.owner,input.limitWei,input.arc===true,now);
       case "begin_signing": {
         const tx = await store.get<import("../lib/otc/model").Transaction>(input.id);
+        if(tx?.leg === "launch" && tx.signingStartedAt === undefined){
+          const row=await ctx.db.query("launchRuns").withIndex("by_owner_request",q=>q.eq("owner",tx.owner).eq("requestId",tx.launchStep?.requestId??"")).unique();
+          const run=row?JSON.parse(row.json) as import("../lib/launches/execution-types").LaunchRun:null;
+          const {assertLaunchAuthorization}=await import("../lib/launches/execution-checks");
+          let valid=!!run&&run.status==="running"&&run.address.toLowerCase()===tx.wallet.toLowerCase()&&run.steps[tx.launchStep!.index]===tx.id;
+          if(run){try{assertLaunchAuthorization(run,now);}catch{valid=false;}}
+          if(!valid)return cancelUnsignedTrade(store,input.id,now,tx.owner);
+        }
         if (tx?.sourceRequestId && !tx.signingStartedAt) {
           const request = await ctx.db.query("walletRequests").withIndex("by_request_id", q => q.eq("requestId", tx.sourceRequestId!)).unique();
           if (request?.source === "telegram") {

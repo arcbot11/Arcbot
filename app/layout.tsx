@@ -1,8 +1,6 @@
 import type { Metadata } from "next";
 import { WalletSessionProvider } from "@/components/WalletSessionProvider";
 import { WalletSignInRecovery } from "@/components/WalletSignInRecovery";
-import { ARC_SERVICE_NOTICE } from "@/lib/service-notice";
-import noticeStyles from "@/components/ServiceNotice.module.css";
 import "./globals.css";
 import "./arc-design.css";
 import "./otc.css";
@@ -32,5 +30,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en"><body><aside className={noticeStyles.notice} aria-label="Arc network service notice"><p>{ARC_SERVICE_NOTICE}</p></aside><WalletSessionProvider><WalletSignInRecovery />{children}</WalletSessionProvider></body></html>;
+  return <html lang="en"><body><WalletSessionProvider><WalletSignInRecovery />{children}</WalletSessionProvider></body></html>;
 }

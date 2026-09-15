@@ -8,6 +8,7 @@ import { PersistentNotices, usePersistentNotices } from "./PersistentNotices";
 import { ActiveStatus } from "./ActiveStatus";
 import { LaunchReview } from "./LaunchReview";
 import { parseAllocation } from "@/lib/launches/allocation";
+import { awaitingLaunchAcceptance, launchTrackingId, canStartNewLaunchDraft } from "@/lib/launches/tracking";
 import { currentLaunchPreview, draftForm, emptyLaunchForm, formInput, type LaunchDraft, type LaunchForm } from "@/lib/launches/form";
 import styles from "./LaunchPreparation.module.css";
 
@@ -15,9 +16,11 @@ type Write = { action: "create" | "update"; requestId: string; revision?: number
   | { action: "prepare" | "cancel" | "resume"; requestId: string }
   | {action:"execute";requestId:string;revision:number};
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-function remember(requestId: string | null) {
+function remember(requestId: string | null, awaitingExecution = false, wallet?:string) {
   const url = new URL(window.location.href);
   if (requestId) url.searchParams.set("draft", requestId); else url.searchParams.delete("draft");
+  if (requestId && awaitingExecution) url.searchParams.set("launchPending", "1"); else url.searchParams.delete("launchPending");
+  if(requestId&&awaitingExecution&&wallet)url.searchParams.set("launchWallet",wallet.toLowerCase());else url.searchParams.delete("launchWallet");
   window.history.replaceState(null, "", url);
 }
 export function LaunchPreparation() {
@@ -31,6 +34,8 @@ export function LaunchPreparation() {
 function LaunchEditor({ session }: { session: WalletSession }) {
   const [form, setForm] = useState<LaunchForm>({ ...emptyLaunchForm });
   const [draft, setDraft] = useState<LaunchDraft | null>(null), [pending, setPending] = useState<Write | null>(null);
+  const [uncertainId, setUncertainId] = useState<string | null>(null);
+  const uncertain = useRef<string | null>(null);
   const [busy, setBusy] = useState(""), [now, setNow] = useState(Date.now());
   const request = useRef<AbortController | null>(null), alive = useRef(true);
   const { notices, notify, dismiss } = usePersistentNotices();
@@ -38,7 +43,8 @@ function LaunchEditor({ session }: { session: WalletSession }) {
   const walletLabel = session.provider === "telegram" ? "Telegram-linked wallet" : `X-linked wallet${session.username ? ` for @${session.username.replace(/^@/, "")}` : ""}`;
   useEffect(() => { alive.current = true; return () => { alive.current = false; request.current?.abort(); }; }, []);
   useEffect(() => {
-    const id = new URL(window.location.href).searchParams.get("draft");
+    const params = new URL(window.location.href).searchParams, id = params.get("draft");
+    if(id && uuid.test(id) && params.get("launchPending")==="1" && params.get("launchWallet")===wallet.toLowerCase()){uncertain.current=id;setUncertainId(id);}
     if (id && uuid.test(id)) void reload(id);
     // Load once per mounted wallet; no automatic RPC simulation loop.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -52,21 +58,28 @@ function LaunchEditor({ session }: { session: WalletSession }) {
   }, [draft]);
   function accept(next: LaunchDraft) {
     if (next.address.toLowerCase() !== wallet.toLowerCase() || next.executionEnabled !== false) throw Error("Wallet or launch settings changed. Reload this page.");
-    setDraft(next); setForm(draftForm(next.input)); setPending(null); setNow(Date.now()); remember(next.requestId);
+    // A stale read before acceptance commits is not evidence that execution failed.
+    const awaiting = awaitingLaunchAcceptance(next,uncertain.current);
+    if(!awaiting){uncertain.current=null;setUncertainId(null);setPending(null);}
+    setDraft(next); setForm(draftForm(next.input)); setNow(Date.now()); remember(next.requestId,awaiting||next.run?.status==="running",wallet);
   }
   useEffect(()=>{
-    if(draft?.run?.status!=="running")return;
-    const timer=setInterval(()=>void reload(draft.requestId,true),3000);return()=>clearInterval(timer);
+    const id=launchTrackingId(draft,uncertainId);
+    if(!id)return;
+    const timer=setInterval(()=>void reload(id,true),3000);return()=>clearInterval(timer);
     // The account-scoped controller owns the poll and prevents overlapping requests.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[draft?.requestId,draft?.run?.status]);
+  },[draft?.requestId,draft?.run?.status,uncertainId]);
   async function reload(id = pending?.requestId ?? draft?.requestId, quiet=false) {
     if (!id || request.current) return;
     const controller = new AbortController(); request.current = controller; setBusy("Loading draft");
     try {
       const response = await fetch(`/api/wallet/launches?requestId=${encodeURIComponent(id)}`, { cache: "no-store", signal: AbortSignal.any([controller.signal, AbortSignal.timeout(20000)]) });
       if (!alive.current || controller.signal.aborted) return;
-      if (response.status === 404) { setPending(null); setDraft(null); remember(null); notify("Draft not found. Save your settings to create one."); return; }
+      if (response.status === 404) {
+        if(uncertain.current===id)return; // Keep reconciling an uncertain confirmation.
+        setPending(null); setDraft(null); remember(null); notify("Draft not found. Save your settings to create one."); return;
+      }
       const result = await response.json();
       if (!response.ok) throw Error(result.error ?? "Draft could not be loaded.");
       if (!alive.current || controller.signal.aborted) return;
@@ -76,7 +89,10 @@ function LaunchEditor({ session }: { session: WalletSession }) {
   }
   async function write(body: Write) {
     if (request.current) return;
-    const controller = new AbortController(); request.current = controller; setPending(body); remember(body.requestId);
+    const controller = new AbortController(); request.current = controller; setPending(body);
+    const executing=body.action==="execute"||body.action==="resume";
+    if(executing){uncertain.current=body.requestId;setUncertainId(body.requestId);}
+    remember(body.requestId,executing||uncertain.current===body.requestId,wallet);
     setBusy(body.action === "execute" || body.action === "resume" ? "Launch processing" : body.action === "prepare" ? "Simulating launch" : body.action === "cancel" ? "Cancelling draft" : "Saving draft");
     try {
       const response = await fetch("/api/wallet/launches", { method: "POST", headers: { "content-type": "application/json", "x-argus-csrf": session.csrfToken ?? "" },
@@ -87,8 +103,11 @@ function LaunchEditor({ session }: { session: WalletSession }) {
       accept(result);
       notify(result.run ? result.run.status === "completed" ? "Launch confirmed." : result.run.note ?? "Launch processing." : body.action === "prepare" ? "Preparation complete. No transaction was submitted." : body.action === "cancel" ? "Draft cancelled." : "Draft saved.");
     } catch (e) {
-      if (alive.current && !controller.signal.aborted) notify(e instanceof Error && !/AbortError|TimeoutError/.test(e.name) ? e.message : body.action === "execute" || body.action === "resume" ? "Launch status could not be loaded. Reload the saved request." : "Request timed out. Reload the saved draft or retry the same request. No transaction was submitted.");
-    } finally { if (request.current === controller) request.current = null; if (alive.current) setBusy(""); }
+      if (alive.current && !controller.signal.aborted) notify(e instanceof Error && !/AbortError|TimeoutError/.test(e.name) ? e.message : body.action === "execute" || body.action === "resume" ? "Checking the saved launch status. Tracking will continue automatically." : "Request timed out. Reload the saved draft or retry the same request. No transaction was submitted.");
+    } finally {
+      if (request.current === controller) request.current = null;
+      if (alive.current) {setBusy("");if(uncertain.current===body.requestId)void reload(body.requestId,true);}
+    }
   }
   let input: ReturnType<typeof formInput> | null = null, validation = "";
   try { input = formInput(form); } catch (e) { validation = e instanceof Error ? e.message : "Check the token settings."; }
@@ -96,7 +115,7 @@ function LaunchEditor({ session }: { session: WalletSession }) {
   try { const allocation = parseAllocation(form.allocationText); if (allocation.remainderToCreatorBps) allocationHint = `${allocation.remainderToCreatorBps / 100}% unassigned → creator.`; }
   catch (e) { allocationError = e instanceof Error ? e.message : "Clarify the allocation."; }
   const dirty = !draft || !input || JSON.stringify(input) !== JSON.stringify(draft.input);
-  const editable = !busy && !pending && !["cancelled","executing","completed"].includes(draft?.status??"") && (!draft || draft.expiresAt > now);
+  const editable = !busy && !pending && !uncertainId && !["cancelled","executing","completed"].includes(draft?.status??"") && (!draft || draft.expiresAt > now);
   const validDraft = draft && !["cancelled","executing","completed"].includes(draft.status) && draft.expiresAt > now;
   const preview = draft && !dirty ? currentLaunchPreview(draft, now) : null;
   function save(event: FormEvent) {
@@ -136,13 +155,14 @@ function LaunchEditor({ session }: { session: WalletSession }) {
         </fieldset>
       </form>
       <div className={styles.actions}>
-        {LAUNCH_EXECUTION_ENABLED && preview && !dirty && <button type="button" disabled={!!(busy||pending)} onClick={()=>void write({action:"execute",requestId:draft!.requestId,revision:draft!.revision})}>Confirm launch</button>}
+        {LAUNCH_EXECUTION_ENABLED && preview && !dirty && <button type="button" disabled={!!(busy||pending||uncertainId)} onClick={()=>void write({action:"execute",requestId:draft!.requestId,revision:draft!.revision})}>Confirm launch</button>}
         {draft?.run && <p role="status">{draft.run.status === "completed" ? <>Launch confirmed. <a href={`https://arguspad.io/token/${draft.run.result?.token}`}>View token</a></> : draft.run.note ?? "Launch processing…"}</p>}
-        {validDraft && <button className="button" type="button" disabled={Boolean(busy || pending || dirty)} onClick={() => void write({ action: "prepare", requestId: draft.requestId })}>Prepare simulation</button>}
-        {validDraft && <button type="button" disabled={Boolean(busy || pending)} onClick={() => void write({ action: "cancel", requestId: draft.requestId })}>Cancel draft</button>}
+        {validDraft && <button className="button" type="button" disabled={Boolean(busy || pending || uncertainId || dirty)} onClick={() => void write({ action: "prepare", requestId: draft.requestId })}>Prepare simulation</button>}
+        {validDraft && <button type="button" disabled={Boolean(busy || (pending&&!uncertainId))} onClick={() => void write({ action: "cancel", requestId: draft.requestId })}>{uncertainId ? "Cancel unaccepted draft" : "Cancel draft"}</button>}
         {(draft || pending) && <button type="button" disabled={Boolean(busy)} onClick={() => void reload()}>Reload saved draft</button>}
+        {uncertainId && !pending && !busy && draft?.status==="prepared" && <button type="button" onClick={()=>void write({action:"execute",requestId:draft.requestId,revision:draft.revision})}>Retry same confirmation</button>}
         {pending && !busy && <button type="button" onClick={() => void write(pending)}>Retry same request</button>}
-        {draft && (draft.status === "cancelled" || draft.expiresAt <= now || draft.run?.status === "blocked") && <button type="button" disabled={Boolean(busy || pending)} onClick={() => {
+        {draft && canStartNewLaunchDraft(draft,now) && <button type="button" disabled={Boolean(busy || pending || uncertainId)} onClick={() => {
           setDraft(null); setForm({ ...emptyLaunchForm }); remember(null); notices.forEach(dismiss);
         }}>New draft</button>}
       </div>

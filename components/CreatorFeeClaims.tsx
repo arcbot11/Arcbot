@@ -8,13 +8,19 @@ export function CreatorFeeClaims({wallet,onComplete}:{wallet:string;onComplete:(
   const [busy,setBusy]=useState(false),[message,setMessage]=useState(""),[hash,setHash]=useState("");
   const [discoveryError,setDiscoveryError]=useState(false),[reload,setReload]=useState(0);
   const active=useRef(true),attempt=useRef<{requestId:string;token:string}|null>(null);
+  const discovered=useRef<{wallet:string;tokens:Array<{token:string;symbol:string}>}>({wallet,tokens:[]});
   const storageKey=`creator-claim:${wallet.toLowerCase()}`;
   const clearAttempt=()=>{attempt.current=null;try{sessionStorage.removeItem(storageKey);}catch{/* Storage is optional. */}};
   useEffect(()=>{
     const controller=new AbortController();active.current=true;
+    if(discovered.current.wallet!==wallet){discovered.current={wallet,tokens:[]};setTokens([]);setSelected("");}
     try{const saved=JSON.parse(sessionStorage.getItem(storageKey)??"null");if(saved&&/^[\da-f-]{36}$/i.test(saved.requestId)&&/^0x[\da-f]{40}$/i.test(saved.token)){attempt.current=saved;setMessage("Previous claim request saved. Retry to check its status.");}}catch{/* Ignore invalid browser storage. */}
     setDiscoveryError(false);let retry:ReturnType<typeof setTimeout>|undefined;
-    const load=async(attemptNumber=0):Promise<void>=>{try{const response=await fetch("/api/wallet/fees",{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(25000)])});if(!response.ok)throw Error("Discovery unavailable");const result=await response.json();if(!controller.signal.aborted&&result.wallet?.toLowerCase()===wallet.toLowerCase()){setTokens(result.tokens);setSelected(attempt.current?.token??result.tokens[0]?.token??"");if(result.incomplete){setDiscoveryError(true);if(attemptNumber<2)retry=setTimeout(()=>void load(attemptNumber+1),2000*(attemptNumber+1));}else setDiscoveryError(false);}}catch{if(controller.signal.aborted)return;if(attemptNumber<2)retry=setTimeout(()=>void load(attemptNumber+1),1000*(attemptNumber+1));else setDiscoveryError(true);}};
+    const load=async(attemptNumber=0):Promise<void>=>{try{const response=await fetch("/api/wallet/fees",{cache:"no-store",signal:AbortSignal.any([controller.signal,AbortSignal.timeout(25000)])});if(!response.ok)throw Error("Discovery unavailable");const result=await response.json();if(!controller.signal.aborted&&result.wallet?.toLowerCase()===wallet.toLowerCase()){
+      const fresh=result.tokens as Array<{token:string;symbol:string}>;
+      const next=result.incomplete?[...new Map([...discovered.current.tokens,...fresh].map(token=>[token.token.toLowerCase(),token])).values()]:fresh;
+      discovered.current={wallet,tokens:next};setTokens(next);setSelected(attempt.current?.token??next[0]?.token??"");
+      if(result.incomplete){setDiscoveryError(true);if(attemptNumber<2)retry=setTimeout(()=>void load(attemptNumber+1),2000*(attemptNumber+1));}else setDiscoveryError(false);}}catch{if(controller.signal.aborted)return;if(attemptNumber<2)retry=setTimeout(()=>void load(attemptNumber+1),1000*(attemptNumber+1));else setDiscoveryError(true);}};
     void load();
     return()=>{active.current=false;controller.abort();if(retry)clearTimeout(retry);};
   },[wallet,storageKey,reload]);

@@ -7,7 +7,7 @@ const secret = "test-server-secret-".repeat(3), requestId = "00000000-0000-4000-
 const input = { name: "Example", symbol: "EXAMPLE", imageURI: "ipfs://Qm" + "a".repeat(44),
   buyTaxBps: 100, sellTaxBps: 100, creatorBps: 10000, burnBps: 0, dividendBps: 0, liquidityBps: 0 };
 function fixture() {
-  const tables: Record<string, Row[]> = { launchDrafts: [], xReplyUsers: [{ xUserId: "1", walletId: "x1" }],
+  const tables: Record<string, Row[]> = { launchRuns: [], launchDrafts: [], xReplyUsers: [{ xUserId: "1", walletId: "x1" }],
     cryptoWallets: [{ _id: "x1", ownerXUserId: "1", address, signerWalletRef: address, chainId: 5042, status: "active" }],
     telegramNativeWallets: [{ _id: "t1", telegramUserId: "1", telegramChatId: "1", address: other, signerWalletRef: other }] };
   const all = () => Object.values(tables).flat();
@@ -31,6 +31,11 @@ function fixture() {
   return { tables, call, create };
 }
 beforeEach(() => { vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED", "true"); vi.stubEnv("WEB_AUTH_SECRET", secret); });
+it("completed launches do not consume the active draft quota",async()=>{
+  const f=fixture();
+  for(let i=0;i<10;i++)f.tables.launchDrafts.push({_id:`old-${i}`,owner:"1",requestId:`old-${i}`,status:"completed",createdAt:Date.now()-120000,expiresAt:Date.now()+60000});
+  await expect(f.create()).resolves.toMatchObject({status:"draft"});
+});
 afterEach(() => vi.unstubAllEnvs());
 it("retains one salt and one draft when the request is retried", async () => {
   const f = fixture(), a = await f.create(), b = await f.create();
@@ -126,4 +131,13 @@ it.each(["owner", "wallet", "cancelled", "expired", "revision", "minimum", "tax"
   const before = JSON.stringify(f.tables.launchDrafts);
   await expect(f.call(drafts.update, args)).rejects.toThrow();
   expect(JSON.stringify(f.tables.launchDrafts)).toBe(before);
+});
+
+it("repairs old terminal runs so stopped drafts no longer consume quota",async()=>{
+ const f=fixture();for(let i=0;i<10;i++){
+ f.tables.launchDrafts.push({_id:"d"+i,requestId:"old"+i,owner:"1",address,status:"executing",createdAt:Date.now()-120000,expiresAt:Date.now()+60000});
+ f.tables.launchRuns.push({requestId:"old"+i,owner:"1",address,status:"blocked"});
+ }
+ await expect(f.create()).resolves.toMatchObject({status:"draft"});
+ expect(f.tables.launchDrafts.slice(0,10).every(d=>d.status==="cancelled")).toBe(true);
 });

@@ -1,4 +1,4 @@
-param([ValidateRange(1,9999)][int]$StartAt=1, [ValidateRange(1,9999)][int]$EndAt=8, [ValidatePattern('^(Personal|tempwallet)[1-9][0-9]{0,3}$')][string]$Name, [switch]$CheckOnly, [switch]$FromClipboard, [switch]$ValidateOnly, [switch]$SelfTest)
+param([ValidateRange(1,9999)][int]$StartAt=1, [ValidateRange(1,9999)][int]$EndAt=8, [ValidatePattern('^(?:(Personal|tempwallet)[1-9][0-9]{0,3}|arguswallet|realwallet)$')][string]$Name, [switch]$CheckOnly, [switch]$FromClipboard, [switch]$ValidateOnly, [switch]$SelfTest)
 $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $helperPath = Join-Path $PSScriptRoot 'import-personal-wallet.mjs'

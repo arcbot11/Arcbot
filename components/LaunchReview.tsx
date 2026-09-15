@@ -1,4 +1,5 @@
 import { launchImageSource } from "../lib/launches/image";
+import { LAUNCH_EXECUTION_ENABLED } from "@/lib/launches/policy";
 import { formatUnits } from "viem";
 import { displayUsdc } from "@/lib/amount-display";
 import { allocationSummary } from "@/lib/launches/form";
@@ -48,6 +49,8 @@ export function LaunchReview({ input, wallet, walletLabel, preview, expired = fa
       <p className={styles.hint}>No token has been deployed at this predicted address by this preparation.</p>
     </div> : <p className={styles.hint}>{expired ? "Simulation expired. Prepare again for current network checks." : "Save and prepare to check funding and simulate."}</p>}
     {input.devBuyUSDC !== "0" && <p className={styles.hint}>The creator buy is price-limited. Any unspent amount is refunded by the launch contract.</p>}
-    <p className={styles.hint}>Preparation only. No transaction will be signed or sent.</p>
+    <p className={styles.hint}>{LAUNCH_EXECUTION_ENABLED
+      ? "Confirm launch authorizes the setup transactions and token deployment shown here. Preparation alone does not send transactions."
+      : "Preparation only. No transaction will be signed or sent."}</p>
   </section>;
 }

@@ -3,7 +3,7 @@ export function personalWalletError(error, stage) {
   if(error instanceof KeyInputError)return error.message;
   const messages = {
     configuration: "CDP credentials are missing from .env.local.",
-    name: "Choose Personal1 through Personal9999 or tempwallet1 through tempwallet9999.",
+    name: "Choose Personal1 through Personal9999, tempwallet1 through tempwallet9999, arguswallet, or realwallet.",
     key: "Invalid private key. Enter a 32-byte hexadecimal EVM private key.",
     name_taken: "This CDP name belongs to another address. Nothing was replaced.",
     already_registered: "This address is already registered in CDP under another name. Nothing was renamed.",

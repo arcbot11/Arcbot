@@ -89,7 +89,8 @@ export async function ethPrice() {
   return { ethUsdMicros: exactAmount(json.data.amount,6).toString(), priceAt: Date.now() };
 }
 export type Call = {from:Address;to:Address;data:Hex;value:bigint};
-export async function prepareCall(chain: Chain, call: Call, allowGasShortfall=false, estimateUnfundedNative=false) {
+export async function prepareCall(chain: Chain, call: Call, allowGasShortfall=false, estimateUnfundedNative=false, launchContext?: {owner: string; terms: NonNullable<Transaction["launchStep"]>}) {
+  const launchTerms = launchContext?.terms;
   const spend = nativeSpend(chain, call);
   const snapshot = await balanceSnapshot(chain,call.from);
   if (snapshot.nonce !== snapshot.pendingNonce) throw new Error("Wallet has a pending transaction.");
@@ -111,8 +112,14 @@ export async function prepareCall(chain: Chain, call: Call, allowGasShortfall=fa
   const gas = ((await client.estimateGas({account:call.from,to:call.to,data:call.data,value:simulationValue,blockNumber}))*120n+99n)/100n;
   const fees = await client.estimateFeesPerGas({type:"eip1559",chain:null});
   const config = chain === 5042 ? arcConfigFromEnv() : baseConfigFromEnv();
-  if (gas <= 0n || gas > config.maxGas || fees.maxFeePerGas <= 0n || fees.maxFeePerGas > config.maxFeePerGas || fees.maxPriorityFeePerGas < 0n || fees.maxPriorityFeePerGas > fees.maxFeePerGas) throw new Error("Gas exceeds the configured policy.");
+  const maxGas = launchTerms?.kind === "launch" && chain === 5042 ? (await import("../launches/policy")).LAUNCH_MAX_GAS : config.maxGas;
+  if (gas <= 0n || gas > maxGas || fees.maxFeePerGas <= 0n || fees.maxFeePerGas > config.maxFeePerGas || fees.maxPriorityFeePerGas < 0n || fees.maxPriorityFeePerGas > fees.maxFeePerGas) throw new Error("Gas exceeds the configured policy.");
   const tx = {chainId:chain,type:"eip1559" as const,to:call.to,data:call.data,value:call.value,nonce:snapshot.nonce,gas,...fees};
+  if (launchTerms) {
+    const checks = await import("../launches/execution-checks");
+    checks.assertLaunchEnabled();
+    checks.assertLaunchTransaction(launchContext!.owner, call.from, serializeTransaction(tx), launchTerms);
+  }
   let gasWei = gas * fees.maxFeePerGas;
   if (chain === 8453) {
     const base = baseConfigFromEnv();

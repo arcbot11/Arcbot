@@ -28,6 +28,7 @@ function fixture(){
    get:async(id:unknown)=>Object.values(rows).flat().find(row=>row._id===id)??null,
    insert:async(table:string,value:Row)=>{const id=`${table}:${(rows[table]??=[]).length}`;rows[table].push({_id:id,...value});return id;},
    patch:async(id:unknown,patch:Row)=>{const row=Object.values(rows).flat().find(row=>row._id===id);if(!row)throw Error("Missing row");Object.assign(row,patch);},
+   replace:async(id:unknown,value:Row)=>{for(const table of Object.keys(rows)){const index=rows[table].findIndex(row=>row._id===id);if(index>=0){rows[table][index]={_id:id,...value};return;}}throw Error("Missing row");},
  }};
  // Convex mutations commit atomically; emulate rollback for denied transitions.
  const call=async(fn:unknown,args:unknown)=>{const snapshot=structuredClone(rows);try{return await invoke(fn,ctx,args);}catch(error){for(const key of Object.keys(rows))delete rows[key];Object.assign(rows,snapshot);throw error;}};
@@ -151,6 +152,19 @@ it("does not export after its owning browser changes or its TG initiation comes 
  const f=fixture();await f.audit("telegram");f.rows.telegramUpdates=[{updateId:"group",telegramUserId:"1",telegramChatId:"group",createdAt:Date.now()}];
  await expect(f.call(exports.startTelegram,{updateId:"group"})).rejects.toThrow("private Telegram");
  await f.start();await expect(f.call(exports.claim,{...f.base,browserHash:hash("stolen-link")})).rejects.toThrow();
+});
+it.each(["expired","stopped","valid"])("checks launch authorization atomically at the signing fence: %s",async mode=>{
+ const f=fixture(),serviceSecret="otc-service-secret-".repeat(3),id="launch:1:test:0";
+ vi.stubEnv("OTC_SERVICE_SECRET",serviceSecret);
+ f.rows.launchRuns=[{owner:"1",requestId:"test",json:JSON.stringify({owner:"1",address:alice,status:mode==="stopped"?"blocked":"running",steps:[id],authorizationExpiresAt:Date.now()+(mode==="expired"?-1:60000)})}];
+ f.rows.otcRecords.push({_id:"wallet",key:walletId(5042,alice),json:JSON.stringify({id:walletId(5042,alice),kind:"wallet",chainId:5042,address:alice,owner:"1",activeTx:id,holds:{[id]:"100",other:"50"}})});
+ f.rows.otcRecords.push({_id:"tx",key:id,json:JSON.stringify({id,kind:"transaction",chainId:5042,wallet:alice,owner:"1",leg:"launch",launchStep:{requestId:"test",index:0},holdId:id,recoveryVersion:1,status:"prepared",unsigned:"unsigned"})});
+ await f.call(otcCommand,{secret:serviceSecret,command:"begin_signing",json:JSON.stringify({id})});
+ const saved=JSON.parse(String(f.rows.otcRecords.find(row=>row._id==="tx")!.json));
+ const wallet=JSON.parse(String(f.rows.otcRecords.find(row=>row._id==="wallet")!.json));
+ expect(saved.status).toBe(mode==="valid"?"prepared":"cancelled");
+ expect(saved.signingStartedAt!==undefined).toBe(mode==="valid");
+ expect(wallet.holds.other).toBe("50");expect(wallet.holds[id]).toBe(mode==="valid"?"100":undefined);
 });
 it.each(["operator_acquire","begin_signing"])("enforces the export fence inside the real %s Convex mutation",async command=>{
  const f=fixture();await f.start();await f.authenticate();await f.approve();await f.begin();

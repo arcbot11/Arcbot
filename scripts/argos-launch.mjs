@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
-import {getAddress,encodeFunctionData,decodeFunctionResult,parseAbi,parseEventLogs,parseTransaction,serializeTransaction,formatUnits,toHex} from 'viem';
+import {getAddress,encodeFunctionData,decodeFunctionResult,parseAbi,parseEventLogs,parseTransaction,serializeTransaction,formatUnits,parseUnits,toHex} from 'viem';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const args=process.argv.slice(2);
@@ -14,16 +14,22 @@ if(creatorFeeRun&&!/^[a-zA-Z0-9-]{1,48}$/.test(creatorFeeRun))throw Error('Inval
 const crankRun=process.env.ARGOS_CRANK_RUN_ID??'first';
 if(crankFees&&!/^[a-zA-Z0-9-]{1,48}$/.test(crankRun))throw Error('Invalid crank run ID.');
 const personalSell=args[1]==='--personal-sell';
-const validPersonalArgs=args.length===5||(args.length===7&&!personalSell&&args[5]==='--percent'&&['45','50','95'].includes(args[6]));
-const personalPercent=personalSell?50:args.length===7?Number(args[6]):95;
-const personal=validPersonalArgs&&['--personal','--personal-sell'].includes(args[1])&&/^Personal[1-9]$/.test(args[2])&&args[3]==='--token'&&/^0x[0-9a-fA-F]{40}$/.test(args[4])?args[2]:null;
+// Dedicated, fixed-size ARGUS sale; cannot select another wallet/token/amount.
+const argusWalletSell=personalSell&&args.length===7&&args[2]==='arguswallet'&&args[3]==='--token'&&args[4].toLowerCase()==='0xece5ca8bf9220718e5727754026757512212cb3c'&&args[5]==='--tokens'&&args[6]==='600000';
+const sellUsd=personalSell&&args.length===7&&args[5]==='--usd'&&/^(?:0|[1-9]\d{0,5})(?:\.\d{1,6})?$/.test(args[6])&&Number(args[6])>0?args[6]:null;
+const validPersonalArgs=args.length===5||(args.length===7&&(!personalSell&&args[5]==='--percent'&&['45','50','95'].includes(args[6])||!!sellUsd));
+const personalPercent=personalSell?(sellUsd||argusWalletSell?null:50):args.length===7?Number(args[6]):95;
+const personal=argusWalletSell?'arguswallet':validPersonalArgs&&['--personal','--personal-sell'].includes(args[1])&&/^Personal[1-9]$/.test(args[2])&&args[3]==='--token'&&/^0x[0-9a-fA-F]{40}$/.test(args[4])?args[2]:null;
+const sellSymbol=argusWalletSell?'ARGUS':'ARGOS';
 if(args[0]==='--help'||(args.length!==1&&!personal&&!creatorFees)||!['--preview','--execute','--resume','--status','--abort'].includes(args[0])){
   console.log('Usage: node --use-system-ca --env-file-if-exists=.env.local --import ./scripts/register-typescript.mjs scripts/argos-launch.mjs --preview|--execute|--resume|--status|--abort [--personal Personal1..Personal9 --token ACTUAL_ARGOS_ADDRESS --percent 45|50|95]');
+  console.log('Sell: --preview|--execute|--resume|--status|--abort --personal-sell Personal1..Personal9 --token ACTUAL_ARGOS_ADDRESS [--usd VALUE]. Without --usd, sells 50%.');
+  console.log('ARGUS sale: use scripts/sell-arguswallet.ps1 -Mode Preview|Execute|Resume|Status|Abort for the fixed 600,000 ARGUS sale.');
   process.exit(args[0]==='--help'?0:1);
 }
 const batchId=process.env.ARGOS_PERSONAL_BATCH_ID;
 if(batchId&&(!personal||personalSell||!/^[a-z0-9-]{1,64}$/.test(batchId)))throw Error('Invalid personal buy batch ID.');
-const mode=args[0],privateDir=path.join(root,'.deployment-private'),journalPath=path.join(privateDir,crankFees?`argos-crank-${crankRun}-v1.json`:creatorFees?`argos-creator-fees-${creatorFeeRun??'20260911'}-v1.json`:personal?`argos-${personalSell?'sell50':personalPercent===95?'buy':`buy${personalPercent}`}-${personal.toLowerCase()}-${args[4].toLowerCase()}${batchId?`-${batchId}`:''}-v1.json`:'argos-launch-v1.json');
+const mode=args[0],privateDir=path.join(root,'.deployment-private'),journalPath=path.join(privateDir,crankFees?`argos-crank-${crankRun}-v1.json`:creatorFees?`argos-creator-fees-${creatorFeeRun??'20260911'}-v1.json`:personal?`argos-${personalSell?argusWalletSell?'sell-tokens600000':sellUsd?`sell-usd${sellUsd}`:'sell50':personalPercent===95?'buy':`buy${personalPercent}`}-${personal.toLowerCase()}-${args[4].toLowerCase()}${batchId?`-${batchId}`:''}-v1.json`:'argos-launch-v1.json');
 const readJson=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 const serial=x=>JSON.stringify(x,(_,v)=>typeof v==='bigint'?v.toString():v,2);
 const same=(a,b)=>a.toLowerCase()===b.toLowerCase();
@@ -36,7 +42,7 @@ const sequence=await readJson(path.join(root,'docs/launch/EXECUTION-SEQUENCE.jso
 const bundle=await readJson(path.join(root,'docs/launch/argus-bundle-2026-09-11.json'));
 const abi=bundle.contracts.ArgusV4Portal6.abi;
 const erc=parseAbi(['function approve(address,uint256) returns(bool)','function allowance(address,address) view returns(uint256)','function balanceOf(address) view returns(uint256)','function symbol() view returns(string)','function name() view returns(string)','function decimals() view returns(uint8)','event Transfer(address indexed from,address indexed to,uint256 value)']);
-const digest=createHash('sha256').update(serial(creatorFees?{purpose:crankFees?'collect-crank-claim':'creator-fees',...(crankFees?{run:crankRun}:creatorFeeRun?{run:creatorFeeRun}:{}),token:draft.predictedToken,creator:draft.creatorWallet,chainId:5042}:personal?{personal,token:args[4].toLowerCase(),percent:personalPercent,chainId:5042}: {draft,sequence})).digest('hex');
+const digest=createHash('sha256').update(serial(creatorFees?{purpose:crankFees?'collect-crank-claim':'creator-fees',...(crankFees?{run:crankRun}:creatorFeeRun?{run:creatorFeeRun}:{}),token:draft.predictedToken,creator:draft.creatorWallet,chainId:5042}:personal?{personal,token:args[4].toLowerCase(),percent:personalPercent,...(sellUsd?{sellUsd}:{}),...(argusWalletSell?{sellTokens:'600000',expectedWallet:'0xf950F0Da8659C62Fb8E0B5462f05f9CACDF56938'}:{}),chainId:5042}: {draft,sequence})).digest('hex');
 let journal,lock;
 try{journal=await readJson(journalPath);}catch(e){if(e.code!=='ENOENT')throw e;}
 if(mode==='--status'){
@@ -53,7 +59,7 @@ const {chainClient,balanceSnapshot,prepareCall,verifyRaw}=await import('../lib/o
 const {repository}=await import('../lib/otc/repository.ts');
 const {signingId,signWithAuthRecovery}=await import('../lib/otc/signing.ts');
 const {locked,walletId}=await import('../lib/otc/model.ts');
-const {previewArcTrade,PERMIT2}=await import('../lib/arc/trading.ts');
+const {previewArcTrade,arcSellAmountForUsdc,PERMIT2}=await import('../lib/arc/trading.ts');
 const {ARC_ROUTER}=await import('../lib/arc/routing.ts');
 const {discoverArgusPool}=await import('../lib/arc/argus-discovery.ts');
 const {createArcRpc}=await import('../lib/arc/rpc.ts');
@@ -78,22 +84,28 @@ async function preflightPersonal(){
   if(!expected)fail('Personal wallet is missing from the local import manifest.');
   const account=await cdp.evm.getAccount({name:personal});
   if(!same(account.address,expected))fail('CDP wallet does not match the saved personal wallet.');
+  if(argusWalletSell&&!same(account.address,'0xf950F0Da8659C62Fb8E0B5462f05f9CACDF56938'))fail('arguswallet address differs from the wallet reviewed for this sale.');
   const snapshot=await balanceSnapshot(5042,account.address);
-  const r=await portal('launches',[token]);
+  const r=argusWalletSell?null:await portal('launches',[token]);
   const [name,symbol,decimals]=await Promise.all(['name','symbol','decimals'].map(fn=>contract(token,erc,fn)));
-  if(!same(r[0],draft.creatorRewardRecipient)||!same(r[10],draft.quoteAsset)||name!==draft.name||symbol!=='ARGOS'||decimals!==18)fail('Token is not the planned creator\'s ARGOS launch.');
-  const pool=await discoverArgusPool(token,createArcRpc(arcConfigFromEnv()),BigInt(snapshot.block));
-  if(!pool||!same(pool.portal,draft.portal))fail('ARGOS pool verification failed.');
+  if(argusWalletSell){
+    if(symbol!=='ARGUS'||decimals!==18)fail('ARGUS token metadata verification failed.');
+  }else{
+    if(!same(r[0],draft.creatorRewardRecipient)||!same(r[10],draft.quoteAsset)||name!==draft.name||symbol!=='ARGOS'||decimals!==18)fail('Token is not the planned creator\'s ARGOS launch.');
+    const pool=await discoverArgusPool(token,createArcRpc(arcConfigFromEnv()),BigInt(snapshot.block));
+    if(!pool||!same(pool.portal,draft.portal))fail('ARGOS pool verification failed.');
+  }
   const w=await repo.read({id:walletId(5042,account.address)});
   if(w?.activeTx&&w.activeTx!==journal?.leaseId)fail('Wallet has another active transaction or launch lock. Finish that run first.');
   if(snapshot.nonce!==snapshot.pendingNonce)fail('Wallet has a pending on-chain transaction.');
   const available=BigInt(snapshot.balanceWei)-(w?locked(w):0n)+BigInt(w?.holds?.[journal?.leaseId]??'0');
   if(batchId?.startsWith('two-passes-20260911')&&!journal&&available<5000000000000000000n)fail('Wallet now has less than 5 USDC available. No new buy prepared.');
-  const units=personalSell?(await contract(token,erc,'balanceOf',[account.address],BigInt(snapshot.block)))/2n:available*BigInt(personalPercent)/100n/1000000000000n;
+  const units=argusWalletSell?parseUnits('600000',18):personalSell?sellUsd?parseUnits(await arcSellAmountForUsdc(account.address,token,sellUsd),18):(await contract(token,erc,'balanceOf',[account.address],BigInt(snapshot.block)))/2n:available*BigInt(personalPercent)/100n/1000000000000n;
+  if(argusWalletSell&&(await contract(token,erc,'balanceOf',[account.address],BigInt(snapshot.block)))<units)fail('Insufficient ARGUS: this sale requires 600,000 ARGUS, plus any additional token tax.');
   if(units<=0n)fail(personalSell?'No ARGOS remaining to sell.':'No available USDC to buy ARGOS.');
   if(available<=0n)fail('No available USDC for transaction gas.');
   const wallet={name:personal,address:account.address,owner:w?.owner??`operator:${personal}`,percent:personalPercent,...(personalSell?{amountARGOS:formatUnits(units,18)}:{amountUSDC:formatUnits(units,6)}),units:units.toString(),availableWei:available.toString(),snapshot};
-  return {token,hook:r[4],splitter:r[5],wallets:[wallet],head:snapshot};
+  return {token,hook:r?.[4],splitter:r?.[5],wallets:[wallet],head:snapshot};
 }
 async function preflightFees(){
   const token=getAddress(draft.predictedToken),r=await portal('launches',[token]),splitter=r[5],splitterAbi=bundle.contracts.ArgusV4HookedSplitter6.abi;
@@ -339,7 +351,7 @@ try{
     if(personal){
       const p=await preflightPersonal(),w=p.wallets[0];
       const q=await personalPreview(w,p.token);
-      out('READ-ONLY personal trade preview',{wallet:personal,address:w.address,token:p.token,percent:personalPercent,spendAmount:personalSell?w.amountARGOS:w.amountUSDC,inputSymbol:personalSell?'ARGOS':'USDC',outputSymbol:personalSell?'USDC':'ARGOS',nextStep:q.stage,estimatedOutput:q.amountOut,minimumOutput:q.minimumOut,executionPerformed:false});
+      out('READ-ONLY personal trade preview',{wallet:personal,address:w.address,token:p.token,percent:personalPercent,spendAmount:personalSell?w.amountARGOS:w.amountUSDC,inputSymbol:personalSell?sellSymbol:'USDC',outputSymbol:personalSell?'USDC':'ARGOS',nextStep:q.stage,estimatedOutput:q.amountOut,minimumOutput:q.minimumOut,executionPerformed:false});
       process.exit(0);
     }
     const p=await preflight();
@@ -393,8 +405,10 @@ try{
         const w=journal.wallets[0];
         let readySwap;
         const tradeLabel=`${personal}:${personalSell?'sell':'buy'}`;
-        const launchedAt=await contract(journal.hook,bundle.contracts.ArgusV4TaxHook.abi,'launchedAt');
-        while(!openingWindowEnded((await client.getBlock()).timestamp,launchedAt))await sleep(500);
+        if(!argusWalletSell){
+          const launchedAt=await contract(journal.hook,bundle.contracts.ArgusV4TaxHook.abi,'launchedAt');
+          while(!openingWindowEnded((await client.getBlock()).timestamp,launchedAt))await sleep(500);
+        }
         if(!journal.transactions.some(t=>t.label===tradeLabel)){
           for(let attempt=0;attempt<5;attempt++){
             const p=await personalPreview(w,journal.token);
@@ -407,10 +421,10 @@ try{
         const t=await transact(w,tradeLabel,async()=>{
           const p=readySwap??await personalPreview(w,journal.token);readySwap=undefined;
           if(p.leg!=='swap')fail('Approval changed. Inspect Status before retrying.');
-          out(personalSell?'Selling ARGOS':'Buying ARGOS',{wallet:personal,spendAmount:personalSell?w.amountARGOS:w.amountUSDC,minimumOutput:p.minimumOut,outputSymbol:personalSell?'USDC':'ARGOS'});return p;
+          out(personalSell?'Selling '+sellSymbol:'Buying ARGOS',{wallet:personal,spendAmount:personalSell?w.amountARGOS:w.amountUSDC,minimumOutput:p.minimumOut,outputSymbol:personalSell?'USDC':'ARGOS'});return p;
         });
         await release(w);journal.status='completed';await save();
-        out('Personal trade completed',{wallet:personal,token:journal.token,spentAmount:personalSell?w.amountARGOS:w.amountUSDC,inputSymbol:personalSell?'ARGOS':'USDC',receivedAmount:t.delivered,outputSymbol:personalSell?'USDC':'ARGOS',hash:t.hash});
+        out('Personal trade completed',{wallet:personal,token:journal.token,spentAmount:personalSell?w.amountARGOS:w.amountUSDC,inputSymbol:personalSell?sellSymbol:'USDC',receivedAmount:t.delivered,outputSymbol:personalSell?'USDC':'ARGOS',hash:t.hash});
       }else{
       // Prepare USDC/Permit2 allowances before launch, so post-launch swaps need no approval round trips.
       const permitAbi=parseAbi(['function allowance(address,address,address) view returns(uint160,uint48,uint48)','function approve(address,address,uint160,uint48)']);
@@ -453,4 +467,8 @@ try{
   const own=error instanceof OperatorError;
   const detail=operatorQuoteMoved(error)?'Price moved beyond the accepted slippage limit during preparation. No new transaction was signed.':String(error?.shortMessage??error?.message??'Unknown error').split('\n')[0].replace(/https?:\/\/\S+/g,'[RPC endpoint]').replace(/[A-Za-z0-9_+/=-]{65,}/g,'[redacted]').slice(0,220);
   console.error(own?error.message:`Operator step failed: ${detail} Inspect --status; existing signatures and locks are retained.`);process.exitCode=1;
+  if(argusWalletSell){
+    const transactions=journal?.transactions??[];
+    out('ARGUS sale status',{mode,journalCreated:!!journal,signingStarted:transactions.some(t=>t.signingStarted),transactions:transactions.map(t=>({step:t.label,status:t.status,hash:t.hash??null})),nextAction:mode==='--preview'?'Fix the reported error and run Preview again. No transaction was submitted by this preview.':journal?'Run Status, then Resume to recover this same sale. Keep the journal.':'No sale journal was created. Fix the reported error before Execute.'});
+  }
 }finally{if(lock){await lock.close();await fs.unlink(journalPath+'.lock');}}

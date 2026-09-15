@@ -10,15 +10,17 @@ vi.mock("../lib/arc/config",async original=>({...await original<typeof import(".
 vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>({})}));
 vi.mock("../lib/launches/image-preflight",()=>({verifyLaunchImage:m.image}));
 vi.mock("../lib/launches/prepare",()=>({prepareLaunch:m.prepare}));
-vi.mock("../lib/launches/execution-checks",()=>({assertLaunchEnabled:()=>{},assertLaunchTransaction:()=>{},launchCall:()=>({to:"0x1111111111111111111111111111111111111111",data:"0x",value:0n})}));
+vi.mock("../lib/launches/execution-checks",async original=>({...await original<typeof import("../lib/launches/execution-checks")>(),assertLaunchEnabled:()=>{},assertLaunchTransaction:()=>{},launchCall:()=>({to:"0x1111111111111111111111111111111111111111",data:"0x",value:0n})}));
 vi.mock("../lib/otc/runtime",()=>({prepareCall:m.create,advanceTransaction:m.advance}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:async({id}:{id:string})=>m.txs.get(id)??null,command:async(_name:string,input:Record<string,unknown>)=>{const tx={...input,status:"prepared"};m.txs.set(String(input.id),tx);return tx;}})}));
-import { advanceLaunch } from "../lib/launches/service";
+import { advanceLaunch, assertLaunchSigning } from "../lib/launches/service";
+import { LaunchError } from "../lib/launches/policy";
+import type { Transaction } from "../lib/otc/model";
 const owner="1",address="0x1111111111111111111111111111111111111111",requestId="00000000-0000-4000-8000-000000000001";
 beforeEach(()=>{
   vi.clearAllMocks();m.txs.clear();vi.stubEnv("NEXT_PUBLIC_CONVEX_URL","https://example.convex.cloud");vi.stubEnv("WEB_AUTH_SECRET","secret");
   const input=parseLaunchInput({name:"Example",symbol:"EX",imageURI:"https://pbs.twimg.com/media/example.jpg"});
-  m.run={owner,address,requestId,input,status:"running",steps:[],preview:{tokenSalt:toHex(1,{size:32}),predictedToken:address,predictedHook:address,predictedSplitter:address,portal:PORTAL6,
+  m.run={owner,address,requestId,input,authorizationExpiresAt:Date.now()+1800000,status:"running",steps:[],preview:{tokenSalt:toHex(1,{size:32}),predictedToken:address,predictedHook:address,predictedSplitter:address,portal:PORTAL6,
     fingerprint:launchFingerprint({owner,address},input),image:{sha256:"abc"},quote:{symbol:"USDC",address:"0x3600000000000000000000000000000000000000",decimals:6,devBuy:"0",start:"2500000000",bond:"45000000000",block:"1"}}};
   m.image.mockResolvedValue({sha256:"abc"});
   m.prepare.mockImplementation(async()=>({...((m.run as LaunchRun).preview),steps:[{kind:"launch"}]}));
@@ -31,6 +33,33 @@ beforeEach(()=>{
     if(last?.status==="completed"&&(last.launchStep as {kind:string})?.kind==="launch"){run.status="completed";}
     return run;
   });
+});
+it.each(["WALLET_BUSY", "IMAGE_UNAVAILABLE", "STALE_SIMULATION"])("keeps temporary %s failures retryable without sending a transaction", async code => {
+  m.prepare.mockRejectedValue(new LaunchError(code,"Temporary failure"));
+  await expect(advanceLaunch(owner,address,requestId)).rejects.toThrow("Temporary failure");
+  expect((m.run as LaunchRun).status).toBe("running");expect(m.create).not.toHaveBeenCalled();
+});
+it("expires an accepted run before preparing a new step", async()=>{
+  (m.run as LaunchRun).authorizationExpiresAt=Date.now()-1;
+  expect((await advanceLaunch(owner,address,requestId)).status).toBe("blocked");
+  expect(m.prepare).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+});
+it("recovers a signature after authorization expires without starting the next step",async()=>{
+  const run=m.run as LaunchRun,id=`launch:${owner}:${requestId}:0`;run.steps=[id];run.authorizationExpiresAt=0;
+  m.txs.set(id,{id,owner,wallet:address,status:"prepared",signingStartedAt:1,launchStep:{requestId,index:0,kind:"approval"}});
+  m.advance.mockImplementation(async()=>{const tx=m.txs.get(id)!;tx.status="completed";return tx;});
+  expect((await advanceLaunch(owner,address,requestId)).status).toBe("blocked");
+  expect(m.advance).toHaveBeenCalledWith(id);expect(m.create).not.toHaveBeenCalled();
+});
+it("compares unbuffered execution gas with the saved gas allowance",async()=>{
+  const run=m.run as LaunchRun,id=`launch:${owner}:${requestId}:0`;run.steps=[id];
+  const terms={requestId,index:0,kind:"launch" as const,input:run.input,preview:run.preview};
+  const unsigned=serializeTransaction({type:"eip1559",chainId:5042,to:address,data:"0x1234",value:0n,nonce:0,gas:120000n,maxFeePerGas:1n,maxPriorityFeePerGas:1n});
+  m.txs.set(`wallet:5042:${address.toLowerCase()}`,{holds:{[id]:"120000"},activeTx:id});
+  m.prepare.mockResolvedValue({...run.preview,status:"simulated",steps:[{kind:"launch",call:{to:address,data:"0x1234"},gas:"120002",estimatedGas:"100001"}]});
+  await expect(assertLaunchSigning({id,owner,wallet:address,unsigned,holdId:id,launchStep:terms} as Transaction)).resolves.toBeUndefined();
+  m.prepare.mockResolvedValue({...run.preview,status:"simulated",steps:[{kind:"launch",call:{to:address,data:"0x1234"},gas:"144002",estimatedGas:"120001"}]});
+  await expect(assertLaunchSigning({id,owner,wallet:address,unsigned,holdId:id,launchStep:terms} as Transaction)).rejects.toThrow("saved allowance");
 });
 it("persists a deterministic step before submission and resumes it without another preparation",async()=>{
   const first=await advanceLaunch(owner,address,requestId);expect(first.status).toBe("running");expect(m.txs.size).toBe(1);

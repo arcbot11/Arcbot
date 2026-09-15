@@ -1,16 +1,17 @@
 import { launchQuote, type LaunchQuote } from "./quote";
+import { verifyLaunchHookStore } from "./hook-review";
 import type { LaunchImageEvidence } from "./image-preflight";
 import { decodeFunctionResult, encodeAbiParameters, encodeFunctionData, encodePacked, getAddress, getCreate2Address,
   keccak256, parseAbiParameters, parseUnits, toHex, type Abi, type Address, type Hex } from "viem";
 import { type ArcConfig } from "../arc/config";
 import { checkArcRpc, type ArcRpc, type ArcCall } from "../arc/rpc";
-import { LaunchError, LAUNCH_PREVIEW_MS } from "./policy";
+import { LaunchError, LAUNCH_PREVIEW_MS, LAUNCH_MAX_GAS, LAUNCH_TOTAL_GAS_WEI } from "./policy";
 import { parseLaunchInput, launchFingerprint, type LaunchIdentity, type LaunchInput } from "./input";
 import { approvalAbi, configAbi, LAUNCH_DEFAULTS, portalAbi, PORTAL6, PORTAL6_CODE_HASH, reviewedImplementations } from "./contracts";
 
 // Deliberately lacks a broadcast or signing capability.
 export type LaunchReadRpc = Omit<ArcRpc, "broadcast" | "receipt">;
-export type LaunchStep = { kind: "rewards" | "approval" | "launch"; call: ArcCall; gas: string | null; gasWei: string | null };
+export type LaunchStep = { kind: "rewards" | "approval" | "launch"; call: ArcCall; estimatedGas?: string; gas: string | null; gasWei: string | null };
 export type LaunchPreview = {
   quote?: LaunchQuote; image?: LaunchImageEvidence;
   version: 1; executionEnabled: false; fingerprint: Hex; creator: Address; portal: typeof PORTAL6;
@@ -56,6 +57,7 @@ export async function mineHook(creator: Address, initCodeHash: Hex, sampleSalt: 
 export async function prepareLaunch(options: {
   identity: LaunchIdentity; input: LaunchInput; tokenSalt: Hex; rpc: LaunchReadRpc; config: ArcConfig;
   reservedWei: bigint; activeTransaction: boolean; now?: number; image?: LaunchImageEvidence; frozenQuote?: LaunchQuote;
+  verifiedHook?: Pick<LaunchPreview, "creator" | "tokenSalt" | "hookSalt" | "hookInitCodeHash" | "predictedHook">;
 }): Promise<LaunchPreview> {
   const { identity, rpc, config, tokenSalt } = options, input = parseLaunchInput(options.input);
   if (!hash.test(tokenSalt) || options.reservedWei < 0n) throw new LaunchError("INVALID_DRAFT", "Invalid launch draft.");
@@ -71,6 +73,7 @@ export async function prepareLaunch(options: {
   };
   const code = await rpc.code(PORTAL6, head.number);
   if (!code || !same(keccak256(code), PORTAL6_CODE_HASH)) throw new LaunchError("PORTAL_CHANGED", "Launch contract needs review.");
+  const reviewedHookStore = await verifyLaunchHookStore(rpc,head.number);
   const [words, quoteApproved, balance, nonce, pendingNonce, fees, impls] = await Promise.all([
     read<bigint>(PORTAL6, portalAbi, "LAUNCH_STRUCT_WORDS"), read<boolean>(PORTAL6, portalAbi, "quoteApproved", [quote.address]),
     rpc.balance(identity.address, head.number), rpc.nonce(identity.address, false), rpc.nonce(identity.address, true), rpc.fees(),
@@ -99,7 +102,11 @@ export async function prepareLaunch(options: {
   if (currentReward[0] !== 0 && currentReward[0] !== 1) throw new LaunchError("REWARD_MODE", "Creator reward mode needs review.");
   const hookInitCodeHash = await read<Hex>(PORTAL6, portalAbi, "hookInitCodeHash", [predictedSplitter, input.buyTaxBps, input.sellTaxBps, quote.address]);
   const saltSample = await read<Hex>(PORTAL6, portalAbi, "hookCreate2Salt", [identity.address, tokenSalt]);
-  const mined = await mineHook(identity.address, hookInitCodeHash, tokenSalt, saltSample);
+  const saved = options.verifiedHook;
+  // Reuse only the salt; live Portal prediction and code checks below remain mandatory.
+  const mined = saved && same(saved.creator, identity.address) && same(saved.tokenSalt, tokenSalt) && same(saved.hookInitCodeHash, hookInitCodeHash)
+    ? { salt: saved.hookSalt, address: saved.predictedHook }
+    : await mineHook(identity.address, hookInitCodeHash, tokenSalt, saltSample);
   const [predictedHook, mask, valid] = await read<readonly [Address, bigint, boolean]>(PORTAL6, portalAbi, "predictHook", [identity.address, tokenSalt, mined.salt, input.buyTaxBps, input.sellTaxBps, quote.address]);
   if (!valid || mask !== 0x2044n || !same(predictedHook, mined.address)) throw new LaunchError("PREDICTION", "Hook prediction could not be verified.");
   const predictedToken = await read<Address>(PORTAL6, portalAbi, "predictToken", [identity.address, tokenSalt, predictedHook, quote.address]);
@@ -111,6 +118,9 @@ export async function prepareLaunch(options: {
   // at a new block before producing the calls that the user actually reviews.
   if(options.now===undefined){
     head=await checkArcRpc(rpc,config);
+    if(!same(await verifyLaunchHookStore(rpc,head.number),reviewedHookStore))throw new LaunchError("HOOK_CHANGED","Launch hook changed during preparation.");
+    for(const [name,expected] of Object.entries(reviewedImplementations))if(!same(await read<Address>(PORTAL6,portalAbi,name),expected))
+      throw new LaunchError("POINTER_CHANGED","Launch implementation changed during preparation.");
     quote=options.frozenQuote??await launchQuote(input.pairToken,parseUnits(input.devBuyUSDC,6),rpc,head.number);
     devBuy=BigInt(quote.devBuy);devBuyWei=input.pairToken==="USDC"?devBuy*10n**12n:0n;
     available=(await rpc.balance(identity.address,head.number))-options.reservedWei;
@@ -135,11 +145,11 @@ export async function prepareLaunch(options: {
     if (step.kind === "launch" && !same(decodeFunctionResult({ abi: portalAbi, functionName: "launch", data: raw }), predictedToken))
       throw new LaunchError("PREDICTION", "Launch simulation returned a different token.");
     const estimate = await rpc.estimateGas(step.call, head.number), gas = (estimate * 120n + 99n) / 100n;
-    if (estimate <= 0n || gas > 5_000_000n) throw new LaunchError("GAS_LIMIT", "Launch gas estimate exceeds the configured limit.");
+    if (estimate <= 0n || gas > (step.kind === "launch" ? LAUNCH_MAX_GAS : config.maxGas)) throw new LaunchError("GAS_LIMIT", "Launch gas estimate exceeds the configured limit.");
     const cost = gas * fees.maxFeePerGas;
-    step.gas = gas.toString(); step.gasWei = cost.toString(); gasWei += cost;
+    step.estimatedGas = estimate.toString(); step.gas = gas.toString(); step.gasWei = cost.toString(); gasWei += cost;
   }
-  if (gasWei > 500_000_000_000_000_000n) throw new LaunchError("GAS_LIMIT", "Launch gas estimate exceeds 0.5 USDC.");
+  if (gasWei > LAUNCH_TOTAL_GAS_WEI) throw new LaunchError("GAS_LIMIT", "Launch gas estimate exceeds 0.5 USDC.");
   if (available < devBuyWei + gasWei) throw new LaunchError("BALANCE", "Not enough USDC for the dev buy and gas.");
   if (!same((await rpc.block(head.number)).hash, head.hash)) throw new LaunchError("BLOCK_CHANGED", "Arc block changed. Prepare again.");
   if(options.now===undefined && Date.now()-Number(head.timestamp)*1000>config.maxHeadAgeSeconds*1000)throw new LaunchError("STALE_SIMULATION","Network checks took too long. Prepare again for a fresh simulation.");

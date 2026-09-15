@@ -44,7 +44,15 @@ export const create = mutation({ args: { ...args, inputJson: v.string() }, handl
     return publicDraft(existing);
   }
   const recent = await ctx.db.query("launchDrafts").withIndex("by_owner", q => q.eq("owner", a.owner)).order("desc").take(50);
-  if (recent.filter(r => r.createdAt > now - 60_000).length >= 5 || recent.filter(r => r.expiresAt > now && r.status !== "cancelled").length >= 10)
+  // Repair terminal runs written before draft lifecycle synchronization existed.
+  for(const row of recent.filter(r=>r.status==="executing")){
+    const run=await ctx.db.query("launchRuns").withIndex("by_owner_request",q=>q.eq("owner",a.owner).eq("requestId",row.requestId)).unique();
+    if(run?.address===row.address&&(run.status==="completed"||run.status==="blocked")){
+      const status=run.status==="completed"?"completed":"cancelled";
+      await ctx.db.patch(row._id,{status,prepareToken:undefined,preparingUntil:undefined,updatedAt:now});row.status=status;
+    }
+  }
+  if (recent.filter(r => r.createdAt > now - 60_000).length >= 5 || recent.filter(r => r.expiresAt > now && !["cancelled", "completed"].includes(r.status)).length >= 10)
     throw Error("Too many launch drafts. Cancel an old draft first.");
   // Convex retries mutations deterministically. Generate once on creation and retain on every retry.
   const tokenSalt = keccak256(toHex(crypto.randomUUID() + crypto.randomUUID()));

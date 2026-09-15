@@ -14,6 +14,7 @@ export const portalAbi = parseAbi([
   "function tokenImpl() view returns (address)",
   "function splitterImpl() view returns (address)",
   "function lockerImpl() view returns (address)",
+  "function hookStore() view returns (address)",
   "function predictSplitter(address creator, bytes32 salt) view returns (address)",
   "function hookInitCodeHash(address splitter, uint16 buyTaxBps, uint16 sellTaxBps, address quote) view returns (bytes32)",
   "function hookCreate2Salt(address creator, bytes32 hookSalt) pure returns (bytes32)",

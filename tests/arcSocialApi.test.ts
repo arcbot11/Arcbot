@@ -1,7 +1,9 @@
+import {LaunchError} from "../lib/launches/policy";
+vi.mock("../lib/launches/social-service",()=>({runSocialLaunch:m.launch}));
 import {beforeEach,afterEach,describe,it,expect,vi} from "vitest";
 import {NextRequest} from "next/server";
 import {serializeTransaction,encodeFunctionData,parseAbi} from 'viem';
-const m=vi.hoisted(()=>({auth:vi.fn(),read:vi.fn(),command:vi.fn(),advance:vi.fn(),prepare:vi.fn(),trade:vi.fn(),balance:vi.fn(),convert:vi.fn(),contract:vi.fn()}));
+const m=vi.hoisted(()=>({launch:vi.fn(),auth:vi.fn(),read:vi.fn(),command:vi.fn(),advance:vi.fn(),prepare:vi.fn(),trade:vi.fn(),balance:vi.fn(),convert:vi.fn(),contract:vi.fn()}));
 vi.mock("../lib/arc/social-authority",()=>({socialAuthority:m.auth}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read,command:m.command})}));
 vi.mock("../lib/otc/runtime",()=>({advanceTransaction:m.advance,prepareCall:m.prepare,chainClient:()=>({readContract:m.contract})}));
@@ -13,7 +15,7 @@ import {POST} from "../app/api/arc/command/route";
 const wallet="0x1111111111111111111111111111111111111111",recipient="0x2222222222222222222222222222222222222222";
 let command:unknown;
 const request=(secret="secret")=>new NextRequest("https://www.argosbot.io/api/arc/command",{method:"POST",headers:{authorization:`Bearer ${secret}`,"content-type":"application/json"},body:JSON.stringify({requestId:"x:123:send"})});
-beforeEach(()=>{vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","secret");command={kind:"send",unit:"usd",amount:"10",recipient};m.auth.mockImplementation(async()=>({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()}));m.read.mockResolvedValue(null);m.prepare.mockResolvedValue({unsigned:"0x02",reserveWei:"10000000000000000100",snapshot:{balanceWei:"20000000000000000000",block:"1"}});m.command.mockImplementation(async(_kind,tx)=>({...tx,status:"prepared"}));m.advance.mockResolvedValue({status:"submitted",hash:"txhash"});});
+beforeEach(()=>{vi.clearAllMocks();m.launch.mockRejectedValue(new LaunchError("EXECUTION_DISABLED","Launch execution is disabled."));vi.stubEnv("WEB_AUTH_SECRET","secret");command={kind:"send",unit:"usd",amount:"10",recipient};m.auth.mockImplementation(async()=>({owner:"alice",wallet,command:JSON.stringify(command),createdAt:Date.now()}));m.read.mockResolvedValue(null);m.prepare.mockResolvedValue({unsigned:"0x02",reserveWei:"10000000000000000100",snapshot:{balanceWei:"20000000000000000000",block:"1"}});m.command.mockImplementation(async(_kind,tx)=>({...tx,status:"prepared"}));m.advance.mockResolvedValue({status:"submitted",hash:"txhash"});});
 afterEach(()=>vi.unstubAllEnvs());
 describe("Arc social execution boundary",()=>{
  it("rejects excessive slippage immediately without preparing or reserving",async()=>{
@@ -175,4 +177,13 @@ it.each([false,true])('reports a persisted signed pause, including when recovery
  const result=await(await POST(request())).json();
  expect(result).toMatchObject({pending:true,processing:false,attention:expect.stringContaining('Contact Argos Bot support'),message:expect.stringContaining('not cancelled')});
  expect(m.prepare).not.toHaveBeenCalled();expect(m.command).not.toHaveBeenCalled();
+});
+
+it.each(["WALLET_BUSY","IMAGE_UNAVAILABLE","STALE_SIMULATION","BLOCK_CHANGED","MINING_LIMIT"])("keeps X launch retryable after %s",async code=>{
+ command={kind:"launch"};m.launch.mockRejectedValue(new LaunchError(code,"Temporary check failed"));
+ expect(await(await POST(request())).json()).toMatchObject({ok:false,pending:true,processing:true});
+});
+it("reports definite launch validation errors without falsely processing",async()=>{
+ command={kind:"launch"};m.launch.mockRejectedValue(new LaunchError("IMAGE_REQUIRED","Include an image."));
+ expect(await(await POST(request())).json()).toEqual({ok:false,message:"Include an image."});
 });

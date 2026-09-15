@@ -16,6 +16,7 @@ export async function creatorTokens(wallet:Address,diagnostics?:{incomplete?:boo
     process.env.NEXT_PUBLIC_CONVEX_URL?new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL).query(makeFunctionReference<"query">("launchExecution:creatorTokens"),{address:wallet}):Promise.resolve([]),
   ]);
   const rows:unknown[]=discoveries.flatMap(r=>r.status==="fulfilled"&&Array.isArray(r.value)?r.value:[]);
+  if(diagnostics)diagnostics.incomplete=discoveries.some(r=>r.status==="rejected");
   if(discoveries[0].status==="rejected"&&!(rows as unknown[]).length)throw Error("Creator discovery unavailable. Retry shortly.");
   const candidates=rows.filter((r):r is {address:string;symbol:string;creator:string}=>!!r&&typeof r==="object"&&"creator" in r&&"address" in r&&"symbol" in r&&typeof r.creator==="string"&&r.creator.toLowerCase()===wallet.toLowerCase()&&typeof r.address==="string"&&/^0x[\da-f]{40}$/i.test(r.address));
   if(!candidates.length)return [];

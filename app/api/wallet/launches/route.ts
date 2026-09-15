@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     const { client, secret } = backend();
     const draft = await client.query(makeFunctionReference<"query">("launchDrafts:read"), { secret, owner: session.owner, address: session.walletAddress, requestId });
     if(!draft)return unavailable();
-    const run=["executing","completed"].includes(draft.status)?await launchBackend(session.owner,session.walletAddress,requestId).read():undefined;
+    const run=["executing","completed","cancelled"].includes(draft.status)?await launchBackend(session.owner,session.walletAddress,requestId).read():undefined;
     return json({...draft,...(run?{run}:{})});
   } catch (e) { return failure(e); }
 }

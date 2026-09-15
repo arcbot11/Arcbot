@@ -1,5 +1,5 @@
 import {runSocialLaunch} from "@/lib/launches/social-service";
-import {LaunchError} from "@/lib/launches/policy";
+import {LaunchError,retryableLaunchError} from "@/lib/launches/policy";
 import {prepareBaseWithdrawal} from "@/lib/base/wallet-actions";
 import {runCreatorClaim} from "@/lib/launches/fee-service";
 import {FeeClaimError} from "@/lib/launches/fees";
@@ -78,7 +78,12 @@ export async function POST(request:NextRequest){
     const command=JSON.parse(auth.command) as WalletCommand;
     if(command.kind==="launch"){
       try{return json(await runSocialLaunch(auth,requestId,command));}
-      catch(error){if(error instanceof LaunchError)return json({ok:false,message:error.message});throw error;}
+      catch(error){
+        if(error instanceof LaunchError)return json(retryableLaunchError(error)
+          ?{ok:false,pending:true,processing:true,message:"Launch processing."}
+          :{ok:false,message:error.message});
+        throw error;
+      }
     }
     if(command.kind==="claim_fees"){
       try{

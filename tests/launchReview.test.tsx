@@ -3,6 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, afterEach, expect, it, vi } from "vitest";
 import { parseLaunchInput } from "../lib/launches/input";
 import type { LaunchPreview } from "../lib/launches/prepare";
+const flags=vi.hoisted(()=>({enabled:false}));
+vi.mock("../lib/launches/policy",async original=>({...await original<typeof import("../lib/launches/policy")>(),get LAUNCH_EXECUTION_ENABLED(){return flags.enabled;}}));
 vi.stubGlobal("React", React);
 vi.mock("../components/ExternalTokenImage", () => ({ ExternalTokenImage: () => null }));
 vi.mock("../components/SiteChrome", () => ({ SiteHeader: () => null, SiteFooter: () => null }));
@@ -10,7 +12,7 @@ vi.mock("../components/LaunchPreparation", () => ({ LaunchPreparation: () => nul
 vi.mock("next/navigation", () => ({ notFound: () => { throw Error("404"); } }));
 import Page from "../app/wallet/launch/page";
 import { LaunchReview } from "../components/LaunchReview";
-afterEach(() => vi.unstubAllEnvs());
+afterEach(() => {vi.unstubAllEnvs();flags.enabled=false;});
 afterAll(() => vi.unstubAllGlobals());
 const input = parseLaunchInput({ name: "Example", symbol: "EXAMPLE", imageURI: "ipfs://Qm" + "a".repeat(44), allocationText: "half creator rest holders", description: "<script>secret()</script>" });
 const render = (preview: LaunchPreview | null, expired = false) => renderToStaticMarkup(<LaunchReview input={input} wallet="0x1111" walletLabel="X-linked wallet for @example" preview={preview} expired={expired} />);
@@ -38,4 +40,11 @@ it("shows actual prepared funding and gas when a full simulation passed", () => 
 });
 it("labels expired simulations without showing a stale funding amount", () => {
   const html = render(null, true); expect(html).toContain("Simulation expired"); expect(html).not.toContain("Simulation passed");
+});
+
+it("describes signing authorization accurately when launch execution is enabled",()=>{
+ flags.enabled=true;vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED","true");
+ const review=render(null),page=renderToStaticMarkup(<Page/>);
+ expect(review).toContain("Confirm launch authorizes");expect(review).not.toContain("No transaction will be signed or sent");
+ expect(page).toContain("Launch a token");expect(page).not.toContain("Launch execution is disabled");
 });

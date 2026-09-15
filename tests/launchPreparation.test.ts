@@ -1,3 +1,4 @@
+vi.mock("../lib/launches/hook-review",()=>({verifyLaunchHookStore:vi.fn(async()=>"0x4444444444444444444444444444444444444444")}));
 import { verifyLaunchReceipt, launchEvents, type LaunchEvidence } from "../lib/launches/receipt";
 import { encodeEventTopics, encodeAbiParameters, parseAbiParameters } from "viem";
 import { poolId } from "../lib/arc/routing";
@@ -5,6 +6,7 @@ import { ARC_USDC } from "../lib/arc/config";
 import { expect, it, vi } from "vitest";
 import { decodeFunctionData, encodeFunctionResult, encodePacked, getCreate2Address, keccak256, toHex, type Abi, type Address, type Hex } from "viem";
 import { prepareLaunch, type LaunchReadRpc } from "../lib/launches/prepare";
+import { verifyLaunchHookStore } from "../lib/launches/hook-review";
 import { parseLaunchInput } from "../lib/launches/input";
 import { approvalAbi, configAbi, portalAbi, PORTAL6, reviewedImplementations } from "../lib/launches/contracts";
 import type { ArcConfig } from "../lib/arc/config";
@@ -62,6 +64,11 @@ function fixture() {
     reservedWei: 0n, activeTransaction: false, now };
   return { state, options, call };
 }
+it("rejects unreviewed hook code before constructing deployment predictions",async()=>{
+  const f=fixture();vi.mocked(verifyLaunchHookStore).mockRejectedValueOnce(Error("Hook review required"));
+  await expect(prepareLaunch(f.options)).rejects.toThrow("Hook review required");
+  expect(f.call.mock.calls.some(([tx])=>decodeFunctionData({abi,data:tx.data}).functionName==="predictHook")).toBe(false);
+});
 it("fully simulates a no-dev-buy launch without signing or approval", async () => {
   const f = fixture(), p = await prepareLaunch(f.options);
   expect(p.status).toBe("simulated"); expect(p.executionEnabled).toBe(false);

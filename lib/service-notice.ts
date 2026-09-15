@@ -1,1 +1,0 @@
-export const ARC_SERVICE_NOTICE = "Arc RPC's are down network wide, likely in preparation for official mainnet opening. We will let you know when Arc chain and Argos Bot are functional again. If you have any Base ETH in your wallet, you can still withdraw it at any time.";
