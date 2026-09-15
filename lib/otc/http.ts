@@ -49,6 +49,8 @@ export function webFailure(error:unknown,operation?:"quote") {
     return json({error:"Wallet signing is not configured on the website server. Contact Argos Bot support."},503);
   if (message === "OTC storage is not configured." || message === "OTC service authorization failed.")
     return json({error:"Wallet reservation service is unavailable. Contact Argos Bot support."},503);
+  if (message.includes("Arc RPC capacity"))
+    return json({error:operation==="quote"?"Arc RPC is busy. Try again shortly. No payment was sent.":"Arc RPC is busy. Check transaction history before retrying."},503);
   if (message.includes("No healthy Arc RPC supports this request"))
     return json({error:operation==="quote"?"Could not get a quote because the Arc network request failed. Try again. No payment was sent.":"Arc network request failed. Check transaction history before retrying."},503);
   if (message === "No supported liquid Arc route found.")

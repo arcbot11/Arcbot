@@ -36,7 +36,7 @@ export function arcConfigFromEnv(env: Record<string, string | undefined> = proce
   return arcConfig({ rpcUrl: env.ARC_MAINNET_RPC_URL,
     rpcFallbackUrls: [env.ARC_INFURA_RPC_URL].filter((url): url is string => Boolean(url)),
     readOnlyRpcUrls: ["https://arguspad.io/api/rpc"],
-    quoteRpcUrls: [env.ARC_INFURA_RPC_URL, "https://arguspad.io/api/rpc", env.ARC_MAINNET_RPC_URL].filter((url): url is string => Boolean(url)),
+    quoteRpcUrls: [env.ARC_MAINNET_RPC_URL, env.ARC_INFURA_RPC_URL, "https://arguspad.io/api/rpc"].filter((url): url is string => Boolean(url)),
     checkpointNumber: env.ARC_CHECKPOINT_NUMBER, checkpointHash: env.ARC_CHECKPOINT_HASH,
     ...ARC_GAS_POLICY,
   });

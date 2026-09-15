@@ -1,5 +1,6 @@
 import { custom } from "viem";
 import type { ArcConfig } from "./config";
+import { paceArcRpc, quickNodeEndpoint, retryAfterMs } from "./rpc-pacing";
 import {roleEndpoints,rpcRole} from './rpc-role';
 import { traceRead, traceReadOutput, TraceReadError, type TraceRead } from "./trace-call";
 
@@ -36,7 +37,7 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
   async function observedCall(url:string,method:string,params:readonly unknown[]){
     const started=Date.now();let category='ok';
     try{return await rawCall(url,method,params);}
-    catch(error){category=error instanceof RpcFailure?(error.retryable?'provider_unavailable':'request_rejected'):'invalid_response';throw error;}
+    catch(error){category=error instanceof RpcFailure?(error.code===429?'rate_limited':error.retryable?'provider_unavailable':'request_rejected'):'invalid_response';throw error;}
     finally{if(category!=='ok'||Date.now()-started>1500)console.info('arc_rpc',{role:rpcRole(method,traceFallback),provider:url===config.rpcUrl?'primary':config.rpcFallbackUrls.includes(url)?'fallback':'gateway',method,durationMs:Date.now()-started,category});}
   }
   async function call(url:string,method:string,params:readonly unknown[]=[]):Promise<unknown>{
@@ -48,10 +49,19 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
   }
   async function rawCall(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
     let response: Response;
+    const admit=async()=>{try{await paceArcRpc(url);}catch{throw new RpcFailure("Arc RPC capacity service busy",429,true,undefined,true,1000,false);}};
+    await admit();
     try {
       response = await fetch(url, { method: "POST", headers: { "content-type": "application/json" },
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(12000) });
-    } catch { throw new RpcFailure("Arc RPC connection unavailable", -32098, true, undefined, true); }
+      // Retry only reads. Never retry a broadcast with an uncertain outcome.
+      if(response.status===429&&quickNodeEndpoint(url)&&method!=="eth_sendRawTransaction"){
+        await new Promise(resolve=>setTimeout(resolve,retryAfterMs(response.headers.get("retry-after"))));
+        await admit();
+        response=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params}),signal:AbortSignal.timeout(12000)});
+      }
+    } catch(error) { if(error instanceof RpcFailure)throw error;throw new RpcFailure("Arc RPC connection unavailable", -32098, true, undefined, true); }
+    if(response.status===429)throw new RpcFailure("Arc RPC rate limit reached",429,true,undefined,true,retryAfterMs(response.headers.get("retry-after")),false);
     if (!response.ok) throw new RpcFailure(`Arc RPC HTTP ${response.status}`, -32098, [401, 403, 408, 429].includes(response.status) || response.status >= 500, undefined, response.status === 408 || response.status >= 500,[401,403,429].includes(response.status)?60000:5000,[408,429].includes(response.status)||response.status>=500);
     let body: unknown;
     try { body = await response.json(); } catch { throw new RpcFailure("Invalid Arc RPC response", -32098, true); }
@@ -158,10 +168,11 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
     const trace=traceFallback&&method==="eth_call"&&Array.isArray(params)?traceRead(params):null;
     const endpoints = roleEndpoints(config,rpcRole(method,traceFallback),method);
     const transientReads = new Set<string>();
+    let capacityLimited=false;
     for (const url of endpoints) {
       const methodKey = `${url}:${method}`;
       if (!broadcast && !trace && (methodUnavailableUntil.get(methodKey) ?? 0) > Date.now()) continue;
-      try { await validate(url); } catch { continue; }
+      try { await validate(url); } catch(error) { if(error instanceof RpcFailure&&error.code===429)capacityLimited=true;continue; }
       // Do not fail over after a broadcast attempt: its outcome may be unknown.
       if (broadcast) {
         try{return await call(url,method,params as unknown[]);}
@@ -180,9 +191,10 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
       try { return await readCall(url, method, (params ?? []) as unknown[],trace); }
       catch (error) {
         if (!(error instanceof RpcFailure) || !error.retryable) throw error;
+        if(error.code===429)capacityLimited=true;
         // Fail over a connection timeout, but do not multiply twelve-second
         // waits on that same connection inside a single user request.
-        if (error.transient&&error.message!=="Arc RPC connection unavailable") transientReads.add(url);
+        if (error.transient&&error.code!==429&&error.message!=="Arc RPC connection unavailable") transientReads.add(url);
         // An upstream miss can be specific to this calldata or block. Do not
         // poison every other token's eth_call while this exact read retries.
       }
@@ -206,11 +218,12 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
           return result;
         } catch (error) {
           if (!(error instanceof RpcFailure) || !error.retryable) throw error;
-          if(error.message==="Arc RPC connection unavailable"||!error.transient)transientReads.delete(url);
+          if(error.code===429||error.message==="Arc RPC connection unavailable"||!error.transient)transientReads.delete(url);
         }
       }
       }
     }
+    if(capacityLimited)throw new RpcFailure("Arc RPC capacity is busy. Retry shortly.",429,true,undefined,true,1000,false);
     throw new RpcFailure("No healthy Arc RPC supports this request", -32098, true);
   } }, { retryCount: 0 });
 }

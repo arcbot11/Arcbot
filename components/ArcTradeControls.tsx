@@ -26,6 +26,7 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{},onBusyChan
   const [estimate,setEstimate]=useState<{minimumOut:string;funding?:FundingDetails;fundingPlan?:string;routeHint?:string;estimatedTokenDebit?:string;inputTaxAmount?:string;inputTaxBps?:number;inputSymbol?:string|null;outputSymbol?:string|null;outputAddress?:string;expiresAt:number}|null>(null);
   const [market,setMarket]=useState<TradeMarket|null>(null),[activeFunding,setActiveFunding]=useState<FundingDetails|null>(null);
   const [estimateStatus,setEstimateStatus]=useState("");
+  const [estimateRefresh,setEstimateRefresh]=useState(0);
   const [completion,setCompletion]=useState<ReturnType<typeof completedTrade>|null>(null);
   const authenticated=session?.authenticated,csrfToken=session?.csrfToken,walletAddress=session?.walletAddress;
   useEffect(()=>{
@@ -55,7 +56,7 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{},onBusyChan
         if(!controller.signal.aborted){setTokenBalance({...result.token,wallet:walletAddress});setBalanceFailed(false);}
       }catch{if(!controller.signal.aborted){setTokenBalance(null);setBalanceFailed(true);}}finally{pending=false;}
     };
-    void refresh();const timer=setInterval(()=>void refresh(),15000);
+    void refresh();const timer=setInterval(()=>void refresh(),60000);
     return()=>{controller.abort();clearInterval(timer);};
   },[token,walletAddress,authenticated,disabled,busy,refreshKey]);
   useEffect(()=>{
@@ -68,7 +69,7 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{},onBusyChan
       estimate:setEstimate,
       status:setEstimateStatus,
     });
-  },[side,token,output,amount,amountUnit,slippage,disabled,busy,authenticated,csrfToken,walletAddress,completion]);
+  },[side,token,output,amount,amountUnit,slippage,disabled,busy,authenticated,csrfToken,walletAddress,completion,estimateRefresh]);
   const preview=(fixedAmount?:string,routeHint?:string,fundingPlan?:string)=>webPost("/api/wallet/trade",{action:"preview",...(side!=="swap"?{intent:side,fundingPlan}:{}),routeHint,tokenIn:side==="buy"?"native":token,tokenOut:side==="buy"?token:side==="sell"?"native":output,amount:fundingPlan?amount:fixedAmount??amount,amountUnit:fundingPlan?(side==="buy"?"tokens":amountUnit):fixedAmount?"tokens":side!=="buy"?amountUnit:"tokens",slippageBps:Math.round(Number(slippage)*100)},session,AbortSignal.timeout(TRADE_REQUEST_TIMEOUT_MS)) as Promise<Quote>;
   const execute=async()=>{
     if(inFlight.current||disabled||!session?.authenticated)return;
@@ -99,6 +100,7 @@ export function ArcTradeControls({side,disabled=false,onNotice=()=>{},onBusyChan
     {side!=="buy"&&<div className="arc-sell-percentages" aria-label="Percentage of token balance to trade">{([25,50,100] as const).map(percent=><button type="button" key={percent} disabled={disabled||busy||!selectedBalance||BigInt(selectedBalance.raw)===0n} onClick={()=>{if(selectedBalance){setAmountUnit("tokens");setAmount(formatUnits(BigInt(selectedBalance.maxSellRaw??selectedBalance.raw)*BigInt(percent)/100n,selectedBalance.decimals));}}}>{percent}%</button>)}</div>}
     <label>Slippage %<input inputMode="decimal" value={slippage} onChange={e=>{setSlippage(e.target.value);}}/></label>
     <div className="arc-trade-estimate" aria-live="polite">{completion?<><p>{completion.received?<>You received <strong>{completion.received}</strong>.</>:"Trade completed. Received amount unavailable."}</p>{completion.hash&&<a href={`https://www.arcexplorer.org/tx/${completion.hash}`} target="_blank" rel="noopener noreferrer">View transaction on Arc Explorer</a>}</>:estimate?<><p>You will receive at least <strong>{displayTokenAmount(estimate.minimumOut,estimate.outputAddress??(side==="sell"?"native":side==="buy"?token:output))} {estimate.outputSymbol?estimate.outputSymbol:side==="sell"?"USDC":estimate.outputAddress??(side==="buy"?token:output)}</strong>.</p><small>Estimate includes slippage.</small></>:<p><ActiveStatus text={estimateStatus} active={/^(Preparing|Refreshing|Loading|Estimating)/.test(estimateStatus)}/></p>}</div>
+    {!completion&&!estimate&&estimateStatus&&!/^(Preparing|Refreshing|Loading|Estimating)/.test(estimateStatus)&&<button type="button" disabled={disabled||busy} onClick={()=>setEstimateRefresh(value=>value+1)}>Refresh estimate</button>}
     {funding&&<ArcTradeFunding funding={funding} side={side}/>}
     <button type="button" className="arc-button" onClick={()=>void execute()} disabled={disabled||busy||!session?.authenticated||!token||(side!=="swap"&&!estimate?.fundingPlan)||(side==="swap"&&!/^0x[0-9a-fA-F]{40}$/.test(output))}>{busy?<ActiveStatus text={progress} active={busy}/>:side==="buy"?(funding?`Buy with ${funding.inputSymbol}`:"Buy"):side==="sell"?(receiveSymbol?`Sell for ${receiveSymbol}`:"Sell"):"Swap"}</button>
     {busy&&<div className="otc-notice" role="status" aria-live="polite"><ActiveStatus text={progress} active={busy}/></div>}

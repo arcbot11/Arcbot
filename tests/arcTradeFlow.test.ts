@@ -2,6 +2,23 @@ import { describe, expect, it, vi } from "vitest";
 import { executeTradeFlow, estimatedTradeGasBudget, ARC_TRADE_GAS_BUDGET_WEI, type TradeFlowQuote } from "../lib/arc/trade-flow";
 const quote = (stage = "approve token", changes: Partial<TradeFlowQuote> = {}): TradeFlowQuote => ({ quote: stage, stage, amountOut: "100", minimumOut: "99", protocol: "v3", gasWei: "10", expiresAt: Date.now() + 60000, ...changes });
 const io = () => ({ confirm: vi.fn(), preview: vi.fn(), wait: vi.fn(async () => {}), active: () => true, progress: vi.fn() });
+it('keeps concurrent buyers independent through both approvals and the final swap',async()=>{
+ const buyers=Array.from({length:4},(_,index)=>{
+   const calls=io(),prefix=`buyer-${index}`;
+   calls.confirm.mockResolvedValueOnce({id:`${prefix}:token`,leg:'allowance',status:'completed'})
+     .mockResolvedValueOnce({id:`${prefix}:router`,leg:'allowance',status:'completed'})
+     .mockResolvedValueOnce({id:`${prefix}:swap`,leg:'swap',status:'completed'});
+   calls.preview.mockResolvedValueOnce(quote('approve router',{routeHint:`${prefix}:route`}))
+     .mockResolvedValueOnce(quote('swap',{routeHint:`${prefix}:route`}));
+   return {calls,prefix};
+ });
+ const results=await Promise.all(buyers.map(({calls,prefix})=>executeTradeFlow(quote('approve token',{amountIn:'10',routeHint:`${prefix}:route`}),calls)));
+ results.forEach((result,index)=>{
+   expect(result.result?.id).toBe(`${buyers[index].prefix}:swap`);
+   expect(buyers[index].calls.confirm).toHaveBeenCalledTimes(3);
+   expect(buyers[index].calls.preview).toHaveBeenCalledTimes(2);
+ });
+});
 describe("automatic trade setup", () => {
   it("carries the funding plan through approvals and rejects a changed funding asset",async()=>{
     const calls=io();calls.confirm.mockResolvedValue({id:"approval",leg:"allowance",status:"completed"});

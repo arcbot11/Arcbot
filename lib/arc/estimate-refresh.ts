@@ -1,6 +1,7 @@
 import {WebResponseError} from "../web-response-error";
 import {tradePreparationError} from "./trade-errors";
 export const ESTIMATE_IDLE_MS = 120_000;
+export const ESTIMATE_REFRESH_MS = 60_000;
 const EXPIRED = "Estimate expired. Change the amount to refresh.";
 
 /** One request at a time. Input changes dispose this cycle and start a new one. */
@@ -15,12 +16,13 @@ export function startEstimateRefresh<T extends { expiresAt: number }>(options: {
   const deadline = Date.now() + ESTIMATE_IDLE_MS;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let idle: ReturnType<typeof setTimeout> | undefined;
-  let expiredRetries = 0;
+  let expiry: ReturnType<typeof setTimeout> | undefined;
   let inFlight=false;
   const dispose = () => {
     controller.abort();
     clearTimeout(timer);
     clearTimeout(idle);
+    clearTimeout(expiry);
   };
   const pause = () => {
     dispose();
@@ -32,6 +34,7 @@ export function startEstimateRefresh<T extends { expiresAt: number }>(options: {
     if (options.autoRefresh && Date.now() >= deadline) { pause(); return; }
     options.estimate(null);
     options.status("Estimating…");
+    const startedAt = Date.now();
     inFlight=true;
     try {
       const result = await options.request(controller.signal);
@@ -39,18 +42,17 @@ export function startEstimateRefresh<T extends { expiresAt: number }>(options: {
       if (options.autoRefresh && Date.now() >= deadline && !options.finishInFlightAfterIdle) { pause(); return; }
       if (!Number.isFinite(result.expiresAt)) throw Error("Invalid estimate expiry");
       if (result.expiresAt <= Date.now()) {
-        if (options.autoRefresh) timer = setTimeout(() => void refresh(), Math.min(500 * 2 ** expiredRetries++, 10_000));
-        else options.status(EXPIRED);
+        options.status(EXPIRED);
+        if (options.autoRefresh) timer = setTimeout(() => void refresh(), Math.max(1000,ESTIMATE_REFRESH_MS-(Date.now()-startedAt)));
         return;
       }
       options.estimate(result);
-      expiredRetries = 0;
       options.status("");
-      timer = setTimeout(() => {
+      expiry = setTimeout(() => {
         if (controller.signal.aborted) return;
-        if (options.autoRefresh) void refresh();
-        else { options.estimate(null); options.status(EXPIRED); }
+        options.estimate(null); options.status(EXPIRED);
       }, result.expiresAt - Date.now());
+      if(options.autoRefresh)timer=setTimeout(()=>void refresh(),Math.max(result.expiresAt-Date.now(),ESTIMATE_REFRESH_MS-(Date.now()-startedAt)));
     } catch(error) {
       if (!controller.signal.aborted) {
         clearTimeout(idle);
