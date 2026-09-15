@@ -14,11 +14,12 @@ function amount(chain:number,address:string,raw:bigint,verifiedDecimals?:number,
   const exact=formatUnits(raw,decimals);
   return `${native&&chain===8453?displayEth(exact):gas?exact:displayAmount(exact,symbol==="USDC"?2:0)} ${symbol??address}`;
 }
-const labels:Record<string,string>={topup:"Base gas recovery",arc_topup:"Arc gas recovery",send:"Send",swap:"Swap",allowance:"Token approval",approval:"Payment approval",payment:"OTC payment",payout:"OTC payout",fund:"Fund OTC position",return_arc:"Return remaining USDC",gas:"Deposit settlement gas",deposit:"Deposit OTC payment",arc:"Deliver Arc USDC",seller:"Pay seller",fee:"Service fee",return_gas:"Return unused gas"};
+const labels:Record<string,string>={claim:"Claim fees",topup:"Base gas recovery",arc_topup:"Arc gas recovery",send:"Send",swap:"Swap",allowance:"Token approval",approval:"Payment approval",payment:"OTC payment",payout:"OTC payout",fund:"Fund OTC position",return_arc:"Return remaining USDC",gas:"Deposit settlement gas",deposit:"Deposit OTC payment",arc:"Deliver Arc USDC",seller:"Pay seller",fee:"Service fee",return_gas:"Return unused gas"};
 
 /** Display-only projection. Never expose signed bytes or treat a quote as a receipt. */
 export function transactionHistory(record:Transaction){
   const details:Array<{label:string;value:string}>=[];
+  for(const claim of record.settlement?.claims??[])details.push({label:"Received",value:amount(record.chainId,claim.token,BigInt(claim.raw))});
   if(record.externalReplacement)details.push({label:'External activity',value:'Matching replacement verified on chain'});
   if(record.nonceConflict)details.push({label:'External replacement',value:record.nonceConflict.hash});
   let note=["completed","reverted"].includes(record.status)?undefined:record.leg==="swap"?record.note?.replace(/Reserved funds remain locked\./gi,"").trim():record.note;

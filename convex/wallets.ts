@@ -3880,7 +3880,7 @@ Your wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`,
         channel: args.channel || "x_reply",
       },
     );
-    if((source==="x"||source==="telegram")&&["buy","sell","send","burn","swap_token_for_token","buy_and_send","buy_and_burn","buy_top_five"].includes(command.kind)){
+    if((source==="x"||source==="telegram")&&["claim_fees","buy","sell","send","burn","swap_token_for_token","buy_and_send","buy_and_burn","buy_top_five"].includes(command.kind)){
       return await ctx.runAction(internal.wallets.continueArcCommand,{requestId});
     }
     if (!reserved.inserted) {

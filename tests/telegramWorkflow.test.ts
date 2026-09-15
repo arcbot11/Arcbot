@@ -44,7 +44,7 @@ describe("Telegram command-only interface", () => {
   ])("rejects unsupported or incomplete /%s %s", (name,args) => expect(telegramWalletCommand(name,args)).toBeNull());
   it("has no retired feature buttons and every action button has a format", () => {
     for (const button of TELEGRAM_MENU.inline_keyboard.flat()) expect(telegramInput(button.callback_data,true)).not.toBeNull();
-    expect(JSON.stringify(TELEGRAM_MENU)).not.toMatch(/fees|launch|otc|guide:|buyandsend|buyandburn/i);
+    expect(JSON.stringify(TELEGRAM_MENU)).not.toMatch(/launch|otc|guide:|buyandsend|buyandburn/i);
     for (const key of Object.keys(TELEGRAM_FORMATS)) expect(TELEGRAM_MENU.inline_keyboard.flat().some(b=>b.callback_data===`/${key}`)).toBe(true);
   });
   it("accepts only slash unlink and removes reply prompts from results", () => {

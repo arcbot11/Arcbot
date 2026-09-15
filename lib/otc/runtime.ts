@@ -1,3 +1,4 @@
+import {verifyCreatorToken,assertClaimCall,claimedAmounts} from "../launches/fees";
 import {staleUnsigned} from "./unsigned-recovery";
 import {operationDiagnostic} from '../operation-diagnostics';
 import {WalletChangeError,recheckUnsignedCall} from './external-spending';
@@ -88,16 +89,26 @@ export async function ethPrice() {
   return { ethUsdMicros: exactAmount(json.data.amount,6).toString(), priceAt: Date.now() };
 }
 export type Call = {from:Address;to:Address;data:Hex;value:bigint};
-export async function prepareCall(chain: Chain, call: Call, allowGasShortfall=false) {
+export async function prepareCall(chain: Chain, call: Call, allowGasShortfall=false, estimateUnfundedNative=false) {
   const spend = nativeSpend(chain, call);
   const snapshot = await balanceSnapshot(chain,call.from);
   if (snapshot.nonce !== snapshot.pendingNonce) throw new Error("Wallet has a pending transaction.");
   const client = chainClient(chain), blockNumber = BigInt(snapshot.block);
-  if(BigInt(snapshot.balanceWei)<spend)throw new Error("Not enough funds for the amount and gas.");
-  const simulation=await client.call({account:call.from,to:call.to,data:call.data,value:call.value,blockNumber});
+  // OTC quote only: estimate EOA transfer execution with zero value when the
+  // buyer is underfunded, but price Base's extra fees using the actual envelope.
+  // The caller must check full affordability before saving a quote. Signing and
+  // reservations retain their independent balance checks.
+  if(estimateUnfundedNative){
+    if(chain!==8453||call.data!=="0x"||!allowGasShortfall)throw new Error("Invalid native funding estimate.");
+    const code=await client.getCode({address:call.to,blockNumber});
+    if(code&&code!=="0x")throw new Error("OTC settlement requires standard EVM wallets.");
+  }
+  if(!estimateUnfundedNative&&BigInt(snapshot.balanceWei)<spend)throw new Error("Not enough funds for the amount and gas.");
+  const simulationValue=estimateUnfundedNative?0n:call.value;
+  const simulation=await client.call({account:call.from,to:call.to,data:call.data,value:simulationValue,blockNumber});
   if (call.data.startsWith("0x095ea7b3")) verifyTransferReturn(simulation.data);
   if(call.data.startsWith("0xa9059cbb")){ tokenTransfer(call.data,call.value); verifyTransferReturn(simulation.data); }
-  const gas = ((await client.estimateGas({account:call.from,to:call.to,data:call.data,value:call.value,blockNumber}))*120n+99n)/100n;
+  const gas = ((await client.estimateGas({account:call.from,to:call.to,data:call.data,value:simulationValue,blockNumber}))*120n+99n)/100n;
   const fees = await client.estimateFeesPerGas({type:"eip1559",chain:null});
   const config = chain === 5042 ? arcConfigFromEnv() : baseConfigFromEnv();
   if (gas <= 0n || gas > config.maxGas || fees.maxFeePerGas <= 0n || fees.maxFeePerGas > config.maxFeePerGas || fees.maxPriorityFeePerGas < 0n || fees.maxPriorityFeePerGas > fees.maxFeePerGas) throw new Error("Gas exceeds the configured policy.");
@@ -223,6 +234,12 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
       const simulation=await recheckUnsignedCall(()=>chainClient(record.chainId).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value,blockNumber:BigInt(snapshot.block)}));
       verifyTransferReturn(simulation.data);
     }
+    if(record.leg==="claim"){
+      if(record.chainId!==5042||!record.creatorClaim)throw Error("Invalid creator claim.");
+      const launch=await verifyCreatorToken(getAddress(record.wallet),getAddress(record.creatorClaim.token),createArcRpc(arcConfigFromEnv()),BigInt(snapshot.block));
+      assertClaimCall(record.wallet,launch.splitter,tx);
+      await recheckUnsignedCall(()=>chainClient(5042).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:0n}));
+    }
     if(record.leg==="allowance"){
       const simulation=await recheckUnsignedCall(()=>chainClient(record.chainId).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:tx.value,blockNumber:BigInt(snapshot.block)}));
       if(tx.data?.startsWith("0x095ea7b3"))verifyTransferReturn(simulation.data);
@@ -243,10 +260,15 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
   });
   if (receipt) {
     const arrivedBaseNative=record.chainId===8453&&record.leg==="send"&&receipt.status==="success"&&(!tx.data||tx.data==="0x")&&(tx.value??0n)>0n;
-    const settlement:Transaction["settlement"]=record.chainId===5042&&(record.leg==="swap"||record.leg==="send"&&tx.data&&tx.data!=="0x")?{gasWei:(receipt.gasUsed*receipt.effectiveGasPrice).toString()}:undefined;
+    const settlement:Transaction["settlement"]=record.chainId===5042&&(record.leg==="claim"||record.leg==="swap"||record.leg==="send"&&tx.data&&tx.data!=="0x")?{gasWei:(receipt.gasUsed*receipt.effectiveGasPrice).toString()}:undefined;
     if ((await client.getBlock({blockNumber:receipt.blockNumber})).hash !== receipt.blockHash) throw new Error("Receipt is not canonical.");
     const chainTx=await client.getTransaction({hash:record.hash as Hex});
     if (chainTx.from.toLowerCase()!==record.wallet.toLowerCase() || chainTx.to?.toLowerCase()!==tx.to?.toLowerCase() || chainTx.value!==(tx.value??0n) || chainTx.input!==(tx.data??"0x")) throw new Error("Receipt transaction does not match the order.");
+    if(receipt.status==="success"&&record.leg==="claim"){
+      if(!record.creatorClaim||!settlement)throw Error("Claim verification terms missing.");
+      assertClaimCall(record.wallet,record.creatorClaim.splitter,tx);
+      settlement.claims=claimedAmounts(record.wallet,record.creatorClaim.splitter,receipt.logs);
+    }
     if(receipt.status === "success" && record.leg === "send"){
       const transfer=tokenTransfer(tx.data,tx.value);
       if(transfer){

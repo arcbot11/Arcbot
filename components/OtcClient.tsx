@@ -28,7 +28,7 @@ const pct=(bps:number|null)=>bps===null?"—":`${(bps/100).toLocaleString("en-US
 export const useOtcSession = useWalletSession;
 export async function webPost(path:string,body:unknown,session:OtcSession|null,signal?:AbortSignal){
   const action = body && typeof body === "object" && "action" in body ? body.action : undefined;
-  const statusRead = path === "/api/otc" && (action === "purchase_status" || action === "listing_status");
+  const statusRead = path === "/api/otc" && (action === "purchase_status" || action === "listing_status" || action === "listing_request_status");
   if (!statusRead && session?.reauthAt && Date.now() >= session.reauthAt * 1000) throw new Error("Sign in again before making another transaction.");
   const response=await fetch(path,{method:"POST",headers:{"content-type":"application/json","x-argus-csrf":session?.csrfToken??""},body:JSON.stringify(body),signal});
   const result=await response.json();if(!response.ok)throw new WebResponseError(typeof result.error==="string"?result.error:"Request failed.");return result;
@@ -52,6 +52,8 @@ export function OtcClient(){
   const [premiumAccepted,setPremiumAccepted]=useState<{quoteId:string;premiumBps:number}|null>(null);
   const [paymentAsset]=useState<"ETH"|"USDC">("ETH");
   const [pendingListing,setPendingListing]=useState<ListingSubmission|null>(null);
+  const [listingLive,setListingLive]=useState(false);
+  const listingDone=useRef(false);
   const [fundingListing,setFundingListing]=useState<{id:string;wallet:string}|null>(null);
   const storageKey=session?.walletAddress?`arc-listing-pending:${session.walletAddress.toLowerCase()}`:null;
   useEffect(()=>{if(!storageKey)return;try{const saved=sessionStorage.getItem(storageKey);const parsed=saved?JSON.parse(saved):null;setPendingListing(parsed?listingSubmission(parsed.requestId,parsed.amount,parsed.premium,parsed.maxGasReserveWei):null);}catch{setNotice("Pending listing could not be read. Check wallet listings before submitting.");}},[storageKey,setNotice]);
@@ -64,8 +66,11 @@ export function OtcClient(){
   const trackingRef=useRef(processingPurchase);trackingRef.current=processingPurchase;
   const completedPurchases=useRef(new Set<string>());
   const recoveryWallet=session?.authenticated?session.walletAddress?.toLowerCase():undefined;
+  const previousRecoveryWallet=useRef<string|undefined>(undefined);
   useEffect(()=>{
-    setProcessingPurchase(null);setQuote(null);setFormOpen(false);setOwnPending(null);
+    setProcessingPurchase(null);setQuote(null);
+    if(previousRecoveryWallet.current&&previousRecoveryWallet.current!==recoveryWallet){setFormOpen(false);setFundingListing(null);setPendingListing(null);setListingLive(false);}
+    previousRecoveryWallet.current=recoveryWallet;setOwnPending(null);
     setPurchaseProgress(null);setCancelEligibility(null);completedPurchases.current.clear();trackingRef.current=null;
     if(!recoveryWallet)return;
     const controller=new AbortController();let pending=false;
@@ -92,6 +97,7 @@ export function OtcClient(){
     void restore();const timer=setInterval(()=>void restore(),10000);
     return()=>{controller.abort();clearInterval(timer);};
   },[recoveryWallet]);
+  useEffect(()=>{if(pendingListing){setTab("sell");setAmount(pendingListing.amount);setPremium(pendingListing.premium);setFormOpen(true);}},[pendingListing]);
   const [listingBalance,setListingBalance]=useState<{walletAddress:string;availableWei:string}|null>(null);
   const [balanceFailed,setBalanceFailed]=useState(false),[balanceRevision,setBalanceRevision]=useState(0);
   useEffect(()=>{
@@ -116,7 +122,7 @@ export function OtcClient(){
     if(direction==="sell"&&!pendingListing){
       notices.forEach(dismiss);
       // The new form must not receive completion notices from the previous listing.
-      setFundingListing(null);
+      setFundingListing(null);setListingLive(false);listingDone.current=false;
     }
     setPurchaseSuccessDismissed(false);setPremiumAccepted(null);setTab(direction);setSelected(id);setAmount(direction==="sell"&&pendingListing?pendingListing.amount:"10");setPremium(direction==="sell"&&pendingListing?pendingListing.premium:"0");setQuote(null);setListingPreview(null);setFormOpen(true);
   };
@@ -171,23 +177,25 @@ export function OtcClient(){
   },[processingPurchase,session,refresh,setNotice]);
 
   useEffect(()=>{
-    if(!fundingListing||!session?.authenticated||session.walletAddress!==fundingListing.wallet)return;
+    if((!fundingListing&&!pendingListing)||!session?.authenticated)return;
+    if(fundingListing&&session.walletAddress?.toLowerCase()!==fundingListing.wallet.toLowerCase())return;
     const controller=new AbortController();let pending=false;
     const check=async()=>{
       if(pending)return;pending=true;
       try{
-        const listing=await webPost("/api/otc",{action:"listing_status",listingId:fundingListing.id},session,AbortSignal.any([controller.signal,AbortSignal.timeout(15000)]));
+        const listing=await webPost("/api/otc",fundingListing?{action:"listing_status",listingId:fundingListing.id}:{action:"listing_request_status",requestId:pendingListing!.requestId},session,AbortSignal.any([controller.signal,AbortSignal.timeout(15000)]));
         if(controller.signal.aborted)return;
         if(listing?.status==="active"){
-          setFundingListing(null);setBalanceRevision(value=>value+1);
+          listingDone.current=true;setListingLive(true);setFundingListing(null);setPendingListing(null);if(storageKey)sessionStorage.removeItem(storageKey);setBalanceRevision(value=>value+1);
           setNotice("Escrow verified. USDC listing live.");void refresh();
-        }else if(listing&&["closing","cancelled","filled"].includes(listing.status))setFundingListing(null);
+        }else if(listing?.status==="funding"){setNotice("Escrow deposit is being verified.");}
+        else if(listing&&["closing","cancelled","filled"].includes(listing.status)){setFundingListing(null);setPendingListing(null);if(storageKey)sessionStorage.removeItem(storageKey);setNotice("Listing "+listing.status+". View your listings in your wallet.");}
       }catch{/* Keep the funding message until status is verified. */}
       finally{pending=false;}
     };
     void check();const timer=setInterval(()=>void check(),5000);
     return()=>{controller.abort();clearInterval(timer);};
-  },[fundingListing,session,setNotice,refresh]);
+  },[fundingListing,pendingListing,session,setNotice,refresh,storageKey]);
   const run=async(body:unknown)=>{
     if(inFlight.current)return;previewRequest.current?.abort();inFlight.current=true;setBusy(true);
     try{const result=await webPost("/api/otc",body,session,AbortSignal.timeout(125000));await refresh();return result;}
@@ -247,16 +255,16 @@ export function OtcClient(){
         {!market?.listings.length&&<div className="otc-empty"><strong>{!market?(marketError?"Listings unavailable.":"Loading listings…"):market.available?"No listings.":"Listings unavailable."}</strong><p>{!market&&!marketError?"Checking available listings.":market?.available?"Fund your wallet with Arc USDC to list it for sale.":"Unable to load listings. Try again."}</p></div>}
         <p className="otc-fine">Minimum purchase $10. You can buy part of a listing.</p>
       </section>}
-      <dialog ref={dialog} className="otc-modal" aria-labelledby="otc-form-title" onCancel={e=>{if(busy)e.preventDefault();}} onClose={()=>setFormOpen(false)}>
+      <dialog ref={dialog} className="otc-modal" aria-labelledby="otc-form-title" onCancel={e=>{if(busy||!!fundingListing||!!pendingListing)e.preventDefault();}} onClose={()=>{if(!dialog.current?.open)setFormOpen(false);}}>
       {formOpen&&<section className="otc-form-panel" id="otc-order-form">
-        <div className="otc-panel-title"><span>{tab==="sell"?"New listing":"Buy from listing"}</span><button className="otc-inline-button" type="button" disabled={busy} onClick={()=>setFormOpen(false)} aria-label="Close form">Close ×</button></div>
+        <div className="otc-panel-title"><span>{tab==="sell"?"New listing":"Buy from listing"}</span><button className="otc-inline-button" type="button" disabled={busy||!!fundingListing||!!pendingListing} onClick={()=>setFormOpen(false)} aria-label="Close form">Close ×</button></div>
         <h2 id="otc-form-title">{tab==="buy"?`Base ${paymentAsset} → Arc USDC`:"List your Arc USDC"}</h2>{tab==="buy"&&<p className="otc-fine">Arc USDC is held in dedicated escrow and pays out on Base ETH payment confirmation.</p>}{tab==="buy"&&<p className="otc-listing-available">Available Base ETH <strong>{availableWei!=null?<>{ethUnits(availableWei)} ETH <EthUsdValue wei={availableWei}/></>:balanceFailed?"Balance unavailable":"—"}</strong></p>}
         {tab==="sell"&&<p className="otc-fine">Your Arc USDC will be locked in a secure escrow wallet.<br/>Base ETH pays out at each buy. Cancel to return remaining USDC at any time.</p>}
         {tab==="sell"&&<p className="otc-listing-available">Available Arc USDC <strong>{availableWei!=null?usdcUnits(availableWei):"—"}</strong></p>}
         {!quote&&<PersistentNotices notices={notices} dismiss={dismiss} renderMessage={renderNotice}/>}
         {!session?.authenticated&&<p className="otc-notice"><WalletSignInButton className="arc-text-link" destination="/otc">Connect your account</WalletSignInButton> to create a listing or trade.</p>}
         {tab==="sell"&&pendingListing&&<p className="otc-notice">Creating OTC USDC listing</p>}
-        {(tab==="sell"||!quote)&&<form onSubmit={async e=>{e.preventDefault();if(inFlight.current||processingPurchase||(!ready&&!pendingListing))return;if(tab==="buy"){if(selectedListing?.settling){setNotice("This listing is processing a purchase. Try again shortly.");return;}if(purchaseError){setNotice(purchaseError);return;}const result=await run({action:"quote",listingId:selected,amount,paymentAsset});if(result)setQuote(result);}else{if(!pendingListing&&!listingPreview){const preview=await run({action:"list_preview",amount,premium});if(preview)setListingPreview(preview);return;}const submission=pendingListing??listingSubmission(crypto.randomUUID(),amount,premium,listingPreview!.gasReserveWei);try{if(!storageKey)throw new Error();sessionStorage.setItem(storageKey,JSON.stringify(submission));}catch{setNotice("Could not save the request for safe retry. No listing was submitted.");return;}setPendingListing(submission);const result=await run(submission);if(result){sessionStorage.removeItem(storageKey!);setPendingListing(null);setFundingListing({id:result.id,wallet:session!.walletAddress!});setBalanceRevision(value=>value+1);setNotice("Position created. Its escrow deposit is being verified. You can view your OTC listings in your wallet.");setListingPreview(null);}}}}>
+        {(tab==="sell"||!quote)&&<form onSubmit={async e=>{e.preventDefault();if(inFlight.current||processingPurchase||fundingListing||listingLive||(!ready&&!pendingListing))return;if(tab==="buy"){if(selectedListing?.settling){setNotice("This listing is processing a purchase. Try again shortly.");return;}if(purchaseError){setNotice(purchaseError);return;}const result=await run({action:"quote",listingId:selected,amount,paymentAsset});if(result)setQuote(result);}else{if(!pendingListing&&!listingPreview){const preview=await run({action:"list_preview",amount,premium});if(preview)setListingPreview(preview);return;}const submission=pendingListing??listingSubmission(crypto.randomUUID(),amount,premium,listingPreview!.gasReserveWei);try{if(!storageKey)throw new Error();sessionStorage.setItem(storageKey,JSON.stringify(submission));}catch{setNotice("Could not save the request for safe retry. No listing was submitted.");return;}listingDone.current=false;setListingLive(false);setPendingListing(submission);setNotice("Creating OTC USDC listing");const result=await run(submission);if(result&&!listingDone.current){setFundingListing({id:result.id,wallet:session!.walletAddress!});setBalanceRevision(value=>value+1);setNotice("Position created. Its escrow deposit is being verified. You can view your OTC listings in your wallet.");setListingPreview(null);}}}}>
           {tab==="buy"&&<p className="otc-fine">Selected listing: {market?.listings.find(l=>l.id===selected)?`${units(market.listings.find(l=>l.id===selected)!.available)} USDC available · ${pct(market.listings.find(l=>l.id===selected)!.premiumBps)} premium`:"Listing unavailable"}</p>}
           <>{tab==="buy"&&<p className="otc-fine">Pay with Base ETH.</p>}</>
           <label>{tab==="buy"?"Arc USDC to receive":"Total Arc USDC listing"}<div className="otc-input-unit"><input required inputMode="decimal" disabled={busy||!!processingPurchase||(tab==="sell"&&!!pendingListing)} value={amount} onChange={e=>{setAmount(e.target.value);setQuote(null);setListingPreview(null);}} pattern="[0-9]+(\.[0-9]{1,6})?"/><span>USDC</span></div>{tab==="sell"&&<button type="button" className="otc-inline-button otc-listing-max" disabled={busy||!!pendingListing||availableWei==null} onClick={()=>{if(availableWei==null)return;setAmount(formatUnits(BigInt(availableWei)/10n**12n,6));setListingPreview(null);}}>Max</button>}{tab==="buy"&&<><button type="button" className="otc-inline-button otc-buy-full" aria-label="Use the maximum available from the selected listing" disabled={busy||!!processingPurchase||!selectedListing||marketError} onClick={()=>{if(!selectedListing)return;setAmount(formatUnits(BigInt(selectedListing.available),6));setQuote(null);setPremiumAccepted(null);setListingPreview(null);}}>Max</button><small>Minimum 10 USDC. Base gas is additional.</small></>}</label>
@@ -265,7 +273,7 @@ export function OtcClient(){
           {tab==="sell"&&<><label>Your premium<div className="otc-input-unit"><input required inputMode="decimal" disabled={busy||!!pendingListing} value={premium} onChange={e=>{setPremium(e.target.value);setListingPreview(null);}} pattern="[0-9]+(\.[0-9]{1,2})?"/><span>%</span></div><small>Set the percent premium for your USDC. The buyer will pay an additional 1.5% service fee on top of this premium.</small></label><div className="otc-comparison"><span>Current lowest <b>{pct(market?.stats.lowestBps??null)}</b></span><span>Weighted average <b>{pct(market?.stats.averageBps??null)}</b></span></div><p className="otc-fine">Your USDC is held in an escrow wallet and listed after funding is verified. Any unsold funds return when you close the position.</p></>}
           {tab==="sell"&&listingPreview&&<div className="otc-comparison"><span>Listed for sale <b>{displayUsdc(listingPreview.listingAmount)} USDC</b></span>{salePrice!==null&&<span>Sale price at premium <b>${units(salePrice)} USD</b></span>}<span>Gas <b>{units(listingPreview.gasReserveWei,18)} USDC</b></span><span>Total to reserve <b>{usdcUnits(listingPreview.requiredWei)} USDC</b></span></div>}
           {inputError&&<p className="otc-fine" role="status">{inputError}</p>}
-          <button className="arc-button" disabled={busy||!!processingPurchase||!(ready||(tab==="sell"&&pendingListing&&session?.authenticated))} type="submit">{processingPurchase?<ActiveStatus text="Processing" active={now-purchaseActivityAt<90_000}/>:busy?<ActiveStatus text={tab==="buy"?"Preparing quote":"Preparing listing"} active={busy}/>:tab==="buy"?"Get exact quote":pendingListing?"Retry original listing":listingPreview?"Confirm listing":"Review Listing"}</button>
+          <button className="arc-button" disabled={busy||!!fundingListing||listingLive||!!processingPurchase||!(ready||(tab==="sell"&&pendingListing&&session?.authenticated))} type="submit">{listingLive?"Listing live":fundingListing?<ActiveStatus text="Verifying escrow" active={true}/>:processingPurchase?<ActiveStatus text="Processing" active={now-purchaseActivityAt<90_000}/>:busy?<ActiveStatus text={tab==="buy"?"Preparing quote":"Preparing listing"} active={busy}/>:tab==="buy"?"Get exact quote":pendingListing?"Retry original listing":listingPreview?"Confirm listing":"Review Listing"}</button>
         </form>}
         {quote&&<div className="otc-quote"><div className="otc-panel-title"><h3>Your quote</h3>{!busy&&!processingPurchase&&!purchaseReceived&&<button type="button" className="otc-inline-button" onClick={()=>{setQuote(null);setPremiumAccepted(null);}}>Back</button>}{purchaseReceived?<span>Received</span>:!processingPurchase&&<span>{Math.max(0,Math.ceil((quote.expiresAt-now)/1000))}s left</span>}</div><PersistentNotices notices={purchaseReceived?(purchaseSuccessDismissed?[]:[`Purchase confirmed. Received ${units(quote.amount)} Arc USDC. Follow it on your wallet page.`]):notices} dismiss={message=>{if(purchaseReceived)setPurchaseSuccessDismissed(true);dismiss(message);}} renderMessage={renderNotice}/><dl><dt>{purchaseReceived?"You received":"You receive"}</dt><dd>{units(quote.amount)} Arc USDC</dd><dt>Premium</dt><dd>{pct(quote.premiumBps)}</dd><dt>Fee</dt><dd>{(quote.serviceFeeBps??SERVICE_FEE_BPS)/100}%</dd><dt>{purchaseReceived?"Quoted total cost":"Total cost"}</dt><dd>{ethUnits((BigInt(quote.totalWei)+quoteGas(quote)).toString())} ETH <EthUsdValue wei={(BigInt(quote.totalWei)+quoteGas(quote)).toString()}/></dd></dl>{purchaseReceived&&quote.payoutHash&&<a className="arc-text-link" href={`https://www.arcexplorer.org/tx/${quote.payoutHash}`} target="_blank" rel="noreferrer">Arc payout</a>}{!purchaseReceived&&<><p className="otc-fine">Your Base ETH payment goes to an escrow wallet. Once confirmed, you receive the exact Arc USDC quoted.</p><label className="otc-premium-ack"><input type="checkbox" checked={premiumAccepted?.quoteId===quote.id&&premiumAccepted.premiumBps===quote.premiumBps} disabled={busy||now>=quote.expiresAt} onChange={e=>setPremiumAccepted(e.target.checked?{quoteId:quote.id,premiumBps:quote.premiumBps}:null)}/><span>I understand I’m paying a {pct(quote.premiumBps)} premium.</span></label><button className="arc-button" aria-busy={busy||!!processingPurchase} disabled={busy||!!processingPurchase||selectedListing?.settling||now>=quote.expiresAt||quote.status!=="quoted"||premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps} onClick={async()=>{if(inFlight.current||processingPurchase||!session?.walletAddress||premiumAccepted?.quoteId!==quote.id||premiumAccepted.premiumBps!==quote.premiumBps)return;for(const notice of notices){if(/^This listing (has|no longer has)/.test(notice))dismiss(notice);}purchaseDone.current=false;setCancelEligibility(null);setPurchaseProgress(null);setNotice("Preparing Base ETH payment");setPurchaseActivityAt(Date.now());trackingRef.current={id:quote.id,listingId:selected,amount:quote.amount,wallet:session.walletAddress};setProcessingPurchase(trackingRef.current);const result=await run({action:"accept",orderId:quote.id});if(purchaseDone.current)return;if(!result){setNotice("Confirming purchase status. Follow it on your wallet page.");return;}if(result.status==="completed"){setProcessingPurchase(null);setQuote({...result,received:true});setBalanceRevision(value=>value+1);setNotice(`Purchase confirmed. Received ${units(result.amount)} Arc USDC. Follow it on your wallet page.`);}else if(result.status==="quoted"||result.status==="expired"){setProcessingPurchase(null);setNotice("Purchase was not submitted. Request a new quote.");}else{setQuote(result);setNotice("Purchase processing. Follow it on your wallet page.");}}}>{busy||processingPurchase?<ActiveStatus text="Processing" active={busy||now-purchaseActivityAt<90_000}/>:"Confirm purchase"}</button>{processingPurchase&&!busy&&session?.walletAddress===processingPurchase.wallet&&cancelEligibility?.id===processingPurchase.id&&now-cancelEligibility.checkedAt<10_000&&<button type="button" className="otc-inline-button" onClick={async()=>{if(inFlight.current||Date.now()-cancelEligibility.checkedAt>=10_000)return;setCancelEligibility(null);const result=await run({action:"cancel_purchase",orderId:processingPurchase.id});if(result?.status==="payment_failed"){setProcessingPurchase(null);setQuote(null);setNotice("Purchase cancelled before payment. No funds sent.");}}}>Cancel unpaid purchase</button>}</>}</div>}
         

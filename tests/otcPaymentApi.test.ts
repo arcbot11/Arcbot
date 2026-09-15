@@ -13,6 +13,29 @@ import {GET,POST} from "../app/api/otc/route";
 const request=(body:unknown)=>new NextRequest("https://arc.invalid/api/otc",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
 beforeEach(()=>{vi.clearAllMocks();m.read.mockImplementation(async({id})=>id.startsWith("wallet:")?null:{id:"listing:test",kind:"listing",status:"active",available:"100000000",seller,premiumBps:1000,escrow:{version:1,address:router,feeRecipient:fees}});m.code.mockResolvedValue("0x");m.command.mockImplementation(async(_command,input)=>({...input,status:"quoted"}));m.rate.mockResolvedValue({ethUsdMicros:"2000000000",priceAt:Date.now()});m.prepare.mockResolvedValue({gasWei:"100",snapshot:{balanceWei:"1000000000000000000",block:"100",nonce:0,pendingNonce:0}});m.usdc.mockResolvedValue("100000000");});
 describe("OTC ETH-only payment API",()=>{
+ it.each(["quote","quote_preview"])("includes the full required ETH total for an underfunded %s",async action=>{
+  m.prepare.mockResolvedValue({gasWei:"100",snapshot:{balanceWei:"0",block:"100"}});
+  const response=await POST(request({action,listingId:"listing:test",amount:"10"}));
+  expect(response.status).toBe(400);
+  expect((await response.json()).error).toContain("0.005583 Base ETH required.");
+  expect(m.prepare).toHaveBeenCalledWith(8453,expect.objectContaining({value:5582500000000000n,data:"0x"}),true,true);
+  expect(m.command).not.toHaveBeenCalled();
+ });
+ it.each(["funding","active"])("restores a listing request's %s status without another submission",async status=>{
+  m.read.mockResolvedValue({id:"listing:buyer:request-123",kind:"listing",owner:"buyer",seller:buyer,status});
+  const r=await POST(request({action:"listing_request_status",requestId:"request-123"}));
+  expect(r.status).toBe(200);expect(await r.json()).toEqual({id:"listing:buyer:request-123",status});
+  expect(m.read).toHaveBeenCalledWith({id:"listing:buyer:request-123"});expect(m.command).not.toHaveBeenCalled();expect(m.prepare).not.toHaveBeenCalled();
+ });
+ it("does not restore a listing belonging to a different wallet",async()=>{
+  m.read.mockResolvedValue({id:"listing:buyer:request-123",kind:"listing",owner:"buyer",seller,status:"active"});
+  expect((await POST(request({action:"listing_request_status",requestId:"request-123"}))).status).toBe(404);
+ });
+ it("keeps waiting when the durable listing has not been created yet",async()=>{
+  m.read.mockResolvedValue(null);
+  const r=await POST(request({action:"listing_request_status",requestId:"request-123"}));
+  expect(await r.json()).toEqual({status:"not_created"});expect(m.command).not.toHaveBeenCalled();
+ });
  it("reconciles an uncertain confirmation through the original owner-scoped order",async()=>{
   m.command.mockResolvedValue({id:"order:test",owner:"buyer",status:"payment_pending",escrow:{version:2},updatedAt:1});
   m.read.mockResolvedValue({chainId:5042,status:"completed",hash:"verified-payout",blockNumber:"100",escrowRef:{orderId:"order:test",step:"arc"}});
@@ -82,7 +105,7 @@ describe("OTC ETH-only payment API",()=>{
   const r=await POST(request({action:"quote",listingId:"listing:test",amount:"10"}));expect(r.status).toBe(200);
   expect(m.command).toHaveBeenCalledWith("quote",expect.objectContaining({paymentAsset:"ETH",baseGasWei:"200",escrowGasBudgetWei:"600"}));
   expect(m.prepare).toHaveBeenCalledTimes(1);
-  expect(m.prepare.mock.calls[0]).toEqual([8453,{from:buyer,to:router,value:5582500000000000n,data:"0x"}]);
+  expect(m.prepare.mock.calls[0]).toEqual([8453,{from:buyer,to:router,value:5582500000000000n,data:"0x"},true,true]);
   expect(m.usdc).not.toHaveBeenCalled();
  });
  it.each(["USDC","USDbC"])("rejects %s before preparing or reserving",async paymentAsset=>{

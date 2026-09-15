@@ -1,3 +1,7 @@
+import { verifyLaunchReceipt, launchEvents, type LaunchEvidence } from "../lib/launches/receipt";
+import { encodeEventTopics, encodeAbiParameters, parseAbiParameters } from "viem";
+import { poolId } from "../lib/arc/routing";
+import { ARC_USDC } from "../lib/arc/config";
 import { expect, it, vi } from "vitest";
 import { decodeFunctionData, encodeFunctionResult, encodePacked, getCreate2Address, keccak256, toHex, type Abi, type Address, type Hex } from "viem";
 import { prepareLaunch, type LaunchReadRpc } from "../lib/launches/prepare";
@@ -103,4 +107,25 @@ it.each(["chain", "code", "nonce", "balance", "reserved", "active", "pointer", "
 it("rejects a false ERC-20 approval result", async () => {
   const f = fixture(); f.options.input.devBuyUSDC = "10"; f.state.approvalResult = false;
   await expect(prepareLaunch(f.options)).rejects.toThrow("approval simulation failed");
+});
+
+it.each(["valid","reverted","wrong-chain","wrong-creator","wrong-calldata","reorg","foreign-events","missing-parts"])("checks mined launch evidence: %s",async mode=>{
+  const f=fixture(),p=await prepareLaunch(f.options),input=f.options.input;
+  const currencies=[ARC_USDC,p.predictedToken].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1);
+  const pool=poolId({protocol:"v4",currency0:currencies[0],currency1:currencies[1],fee:10000,tickSpacing:200,hooks:p.predictedHook});
+  const topics=(name:"TokenCreated"|"PartsDeployed")=>encodeEventTopics({abi:launchEvents,eventName:name,args:{token:p.predictedToken,...(name==="TokenCreated"?{creator}: {})}}) as [Hex,...Hex[]];
+  const evidence:LaunchEvidence={chainId:5042,hash:toHex(99n,{size:32}),from:creator,to:PORTAL6,input:p.steps.at(-1)!.call.data,value:0n,
+    canonicalBlock:{number:201n,hash:toHex(20n,{size:32})},receipt:{transactionHash:toHex(99n,{size:32}),status:"success",blockNumber:201n,blockHash:toHex(20n,{size:32}),logs:[
+      {address:PORTAL6,topics:topics("TokenCreated"),data:encodeAbiParameters(parseAbiParameters("string,string,bytes32,string,string,string,string"),[input.name,input.symbol,pool as Hex,input.imageURI,input.website,input.twitter,input.telegram])},
+      {address:PORTAL6,topics:topics("PartsDeployed"),data:encodeAbiParameters(parseAbiParameters("address,address,address"),[creator,p.predictedHook,p.predictedSplitter])}
+    ]}};
+  if(mode==="reverted")evidence.receipt.status="reverted";
+  if(mode==="wrong-chain")evidence.chainId=8453;
+  if(mode==="wrong-creator")evidence.from=predicted;
+  if(mode==="wrong-calldata")evidence.input="0x";
+  if(mode==="reorg")evidence.canonicalBlock.hash=toHex(21n,{size:32});
+  if(mode==="foreign-events")evidence.receipt.logs.forEach(l=>l.address=creator);
+  if(mode==="missing-parts")evidence.receipt.logs.pop();
+  if(mode==="valid")expect(verifyLaunchReceipt(f.options.identity,input,p,evidence)).toMatchObject({token:p.predictedToken,creator,portal:PORTAL6,poolId:pool});
+  else expect(()=>verifyLaunchReceipt(f.options.identity,input,p,evidence)).toThrow("Launch evidence");
 });

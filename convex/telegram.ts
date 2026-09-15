@@ -2,7 +2,7 @@ import {safeExportError} from "../lib/key-export/errors";
 import { suppressCreationReply } from "../lib/disabled-creation";
 import {makeFunctionReference} from "convex/server";
 import { socialAddressLinks } from "../lib/social-address-links";
-import { ARC_BOT_TELEGRAM_USER_ID, ARC_BOT_TELEGRAM_USERNAME } from "../lib/project-config";
+import { ARC_BOT_SITE_URL, ARC_BOT_TELEGRAM_USER_ID, ARC_BOT_TELEGRAM_USERNAME } from "../lib/project-config";
 import { internal } from "./_generated/api";
 import { action, internalAction, internalMutation, internalQuery, type ActionCtx } from "./_generated/server";
 import { baseConfigFromEnv } from "../lib/base/config";
@@ -21,16 +21,23 @@ const LINK_TTL_MS = 10 * 60 * 1_000;
 
 async function fundedWalletMenu(ctx: ActionCtx, state: Awaited<ReturnType<typeof walletContext>>) {
   let hasBaseEth = false;
+  let hasCreatorTokens = false;
+  const address = state.selected === "tg" ? state.native?.address : state.selected === "x" && state.link
+    ? (await ctx.runQuery(internal.wallets.getXUserAndWallet, { xUserId: state.link.ownerXUserId }))?.wallet?.address : undefined;
   try {
-    const address = state.selected === "tg" ? state.native?.address : state.selected === "x" && state.link
-      ? (await ctx.runQuery(internal.wallets.getXUserAndWallet, { xUserId: state.link.ownerXUserId }))?.wallet?.address : undefined;
     if (address) {
       const config = baseConfigFromEnv(), rpc = createBaseRpc(config);
       const head = await checkBaseRpc(rpc, config);
       hasBaseEth = await rpc.balance(getAddress(address), head.number) > 0n;
     }
   } catch { /* An unavailable balance must not prevent the rest of the menu. */ }
-  return telegramMenu(state, hasBaseEth);
+  try {
+    if(address&&process.env.WEB_AUTH_SECRET){
+      const response=await fetch(`${ARC_BOT_SITE_URL}/api/wallet/fees?wallet=${encodeURIComponent(address)}`,{headers:{authorization:`Bearer ${process.env.WEB_AUTH_SECRET}`},signal:AbortSignal.timeout(20000)});
+      if(response.ok){const result=await response.json();hasCreatorTokens=Array.isArray(result.tokens)&&result.tokens.length>0;}
+    }
+  }catch{/* Hide creator controls when eligibility cannot be verified. */}
+  return telegramMenu(state, hasBaseEth,hasCreatorTokens);
 }
 
 type TelegramUpdate = {
@@ -131,7 +138,7 @@ export const reserveUpdate = internalMutation({
       if (source?.chat?.type === "private" && !from?.is_bot && String(from?.id) === args.telegramUserId && input) {
         const changesWallet = (["createtg", "usetg", "usex", "unlink"].includes(input.name) && !input.args)
           || (input.name === "start" && /^link_[a-f0-9]{32}$/.test(input.args));
-        const spends = ["buy", "sell", "swap", "send", "burn", "withdraw"].includes(input.name) && Boolean(input.args);
+        const spends = ["buy", "sell", "swap", "send", "burn", "withdraw", "claim"].includes(input.name) && Boolean(input.args);
         const selection = await ctx.db.query("telegramWalletSelections").withIndex("by_user", q => q.eq("telegramUserId", args.telegramUserId!)).unique();
         walletTransitionBlocked = Boolean(selection?.pendingUpdateId && (changesWallet || spends));
         if (changesWallet && !walletTransitionBlocked) {
@@ -628,7 +635,7 @@ export const processUpdate = internalAction({
             if (result.attention) {
               await ctx.runAction(internal.telegram.deliverWalletMessage, { telegramUserId, telegramChatId: chatId, ownerXUserId: link.ownerXUserId, requestId: `telegram-attention:${requestId}`, text: result.attention });
             } else if (result.processing) {
-              const action = parsedCommand.kind === "send" && parsedCommand.chainId === 8453 ? "Base withdrawal" : parsedCommand.kind === "swap_token_for_token" ? "Swap" : parsedCommand.kind[0].toUpperCase() + parsedCommand.kind.slice(1);
+              const action = parsedCommand.kind === "send" && parsedCommand.chainId === 8453 ? "Base withdrawal" : parsedCommand.kind === "claim_fees" ? "Claim" : parsedCommand.kind === "swap_token_for_token" ? "Swap" : parsedCommand.kind[0].toUpperCase() + parsedCommand.kind.slice(1);
               await ctx.runAction(internal.telegram.deliverWalletMessage, { telegramUserId, telegramChatId: chatId, ownerXUserId: link.ownerXUserId, requestId: `telegram-processing:${requestId}`, text: `${action} processing.` });
             }
           } else {

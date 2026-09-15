@@ -19,6 +19,7 @@ import { z } from "zod";
 import { boundedJson } from "@/lib/bounded-json";
 import { repository } from "@/lib/otc/repository";
 import { balanceSnapshot, verifyRouter, ethPrice, prepareCall, advanceOrder, baseUsdcBalance, chainClient } from "@/lib/otc/runtime";
+import {requiredEth} from "@/lib/otc/required-eth";
 import { json, webFailure, websiteSession, WebError } from "@/lib/otc/http";
 import { SERVICE_FEE_BPS, type Transaction, type Listing, type Order, type RecordValue, type Wallet, locked, paymentAsset, walletId, usdc, price } from "@/lib/otc/model";
 import { payoutCall } from "@/lib/otc/transactions";
@@ -37,6 +38,7 @@ const bodySchema=z.discriminatedUnion("action",[
   z.object({action:z.literal("cancel_purchase"),orderId:id}).strict(),
   z.object({action:z.literal("purchase_status"),orderId:id}).strict(),
   z.object({action:z.literal("listing_status"),listingId:id}).strict(),
+  z.object({action:z.literal("listing_request_status"),requestId:id}).strict(),
   z.object({action:z.literal("retry_escrow"),listingId:id,orderId:id.optional()}).strict(),
   z.object({action:z.literal("retry_payout"),orderId:id,attempt:z.number().int().min(0)}).strict(),
 ]);
@@ -107,14 +109,15 @@ export async function POST(request:NextRequest) {
   let operation:"quote"|undefined;
   try{
     const body=bodySchema.parse(await boundedJson(request,4096));
-    const session=await websiteSession(request,true,body.action!=="purchase_status"&&body.action!=="listing_status");
+    const session=await websiteSession(request,true,!["purchase_status","listing_status","listing_request_status"].includes(body.action));
     if(body.action==="quote"||body.action==="quote_preview")operation="quote";
     const repo=repository();
     if(body.action==="retry_escrow"){const r=await repo.command("escrow_retry",{listingId:body.listingId,orderId:body.orderId,owner:session.owner});return json(r);}
     if(body.action==="cancel"){const r=await repo.command("cancel",{id:body.listingId,owner:session.owner});return json(r);}
     if(body.action==="cancel_purchase")return json(await repo.command("cancel_purchase",{id:body.orderId,owner:session.owner}));
-    if(body.action==="listing_status"){
-      const listing=await repo.read<Listing|null>({id:body.listingId});
+    if(body.action==="listing_status"||body.action==="listing_request_status"){
+      const listing=await repo.read<Listing|null>({id:body.action==="listing_status"?body.listingId:`listing:${session.owner}:${body.requestId}`});
+      if(!listing&&body.action==="listing_request_status")return json({status:"not_created"});
       if(!listing||listing.kind!=="listing"||listing.owner!==session.owner||listing.seller.toLowerCase()!==session.walletAddress.toLowerCase())throw new WebError("Listing not found.",404);
       return json({id:listing.id,status:listing.status});
     }
@@ -168,7 +171,7 @@ export async function POST(request:NextRequest) {
       const from=getAddress(session.walletAddress),to=getAddress(listing.escrow.address);
       // One validated native-transfer estimate includes Base L1/operator fees.
       // All settlement recipients must be EOAs; there is no calldata or contract execution.
-      const payment=await prepareCall(8453,{from,to,value:BigInt(cost.totalWei),data:"0x"});
+      const payment=await prepareCall(8453,{from,to,value:BigInt(cost.totalWei),data:"0x"},true,true);
       const destinations=[getAddress(listing.seller),getAddress(listing.escrow.feeRecipient),from,to];
       const client=chainClient(8453);
       const codes=await Promise.all(destinations.map(address=>client.getCode({address,blockNumber:BigInt(payment.snapshot.block)})));
@@ -184,7 +187,7 @@ export async function POST(request:NextRequest) {
         cost=price(amount,listing.premiumBps,BigInt(rate.ethUsdMicros),SERVICE_FEE_BPS);
       }
       const required=BigInt(cost.totalWei)+gas.settlementWei+perTransfer;
-      if(BigInt(payment.snapshot.balanceWei)-(funding?locked(funding):0n)<required)throw new WebError("Not enough available Base ETH for the amount, premium, 1.5% fee, and gas.");
+      if(BigInt(payment.snapshot.balanceWei)-(funding?locked(funding):0n)<required)throw new WebError(`Not enough available Base ETH for the amount, premium, 1.5% fee, and gas. ${requiredEth(required)} Base ETH required.`);
       if(body.action==="quote_preview")return json({totalCostWei:required.toString()});
       // Save quote terms only. Confirmation reserves inventory and buyer funds.
       return json(publicOrder(await repo.command<Order>("quote",{id:`order:${randomUUID()}`,owner:session.owner,buyer:session.walletAddress,listingId:listing.id,amount:body.amount,paymentAsset:"ETH",...rate,baseGasWei:perTransfer.toString(),escrowGasBudgetWei:gas.settlementWei.toString(),baseBalanceWei:payment.snapshot.balanceWei,baseBlock:payment.snapshot.block,router:listing.escrow.address,feeRecipient:listing.escrow.feeRecipient})));

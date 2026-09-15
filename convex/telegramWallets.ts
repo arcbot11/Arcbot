@@ -90,7 +90,7 @@ async function boundNative(ctx: DbCtx, updateId: string) {
 export const enqueue = internalMutation({ args: { updateId: v.string(), name: v.string(), args: v.string() }, handler: async (ctx, a) => {
   const { update, wallet } = await boundNative(ctx, a.updateId);
   const command = telegramWalletCommand(a.name, a.args);
-  if (!command || !["show_wallet", "show_balance", "buy", "sell", "swap_token_for_token", "send", "burn"].includes(command.kind)) throw Error("Unsupported command.");
+  if (!command || !["claim_fees", "show_wallet", "show_balance", "buy", "sell", "swap_token_for_token", "send", "burn"].includes(command.kind)) throw Error("Unsupported command.");
   const requestId = `telegram-native:${a.updateId}`;
   const existing = await ctx.db.query("telegramNativeRequests").withIndex("by_request", q => q.eq("requestId", requestId)).unique();
   if (existing) {
@@ -158,7 +158,7 @@ export const work = internalAction({ args: { requestId: v.string() }, handler: a
           try { await ctx.runAction(internal.telegram.deliverNativeWalletMessage, { walletId: wallet._id, requestId: `telegram-attention:${row.requestId}`, text: reply.attention }); }
           catch { /* Retry this idempotent notice while receipt recovery continues. */ }
         } else if (reply.processing) {
-          const action = command.kind === "send" && command.chainId === 8453 ? "Base withdrawal" : command.kind === "swap_token_for_token" ? "Swap" : command.kind[0].toUpperCase() + command.kind.slice(1);
+          const action = command.kind === "send" && command.chainId === 8453 ? "Base withdrawal" : command.kind === "claim_fees" ? "Claim" : command.kind === "swap_token_for_token" ? "Swap" : command.kind[0].toUpperCase() + command.kind.slice(1);
           try { await ctx.runAction(internal.telegram.deliverNativeWalletMessage, { walletId: wallet._id, requestId: `telegram-processing:${row.requestId}`, text: `${action} processing.` }); }
           catch { /* A progress notice failure must not change transaction recovery. */ }
         }

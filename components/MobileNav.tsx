@@ -26,6 +26,7 @@ export function MobileNav() {
     {open ? <div className="mobile-menu" id="mobile-navigation">
       <Link href="/" onClick={() => setOpen(false)}>Home</Link>
       <Link href="/wallet" onClick={() => setOpen(false)}>Wallet</Link>
+      <Link href="/wallet#move-funds" onClick={() => setOpen(false)}>Swap</Link>
       <Link href="/guide" onClick={() => setOpen(false)}>Guide</Link>
       <Link href="/otc" onClick={() => setOpen(false)}>OTC Market</Link>
       <a href={brand.xUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>X</a>

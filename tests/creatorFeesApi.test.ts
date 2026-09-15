@@ -1,0 +1,13 @@
+import {beforeEach,expect,it,vi} from "vitest";
+import {NextRequest,NextResponse} from "next/server";
+const mock=vi.hoisted(()=>({session:vi.fn(),claim:vi.fn(),tokens:vi.fn()}));
+vi.mock("../lib/otc/http",()=>({websiteSession:mock.session,json:(body:unknown,status=200)=>NextResponse.json(body,{status}),sameSecret:(a:string,b:string)=>a===b,WebError:class extends Error{status=401}}));
+vi.mock("../lib/launches/fee-service",()=>({runCreatorClaim:mock.claim,creatorTokens:mock.tokens}));
+import {GET,POST} from "../app/api/wallet/fees/route";
+const wallet="0x1111111111111111111111111111111111111111",token="0x2222222222222222222222222222222222222222",requestId="11111111-1111-4111-8111-111111111111";
+beforeEach(()=>{vi.resetAllMocks();mock.session.mockResolvedValue({owner:"tg:123",walletAddress:wallet});mock.claim.mockResolvedValue({ok:true,status:"completed"});mock.tokens.mockResolvedValue([]);});
+const post=(body:unknown)=>new NextRequest("https://www.argosbot.io/api/wallet/fees",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(body)});
+it("uses only the authenticated owner and wallet for claims",async()=>{expect((await POST(post({token,requestId}))).status).toBe(200);expect(mock.session).toHaveBeenCalledWith(expect.anything(),true);expect(mock.claim).toHaveBeenCalledWith("tg:123",wallet,requestId,token);});
+it("rejects attempts to choose a recipient or owner",async()=>{expect((await POST(post({token,requestId,owner:"other",recipient:token}))).status).toBe(400);expect(mock.claim).not.toHaveBeenCalled();});
+it("does not discover or claim if session verification fails",async()=>{mock.session.mockRejectedValue(Error("Invalid session"));await GET(new NextRequest("https://www.argosbot.io/api/wallet/fees"));await POST(post({token,requestId}));expect(mock.tokens).not.toHaveBeenCalled();expect(mock.claim).not.toHaveBeenCalled();});
+it("does not use an arbitrary GET wallet query from browser clients",async()=>{await GET(new NextRequest(`https://www.argosbot.io/api/wallet/fees?wallet=${token}`));expect(mock.tokens).toHaveBeenCalledWith(wallet);});

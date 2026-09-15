@@ -5,6 +5,7 @@ import { normalizeLeadingQuantity, normalizeTokenFirstBuy, hasMalformedNumericGr
 
 export const TELEGRAM_HELP = "Argos Bot\nYour Arc Chain wallet.\n\nUse the buttons or a full /command. Arc gas is paid in USDC. Token names accept a ticker or contract address. Sends require a full wallet address.";
 export const TELEGRAM_FORMATS: Record<string, string> = {
+  claim: "Claim credited creator fees:\n/claim ARGOS\n/claim CONTRACT\nClaims pay your selected creator wallet. Arc gas is paid in USDC.",
   buy: "Buy Arc tokens:\n/buy 10 USDC ARGOS\n/buy $10 ARGOS\n\nPaired tokens use their quote asset when it covers a dollar buy, otherwise USDC. To choose the spend asset: /buy 100 ARGUS of BABYARGUS",
   sell: "Sell Arc tokens:\n/sell 100 ARGOS\n/sell $10 ARGOS\n/sell 50% ARGOS\n/sell all ARGOS\n\nReceive the token's trading asset: USDC for ordinary tokens, ARGUS for ARGUS-paired tokens.",
   swap: "Swap Arc tokens:\n/swap 100 ARGOS for TOKEN\n/swap $10 ARGOS for TOKEN\n/swap 50% ARGOS for TOKEN\n/swap all ARGOS for TOKEN",
@@ -16,12 +17,13 @@ export const TELEGRAM_MENU = { inline_keyboard: [
   [{ text: "Wallet", callback_data: "/wallet" }, { text: "Balances", callback_data: "/balance" }],
   [{ text: "Buy", callback_data: "/buy" }, { text: "Sell", callback_data: "/sell" }, { text: "Swap", callback_data: "/swap" }],
   [{ text: "Send", callback_data: "/send" }, { text: "Burn", callback_data: "/burn" }],
+  [{ text: "Claim fees", callback_data: "/claim" }],
   [{ text: "Withdraw Base ETH", callback_data: "/withdraw" }],
   [{ text: "Help", callback_data: "/help" }, { text: "Unlink X", callback_data: "/unlink" }],
 ] };
 const walletNavigation = ["createtg", "usetg", "usex", "link"];
-export function telegramMenu(state: { native: unknown; link: unknown; selected: string | null }, hasBaseEth = false) {
-  const rows = state.native || state.link ? TELEGRAM_MENU.inline_keyboard.slice(0, -1).filter(row => hasBaseEth || !row.some(button => button.callback_data === "/withdraw")).concat([[{ text: "Help", callback_data: "/help" }]]) : [];
+export function telegramMenu(state: { native: unknown; link: unknown; selected: string | null }, hasBaseEth = false, hasCreatorTokens = false) {
+  const rows = state.native || state.link ? TELEGRAM_MENU.inline_keyboard.slice(0, -1).filter(row => (hasBaseEth || !row.some(button => button.callback_data === "/withdraw")) && (hasCreatorTokens || !row.some(button => button.callback_data === "/claim"))).concat([[{ text: "Help", callback_data: "/help" }]]) : [];
   if (!state.native) rows.push([{ text: "Create TG Linked Wallet", callback_data: "/createtg" }]);
   if (!state.link) rows.push([{ text: "Link X", callback_data: "/link" }]);
   if (state.native && state.link) rows.push([{ text: state.selected === "tg" ? "Switch to X Wallet" : "Switch to TG Wallet", callback_data: state.selected === "tg" ? "/usex" : "/usetg" }]);
@@ -58,6 +60,7 @@ export function telegramWalletCommand(name: string, args: string): WalletCommand
     if (name === "buy") args = args.replace(/^(\$?(?:0x[a-fA-F0-9]{40}|[A-Za-z][A-Za-z0-9_]{0,31}))\s+(?:for|with|using)\s+(\$\d+(?:\.\d+)?|\d+(?:\.\d+)?\s+(?:USDC|USD|dollars?))$/i, "$2 $1");
     args = args.replace(/^(\d+(?:\.\d+)?|\.\d+)\s+(?:USD|dollars?)\s+/i, "$$$1 ");
   }
+  if (name === "claim") return new RegExp(`^${token}$`).test(args) ? {kind:"claim_fees",token:args.replace(/^\$/, "")} : null;
   if (name === "wallet") return args ? null : { kind: "show_wallet" };
   if (name === "balance") return !args ? { kind: "show_balance" } : new RegExp(`^${token}$`).test(args) ? { kind: "show_balance", token: args.replace(/^\$/, "") } : null;
   let match: RegExpMatchArray | null;

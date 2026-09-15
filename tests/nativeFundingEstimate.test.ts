@@ -1,0 +1,20 @@
+import {beforeEach,expect,it,vi} from "vitest";
+import {parseTransaction,type Hex} from "viem";
+const m=vi.hoisted(()=>({balance:vi.fn(),code:vi.fn(),call:vi.fn(),gas:vi.fn(),extra:vi.fn()}));
+vi.mock("viem",async original=>({...await original<typeof import("viem")>(),createPublicClient:()=>({getBalance:m.balance,getTransactionCount:async()=>0,getBlock:async()=>({hash:"0xabc"}),getCode:m.code,call:m.call,estimateGas:m.gas,estimateFeesPerGas:async()=>({maxFeePerGas:2n,maxPriorityFeePerGas:1n})})}));
+vi.mock("../lib/base/config",()=>({baseConfigFromEnv:()=>({maxGas:100000n,maxFeePerGas:100n,maxTotalFeeWei:1000000n})}));
+vi.mock("../lib/base/rpc",()=>({createBaseRpc:()=>({extraFees:m.extra}),checkBaseRpc:async()=>({number:1n,hash:"0xabc"})}));
+vi.mock("../lib/base/transport",()=>({baseTransport:()=>({})}));
+import {prepareCall} from "../lib/otc/runtime";
+const call={from:"0x1111111111111111111111111111111111111111" as const,to:"0x2222222222222222222222222222222222222222" as const,data:"0x" as Hex,value:10n**16n};
+beforeEach(()=>{vi.clearAllMocks();m.balance.mockResolvedValue(0n);m.code.mockResolvedValue("0x");m.call.mockResolvedValue({data:"0x"});m.gas.mockResolvedValue(21000n);m.extra.mockResolvedValue({l1FeeUpperBoundWei:100n,operatorFeeWei:10n});});
+it("computes full funding for an empty wallet without mispricing the actual Base envelope",async()=>{
+  const result=await prepareCall(8453,call,true,true);
+  expect(m.call).toHaveBeenCalledWith(expect.objectContaining({value:0n}));expect(m.gas).toHaveBeenCalledWith(expect.objectContaining({value:0n}));
+  expect(m.extra).toHaveBeenCalledWith(expect.objectContaining({value:call.value}),1n);
+  expect(parseTransaction(result.unsigned).value).toBe(call.value);
+  expect(BigInt(result.reserveWei)).toBe(call.value+BigInt(result.gasWei));
+});
+it("normal execution preparation still rejects insufficient funds",async()=>{await expect(prepareCall(8453,call)).rejects.toThrow("Not enough funds");expect(m.call).not.toHaveBeenCalled();});
+it("cannot use unfunded estimates for contract calls",async()=>{m.code.mockResolvedValue("0x1234");await expect(prepareCall(8453,call,true,true)).rejects.toThrow("standard EVM wallets");expect(m.call).not.toHaveBeenCalled();});
+it("requires explicit read-only mode and empty calldata",async()=>{await expect(prepareCall(8453,call,false,true)).rejects.toThrow("Invalid native funding estimate");await expect(prepareCall(8453,{...call,data:"0x1234"},true,true)).rejects.toThrow("Invalid native funding estimate");});
