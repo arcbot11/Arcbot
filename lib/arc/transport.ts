@@ -33,11 +33,12 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
   const methodUnavailableUntil = new Map<string, number>();
   const traceAllowedUntil = new Map<string, number>();
   const validationEvidence=new Map<string,{chain:unknown;checkpoint:unknown}>();
+  const identityUntil = new Map<string, number>();
   const inFlightReads=new Map<string,Promise<unknown>>();
   async function observedCall(url:string,method:string,params:readonly unknown[]){
     const started=Date.now();let category='ok';
     try{return await rawCall(url,method,params);}
-    catch(error){category=error instanceof RpcFailure?(error.code===429?'rate_limited':error.retryable?'provider_unavailable':'request_rejected'):'invalid_response';throw error;}
+    catch(error){category=error instanceof RpcFailure?(error.message==='Arc RPC capacity service busy'?'admission_unavailable':error.code===429?'rate_limited':error.retryable?'provider_unavailable':'request_rejected'):'invalid_response';throw error;}
     finally{if(category!=='ok'||Date.now()-started>1500)console.info('arc_rpc',{role:rpcRole(method,traceFallback),provider:url===config.rpcUrl?'primary':config.rpcFallbackUrls.includes(url)?'fallback':'gateway',method,durationMs:Date.now()-started,category});}
   }
   async function call(url:string,method:string,params:readonly unknown[]=[]):Promise<unknown>{
@@ -69,6 +70,8 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
     if (body.error) {
       if (!isRecord(body.error)) throw new RpcFailure("Invalid Arc RPC error", -32098, true);
       const code = Number(body.error.code), message = String(body.error.message || "RPC error");
+      if (/rate.?limit|too many requests/i.test(message))
+        throw new RpcFailure('Arc RPC rate limit reached',429,true,undefined,true,1000,false);
       const executionFailure = code === 3 || /execution reverted|out of gas|outoffunds|insufficient (?:funds|balance)|invalid opcode/i.test(message);
       const authorizationFailure = /unauthori[sz]ed|forbidden|invalid (?:api|project) key|access denied|not authorized/i.test(message);
       // A provider may serve a fresh head before its state backend has that
@@ -127,10 +130,11 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
         }
       }
     };
-    const chain = await identityRead("eth_chainId");
+    const cached = (identityUntil.get(url) ?? 0) > Date.now() ? validationEvidence.get(url) : undefined;
+    const chain = cached?.chain ?? await identityRead("eth_chainId");
     if (chain !== "0x13b2") throw new RpcFailure("Arc RPC chain mismatch", -32098, true);
     const [checkpoint,head] = await Promise.all([
-      identityRead("eth_getBlockByNumber", [`0x${config.checkpointNumber.toString(16)}`, false]),
+      cached?.checkpoint ?? identityRead("eth_getBlockByNumber", [`0x${config.checkpointNumber.toString(16)}`, false]),
       identityRead("eth_getBlockByNumber", ["latest", false]),
     ]);
     if (!isBlock(checkpoint) || BigInt(checkpoint.number) !== config.checkpointNumber || checkpoint.hash.toLowerCase() !== config.checkpointHash.toLowerCase()) throw new RpcFailure("Arc RPC checkpoint mismatch", -32098, true);
@@ -138,6 +142,7 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
     if (!isBlock(head) || !Number.isFinite(age) || age < -5 || age > config.maxHeadAgeSeconds || BigInt(head.number) < config.checkpointNumber) throw new RpcFailure("Arc RPC head is stale", -32098, true);
     verifiedUntil.set(url, Date.now() + Math.min(5000, Math.max(0, (config.maxHeadAgeSeconds - age) * 1000)));
     validationEvidence.set(url,{chain,checkpoint});
+    if (!cached) identityUntil.set(url, Date.now() + 300000);
   }
   async function validate(url: string) {
     if ((unavailableUntil.get(url) ?? 0) > Date.now()) throw new RpcFailure("Arc RPC cooling down", -32098, true);

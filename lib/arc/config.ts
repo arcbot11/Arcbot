@@ -33,11 +33,18 @@ export function arcConfigFromEnv(env: Record<string, string | undefined> = proce
   if (!env.ARC_MAINNET_RPC_URL || !env.ARC_CHECKPOINT_NUMBER || !env.ARC_CHECKPOINT_HASH) {
     throw new Error("Configure ARC_MAINNET_RPC_URL, ARC_CHECKPOINT_NUMBER and ARC_CHECKPOINT_HASH before preparing Arc transactions");
   }
+  // Advance only the project's known legacy anchor. Both independent providers
+  // returned this block/hash on 2026-09-15; the public RPC rejects the old height.
+  const legacy = env.ARC_CHECKPOINT_NUMBER === '18456078' &&
+    env.ARC_CHECKPOINT_HASH.toLowerCase() === '0xdd5a48032af8571d6a262f39e5cde7e6b91625aaa4330289f03e5a346dd3c358';
+  const fallback = env.ARC_RPC_FALLBACK_URLS === undefined ? ['https://rpc.mainnet.arc.io'] :
+    env.ARC_RPC_FALLBACK_URLS.split(',').map(url=>url.trim()).filter(Boolean);
   return arcConfig({ rpcUrl: env.ARC_MAINNET_RPC_URL,
-    rpcFallbackUrls: [env.ARC_INFURA_RPC_URL].filter((url): url is string => Boolean(url)),
-    readOnlyRpcUrls: ["https://arguspad.io/api/rpc"],
-    quoteRpcUrls: [env.ARC_MAINNET_RPC_URL, env.ARC_INFURA_RPC_URL, "https://arguspad.io/api/rpc"].filter((url): url is string => Boolean(url)),
-    checkpointNumber: env.ARC_CHECKPOINT_NUMBER, checkpointHash: env.ARC_CHECKPOINT_HASH,
+    rpcFallbackUrls: fallback,
+    readOnlyRpcUrls: [],
+    quoteRpcUrls: [env.ARC_MAINNET_RPC_URL, ...fallback],
+    checkpointNumber: legacy ? '21065497' : env.ARC_CHECKPOINT_NUMBER,
+    checkpointHash: legacy ? '0xdba68d53cfd9677309247a79359fe7d01599447d69f84f69a958bc179a6cdf07' : env.ARC_CHECKPOINT_HASH,
     ...ARC_GAS_POLICY,
   });
 }

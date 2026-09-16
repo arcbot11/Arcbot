@@ -42,6 +42,7 @@ import type * as operationDiagnostics from "../operationDiagnostics.js";
 import type * as otc from "../otc.js";
 import type * as registry from "../registry.js";
 import type * as retiredTokenCleanup from "../retiredTokenCleanup.js";
+import type * as rpcCapacity from "../rpcCapacity.js";
 import type * as site from "../site.js";
 import type * as telegram from "../telegram.js";
 import type * as telegramDeliveries from "../telegramDeliveries.js";
@@ -107,6 +108,7 @@ declare const fullApi: ApiFromModules<{
   otc: typeof otc;
   registry: typeof registry;
   retiredTokenCleanup: typeof retiredTokenCleanup;
+  rpcCapacity: typeof rpcCapacity;
   site: typeof site;
   telegram: typeof telegram;
   telegramDeliveries: typeof telegramDeliveries;

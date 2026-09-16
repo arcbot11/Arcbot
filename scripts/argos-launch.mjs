@@ -29,7 +29,9 @@ if(args[0]==='--help'||(args.length!==1&&!personal&&!creatorFees)||!['--preview'
 }
 const batchId=process.env.ARGOS_PERSONAL_BATCH_ID;
 if(batchId&&(!personal||personalSell||!/^[a-z0-9-]{1,64}$/.test(batchId)))throw Error('Invalid personal buy batch ID.');
-const mode=args[0],privateDir=path.join(root,'.deployment-private'),journalPath=path.join(privateDir,crankFees?`argos-crank-${crankRun}-v1.json`:creatorFees?`argos-creator-fees-${creatorFeeRun??'20260911'}-v1.json`:personal?`argos-${personalSell?argusWalletSell?'sell-tokens600000':sellUsd?`sell-usd${sellUsd}`:'sell50':personalPercent===95?'buy':`buy${personalPercent}`}-${personal.toLowerCase()}-${args[4].toLowerCase()}${batchId?`-${batchId}`:''}-v1.json`:'argos-launch-v1.json');
+const sellRun=process.env.ARGOS_PERSONAL_SELL_RUN_ID;
+if(sellRun&&(!argusWalletSell||!/^[a-z0-9-]{1,64}$/.test(sellRun)))throw Error('Invalid personal sell run ID.');
+const mode=args[0],privateDir=path.join(root,'.deployment-private'),journalPath=path.join(privateDir,crankFees?`argos-crank-${crankRun}-v1.json`:creatorFees?`argos-creator-fees-${creatorFeeRun??'20260911'}-v1.json`:personal?`argos-${personalSell?argusWalletSell?'sell-tokens600000':sellUsd?`sell-usd${sellUsd}`:'sell50':personalPercent===95?'buy':`buy${personalPercent}`}-${personal.toLowerCase()}-${args[4].toLowerCase()}${batchId?`-${batchId}`:''}${sellRun?`-${sellRun}`:''}-v1.json`:'argos-launch-v1.json');
 const readJson=async p=>JSON.parse(await fs.readFile(p,'utf8'));
 const serial=x=>JSON.stringify(x,(_,v)=>typeof v==='bigint'?v.toString():v,2);
 const same=(a,b)=>a.toLowerCase()===b.toLowerCase();
@@ -42,7 +44,7 @@ const sequence=await readJson(path.join(root,'docs/launch/EXECUTION-SEQUENCE.jso
 const bundle=await readJson(path.join(root,'docs/launch/argus-bundle-2026-09-11.json'));
 const abi=bundle.contracts.ArgusV4Portal6.abi;
 const erc=parseAbi(['function approve(address,uint256) returns(bool)','function allowance(address,address) view returns(uint256)','function balanceOf(address) view returns(uint256)','function symbol() view returns(string)','function name() view returns(string)','function decimals() view returns(uint8)','event Transfer(address indexed from,address indexed to,uint256 value)']);
-const digest=createHash('sha256').update(serial(creatorFees?{purpose:crankFees?'collect-crank-claim':'creator-fees',...(crankFees?{run:crankRun}:creatorFeeRun?{run:creatorFeeRun}:{}),token:draft.predictedToken,creator:draft.creatorWallet,chainId:5042}:personal?{personal,token:args[4].toLowerCase(),percent:personalPercent,...(sellUsd?{sellUsd}:{}),...(argusWalletSell?{sellTokens:'600000',expectedWallet:'0xf950F0Da8659C62Fb8E0B5462f05f9CACDF56938'}:{}),chainId:5042}: {draft,sequence})).digest('hex');
+const digest=createHash('sha256').update(serial(creatorFees?{purpose:crankFees?'collect-crank-claim':'creator-fees',...(crankFees?{run:crankRun}:creatorFeeRun?{run:creatorFeeRun}:{}),token:draft.predictedToken,creator:draft.creatorWallet,chainId:5042}:personal?{personal,token:args[4].toLowerCase(),percent:personalPercent,...(sellUsd?{sellUsd}:{}),...(sellRun?{sellRun}:{}),...(argusWalletSell?{sellTokens:'600000',expectedWallet:'0xf950F0Da8659C62Fb8E0B5462f05f9CACDF56938'}:{}),chainId:5042}: {draft,sequence})).digest('hex');
 let journal,lock;
 try{journal=await readJson(journalPath);}catch(e){if(e.code!=='ENOENT')throw e;}
 if(mode==='--status'){

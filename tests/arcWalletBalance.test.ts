@@ -15,7 +15,7 @@ beforeEach(() => {
 afterEach(() => vi.unstubAllEnvs());
 it("reads funds with verified public defaults without transaction environment settings", async () => {
   expect(await arcWalletBalance("0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC")).toEqual({ balanceWei: "1000000000000000000", block: "20153076" });
-  expect(mocks.config.mock.calls[0][0]).toMatchObject({ rpcUrl: "https://rpc.arc-scan.org", checkpointNumber: 18456078n, readOnlyRpcUrls: ["https://arguspad.io/api/rpc"] });
+  expect(mocks.config.mock.calls[0][0]).toMatchObject({ rpcUrl: "https://rpc.mainnet.arc.io", checkpointNumber: 21065497n, readOnlyRpcUrls: [] });
 });
 it("rejects a changed canonical balance block", async () => {
   mocks.block.mockResolvedValue({ hash: "0xcd" });

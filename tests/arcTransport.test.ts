@@ -105,7 +105,8 @@ describe("Arc RPC failover", () => {
     const f=fixture(()=>undefined);
     await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});now+=6000;
     await f.client.getBalance({address:"0x1111111111111111111111111111111111111111"});
-    expect(f.calls.filter(c=>c.method==="eth_chainId")).toHaveLength(2);
+    expect(f.calls.filter(c=>c.method==="eth_chainId")).toHaveLength(1);
+    expect(f.calls.filter(c=>c.method==="eth_getBlockByNumber"&&c.params[0]==="latest")).toHaveLength(2);
   });
   it("does not repeat a quota-failing method for each read",async()=>{
     const f=fixture((url,method)=>url===primary&&method==="eth_call"?{error:{code:-32600,message:"quota"}}:undefined);

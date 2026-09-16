@@ -47,7 +47,7 @@ it('never repeats a broadcast on HTTP 429',async()=>{
 it('requires shared admission for concurrent callers with a backend',async()=>{
  vi.stubEnv('NEXT_PUBLIC_CONVEX_URL','https://example.convex.cloud');vi.stubEnv('OTC_SERVICE_SECRET','test-only');
  let slot=1000500;
- reserve.mockImplementation(async()=>{const at=slot;slot+=25;return {at,expiresAt:at+150,retryAfterMs:0};});
+ reserve.mockImplementation(async()=>{const at=slot;slot+=25;return {slots:[{at,expiresAt:at+150}],serverNow:Date.now(),retryAfterMs:0};});
  const times:number[]=[];
  const calls=Promise.all([url,'https://other.arc-mainnet.quiknode.pro/private'].map(async u=>{await paceArcRpc(u);times.push(Date.now());}));
  await vi.advanceTimersByTimeAsync(499);expect(times).toEqual([]);
@@ -55,13 +55,28 @@ it('requires shared admission for concurrent callers with a backend',async()=>{
 });
 it('rejects late permissions and recovers after a coordinator error',async()=>{
  vi.stubEnv('NEXT_PUBLIC_CONVEX_URL','https://example.convex.cloud');vi.stubEnv('OTC_SERVICE_SECRET','test-only');
- reserve.mockResolvedValue({at:999000,expiresAt:999150,retryAfterMs:0});
- await expect(paceArcRpc(url)).rejects.toThrow('capacity is busy');expect(reserve).toHaveBeenCalledTimes(3);
- reserve.mockRejectedValueOnce(Error('network'));
- const failed=paceArcRpc(url).catch(e=>e.message);await vi.advanceTimersByTimeAsync(25);expect(await failed).toContain('capacity service unavailable');
- reserve.mockImplementation(async()=>({at:Date.now(),expiresAt:Date.now()+150,retryAfterMs:0}));
+ reserve.mockResolvedValue({slots:[{at:999000,expiresAt:999150}],serverNow:Date.now(),retryAfterMs:0});
+ await expect(paceArcRpc(url)).rejects.toThrow('capacity is busy');expect(reserve).toHaveBeenCalledTimes(6);
+ reserve.mockRejectedValue(Error('network'));
+ const failed=paceArcRpc(url).catch(e=>e.message);await vi.advanceTimersByTimeAsync(500);expect(await failed).toContain('capacity service unavailable');
+ reserve.mockImplementation(async()=>({slots:[{at:Date.now(),expiresAt:Date.now()+150}],serverNow:Date.now(),retryAfterMs:0}));
  const recovered=paceArcRpc(url);await vi.advanceTimersByTimeAsync(25);await expect(recovered).resolves.toBeUndefined();
 });
 it('does not send an RPC without capacity configuration on Vercel',async()=>{
  vi.stubEnv('VERCEL','1');await expect(paceArcRpc(url)).rejects.toThrow('capacity configuration');
+});
+it('uses one shared admission for eight requests instead of eight network calls',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_CONVEX_URL','https://example.convex.cloud');vi.stubEnv('OTC_SERVICE_SECRET','test');
+ reserve.mockImplementation(async()=>({serverNow:Date.now(),retryAfterMs:0,
+ slots:Array.from({length:8},(_,i)=>({at:Date.now()+i*50,expiresAt:Date.now()+i*50+1000}))}));
+ const times:number[]=[];
+ const work=Promise.all(Array.from({length:8},async()=>{await paceArcRpc(url);times.push(Date.now());}));
+ await vi.runAllTimersAsync();await work;
+ expect(reserve).toHaveBeenCalledTimes(1);expect(times[7]-times[0]).toBe(350);
+});
+it('paces the public fallback without needing the capacity service',async()=>{
+ vi.stubEnv('VERCEL','1');const times:number[]=[];
+ const work=Promise.all(Array.from({length:3},async()=>{await paceArcRpc('https://rpc.mainnet.arc.io');times.push(Date.now());}));
+ await vi.runAllTimersAsync();await work;
+ expect(times).toEqual([1000000,1000300,1000600]);expect(reserve).not.toHaveBeenCalled();
 });

@@ -1,16 +1,14 @@
 import { getAddress } from "viem";
-import { arcConfig } from "./config";
+import { arcConfigFromEnv } from "./config";
 import { createArcRpc, checkArcRpc } from "./rpc";
 
 /** Display-only defaults. Sending still requires the explicit transaction configuration. */
 export function arcDisplayConfig() {
-  return arcConfig({
-    rpcUrl: process.env.ARC_MAINNET_RPC_URL || "https://rpc.arc-scan.org",
-    rpcFallbackUrls: process.env.ARC_INFURA_RPC_URL ? [process.env.ARC_INFURA_RPC_URL] : [],
-    readOnlyRpcUrls: ["https://arguspad.io/api/rpc"],
-    quoteRpcUrls: [process.env.ARC_MAINNET_RPC_URL||"https://rpc.arc-scan.org",process.env.ARC_INFURA_RPC_URL,"https://arguspad.io/api/rpc"].filter((url):url is string=>Boolean(url)),
-    checkpointNumber: process.env.ARC_CHECKPOINT_NUMBER || "18456078",
-    checkpointHash: process.env.ARC_CHECKPOINT_HASH || "0xdd5a48032af8571d6a262f39e5cde7e6b91625aaa4330289f03e5a346dd3c358",
+  return arcConfigFromEnv({
+    ...process.env,
+    ARC_MAINNET_RPC_URL: process.env.ARC_MAINNET_RPC_URL || "https://rpc.mainnet.arc.io",
+    ARC_CHECKPOINT_NUMBER: process.env.ARC_CHECKPOINT_NUMBER || "21065497",
+    ARC_CHECKPOINT_HASH: process.env.ARC_CHECKPOINT_HASH || "0xdba68d53cfd9677309247a79359fe7d01599447d69f84f69a958bc179a6cdf07",
   });
 }
 export async function arcWalletBalance(address: string) {
