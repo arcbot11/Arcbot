@@ -4,6 +4,7 @@ import {assertNoKeyExport} from "./lib/walletExportGuard";
 import {walletExportIndexes} from "./lib/walletExportIndexes";
 import {acquireOperatorLease,releaseOperatorLease} from "../lib/otc/operator-lease";
 import {beginSigning,cancelUnsignedTrade} from "../lib/otc/unsigned-recovery";
+import {assertLaunchAuthorization} from "../lib/launches/execution-checks";
 import {prepareReplacement,selectMinedAttempt,reconcileMinedNonce,extendEscrowBaseGas,extendBaseWithdrawalGas,cleanupExternalConflict,saveNonceSearch,pauseSignedBroadcast,resumeSignedBroadcast} from "../lib/otc/signed-recovery";
 import {abortChangedRequest,abortUnfundedListing,abortUnfundedPurchase} from '../lib/otc/external-spending';
 import { bindEscrow, prepareEscrowStep, advanceEscrowState, retryEscrow } from "../lib/otc/escrow-model";
@@ -140,7 +141,6 @@ export const command = mutation({
         if(tx?.leg === "launch" && tx.signingStartedAt === undefined){
           const row=await ctx.db.query("launchRuns").withIndex("by_owner_request",q=>q.eq("owner",tx.owner).eq("requestId",tx.launchStep?.requestId??"")).unique();
           const run=row?JSON.parse(row.json) as import("../lib/launches/execution-types").LaunchRun:null;
-          const {assertLaunchAuthorization}=await import("../lib/launches/execution-checks");
           let valid=!!run&&run.status==="running"&&run.address.toLowerCase()===tx.wallet.toLowerCase()&&run.steps[tx.launchStep!.index]===tx.id;
           if(run){try{assertLaunchAuthorization(run,now);}catch{valid=false;}}
           if(!valid)return cancelUnsignedTrade(store,input.id,now,tx.owner);

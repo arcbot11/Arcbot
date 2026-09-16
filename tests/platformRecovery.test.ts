@@ -4,6 +4,7 @@ import {roleEndpoints,rpcRole} from '../lib/arc/rpc-role';
 import {arcConfig} from '../lib/arc/config';
 import {transactionStatus} from '../lib/otc/transaction-history';
 import type {Transaction} from '../lib/otc/model';
+import {walletId} from '../lib/otc/model';
 type Row=Record<string,unknown>;
 function fixture(){
   vi.stubEnv('OTC_SERVICE_SECRET','s'.repeat(32));
@@ -16,6 +17,23 @@ function fixture(){
   return {tx,tables,ctx,call,invoke};
 }
 afterEach(()=>{vi.unstubAllEnvs();vi.useRealTimers();});
+it.each(['valid','expired','wrong-step','already-signing'])("launch signing fence: %s",async mode=>{
+ const f=fixture(),requestId='launch-request';
+ const tx={...f.tx,leg:'launch',status:'prepared',raw:undefined,hash:undefined,recoveryVersion:1,
+   launchStep:{requestId,index:0},...(mode==='already-signing'?{signingStartedAt:Date.now()-1000}:{})};
+ Object.assign(f.tables.otcRecords[0],{status:'prepared',json:JSON.stringify(tx)});
+ const id=walletId(5042,tx.wallet);
+ f.tables.otcRecords.push({_id:'wallet',key:id,kind:'wallet',json:JSON.stringify({kind:'wallet',id,owner:tx.owner,address:tx.wallet,chainId:5042,activeTx:tx.id,holds:{[tx.holdId]:'100'},updatedAt:Date.now()})});
+ f.tables.launchRuns=[{_id:'run',owner:tx.owner,requestId,json:JSON.stringify({status:'running',address:tx.wallet,steps:[mode==='wrong-step'?'other':tx.id],authorizationExpiresAt:Date.now()+(mode==='expired'||mode==='already-signing'?-1000:60000)})}];
+ const result=await f.call('begin_signing',{id:tx.id}) as Transaction;
+ if(mode==='valid'||mode==='already-signing'){
+  expect(result.status).toBe('prepared');expect(result.signingStartedAt).toBeTypeOf('number');
+ }else{
+  expect(result.status).toBe('cancelled');expect(result.signingStartedAt).toBeUndefined();
+  const wallet=JSON.parse(f.tables.otcRecords.find(r=>r.key===id)!.json as string);
+  expect(wallet.activeTx).toBeUndefined();expect(wallet.holds[tx.holdId]).toBeUndefined();
+ }
+});
 it('allows one recovery lease, ignores a stale release, and rejects a stale broadcast',async()=>{
   const f=fixture();expect(await f.call('recovery_acquire',{id:f.tx.id,lease:'first'})).toBe(true);
   expect(await f.call('recovery_acquire',{id:f.tx.id,lease:'second'})).toBe(false);
