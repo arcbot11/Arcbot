@@ -63,6 +63,11 @@ describe("referenced launch image source policy", () => {
 });
 
 describe("direct launch image instruction", () => {
+  it("permits an explicitly requested image below but respects negation",()=>{
+    expect(requestsReferencedLaunchImage("launch ODDY use the image below")).toBe(true);
+    expect(requestsReferencedLaunchImage("launch ODDY do not use the image below")).toBe(false);
+    expect(requestsReferencedLaunchImage('launch ODDY description "use the image below"')).toBe(false);
+  });
   it.each([
     ["launch Odysseus ticker ODDY Use the image below", "launch Odysseus ticker ODDY"],
     ["launch Odysseus ticker ODDY use the picture below", "launch Odysseus ticker ODDY"],

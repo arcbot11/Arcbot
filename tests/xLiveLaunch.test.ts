@@ -6,6 +6,11 @@ import {walletExtractionSchema,walletIntentSchema} from "../convex/xWalletAiSche
 import {launchInputFromXCommand} from "../lib/launches/x-input";
 import {X_INTENT_CLASSIFIER_PROMPT} from "../lib/x-intent-prompt";
 beforeEach(()=>{m.llm.mockReset();});
+it("recognizes ODDY when its image is in a quoted post",async()=>{
+ const text="Hey @TheArgosBot launch a token called Odysseus with a ticker of $ODDY Use the image below https://twitter.com/TheArgosBot/status/2100047587453624772";
+ m.llm.mockResolvedValueOnce(JSON.stringify({kind:"command",operation:"launch"})).mockResolvedValueOnce(JSON.stringify({kind:"launch",name:"Odysseus",symbol:"ODDY"}));
+ expect(await parseXWalletIntent(text,false)).toMatchObject({kind:"command",command:{kind:"launch",name:"Odysseus",symbol:"ODDY"}});
+});
 it("handles the exact ODDY attachment instruction without an initial buy",async()=>{
  const text="Hey @TheArgosBot launch a token called Odysseus with a ticker of $ODDY Use the image below";
  m.llm.mockResolvedValueOnce(JSON.stringify({kind:"command",operation:"launch"})).mockResolvedValueOnce(JSON.stringify({kind:"launch",name:"Odysseus",symbol:"ODDY"}));
