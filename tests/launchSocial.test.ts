@@ -40,6 +40,6 @@ it.each(["USDC","ARCASH"] as const)("only confirms verified completion; pair pre
   expect(m.create).not.toHaveBeenCalled();
 });
 it("cannot start an expired social authorization but can recover an accepted run",async()=>{
-  await expect(runSocialLaunch({...auth,createdAt:0},"x:123:launch",command)).rejects.toThrow("authorization expired");expect(m.advance).not.toHaveBeenCalled();
+  await expect(runSocialLaunch({...auth,createdAt:0},"x:123:launch",command)).rejects.toThrow("Your launch request expired before it started.");expect(m.advance).not.toHaveBeenCalled();
   m.read.mockResolvedValue({status:"running"});await runSocialLaunch({...auth,createdAt:0,recoveryOnly:true},"x:123:launch",command);expect(m.advance).toHaveBeenCalledTimes(1);
 });

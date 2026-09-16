@@ -17,14 +17,14 @@ import { LaunchError } from "./policy";
 import type { Hex } from "viem";
 const serialize=(value:unknown)=>JSON.stringify(value,(_,v)=>typeof v==="bigint"?String(v):v);
 export async function runSocialLaunch(auth:{owner:string;wallet:string;source:string;createdAt:number;recoveryOnly?:boolean},sourceRequestId:string,command:Extract<WalletCommand,{kind:"launch"}>){
-  if(auth.source!=="x")throw new LaunchError("SOURCE","Use an X launch command or the launch page.");
+  if(auth.source!=="x")throw new LaunchError("SOURCE","To launch, post your token details and logo on X and tag @TheArgosBot.");
   const hex=createHash("sha256").update(sourceRequestId).digest("hex");
   const requestId=`${hex.slice(0,8)}-${hex.slice(8,12)}-4${hex.slice(13,16)}-8${hex.slice(17,20)}-${hex.slice(20,32)}`;
   const backend=launchBackend(auth.owner,auth.wallet,requestId),existing=await backend.read();
   if(!existing){
     assertLaunchEnabled();
-    if(auth.recoveryOnly||Date.now()-auth.createdAt>ARC_COMMAND_AUTHORIZATION_MS)throw new LaunchError("AUTH_EXPIRED","Launch authorization expired before execution. Post a new command.");
-    const source=command.launchSource;if(!source?.text||!source.imageURI)throw new LaunchError("IMAGE_REQUIRED","Include a token image or direct X photo URL.");
+    if(auth.recoveryOnly||Date.now()-auth.createdAt>ARC_COMMAND_AUTHORIZATION_MS)throw new LaunchError("AUTH_EXPIRED","Your launch request expired before it started. Post a new command.");
+    const source=command.launchSource;if(!source?.text||!source.imageURI)throw new LaunchError("IMAGE_REQUIRED","Attach your token logo to the launch post or include a direct link to the image on X.");
     const input=launchInputFromXCommand(command,source.text,source.imageURI);
     const mutation=<T>(name:string,extra:Record<string,unknown>={})=>backend.client.mutation(makeFunctionReference<"mutation">(`launchDrafts:${name}`),{...backend.args,...extra}) as Promise<T>;
     let draft=await mutation<{tokenSalt:Hex;revision:number;preview:LaunchPreview|null}>("create",{inputJson:JSON.stringify(input)});
