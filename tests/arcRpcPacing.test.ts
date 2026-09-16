@@ -80,3 +80,17 @@ it('paces the public fallback without needing the capacity service',async()=>{
  await vi.runAllTimersAsync();await work;
  expect(times).toEqual([1000000,1000300,1000600]);expect(reserve).not.toHaveBeenCalled();
 });
+it('uses a valid batch returned by the last allowed acquisition',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_CONVEX_URL','https://example.convex.cloud');vi.stubEnv('OTC_SERVICE_SECRET','test');
+ for(let i=0;i<5;i++)reserve.mockResolvedValueOnce({slots:[],serverNow:Date.now(),retryAfterMs:100});
+ reserve.mockImplementation(async()=>({slots:[{at:Date.now(),expiresAt:Date.now()+1000}],serverNow:Date.now(),retryAfterMs:0}));
+ const work=paceArcRpc(url);await vi.runAllTimersAsync();await expect(work).resolves.toBeUndefined();
+ expect(reserve).toHaveBeenCalledTimes(6);
+});
+it('does not burst late-but-valid permits after admission was delayed',async()=>{
+ vi.stubEnv('NEXT_PUBLIC_CONVEX_URL','https://example.convex.cloud');vi.stubEnv('OTC_SERVICE_SECRET','test');
+ reserve.mockImplementation(async()=>{await new Promise(resolve=>setTimeout(resolve,500));return {serverNow:Date.now(),retryAfterMs:0,slots:Array.from({length:8},()=>({at:Date.now()-100,expiresAt:Date.now()+1000}))};});
+ const times:number[]=[];const work=Promise.all(Array.from({length:8},async()=>{await paceArcRpc(url);times.push(Date.now());}));
+ await vi.runAllTimersAsync();await work;
+ for(let i=1;i<times.length;i++)expect(times[i]-times[i-1]).toBeGreaterThanOrEqual(25);
+});

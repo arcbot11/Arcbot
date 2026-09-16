@@ -26,13 +26,13 @@ it.each(["ARGUS","ARCASH"] as const)("converts dollar valuations and developer b
   const decoded=decodeFunctionData({abi:portalAbi,data});
   if(decoded.functionName!=="launch")throw Error();
   expect(decoded.args[0].quoteAsset.toLowerCase()).toBe(LAUNCH_PAIRS[pair].address);expect(decoded.args[0].devBuyQuote).toBe(25_000_000n);
-  expect(nativeSpend(5042,{to:"0xA5628A11c412596E1f63b75a2C0284F843C549d6",data,value:0n})).toBe(0n);
+  expect(nativeSpend(5042,{to:"0xB021Be536808f551b31789422Fd28a6c9c6e97Da",data,value:0n})).toBe(0n);
 });
 it("reserves ERC-20 USDC pulled by the launch in addition to native gas",()=>{
   const input=parseLaunchInput({name:"Example",symbol:"EX",imageURI:"https://pbs.twimg.com/media/example.jpg",devBuyUSDC:"25"});
   const data=encodeLaunch(input,toHex(1,{size:32}),toHex(2,{size:32}));
-  expect(nativeSpend(5042,{to:"0xA5628A11c412596E1f63b75a2C0284F843C549d6",data,value:0n})).toBe(parseUnits("25",18));
-  expect(nativeSpend(8453,{to:"0xA5628A11c412596E1f63b75a2C0284F843C549d6",data,value:0n})).toBe(0n);
+  expect(nativeSpend(5042,{to:"0xB021Be536808f551b31789422Fd28a6c9c6e97Da",data,value:0n})).toBe(parseUnits("25",18));
+  expect(nativeSpend(8453,{to:"0xB021Be536808f551b31789422Fd28a6c9c6e97Da",data,value:0n})).toBe(0n);
 });
 it("USDC needs no external price or duplicate token-balance lookup",async()=>{
   const rpc={block:historicalBlock,call:vi.fn(),code:vi.fn(),decimals:vi.fn()};

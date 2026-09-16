@@ -1,6 +1,6 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { parseLaunchInput, launchFingerprint } from "../lib/launches/input";
-import { PORTAL6 } from "../lib/launches/contracts";
+import { LAUNCH_PORTAL } from "../lib/launches/contracts";
 import { toHex, serializeTransaction } from "viem";
 import type { LaunchRun } from "../lib/launches/execution-types";
 const m=vi.hoisted(()=>({run:null as unknown,txs:new Map<string,Record<string,unknown>>(),prepare:vi.fn(),advance:vi.fn(),image:vi.fn(),create:vi.fn(),mutation:vi.fn()}));
@@ -20,7 +20,7 @@ const owner="1",address="0x1111111111111111111111111111111111111111",requestId="
 beforeEach(()=>{
   vi.clearAllMocks();m.txs.clear();vi.stubEnv("NEXT_PUBLIC_CONVEX_URL","https://example.convex.cloud");vi.stubEnv("WEB_AUTH_SECRET","secret");
   const input=parseLaunchInput({name:"Example",symbol:"EX",imageURI:"https://pbs.twimg.com/media/example.jpg"});
-  m.run={owner,address,requestId,input,authorizationExpiresAt:Date.now()+1800000,status:"running",steps:[],preview:{tokenSalt:toHex(1,{size:32}),predictedToken:address,predictedHook:address,predictedSplitter:address,portal:PORTAL6,
+  m.run={owner,address,requestId,input,authorizationExpiresAt:Date.now()+1800000,status:"running",steps:[],preview:{tokenSalt:toHex(1,{size:32}),predictedToken:address,predictedHook:address,predictedSplitter:address,portal:LAUNCH_PORTAL,
     fingerprint:launchFingerprint({owner,address},input),image:{sha256:"abc"},quote:{symbol:"USDC",address:"0x3600000000000000000000000000000000000000",decimals:6,devBuy:"0",start:"2500000000",bond:"45000000000",block:"1"}}};
   m.image.mockResolvedValue({sha256:"abc"});
   m.prepare.mockImplementation(async()=>({...((m.run as LaunchRun).preview),steps:[{kind:"launch"}]}));

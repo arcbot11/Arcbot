@@ -4,11 +4,12 @@ import { arcTransport } from "../arc/transport";
 import { createArcRpc, checkArcRpc } from "../arc/rpc";
 import { quotedLaunchAbi } from "../arc/argus-discovery";
 import { ARC_NATIVE_TRANSFER } from "../arc/usdc-delivery";
-import { PORTAL6, reviewedImplementations, approvalAbi, configAbi } from "./contracts";
+import { LAUNCH_PORTAL, reviewedImplementations, approvalAbi, configAbi } from "./contracts";
 import { rewardTarget } from "./prepare";
 import { verifyLaunchReceipt } from "./receipt";
 import type { LaunchStepTerms, VerifiedLaunch } from "./execution-types";
 const abi=parseAbi(["function creator() view returns(address)","function token() view returns(address)","function quoteAsset() view returns(address)",
+  "function converts() view returns(bool)","function trackerPayoutAsset() view returns(address)",
   "function rewardMode() view returns(uint8)","function rewardTracker() view returns(address)","function minimumShareBalance() view returns(uint96)",
   "function creatorBps() view returns(uint16)","function burnBps() view returns(uint16)","function dividendBps() view returns(uint16)","function liquidityBps() view returns(uint16)",
   "event Transfer(address indexed from,address indexed to,uint256 value)"]);
@@ -26,13 +27,13 @@ export async function verifyMinedLaunchStep(owner:string,wallet:string,hash:Hex,
     return;
   }
   if(terms.kind==="approval"){
-    const amount=await client.readContract({address:p.quote?.address??ARC_USDC,abi:approvalAbi,functionName:"allowance",args:[account,PORTAL6],blockNumber});
+    const amount=await client.readContract({address:p.quote?.address??ARC_USDC,abi:approvalAbi,functionName:"allowance",args:[account,LAUNCH_PORTAL],blockNumber});
     if(amount<BigInt(p.quote?.devBuy??"0"))throw Error("Launch approval was not verified.");
     return;
   }
   const verified=verifyLaunchReceipt({owner,address:account},input,p,{chainId:await client.getChainId(),hash,from:tx.from,to:tx.to!,input:tx.input,value:tx.value,
     receipt,canonicalBlock:{number:blockNumber,hash:canonicalBlock.hash!}});
-  const record=await client.readContract({address:PORTAL6,abi:quotedLaunchAbi,functionName:"launches",args:[verified.token],blockNumber});
+  const record=await client.readContract({address:LAUNCH_PORTAL,abi:quotedLaunchAbi,functionName:"launches",args:[verified.token],blockNumber});
   if(!same(record[0],wallet)||!same(record[3],verified.locker)||!same(record[4],verified.hook)||!same(record[5],verified.splitter)||record[6]!==100||record[7]!==100||!same(record[10],p.quote?.address??ARC_USDC))throw Error("Deployed launch record differs from approved settings.");
   for(const [address,impl] of [[verified.token,reviewedImplementations.tokenImpl],[verified.splitter,reviewedImplementations.splitterImpl],[verified.locker,reviewedImplementations.lockerImpl]] as const){
     const code=await client.getCode({address,blockNumber});
@@ -44,6 +45,11 @@ export async function verifyMinedLaunchStep(owner:string,wallet:string,hash:Hex,
     ...(["creatorBps","burnBps","dividendBps","liquidityBps"] as const).map(functionName=>client.readContract({address:verified.splitter,abi,functionName,blockNumber})),
   ]);
   if(!same(String(creator),wallet)||!same(String(token),verified.token)||!same(String(quote),record[10])||mode!==rewardTarget(input).mode)throw Error("Deployed rewards differ from approved settings.");
+  const [converts,payout]=await Promise.all([
+    client.readContract({address:verified.splitter,abi,functionName:'converts',blockNumber}),
+    client.readContract({address:verified.splitter,abi,functionName:'trackerPayoutAsset',blockNumber}),
+  ]);
+  if(converts||!same(payout,record[10]))throw Error('Deployed payout currency differs from approved settings.');
   const numeric=shares.map(Number),sum=numeric.reduce((a,b)=>a+b,0);
   const expected=[input.creatorBps,input.burnBps,input.dividendBps,input.liquidityBps];
   // The splitter may store shares after treasury allocation. Compare proportions.
@@ -69,7 +75,7 @@ export async function verifyMinedLaunchStep(owner:string,wallet:string,hash:Hex,
     if(erc.length&&native.length&&ercAmount!==nativeAmount)throw Error("Conflicting Arc USDC transfer evidence.");
     return native.length?nativeAmount:ercAmount;
   };
-  const paid=quoteLeg(wallet,PORTAL6),refunded=quoteLeg(PORTAL6,wallet);
+  const paid=quoteLeg(wallet,LAUNCH_PORTAL),refunded=quoteLeg(LAUNCH_PORTAL,wallet);
   if(paid!==budget||refunded>paid||devBuyReceived<0n||budget>refunded&&devBuyReceived===0n)throw Error("Creator buy delivery or refund could not be verified.");
   return {...verified,devBuyReceived:String(devBuyReceived),quoteSpent:String(paid-refunded),quoteRefunded:String(refunded)};
 }

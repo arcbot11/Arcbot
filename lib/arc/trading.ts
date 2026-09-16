@@ -14,6 +14,7 @@ import { ARC_TOKEN_CATALOG } from "./token-catalog";
 import { estimatedTradeGasBudget } from "./trade-flow";
 import {signedSwapPermit} from './permit2-signing';
 import { prepareCall, type Call } from "../otc/runtime";
+import {retryMovedPreview} from './preview-retry';
 
 export const PERMIT2=getAddress("0x000000000022D473030F116dDEE9F6B43aC78BA3");
 const allowanceAbi=parseAbi(["function allowance(address,address) view returns (uint256)","function approve(address,uint256) returns (bool)"]);
@@ -223,10 +224,15 @@ export async function arcSellAmountForUsdc(wallet:Address,token:Address,value:st
 }
 
 export async function previewArcTrade(wallet:Address,input:TradeInput,delivery: boolean | Address=false){
+  let routeHint=input.routeHint;
+  return retryMovedPreview(()=>previewArcTradeAttempt(wallet,{...input,routeHint},delivery,hint=>{routeHint=hint;}));
+}
+async function previewArcTradeAttempt(wallet:Address,input:TradeInput,delivery: boolean | Address,onRoute:(hint:string|undefined)=>void){
   const outputRecipient=delivery===true?ARC_DEAD_ADDRESS:delivery?getAddress(delivery):undefined;
   if(outputRecipient&&BigInt(outputRecipient)<=2n)throw new Error("Use a valid recipient wallet.");
   if(outputRecipient&&(!native(input.tokenIn)||native(input.tokenOut)))throw new Error("Buy and burn requires USDC input and a different token output.");
   const {q,rpc,client,head,verifiedHookPoolIds,inputTaxBps,routeHint}=await quoteArcTrade(wallet,input);
+  onRoute(routeHint);
   const token=q.route.tokenIn;
   const balance=token===zeroAddress?await rpc.balance(wallet,head.number):await rpc.tokenBalance(token,wallet,head.number);
   if(balance<tokenDebit(q.amountIn,inputTaxBps))throw new Error(native(token)?'Not enough Arc USDC for this buy.':inputTaxBps?'Not enough tokens for the amount and token tax. Use a smaller amount or 100%.':'Not enough input tokens for this amount.');

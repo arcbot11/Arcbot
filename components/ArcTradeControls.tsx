@@ -1,4 +1,5 @@
 "use client";
+import {DEFAULT_ARC_SLIPPAGE_BPS} from '@/lib/arc/slippage';
 import { ActiveStatus } from "./ActiveStatus";
 import { currentValuation } from "@/lib/price-freshness";
 import {startEstimateRefresh} from "@/lib/arc/estimate-refresh";
@@ -16,7 +17,7 @@ import type {TradeMarket} from "@/lib/arc/markets";
 import {ArcTradeFunding} from "./ArcTradeFunding";
 import {PAIRED_ESTIMATE_TIMEOUT_MS,TRADE_REQUEST_TIMEOUT_MS} from "@/lib/arc/trade-timing";
 export function ArcTradeControls({side,disabled=false,onNotice=()=>{},onBusyChange=()=>{},onCompleted=()=>{},refreshKey=0,initialToken="",children}:{side:"buy"|"sell"|"swap";disabled?:boolean;onNotice?:(message:string)=>void;onBusyChange?:(busy:boolean)=>void;onCompleted?:(id:string)=>void;refreshKey?:number;initialToken?:string;children?:ReactNode}){
-  const session=useOtcSession(),[token,setToken]=useState(initialToken),[amount,setAmount]=useState(""),[output,setOutput]=useState("native"),[slippage,setSlippage]=useState("1");
+  const session=useOtcSession(),[token,setToken]=useState(initialToken),[amount,setAmount]=useState(""),[output,setOutput]=useState("native"),[slippage,setSlippage]=useState(String(DEFAULT_ARC_SLIPPAGE_BPS/100));
   const [amountUnit,setAmountUnit]=useState<"tokens"|"usd">("tokens");
   const [busy,setBusy]=useState(false);
   const active=useRef(true),inFlight=useRef(false);

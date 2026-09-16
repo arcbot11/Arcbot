@@ -7,14 +7,14 @@ import { type ArcConfig } from "../arc/config";
 import { checkArcRpc, type ArcRpc, type ArcCall } from "../arc/rpc";
 import { LaunchError, LAUNCH_PREVIEW_MS, LAUNCH_MAX_GAS, LAUNCH_TOTAL_GAS_WEI } from "./policy";
 import { parseLaunchInput, launchFingerprint, type LaunchIdentity, type LaunchInput } from "./input";
-import { approvalAbi, configAbi, LAUNCH_DEFAULTS, portalAbi, PORTAL6, PORTAL6_CODE_HASH, reviewedImplementations } from "./contracts";
+import { approvalAbi, configAbi, LAUNCH_DEFAULTS, LAUNCH_REGISTRY, LAUNCH_REWARD_CONFIG, portalAbi, LAUNCH_PORTAL, LAUNCH_PORTAL_CODE_HASH, reviewedImplementations } from "./contracts";
 
 // Deliberately lacks a broadcast or signing capability.
 export type LaunchReadRpc = Omit<ArcRpc, "broadcast" | "receipt">;
 export type LaunchStep = { kind: "rewards" | "approval" | "launch"; call: ArcCall; estimatedGas?: string; gas: string | null; gasWei: string | null };
 export type LaunchPreview = {
   quote?: LaunchQuote; image?: LaunchImageEvidence;
-  version: 1; executionEnabled: false; fingerprint: Hex; creator: Address; portal: typeof PORTAL6;
+  version: 1; executionEnabled: false; fingerprint: Hex; creator: Address; portal: typeof LAUNCH_PORTAL;
   tokenSalt: Hex; hookSalt: Hex; predictedToken: Address; predictedHook: Address; predictedSplitter: Address;
   hookInitCodeHash: Hex; rewardConfig: Address; block: string; blockHash: Hex; nonce: number;
   createdAt: number; expiresAt: number; status: "simulated" | "needs_setup";
@@ -29,6 +29,7 @@ export function encodeLaunch(input: LaunchInput, tokenSalt: Hex, hookSalt: Hex, 
   return encodeFunctionData({ abi: portalAbi, functionName: "launch", args: [{
     name: p.name, symbol: p.symbol, ...LAUNCH_DEFAULTS, buyTaxBps: p.buyTaxBps, sellTaxBps: p.sellTaxBps,
     creatorBps: p.creatorBps, burnBps: p.burnBps, dividendBps: p.dividendBps, liquidityBps: p.liquidityBps,
+    expectConvert: 1, // Pin payout to the reviewed quote currency; never accept either silently.
     devBuyQuote: quote ? BigInt(quote.devBuy) : parseUnits(p.devBuyUSDC, 6),
     ...(quote ? { quoteAsset: quote.address, startFdvUsdc6: BigInt(quote.start), bondFdvUsdc6: BigInt(quote.bond) } : {}),
   }, { imageURI: p.imageURI, description: p.description, website: p.website, twitter: p.twitter, telegram: p.telegram }, tokenSalt, hookSalt] });
@@ -46,7 +47,7 @@ export async function mineHook(creator: Address, initCodeHash: Hex, sampleSalt: 
   const start = BigInt(sampleSalt);
   for (let i = 0; i < 262_144; i++) {
     const salt = toHex((start + BigInt(i)) % (1n << 256n), { size: 32 });
-    const address = getCreate2Address({ from: PORTAL6, salt: derive(salt), bytecodeHash: initCodeHash });
+    const address = getCreate2Address({ from: LAUNCH_PORTAL, salt: derive(salt), bytecodeHash: initCodeHash });
     if ((BigInt(address) & 0x3fffn) === 0x2044n) return { salt, address };
     if (i && i % 1024 === 0) await yieldWork();
   }
@@ -71,14 +72,21 @@ export async function prepareLaunch(options: {
     const raw = await rpc.call({ from: identity.address, to: address, value: 0n, data }, head.number);
     return decodeFunctionResult({ abi, functionName, data: raw }) as T;
   };
-  const code = await rpc.code(PORTAL6, head.number);
-  if (!code || !same(keccak256(code), PORTAL6_CODE_HASH)) throw new LaunchError("PORTAL_CHANGED", "Launch contract needs review.");
+  const code = await rpc.code(LAUNCH_PORTAL, head.number);
+  if (!code || !same(keccak256(code), LAUNCH_PORTAL_CODE_HASH)) throw new LaunchError("PORTAL_CHANGED", "Launch contract needs review.");
   const reviewedHookStore = await verifyLaunchHookStore(rpc,head.number);
+  const registry = await read<Address>(LAUNCH_PORTAL,portalAbi,'registry');
+  if(!same(registry,LAUNCH_REGISTRY))throw new LaunchError('PORTAL_CHANGED','Launch payout registry changed.');
+  const checkPayout = async () => {
+    const payout = await read<Address>(registry,portalAbi,'payoutAssetFor',[quote.address]);
+    if(!same(payout,quote.address))throw new LaunchError('PAYOUT_CHANGED','This paired asset now converts rewards to another currency. Prepare only supported quote-currency payouts.');
+  };
+  await checkPayout();
   const [words, quoteApproved, balance, nonce, pendingNonce, fees, impls] = await Promise.all([
-    read<bigint>(PORTAL6, portalAbi, "LAUNCH_STRUCT_WORDS"), read<boolean>(PORTAL6, portalAbi, "quoteApproved", [quote.address]),
+    read<bigint>(LAUNCH_PORTAL, portalAbi, "LAUNCH_STRUCT_WORDS"), read<boolean>(LAUNCH_PORTAL, portalAbi, "quoteApproved", [quote.address]),
     rpc.balance(identity.address, head.number), rpc.nonce(identity.address, false), rpc.nonce(identity.address, true), rpc.fees(),
     Promise.all(Object.entries(reviewedImplementations).map(async ([name, expected]) => {
-      const address = await read<Address>(PORTAL6, portalAbi, name);
+      const address = await read<Address>(LAUNCH_PORTAL, portalAbi, name);
       if (!same(address, expected)) throw new LaunchError("POINTER_CHANGED", "Launch implementation changed. Review is required.");
       return address;
     })),
@@ -92,24 +100,24 @@ export async function prepareLaunch(options: {
   if (input.pairToken !== "USDC" && await rpc.tokenBalance(quote.address, identity.address, head.number) < devBuy)
     throw new LaunchError("BALANCE", `Not enough ${input.pairToken} for the creator buy. Fund this wallet with the paired asset first.`);
   const rewardConfig = await read<Address>(impls[0], configAbi, "launchConfig");
-  if (!same(rewardConfig, "0x8Bf56C35faEA89D81E8eEe45c2FfB3994148A840")) throw new LaunchError("PORTAL_CHANGED", "Reward configuration needs review.");
+  if (!same(rewardConfig, LAUNCH_REWARD_CONFIG)) throw new LaunchError("PORTAL_CHANGED", "Reward configuration needs review.");
   const [initialReward, initialAllowance, predictedSplitter] = await Promise.all([
     read<readonly [number, bigint]>(rewardConfig, configAbi, "configFor", [identity.address]),
-    read<bigint>(quote.address, approvalAbi, "allowance", [identity.address, PORTAL6]),
-    read<Address>(PORTAL6, portalAbi, "predictSplitter", [identity.address, tokenSalt]),
+    read<bigint>(quote.address, approvalAbi, "allowance", [identity.address, LAUNCH_PORTAL]),
+    read<Address>(LAUNCH_PORTAL, portalAbi, "predictSplitter", [identity.address, tokenSalt]),
   ]);
   let currentReward=initialReward,allowance=initialAllowance;
   if (currentReward[0] !== 0 && currentReward[0] !== 1) throw new LaunchError("REWARD_MODE", "Creator reward mode needs review.");
-  const hookInitCodeHash = await read<Hex>(PORTAL6, portalAbi, "hookInitCodeHash", [predictedSplitter, input.buyTaxBps, input.sellTaxBps, quote.address]);
-  const saltSample = await read<Hex>(PORTAL6, portalAbi, "hookCreate2Salt", [identity.address, tokenSalt]);
+  const hookInitCodeHash = await read<Hex>(LAUNCH_PORTAL, portalAbi, "hookInitCodeHash", [predictedSplitter, input.buyTaxBps, input.sellTaxBps, quote.address]);
+  const saltSample = await read<Hex>(LAUNCH_PORTAL, portalAbi, "hookCreate2Salt", [identity.address, tokenSalt]);
   const saved = options.verifiedHook;
   // Reuse only the salt; live Portal prediction and code checks below remain mandatory.
   const mined = saved && same(saved.creator, identity.address) && same(saved.tokenSalt, tokenSalt) && same(saved.hookInitCodeHash, hookInitCodeHash)
     ? { salt: saved.hookSalt, address: saved.predictedHook }
     : await mineHook(identity.address, hookInitCodeHash, tokenSalt, saltSample);
-  const [predictedHook, mask, valid] = await read<readonly [Address, bigint, boolean]>(PORTAL6, portalAbi, "predictHook", [identity.address, tokenSalt, mined.salt, input.buyTaxBps, input.sellTaxBps, quote.address]);
+  const [predictedHook, mask, valid] = await read<readonly [Address, bigint, boolean]>(LAUNCH_PORTAL, portalAbi, "predictHook", [identity.address, tokenSalt, mined.salt, input.buyTaxBps, input.sellTaxBps, quote.address]);
   if (!valid || mask !== 0x2044n || !same(predictedHook, mined.address)) throw new LaunchError("PREDICTION", "Hook prediction could not be verified.");
-  const predictedToken = await read<Address>(PORTAL6, portalAbi, "predictToken", [identity.address, tokenSalt, predictedHook, quote.address]);
+  const predictedToken = await read<Address>(LAUNCH_PORTAL, portalAbi, "predictToken", [identity.address, tokenSalt, predictedHook, quote.address]);
   for (const address of [predictedToken, predictedHook, predictedSplitter]) {
     const deployed = await rpc.code(address, head.number);
     if (deployed && deployed !== "0x") throw new LaunchError("ALREADY_DEPLOYED", "This draft already has deployed contracts. Reconcile its launch first.");
@@ -119,22 +127,23 @@ export async function prepareLaunch(options: {
   if(options.now===undefined){
     head=await checkArcRpc(rpc,config);
     if(!same(await verifyLaunchHookStore(rpc,head.number),reviewedHookStore))throw new LaunchError("HOOK_CHANGED","Launch hook changed during preparation.");
-    for(const [name,expected] of Object.entries(reviewedImplementations))if(!same(await read<Address>(PORTAL6,portalAbi,name),expected))
+    for(const [name,expected] of Object.entries(reviewedImplementations))if(!same(await read<Address>(LAUNCH_PORTAL,portalAbi,name),expected))
       throw new LaunchError("POINTER_CHANGED","Launch implementation changed during preparation.");
     quote=options.frozenQuote??await launchQuote(input.pairToken,parseUnits(input.devBuyUSDC,6),rpc,head.number);
     devBuy=BigInt(quote.devBuy);devBuyWei=input.pairToken==="USDC"?devBuy*10n**12n:0n;
     available=(await rpc.balance(identity.address,head.number))-options.reservedWei;
-    [currentReward,allowance]=await Promise.all([read<readonly [number,bigint]>(rewardConfig,configAbi,"configFor",[identity.address]),read<bigint>(quote.address,approvalAbi,"allowance",[identity.address,PORTAL6])]);
+    [currentReward,allowance]=await Promise.all([read<readonly [number,bigint]>(rewardConfig,configAbi,"configFor",[identity.address]),read<bigint>(quote.address,approvalAbi,"allowance",[identity.address,LAUNCH_PORTAL])]);
     if(input.pairToken!=="USDC"&&await rpc.tokenBalance(quote.address,identity.address,head.number)<devBuy)throw new LaunchError("BALANCE", "Not enough paired tokens for the creator buy.");
     if(await rpc.nonce(identity.address,true)!==nonce)throw new LaunchError("WALLET_BUSY","Wallet nonce changed. Prepare again.");
-    if(!await read<boolean>(PORTAL6,portalAbi,"quoteApproved",[quote.address]))throw new LaunchError("QUOTE_ASSET","Paired asset is no longer approved.");
+    await checkPayout();
+    if(!await read<boolean>(LAUNCH_PORTAL,portalAbi,"quoteApproved",[quote.address]))throw new LaunchError("QUOTE_ASSET","Paired asset is no longer approved.");
   }
   const target = rewardTarget(input), steps: LaunchStep[] = [];
   const add = (kind: LaunchStep["kind"], to: Address, data: Hex) => steps.push({ kind, call: { from: identity.address, to, data, value: 0n }, gas: null, gasWei: null });
   if (currentReward[0] !== target.mode || currentReward[1] !== target.minimumShareBalance)
     add("rewards", rewardConfig, encodeFunctionData({ abi: configAbi, functionName: "setConfig", args: [target] }));
-  if (allowance < devBuy) add("approval", quote.address, encodeFunctionData({ abi: approvalAbi, functionName: "approve", args: [PORTAL6, devBuy] }));
-  add("launch", PORTAL6, encodeLaunch(input, tokenSalt, mined.salt, quote));
+  if (allowance < devBuy) add("approval", quote.address, encodeFunctionData({ abi: approvalAbi, functionName: "approve", args: [LAUNCH_PORTAL, devBuy] }));
+  add("launch", LAUNCH_PORTAL, encodeLaunch(input, tokenSalt, mined.salt, quote));
   const setup = steps.length > 1;
   let gasWei = 0n;
   for (const step of steps) {
@@ -153,7 +162,7 @@ export async function prepareLaunch(options: {
   if (available < devBuyWei + gasWei) throw new LaunchError("BALANCE", "Not enough USDC for the dev buy and gas.");
   if (!same((await rpc.block(head.number)).hash, head.hash)) throw new LaunchError("BLOCK_CHANGED", "Arc block changed. Prepare again.");
   if(options.now===undefined && Date.now()-Number(head.timestamp)*1000>config.maxHeadAgeSeconds*1000)throw new LaunchError("STALE_SIMULATION","Network checks took too long. Prepare again for a fresh simulation.");
-  return { version: 1, executionEnabled: false, fingerprint: launchFingerprint(identity, input), creator: getAddress(identity.address), portal: PORTAL6,
+  return { version: 1, executionEnabled: false, fingerprint: launchFingerprint(identity, input), creator: getAddress(identity.address), portal: LAUNCH_PORTAL,
     tokenSalt, hookSalt: mined.salt, predictedToken, predictedHook, predictedSplitter, hookInitCodeHash, rewardConfig,
     block: head.number.toString(), blockHash: head.hash, nonce, createdAt: options.now ?? Date.now(), expiresAt: (options.now ?? Date.now()) + LAUNCH_PREVIEW_MS, quote, ...(options.image ? {image: options.image} : {}),
     status: setup ? "needs_setup" : "simulated", steps, devBuyWei: devBuyWei.toString(), availableWei: available.toString(),

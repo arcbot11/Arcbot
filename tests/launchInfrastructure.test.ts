@@ -3,7 +3,7 @@ import { decodeFunctionData, encodeAbiParameters, encodeFunctionData, keccak256,
 import bundle from "../docs/launch/argus-bundle-2026-09-13.json";
 import { parseLaunchInput, launchIdentity, launchFingerprint } from "../lib/launches/input";
 import { encodeLaunch, mineHook, rewardTarget } from "../lib/launches/prepare";
-import { portalAbi, PORTAL6 } from "../lib/launches/contracts";
+import { portalAbi, LAUNCH_PORTAL } from "../lib/launches/contracts";
 import { assertLaunchExecutionDisabled, launchPreparationEnabled, LAUNCH_EXECUTION_ENABLED } from "../lib/launches/policy";
 
 export const launchInput = { name: "Example Token", symbol: "EXAMPLE", imageURI: "ipfs://Qm" + "a".repeat(44),
@@ -17,7 +17,7 @@ describe("launch input and execution boundary", () => {
     expect(assertLaunchExecutionDisabled).toThrow("execution is disabled");
   });
   it.each([
-    { creator: creator }, { portal: PORTAL6 }, { totalSupply: "100" }, { symbol: "usdc" },
+    { creator: creator }, { portal: LAUNCH_PORTAL }, { totalSupply: "100" }, { symbol: "usdc" },
     { buyTaxBps: 0, sellTaxBps: 0 }, { buyTaxBps: 1001 }, { creatorBps: 10000, burnBps: 1 },
     { devBuyUSDC: "1e3" }, { devBuyUSDC: "0.0000001" }, { devBuyUSDC: "-1" },
     { imageURI: "https://127.0.0.1/secrets" }, { website: "javascript:alert(1)" },
@@ -50,9 +50,9 @@ describe("launch input and execution boundary", () => {
     expect(decoded.functionName).toBe("launch");
     if (decoded.functionName !== "launch") throw Error("Wrong function");
     expect(decoded.args[0]).toMatchObject({ devBuyQuote: 300_000_000n, quoteAsset: "0x3600000000000000000000000000000000000000",
-      totalSupply: 10n ** 27n, startFdvUsdc6: 2_500_000_000n, bondFdvUsdc6: 45_000_000_000n });
+      expectConvert: 1, totalSupply: 10n ** 27n, startFdvUsdc6: 2_500_000_000n, bondFdvUsdc6: 45_000_000_000n });
     expect(decoded.args[1]).toMatchObject({ description: "Description", website: input.website });
-    expect(encodeFunctionData({ abi: bundle.contracts.ArgusV4Portal6.abi, functionName: "launch", args: decoded.args })).toBe(data);
+    expect(encodeFunctionData({ abi: bundle.portal7.contracts.ArgusV4Portal7.abi, functionName: "launch", args: decoded.args })).toBe(data);
   });
   it("mines the exact required hook flags without sending a transaction", async () => {
     const init = keccak256("0x1234");

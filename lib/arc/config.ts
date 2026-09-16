@@ -14,6 +14,9 @@ const configuration = z.object({
   rpcFallbackUrls: z.array(rpcUrl).default([]),
   readOnlyRpcUrls: z.array(rpcUrl).default([]),
   quoteRpcUrls: z.array(rpcUrl).optional(),
+  executionRpcUrls: z.array(rpcUrl).optional(),
+  receiptRpcUrls: z.array(rpcUrl).optional(),
+  rpcHeaders: z.record(rpcUrl,z.object({'Drpc-Key':z.string().min(1)}).strict()).optional(),
   checkpointNumber: uint,
   checkpointHash: z.string().regex(/^0x[0-9a-fA-F]{64}$/),
   maxHeadAgeSeconds: z.number().int().min(1).max(300).default(30),
@@ -39,10 +42,16 @@ export function arcConfigFromEnv(env: Record<string, string | undefined> = proce
     env.ARC_CHECKPOINT_HASH.toLowerCase() === '0xdd5a48032af8571d6a262f39e5cde7e6b91625aaa4330289f03e5a346dd3c358';
   const fallback = env.ARC_RPC_FALLBACK_URLS === undefined ? ['https://rpc.mainnet.arc.io'] :
     env.ARC_RPC_FALLBACK_URLS.split(',').map(url=>url.trim()).filter(Boolean);
+  const drpc=env.ARC_DRPC_HTTP_URL?.trim();
+  if(drpc&&!/(^|\.)drpc\.(org|live)$/.test(new URL(drpc).hostname))throw Error('Use an official dRPC HTTPS endpoint.');
+  const reads=[...new Set([...(drpc?[drpc]:[]),env.ARC_MAINNET_RPC_URL,...fallback])];
   return arcConfig({ rpcUrl: env.ARC_MAINNET_RPC_URL,
-    rpcFallbackUrls: fallback,
+    rpcFallbackUrls: [...new Set([...(drpc?[drpc]:[]),...fallback])].filter(url=>url!==env.ARC_MAINNET_RPC_URL),
     readOnlyRpcUrls: [],
-    quoteRpcUrls: [env.ARC_MAINNET_RPC_URL, ...fallback],
+    quoteRpcUrls: reads,
+    executionRpcUrls: reads,
+    receiptRpcUrls: reads,
+    ...(drpc&&env.ARC_DRPC_API_KEY?{rpcHeaders:{[drpc]:{'Drpc-Key':env.ARC_DRPC_API_KEY}}}:{}),
     checkpointNumber: legacy ? '21065497' : env.ARC_CHECKPOINT_NUMBER,
     checkpointHash: legacy ? '0xdba68d53cfd9677309247a79359fe7d01599447d69f84f69a958bc179a6cdf07' : env.ARC_CHECKPOINT_HASH,
     ...ARC_GAS_POLICY,

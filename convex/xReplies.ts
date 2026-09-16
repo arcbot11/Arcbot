@@ -1627,7 +1627,7 @@ export const retryInteraction = internalAction({
             ctx.runQuery(internal.wallets.resolveKnownToken, { identifier }));
           // Only the verified identifier crosses this boundary, never parent instructions.
           workflowText = `buy ${contextualBuy.unit === "usd" ? "$" : ""}${contextualBuy.amount}${contextualBuy.unit === "eth" ? " ETH" : ""} of ${token}`;
-          contextualBuyIntent = { kind: "command", command: { kind: "buy", ...contextualBuy, token, slippageBps: 250 } };
+          contextualBuyIntent = { kind: "command", command: { kind: "buy", ...contextualBuy, token, slippageBps: 200 } };
         } catch (error) {
           const message = String(error).includes("CONTEXT_BUY_AMBIGUOUS")
             ? "Action needed: That post contains more than one possible token. Send a buy command with the exact contract address. No purchase was made."

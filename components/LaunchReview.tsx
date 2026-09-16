@@ -22,6 +22,7 @@ export function LaunchReview({ input, wallet, walletLabel, preview, expired = fa
       url ? <a key={label} href={url} target="_blank" rel="noopener noreferrer">{label}</a> : null)}</div>
     <dl className={styles.facts}>
       <div><dt>Paired asset</dt><dd>{input.pairToken}</dd></div>
+      <div><dt>Reward currency</dt><dd>{input.pairToken}</dd></div>
       <div><dt>Buy tax</dt><dd>1%</dd></div><div><dt>Sell tax</dt><dd>1%</dd></div>
       <div><dt>Supply</dt><dd>1,000,000,000 {input.symbol}</dd></div>
       <div><dt>Initial creator buy</dt><dd>{input.pairToken==="USDC"?`${displayUsdc(input.devBuyUSDC)} USDC`:preview?.quote?`${formatUnits(BigInt(preview.quote.devBuy),preview.quote.decimals)} ${input.pairToken} (${displayUsdc(input.devBuyUSDC)} USD reference)`: `${displayUsdc(input.devBuyUSDC)} USD value in ${input.pairToken}`}</dd></div>

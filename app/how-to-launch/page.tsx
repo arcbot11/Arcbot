@@ -15,7 +15,8 @@ const parameters = [
   ["Dividend minimum", "When dividends are enabled, the minimum holding is fixed at 100,000 launch tokens. This does not promise a fixed dividend amount or return.", "100,000 EXAMPLE minimum holding"],
   ["Developer buy", "Optional. Enter the USDC budget for a buy inside the launch transaction. Zero means no developer buy. Gas is additional, and the received token amount depends on execution.", "Dev buy: 25 USDC · No dev buy: 0 USDC"],
   ["Supply and initial market", "The prepared launch uses 1 billion tokens, a $2,500 starting fully diluted valuation, and a $45,000 bonding threshold. These are configuration values, not guaranteed market prices or returns.", "Supply: 1,000,000,000 · Pair: Arc USDC"],
-  ["Creator wallet", "The wallet used to submit the launch is the creator. Check it before confirming. Portal #6 credits creator rewards for claiming; for our USDC pairs, the quote reward is USDC, and launch-token rewards may also accrue.", "Use the X-linked or Telegram-linked wallet you intend to receive creator rewards."],
+  ["Paired asset", "USDC is the default. ARGUS and ARCASH are also supported while approved by the Portal. Fund the creator buy with the chosen asset. Rewards stay in that paired currency; preparation stops if the registry changes it.", "Pair with ARGUS · Pair with ARCASH"],
+  ["Creator wallet", "The wallet used to submit the launch is the creator. Check it before confirming. Portal #7 credits creator rewards for claiming; for our USDC pairs, the quote reward is USDC, and launch-token rewards may also accrue.", "Use the X-linked or Telegram-linked wallet you intend to receive creator rewards."],
 ];
 const allocations = [
   ["All to creator", "Creator 100%"],
@@ -28,7 +29,7 @@ const allocations = [
 export default function HowToLaunch(){
   return <main><SiteHeader/><section className="arc-container arc-guide">
     <p className="arc-kicker">Launch guide</p><h1>How to Launch</h1>
-    <p className="arc-intro">Prepare your token on Arc with Argus Portal #6. Review the token, allocation and creator wallet before submitting.</p>
+    <p className="arc-intro">Prepare your token on Arc with Argus Portal #7. Review the token, allocation and creator wallet before submitting.</p>
     <p className="otc-notice">Preparation reference. Launch execution is currently disabled.</p>
     <div className="arc-command-list">{parameters.map(([name,description,example],i)=><article key={name}><span>{String(i+1).padStart(2,"0")}</span><h2>{name}</h2><div><p>{description}</p><p><strong>Example:</strong> {example}</p></div></article>)}</div>
     <h2>Allocation examples</h2>
@@ -38,6 +39,6 @@ export default function HowToLaunch(){
     <p>Name: Example Token. Ticker: EXAMPLE. Image: your token logo. Description: A community token on Arc. Dev buy: 25 USDC. Allocation: half creator, half dividends.</p>
     <p>This resolves to 1% buy tax, 1% sell tax, 50% creator, 50% dividends, a 100,000-token dividend minimum, and a 25 USDC developer-buy budget plus gas.</p>
     <h2>What happens during preparation</h2>
-    <ol><li>Choose the creator wallet and enter the token details.</li><li>Review the exact allocation and USDC budget.</li><li>Check whether reward configuration or USDC approval is required. A launch with unmet prerequisites is not shown as successfully simulated.</li><li>Simulate against Portal #6 and refresh expired estimates. RPC failure is not a successful check.</li><li>When execution is enabled, verify the mined launch, creator and pool before reporting completion. A submitted transaction alone is not confirmation.</li></ol>
+    <ol><li>Choose the creator wallet and enter the token details.</li><li>Review the exact allocation and USDC budget.</li><li>Check whether reward configuration or USDC approval is required. A launch with unmet prerequisites is not shown as successfully simulated.</li><li>Simulate against Portal #7 and refresh expired estimates. RPC failure is not a successful check.</li><li>When execution is enabled, verify the mined launch, creator and pool before reporting completion. A submitted transaction alone is not confirmation.</li></ol>
   </section><SiteFooter/></main>;
 }

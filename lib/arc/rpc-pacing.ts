@@ -9,7 +9,8 @@ export function quickNodeEndpoint(url: string) {
 }
 export async function paceArcRpc(url: string) {
   const publicRpc = new URL(url).hostname === 'rpc.mainnet.arc.io';
-  if (!quickNodeEndpoint(url) && !publicRpc) return;
+  const drpc=/(^|\.)drpc\.(org|live)$/.test(new URL(url).hostname);
+  if (!quickNodeEndpoint(url) && !publicRpc&&!drpc) return;
   let queue = queues.get(url);
   if (!queue) { queue = { next: 0, tail: Promise.resolve() }; queues.set(url, queue); }
   const state = queue;
@@ -17,14 +18,15 @@ export async function paceArcRpc(url: string) {
     const delay = state.next - Date.now();
     if (delay > 0) await new Promise<void>(resolve => setTimeout(resolve, delay));
     // Measure actual dispatch time so an event-loop stall cannot release a burst.
-    state.next = Date.now() + (publicRpc ? 300 : ARC_RPC_REQUEST_SPACING_MS);
+    state.next = Date.now() + (publicRpc ? 300 : drpc ? 50 : ARC_RPC_REQUEST_SPACING_MS);
   });
   state.tail = turn.catch(()=>undefined);
   await turn;
-  if (!publicRpc) await sharedAdmission();
+  if (quickNodeEndpoint(url)) await sharedAdmission();
 }
 let admissionTail: Promise<void> = Promise.resolve();
 let permits: {at:number;expiresAt:number}[] = [];
+let lastSharedDispatchAt=0;
 async function sharedAdmission() {
   const task = admissionTail.then(acquirePermit);
   admissionTail = task.catch(() => undefined);
@@ -37,13 +39,16 @@ async function acquirePermit(){
     return;
   }
   const client=new ConvexHttpClient(url);
-  for(let attempt=0;attempt<6;attempt++){
+  for(let attempt=0;attempt<=6;attempt++){
     while(permits.length){
       const permit=permits.shift()!;
       if(Date.now()>permit.expiresAt)continue;
-      if(permit.at>Date.now())await new Promise(resolve=>setTimeout(resolve,permit.at-Date.now()));
-      if(Date.now()<=permit.expiresAt)return;
+      const dispatchAt=Math.max(permit.at,lastSharedDispatchAt+ARC_RPC_REQUEST_SPACING_MS);
+      if(dispatchAt>Date.now())await new Promise(resolve=>setTimeout(resolve,dispatchAt-Date.now()));
+      if(Date.now()<=permit.expiresAt){lastSharedDispatchAt=Date.now();return;}
     }
+    // Consume the final successful batch before exhausting the acquisition limit.
+    if(attempt===6)break;
     const requestedAt=Date.now();
     let timer:ReturnType<typeof setTimeout>|undefined;
     let batch:{slots:{at:number;expiresAt:number}[];retryAfterMs:number;serverNow:number};
@@ -71,4 +76,4 @@ export function retryAfterMs(value: string | null) {
   const duration = Number.isFinite(seconds) ? seconds * 1000 : value ? Date.parse(value) - Date.now() : 1000;
   return Math.max(1000, Math.min(5000, Number.isFinite(duration) ? duration : 1000));
 }
-export function clearArcRpcPacing() { queues.clear(); permits=[]; admissionTail=Promise.resolve(); }
+export function clearArcRpcPacing() { queues.clear(); permits=[]; admissionTail=Promise.resolve(); lastSharedDispatchAt=0; }

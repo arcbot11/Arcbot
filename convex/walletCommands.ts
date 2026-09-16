@@ -1,4 +1,5 @@
 import { launchPairFromXText } from "../lib/launches/x-pair";
+import {DEFAULT_ARC_SLIPPAGE_BPS} from '../lib/arc/slippage';
 import { launchAllocationFromXText } from "../lib/launches/x-allocation";
 import type { Allocation } from "../lib/launches/allocation";
 import {explicitArcSwap} from "../lib/arc-swap-command";
@@ -54,7 +55,7 @@ const ADDRESS = /0x[a-fA-F0-9]{40}/;
 // removed before a command crosses the parser boundary.
 const NUMBER = "((?:[0-9][0-9,]*(?:\\.[0-9]+)?|\\.[0-9]+))";
 const NUMBER_NC = "(?:[0-9][0-9,]*(?:\\.[0-9]+)?|\\.[0-9]+)";
-export const DEFAULT_SWAP_SLIPPAGE_BPS = 250;
+export const DEFAULT_SWAP_SLIPPAGE_BPS = DEFAULT_ARC_SLIPPAGE_BPS;
 
 // No inherited company-name or wrapped-asset aliases. Resolve Arc assets by
 // their actual ticker/address instead of mapping them to a retired catalog.

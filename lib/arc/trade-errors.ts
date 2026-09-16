@@ -4,8 +4,8 @@ export function tradeSimulationFailure(error:unknown):"minimum_output"|"reverted
   for(let depth=0;depth<12&&typeof current==="object"&&current!==null&&!seen.has(current);depth++){
     seen.add(current);
     const e=current as {code?:unknown;name?:unknown;message?:unknown;data?:unknown;cause?:unknown};
-    // V4TooLittleReceived(uint256 minimum,uint256 received), from the router.
-    if(typeof e.data==="string"&&/^0x8b063d73[0-9a-f]{128}$/i.test(e.data))return "minimum_output";
+    // V3TooLittleReceived(), or V4TooLittleReceived(minimum,received).
+    if(typeof e.data==="string"&&/^(?:0x39d35496|0x8b063d73[0-9a-f]{128})$/i.test(e.data))return "minimum_output";
     if(e.code===3||e.name==="ContractFunctionRevertedError"||typeof e.message==="string"&&/execution reverted/i.test(e.message))reverted=true;
     current=e.cause;
   }

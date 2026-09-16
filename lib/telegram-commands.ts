@@ -1,4 +1,5 @@
 import { ARC_BOT_TELEGRAM_USERNAME } from "./project-config";
+import {DEFAULT_ARC_SLIPPAGE_BPS} from './arc/slippage';
 import { tokenClarificationWithoutWallet } from "./public-links";
 import type { WalletCommand } from "../convex/walletCommands";
 import { normalizeLeadingQuantity, normalizeTokenFirstBuy, hasMalformedNumericGrouping } from "./command-amount-language";
@@ -47,7 +48,7 @@ export function telegramInput(text: string, callback = false, username = ARC_BOT
 
 const token = "\\$?(0x[a-fA-F0-9]{40}|[A-Za-z][A-Za-z0-9_]{0,31})";
 const number = "((?:[0-9]+(?:\\.[0-9]+)?|\\.[0-9]+))";
-const slippageBps = 100;
+const slippageBps = DEFAULT_ARC_SLIPPAGE_BPS;
 /** Anchored formats only: no AI, inferred amounts, or prior-message context. */
 export function telegramWalletCommand(name: string, args: string): WalletCommand | null {
   if (hasMalformedNumericGrouping(args)) return null;

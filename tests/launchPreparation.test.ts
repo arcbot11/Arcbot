@@ -8,19 +8,19 @@ import { decodeFunctionData, encodeFunctionResult, encodePacked, getCreate2Addre
 import { prepareLaunch, type LaunchReadRpc } from "../lib/launches/prepare";
 import { verifyLaunchHookStore } from "../lib/launches/hook-review";
 import { parseLaunchInput } from "../lib/launches/input";
-import { approvalAbi, configAbi, portalAbi, PORTAL6, reviewedImplementations } from "../lib/launches/contracts";
+import { approvalAbi, configAbi, portalAbi, LAUNCH_PORTAL, reviewedImplementations } from "../lib/launches/contracts";
 import type { ArcConfig } from "../lib/arc/config";
 import type { ArcCall } from "../lib/arc/rpc";
 
 vi.mock("viem", async original => {
   const actual = await original<typeof import("viem")>();
   return { ...actual, keccak256: (value: Hex) => value === "0x6000"
-    ? "0xe0c3db1cba754430a88582b593b819e40484e778f9121ece798f74b4dcee5863" : actual.keccak256(value) };
+    ? "0xe94d472a2fd09ea7abd17e6e6b76655eb4496b0f6525ccc7b466d01093537a26" : actual.keccak256(value) };
 });
 const creator = "0x1111111111111111111111111111111111111111" as const;
 const predicted = "0x2222222222222222222222222222222222222222" as const;
 const splitter = "0x3333333333333333333333333333333333333333" as const;
-const cfg = "0x8Bf56C35faEA89D81E8eEe45c2FfB3994148A840";
+const cfg = "0x87FE2242b83680F3912829014A5915c9B0A51dD3";
 const abi: Abi = [...portalAbi, ...approvalAbi, ...configAbi];
 function fixture() {
   const now = Date.now(), blockHash = toHex(10n, { size: 32 }), initCodeHash = keccak256("0x1234");
@@ -32,6 +32,8 @@ function fixture() {
     const decoded = decodeFunctionData({ abi, data: tx.data }), fn = decoded.functionName!, args = decoded.args ?? [];
     let result: unknown;
     switch (fn) {
+      case "registry": result = "0xfA4552DD491acC08051725fe522F4cfEaeC8EDc6"; break;
+      case "payoutAssetFor": result = args[0]; break;
       case "LAUNCH_STRUCT_WORDS": result = 11n; break;
       case "quoteApproved": result = state.quote; break;
       case "tokenImpl": case "splitterImpl": case "lockerImpl": result = state.pointerChanged ? creator : reviewedImplementations[fn]; break;
@@ -41,7 +43,7 @@ function fixture() {
       case "predictSplitter": result = splitter; break;
       case "hookInitCodeHash": result = initCodeHash; break;
       case "hookCreate2Salt": result = keccak256(encodePacked(["address", "bytes32"], [args[0] as Address, args[1] as Hex])); break;
-      case "predictHook": result = [getCreate2Address({ from: PORTAL6, bytecodeHash: initCodeHash,
+      case "predictHook": result = [getCreate2Address({ from: LAUNCH_PORTAL, bytecodeHash: initCodeHash,
         salt: keccak256(encodePacked(["address", "bytes32"], [creator, args[2] as Hex])) }), 0x2044n, true]; break;
       case "predictToken": case "launch": result = predicted; break;
       case "setConfig": return "0x" as Hex;
@@ -52,7 +54,7 @@ function fixture() {
   });
   const rpc: LaunchReadRpc = {
     chainId: async () => state.chain, block: async (number = 200n) => ({ number, hash: blockHash, timestamp: BigInt(Math.floor(now / 1000)) }),
-    balance: async () => state.balance, code: async address => address === PORTAL6 ? state.code : state.deployed ? "0x1234" : undefined,
+    balance: async () => state.balance, code: async address => address === LAUNCH_PORTAL ? state.code : state.deployed ? "0x1234" : undefined,
     decimals: async () => 6, tokenBalance: async () => { throw Error("Native USDC must not be counted twice"); },
     call, nonce: async (_address, pending) => pending ? state.pendingNonce : 1,
     fees: async () => ({ maxFeePerGas: 10_000_000_000n, maxPriorityFeePerGas: 1n }),
@@ -73,7 +75,7 @@ it("fully simulates a no-dev-buy launch without signing or approval", async () =
   const f = fixture(), p = await prepareLaunch(f.options);
   expect(p.status).toBe("simulated"); expect(p.executionEnabled).toBe(false);
   expect(p.steps.map(s => s.kind)).toEqual(["launch"]);
-  expect(p.steps[0].call).toMatchObject({ from: creator, to: PORTAL6, value: 0n });
+  expect(p.steps[0].call).toMatchObject({ from: creator, to: LAUNCH_PORTAL, value: 0n });
   expect(p.predictedToken.toLowerCase()).toBe(predicted); expect(BigInt(p.gasWei!)).toBeGreaterThan(0n);
 });
 it("reports approval prerequisites without pretending deployment was simulated", async () => {
@@ -121,10 +123,10 @@ it.each(["valid","reverted","wrong-chain","wrong-creator","wrong-calldata","reor
   const currencies=[ARC_USDC,p.predictedToken].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1);
   const pool=poolId({protocol:"v4",currency0:currencies[0],currency1:currencies[1],fee:10000,tickSpacing:200,hooks:p.predictedHook});
   const topics=(name:"TokenCreated"|"PartsDeployed")=>encodeEventTopics({abi:launchEvents,eventName:name,args:{token:p.predictedToken,...(name==="TokenCreated"?{creator}: {})}}) as [Hex,...Hex[]];
-  const evidence:LaunchEvidence={chainId:5042,hash:toHex(99n,{size:32}),from:creator,to:PORTAL6,input:p.steps.at(-1)!.call.data,value:0n,
+  const evidence:LaunchEvidence={chainId:5042,hash:toHex(99n,{size:32}),from:creator,to:LAUNCH_PORTAL,input:p.steps.at(-1)!.call.data,value:0n,
     canonicalBlock:{number:201n,hash:toHex(20n,{size:32})},receipt:{transactionHash:toHex(99n,{size:32}),status:"success",blockNumber:201n,blockHash:toHex(20n,{size:32}),logs:[
-      {address:PORTAL6,topics:topics("TokenCreated"),data:encodeAbiParameters(parseAbiParameters("string,string,bytes32,string,string,string,string"),[input.name,input.symbol,pool as Hex,input.imageURI,input.website,input.twitter,input.telegram])},
-      {address:PORTAL6,topics:topics("PartsDeployed"),data:encodeAbiParameters(parseAbiParameters("address,address,address"),[creator,p.predictedHook,p.predictedSplitter])}
+      {address:LAUNCH_PORTAL,topics:topics("TokenCreated"),data:encodeAbiParameters(parseAbiParameters("string,string,bytes32,string,string,string,string"),[input.name,input.symbol,pool as Hex,input.imageURI,input.website,input.twitter,input.telegram])},
+      {address:LAUNCH_PORTAL,topics:topics("PartsDeployed"),data:encodeAbiParameters(parseAbiParameters("address,address,address"),[creator,p.predictedHook,p.predictedSplitter])}
     ]}};
   if(mode==="reverted")evidence.receipt.status="reverted";
   if(mode==="wrong-chain")evidence.chainId=8453;
@@ -133,7 +135,7 @@ it.each(["valid","reverted","wrong-chain","wrong-creator","wrong-calldata","reor
   if(mode==="reorg")evidence.canonicalBlock.hash=toHex(21n,{size:32});
   if(mode==="foreign-events")evidence.receipt.logs.forEach(l=>l.address=creator);
   if(mode==="missing-parts")evidence.receipt.logs.pop();
-  if(mode==="valid")expect(verifyLaunchReceipt(f.options.identity,input,p,evidence)).toMatchObject({token:p.predictedToken,creator,portal:PORTAL6,poolId:pool});
+  if(mode==="valid")expect(verifyLaunchReceipt(f.options.identity,input,p,evidence)).toMatchObject({token:p.predictedToken,creator,portal:LAUNCH_PORTAL,poolId:pool});
   else expect(()=>verifyLaunchReceipt(f.options.identity,input,p,evidence)).toThrow("Launch evidence");
 });
 

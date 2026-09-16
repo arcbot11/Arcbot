@@ -50,16 +50,17 @@ function createArcTransport(config: ArcConfig, traceFallback: boolean) {
   }
   async function rawCall(url: string, method: string, params: readonly unknown[] = []): Promise<unknown> {
     let response: Response;
+    const headers={"content-type":"application/json",...config.rpcHeaders?.[url]};
     const admit=async()=>{try{await paceArcRpc(url);}catch{throw new RpcFailure("Arc RPC capacity service busy",429,true,undefined,true,1000,false);}};
     await admit();
     try {
-      response = await fetch(url, { method: "POST", headers: { "content-type": "application/json" },
+      response = await fetch(url, { method: "POST", headers,redirect:"error",
         body: JSON.stringify({ jsonrpc: "2.0", id: 1, method, params }), signal: AbortSignal.timeout(12000) });
       // Retry only reads. Never retry a broadcast with an uncertain outcome.
       if(response.status===429&&quickNodeEndpoint(url)&&method!=="eth_sendRawTransaction"){
         await new Promise(resolve=>setTimeout(resolve,retryAfterMs(response.headers.get("retry-after"))));
         await admit();
-        response=await fetch(url,{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({jsonrpc:"2.0",id:1,method,params}),signal:AbortSignal.timeout(12000)});
+        response=await fetch(url,{method:"POST",headers,redirect:"error",body:JSON.stringify({jsonrpc:"2.0",id:1,method,params}),signal:AbortSignal.timeout(12000)});
       }
     } catch(error) { if(error instanceof RpcFailure)throw error;throw new RpcFailure("Arc RPC connection unavailable", -32098, true, undefined, true); }
     if(response.status===429)throw new RpcFailure("Arc RPC rate limit reached",429,true,undefined,true,retryAfterMs(response.headers.get("retry-after")),false);

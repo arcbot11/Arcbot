@@ -8,6 +8,8 @@ export function rpcRole(method:string,traceFallback:boolean):ArcRpcRole {
 }
 export function roleEndpoints(config:ArcConfig,role:ArcRpcRole,method:string):string[]{
   if(role==='quote'&&config.quoteRpcUrls?.length)return [...new Set([...config.quoteRpcUrls,config.rpcUrl,...config.rpcFallbackUrls,...config.readOnlyRpcUrls])];
+  const preferred=role==='execution'?config.executionRpcUrls:role==='receipt'?config.receiptRpcUrls:undefined;
+  if(preferred?.length)return [...new Set([...preferred,config.rpcUrl,...config.rpcFallbackUrls,...config.readOnlyRpcUrls])];
   const fallback=role==='broadcast'?config.rpcFallbackUrls:method==='eth_call'
     ? [...config.readOnlyRpcUrls,...config.rpcFallbackUrls]:[...config.rpcFallbackUrls,...config.readOnlyRpcUrls];
   return [...new Set([config.rpcUrl,...fallback])];

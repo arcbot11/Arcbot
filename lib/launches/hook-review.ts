@@ -1,21 +1,19 @@
-import { decodeFunctionResult, encodeFunctionData, keccak256, zeroAddress, type Address, type Hex } from "viem";
-import type { ArcRpc } from "../arc/rpc";
-import { portalAbi, PORTAL6 } from "./contracts";
-import { LaunchError } from "./policy";
+import { decodeFunctionResult, encodeFunctionData, zeroAddress } from 'viem';
+import type { ArcRpc } from '../arc/rpc';
+import { ARC_USDC } from '../arc/config';
+import { portalAbi, LAUNCH_PORTAL } from './contracts';
+import { LaunchError } from './policy';
 
-/** Populate only after reviewing the stored creation bytecode against compiled
- * source. ABI snapshots and the Portal's own init-code prediction are not code
- * attestations. No environment override or trust-on-first-use enrollment. */
-export const REVIEWED_HOOK_STORES: ReadonlyArray<{ address: Address; codeHash: Hex; source: string }> = [];
-
-export async function verifyLaunchHookStore(rpc: Pick<ArcRpc,"call"|"code">, block: bigint) {
-  if (!REVIEWED_HOOK_STORES.length) throw new LaunchError("HOOK_REVIEW_REQUIRED", "Launch hook bytecode review is required before preparation.");
-  const raw = await rpc.call({from:zeroAddress,to:PORTAL6,value:0n,data:encodeFunctionData({abi:portalAbi,functionName:"hookStore"})},block);
-  const address = decodeFunctionResult({abi:portalAbi,functionName:"hookStore",data:raw});
-  const reviewed = REVIEWED_HOOK_STORES.find(entry=>entry.address.toLowerCase()===address.toLowerCase());
-  if (!reviewed) throw new LaunchError("HOOK_CHANGED", "Launch hook implementation changed. Review is required.");
-  const code = await rpc.code(address,block);
-  if(!code || code==="0x" || keccak256(code).toLowerCase()!==reviewed.codeHash.toLowerCase())
-    throw new LaunchError("HOOK_CHANGED", "Launch hook bytecode changed. Review is required.");
-  return address;
+/** Fixed-argument creation-code fingerprint observed at block 21070387.
+ * The Portal runtime is checked separately. Its private hookStore has no getter;
+ * this public prediction detects changes to the stored creation code.
+ * Deployment consistency evidence, not a source-code audit. */
+export const LAUNCH_HOOK_FINGERPRINT = '0x0dd6f01bc6791180171071b9d71a6d1d627e6e248d0c59fa266f4c0df19467f3';
+export async function verifyLaunchHookStore(rpc: Pick<ArcRpc,'call'|'code'>, block: bigint) {
+  const raw = await rpc.call({from:zeroAddress,to:LAUNCH_PORTAL,value:0n,
+    data:encodeFunctionData({abi:portalAbi,functionName:'hookInitCodeHash',args:[zeroAddress,100,100,ARC_USDC]})},block);
+  const fingerprint = decodeFunctionResult({abi:portalAbi,functionName:'hookInitCodeHash',data:raw});
+  if(fingerprint.toLowerCase()!==LAUNCH_HOOK_FINGERPRINT)
+    throw new LaunchError('HOOK_CHANGED','Launch hook implementation changed. Review is required.');
+  return fingerprint;
 }
