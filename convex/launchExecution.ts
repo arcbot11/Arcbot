@@ -30,7 +30,7 @@ export const accept=mutation({args:{...args,revision:v.number(),sourceRequestId:
   if(a.sourceRequestId){
     const request=await ctx.db.query("walletRequests").withIndex("by_request_id",q=>q.eq("requestId",a.sourceRequestId!)).unique();
     if(!request||request.source!=="x"||request.ownerXUserId!==a.owner||request.kind!=="launch")throw Error("Launch command authorization changed.");
-    authorizationExpiresAt=Math.min(authorizationExpiresAt,request._creationTime+LAUNCH_AUTHORIZATION_MS);
+    authorizationExpiresAt=Math.min(authorizationExpiresAt,Math.floor(request._creationTime)+LAUNCH_AUTHORIZATION_MS);
   }
   const run:LaunchRun={requestId:a.requestId,owner:a.owner,address:identity.address,input,preview,authorizationExpiresAt,status:"running",steps:[],...(a.sourceRequestId?{sourceRequestId:a.sourceRequestId}:{})};
   try{assertLaunchAuthorization(run);}catch{rejectAcceptance("Launch authorization expired. Review a new draft before continuing.");}

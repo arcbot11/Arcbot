@@ -1,7 +1,9 @@
 import { beforeEach, expect, it, vi } from "vitest";
 const discovery=vi.hoisted(()=>vi.fn());
+const transient=vi.hoisted(()=>vi.fn());
+vi.mock("../lib/arc/transport",()=>({isTransientArcReadFailure:transient}));
 vi.mock("../lib/arc/argus-discovery",()=>({discoverArgusPool:discovery}));
-beforeEach(()=>discovery.mockReset().mockResolvedValue(null));
+beforeEach(()=>{discovery.mockReset().mockResolvedValue(null);transient.mockReset().mockReturnValue(false);});
 import { decodeFunctionData, encodeFunctionResult, parseAbi, parseUnits, toHex, type Hex } from "viem";
 import { launchQuote, assertLaunchQuote, type LaunchQuote } from "../lib/launches/quote";
 import { encodeLaunch } from "../lib/launches/prepare";
@@ -56,6 +58,13 @@ it("USDC needs no external price or duplicate token-balance lookup",async()=>{
 it("refuses a changed paired token decimal scale",async()=>{
   await expect(launchQuote("ARCASH",1n,{block:historicalBlock,call:vi.fn(),code:vi.fn(),decimals:async()=>6},1n)).rejects.toThrow("decimals changed");
 });
+it("retries a transient price read once at the original block, then stops",async()=>{
+  transient.mockReturnValue(true);
+  const error=Error("temporary outage"),decimals=vi.fn().mockRejectedValue(error);
+  await expect(launchQuote("ARGUS",0n,{block:historicalBlock,call:vi.fn(),code:vi.fn(),decimals},100n)).rejects.toBe(error);
+  expect(decimals).toHaveBeenCalledTimes(2);
+  expect(decimals.mock.calls.every(call=>call[1]===100n)).toBe(true);
+});
 it.each(["dust", "conflict", "empty"])("checks V4 even with a V3 pool: %s",async mode=>{
   const v4abi=parseAbi(["function getSlot0(bytes32) view returns(uint160,int24,uint24,uint24)","function getLiquidity(bytes32) view returns(uint128)"]);
   const combined=[...abi,...v4abi];
@@ -63,22 +72,22 @@ it.each(["dust", "conflict", "empty"])("checks V4 even with a V3 pool: %s",async
   const rpc={block:historicalBlock,decimals:async()=>18,code:vi.fn(),call:vi.fn(async(tx:{data:Hex})=>{
     const fn=decodeFunctionData({abi:combined,data:tx.data}).functionName;
     if(fn==="getPool")return encodeFunctionResult({abi,functionName:fn,result:"0x1111111111111111111111111111111111111111"});
-    if(fn==="liquidity")return encodeFunctionResult({abi,functionName:fn,result:mode==="conflict"?10_000_000_000n:1n});
+    if(fn==="liquidity")return encodeFunctionResult({abi,functionName:fn,result:mode==="empty"?0n:mode==="conflict"?10_000_000_000n:1n});
     if(fn==="slot0")return encodeFunctionResult({abi,functionName:fn,result:[1n<<96n,0,0,0,0,0,true]});
-    if(fn==="getLiquidity")return encodeFunctionResult({abi:v4abi,functionName:fn,result:mode==="empty"?1n:10_000_000_000n});
+    if(fn==="getLiquidity")return encodeFunctionResult({abi:v4abi,functionName:fn,result:mode==="empty"?0n:10_000_000_000n});
     return encodeFunctionResult({abi:v4abi,functionName:"getSlot0",result:[2n<<96n,0,0,0]});
   })};
-  if(mode==="conflict")await expect(launchQuote("ARGUS",25_000_000n,rpc,100n)).rejects.toThrow("disagree");
-  else if(mode==="empty")await expect(launchQuote("ARGUS",25_000_000n,rpc,100n)).rejects.toThrow("sufficiently liquid");
+  if(mode==="empty")await expect(launchQuote("ARGUS",25_000_000n,rpc,100n)).rejects.toThrow("No active USDC pool");
   else {
     const quote=await launchQuote("ARGUS",25_000_000n,rpc,100n);
-    const expected=BigInt(LAUNCH_PAIRS.ARGUS.address)<BigInt(LAUNCH_PAIRS.USDC.address)?6_250_000n:100_000_000n;
-    expect(quote.devBuy).toBe(String(expected));
+    expect(quote.priceEvidence?.method).toBe("current-pool");
+    expect(quote.priceEvidence?.pool).toMatch(/^v[34]:/);
+    expect(()=>assertLaunchQuote("ARGUS",25_000_000n,quote)).not.toThrow();
   }
   expect(discovery).toHaveBeenCalledTimes(1);
 });
 
-it.each(["stable","spike","thin-history","archive-down","reorg"])("paired quote historical guard: %s",async mode=>{
+it.each(["stable","spike","thin-history","archive-down","reorg"])("uses current pool without historical checks: %s",async mode=>{
  let headReads=0;
  const rpc={decimals:async()=>18,code:vi.fn(),block:async(number=100n)=>{
    const b=await historicalBlock(number);if(number===100n&&++headReads>1&&mode==="reorg")return {...b,hash:toHex(999,{size:32})};return b;
@@ -90,7 +99,9 @@ it.each(["stable","spike","thin-history","archive-down","reorg"])("paired quote 
    const sqrt=at===100n?(1n<<96n)*(mode==="spike"?120n:102n)/100n:1n<<96n;
    return encodeFunctionResult({abi,functionName:"slot0",result:[sqrt,0,0,0,0,0,true]});
  })};
- const result=launchQuote("ARGUS",25_000_000n,rpc,100n);
- if(mode==="stable")expect((await result).devBuy).toBe("25000000");
- else await expect(result).rejects.toThrow(mode==="spike"?"changed too much":mode==="thin-history"?"sufficient liquidity":mode==="reorg"?"block changed":"Historical state unavailable");
+ const quote=await launchQuote("ARGUS",25_000_000n,rpc,100n);
+ expect(quote.priceEvidence?.method).toBe("current-pool");
+ expect(()=>assertLaunchQuote("ARGUS",25_000_000n,quote)).not.toThrow();
+ expect(headReads).toBe(0);
+ expect(rpc.call.mock.calls.every(call=>call[1]===100n)).toBe(true);
 });

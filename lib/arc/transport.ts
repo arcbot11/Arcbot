@@ -14,6 +14,14 @@ class RpcFailure extends Error {
   readonly code:number;readonly retryable:boolean;readonly data?:unknown;readonly transient:boolean;readonly cooldownMs:number;readonly traceFallback:boolean;
   constructor(message:string,code:number,retryable:boolean,data?:unknown,transient=false,cooldownMs=5000,traceFallback=false){super(message);this.code=code;this.retryable=retryable;this.data=data;this.transient=transient;this.cooldownMs=cooldownMs;this.traceFallback=traceFallback;}
 }
+/** Only temporary read failures, including errors wrapped by viem. */
+export function isTransientArcReadFailure(error: unknown): boolean {
+  for (let depth=0; depth<8 && error instanceof Error; depth++) {
+    if (error instanceof RpcFailure) return error.retryable && error.transient && error.code !== 429;
+    error=error.cause;
+  }
+  return false;
+}
 
 const transports=new Map<string,ReturnType<typeof createArcTransport>>();
 export function clearArcTransportCache(){transports.clear();}

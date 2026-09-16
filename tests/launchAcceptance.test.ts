@@ -41,11 +41,11 @@ it("leases recovery and refuses an old worker's release",async()=>{
   await f.call(execution.releaseRecovery,{lease:first});expect(f.tables.launchRuns[0].recoveryLease).toBe(next);
   await f.call(execution.releaseRecovery,{lease:next});expect(f.tables.launchRuns[0].recoveryUntil).toBe(0);
 });
-it("freezes X authorization expiry at the original command time",async()=>{
-  const f=fixture(),createdAt=Date.now()-600000;
+it.each([0,0.0625])("freezes X authorization expiry at the original command time, fractional ms %s",async fraction=>{
+  const f=fixture(),createdAt=Date.now()-600000+fraction;
   f.tables.walletRequests=[{requestId:"x-launch",source:"x",ownerXUserId:owner,kind:"launch",_creationTime:createdAt}];
   const run=await f.call(execution.accept,{sourceRequestId:"x-launch"});
-  expect(run.authorizationExpiresAt).toBe(createdAt+1800000);
+  expect(run.authorizationExpiresAt).toBe(Math.floor(createdAt)+1800000);
 });
 it("rejects an already expired X command before accepting a run",async()=>{
   const f=fixture();f.tables.walletRequests=[{requestId:"x-launch",source:"x",ownerXUserId:owner,kind:"launch",_creationTime:Date.now()-1800001}];

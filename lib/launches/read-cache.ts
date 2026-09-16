@@ -1,6 +1,6 @@
 import type { ArcRpc } from "../arc/rpc";
 /** One preparation only. Only reads pinned to an explicit block are shared. */
-export function launchReadCache<T extends Omit<ArcRpc,"broadcast"|"receipt">>(rpc:T):T{
+export function launchReadCache<T extends Pick<ArcRpc,"call"|"code"|"decimals"|"block">>(rpc:T):T{
   const cache=new Map<string,Promise<unknown>>();
   const allowed=new Set(["call","code","decimals"]);
   return new Proxy(rpc,{get(target,key){
