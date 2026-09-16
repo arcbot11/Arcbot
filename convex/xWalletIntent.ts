@@ -233,7 +233,7 @@ function commandRolesMatchText(text: string, command: WalletCommand) {
 }
 
 function hasMultipleLaunchSpecifications(text: string) {
-  const symbols = [...text.matchAll(tokenPattern(/\b(?:ticker|symbol)\s*(?:(?:should|will)\s+be\b|is\b|=|:)?\s*["'\u2018\u2019\u201c\u201d]?\s*\$?([A-Za-z0-9]{1,16})\b/gi))]
+  const symbols = [...text.matchAll(tokenPattern(/\b(?:ticker|symbol)\s*(?:(?:should|will)\s+be\b|is\b|of\b|=|:)?\s*["'\u2018\u2019\u201c\u201d]?\s*\$?([A-Za-z0-9]{1,16})\b/gi))]
     .map((match) => match[1].toUpperCase());
   const names = [...text.matchAll(/\b(?:(?:full|token)\s+name|name)\s*(?:is|=|:)?\s*(?:["\u201c]([^"\u201d]+)["\u201d]|['\u2018]([^'\u2019]+)['\u2019]|([^,;|\n]+))/gi)]
     .map((match) => (match[1] || match[2] || match[3] || "").trim().toLowerCase());
@@ -284,7 +284,7 @@ function fieldsAreGrounded(text: string, command: WalletCommand) {
       && (!command.website || normalizedUrlIsGrounded(text, command.website, "website"))
       && (!command.twitter || normalizedUrlIsGrounded(text, command.twitter, "twitter"))
       && (!command.telegram || normalizedUrlIsGrounded(text, command.telegram, "telegram"))
-      && (!command.pairToken || identifierIsGrounded(text, command.pairToken) || identifierAppearsAsKnownLaunchPair(text, command.pairToken))
+      && (!command.pairToken || (command.pairToken === "USDC" && launchPairFromXText(text) === "USDC") || identifierIsGrounded(text, command.pairToken) || identifierAppearsAsKnownLaunchPair(text, command.pairToken))
       && (!command.devBuy || amountIsGrounded(text, command.devBuy.amount));
   }
   return true;
@@ -402,7 +402,7 @@ function validateExtractedCommand(value: unknown, operation: WalletOperation, te
       item.symbol = sharedNameTicker.symbol;
     }
     if (/\bno\s+description\s+(?:needed|required)\b/i.test(text)) delete item.description;
-    const explicitSymbol = text.match(tokenPattern(/\b(?:ticker|symbol)\s*(?:(?:should|will)\s+be\b|is\b|=|:)?\s*["'\u2018\u2019\u201c\u201d]?\s*\$?([A-Za-z0-9]{1,16})\s*["'\u2018\u2019\u201c\u201d]?/i))?.[1];
+    const explicitSymbol = text.match(tokenPattern(/\b(?:ticker|symbol)\s*(?:(?:should|will)\s+be\b|is\b|of\b|=|:)?\s*["'\u2018\u2019\u201c\u201d]?\s*\$?([A-Za-z0-9]{1,16})\s*["'\u2018\u2019\u201c\u201d]?/i))?.[1];
     if (explicitSymbol && !sharedNameTicker) item.symbol = explicitSymbol.toUpperCase();
     const labeledWebsite = text.match(/\b(?:website|site)\s*(?:is|=|:)?\s*((?:https?:\/\/)?(?:www\.)?[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,}(?:\/[^\s,;]*)?)/i)?.[1];
     const labeledXHandle = text.match(/\b(?:x|twitter)\s*(?:is|=|:)?\s*@([a-zA-Z0-9_]{1,15})\b/i)?.[1];

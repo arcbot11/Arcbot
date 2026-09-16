@@ -7,7 +7,7 @@ export type XPostReference = {
 
 const REFERENCE_IMAGE_PHRASE = /\b(?:use|using|with) this (?:image|picture)\b/i;
 const NEGATED_REFERENCE_IMAGE_PHRASE = /\b(?:do not|don't|dont|not|never|without)\b[^.!?\n]{0,32}\b(?:use|using|with) this (?:image|picture)\b/i;
-const DIRECT_IMAGE_INSTRUCTION = /\b(?:(?:ticker|symbol)\s*:?\s*)?(?:use|using|with) this (?:image|picture)\b(?:\s+(?:as|for)\s+(?:(?:a|the|my|our|your)\s+)?(?:token\s+)?logo\b)?(?:[.!]?\s+add your token logo\b[.!]?)?/gi;
+const DIRECT_IMAGE_INSTRUCTION = /\b(?:(?:ticker|symbol)\s*:?\s*)?(?:use|using|with)\s+(?:this\s+(?:image|picture)|the\s+(?:image|picture)\s+below)\b(?:\s+(?:as|for)\s+(?:(?:a|the|my|our|your)\s+)?(?:token\s+)?logo\b)?(?:[.!]?\s+add your token logo\b[.!]?)?/gi;
 
 function removeQuotedContent(text: string) {
   return text

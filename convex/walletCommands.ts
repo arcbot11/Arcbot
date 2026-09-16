@@ -236,9 +236,9 @@ function textOutsideQuotedContent(text: string) {
 /** An unqualified final spend in a launch refers to that launch, not another asset. */
 export function trailingLaunchBuy(text: string) {
   const operative = textOutsideQuotedContent(text);
-  const match = /\b(?:and\s+)?(?:please\s+)?(?:buy(?:\s*back)?|purchase)\s+(?:\$([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)(?:\s+USD)?|([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)\s+ETH)(?:\s+worth)?(?:\s+please)?[\s.!?,;]*(?:@TheArgosBot[\s.!?,;]*)?$/i.exec(operative);
+  const match = /\b(?:and\s+)?(?:please\s+)?(?:buy(?:\s*back)?|purchase)\s+(?:\$([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)(?:\s+USDC?)?|([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)\s+ETH|([0-9][0-9,]*(?:\.[0-9]+)?|\.[0-9]+)\s+USDC)(?:\s+worth)?(?:\s+of\s+(?:it|this\s+token|the\s+new\s+token))?(?:\s+please)?[\s.!?,;]*(?:@TheArgosBot[\s.!?,;]*)?$/i.exec(operative);
   if (!match || /\b(?:dev|developer|initial)\s*$/i.test(operative.slice(0, match.index))) return undefined;
-  return { index: match.index, amount: cleanAmount(match[1] || match[2]), unit: match[1] ? "usd" as const : "eth" as const };
+  return { index: match.index, amount: cleanAmount(match[1] || match[2] || match[3]), unit: match[2] ? "eth" as const : "usd" as const };
 }
 
 export function launchFeeOptionsFromText(text: string) {
@@ -395,10 +395,10 @@ export function extractGroundedLaunchName(text: string) {
   // consume only the first four letters of `named`, leaving the trailing `d`
   // attached to the actual value (for example, `d Tesladog`).
   const labeled = text.match(/\b(?:(?:full|token)\s+name|name)\b\s*(?:is|=|:)?\s+([^,;|/]{1,48}?)(?=\s*(?:[.,;|/]|(?:and\s+the\s+)?(?:with\s+)?(?:ticker|symbol|pair)\b|assign\s+fees\s+to\b|holder\s+fee\s+sharing\b|share\s+with\s+holders\b|$))/i)?.[1];
-  const named = text.match(/\b(?:called|named|call\s+it)\s+([^,;|/]{1,48}?)(?=\s*(?:[,;|/]|(?:with\s+)?(?:ticker|symbol)\b|using\b|dev\s*buy\b|website\b|site\b|description\b|desc\b|assign\s+fees\s+to\b|holder\s+fee\s+sharing\b|share\s+with\s+holders\b|$))/i)?.[1];
+  const named = text.match(/\b(?:called|named|call\s+it)\s+([^,;|/]{1,48}?)(?=\s*(?:[,;|/]|(?:with\s+(?:a\s+)?)?(?:ticker|symbol)\b|using\b|dev\s*buy\b|website\b|site\b|description\b|desc\b|assign\s+fees\s+to\b|holder\s+fee\s+sharing\b|share\s+with\s+holders\b|$))/i)?.[1];
   // A ticker immediately after launch syntax is also the name when no name
   // was supplied. Anchor to the launch clause, never a pair or social field.
-  const tickerOnlyPrefix = text.match(/\b(?:launch|create|deploy|make)\s+(?:(?:me|my)\s+)?(?:(?:a|the)\s+)?(?:new\s+)?(?:(?:token|coin)\b[\s,:]*)?(?:with\s+)?(?:ticker|symbol)\b\s*(?:(?:should|will)\s+be\b|is\b|=|:)?\s*/i);
+  const tickerOnlyPrefix = text.match(/\b(?:launch|create|deploy|make)\s+(?:(?:me|my)\s+)?(?:(?:a|the)\s+)?(?:new\s+)?(?:(?:token|coin)\b[\s,:]*)?(?:with\s+(?:a\s+)?)?(?:ticker|symbol)\b\s*(?:(?:should|will)\s+be\b|is\b|=|:)?\s*/i);
   if (tickerOnlyPrefix && !quoted && !labeled && !named) {
     const rest = text.slice(tickerOnlyPrefix.index! + tickerOnlyPrefix[0].length);
     const value = rest.match(tokenPattern(/^["'\u2018\u2019\u201c\u201d]?\s*\$?([a-zA-Z0-9]{1,16})(?=["'\u2018\u2019\u201c\u201d\s,;.!?]|$)/))?.[1];
@@ -407,7 +407,7 @@ export function extractGroundedLaunchName(text: string) {
   }
   const cashtagOnly = text.match(tokenPattern(/\b(?:launch|create|deploy)\s+(?:(?:me|my)\s+)?(?:(?:a|the)\s+)?(?:new\s+)?(?:(?:token|coin)\b[\s,:]*)?\$([a-zA-Z][a-zA-Z0-9]{0,15})\b/i))?.[1];
   if (cashtagOnly && !quoted && !labeled && !named && !/\b(?:ticker|symbol)\b/i.test(text)) return cleanSymbol(cashtagOnly);
-  const prefixed = text.match(tokenPattern(/\b(?:launch|create|deploy)\s+(?:(?:me|my)\s+)?(?:a\s+)?(?:new\s+)?(?:(?:token|coin)\s*:?)?\s*([^,;|]{1,48}?)(?=\s+\$[A-Z][A-Z0-9]{0,11}\b|\s+(?:with\s+)?(?:ticker|symbol)\b|\s+(?:and\s+)?paired?\s+(?:(?:it\s+)?with|against)\b|\s+(?:and\s+)?pair\s+(?:it\s+)?with\b|\s+with\s+\$?[A-Z][A-Z0-9]{0,11}\s+as\s+(?:the\s+)?(?:ticker|symbol)\b|\s+assign\s+fees\s+to\b|\s+holder\s+fee\s+sharing\b|\s+share\s+with\s+holders\b|\s*\(\s*\$?[A-Z][A-Z0-9]{0,11}\s*\)|\s*[,;|]|$)/i))?.[1];
+  const prefixed = text.match(tokenPattern(/\b(?:launch|create|deploy)\s+(?:(?:me|my)\s+)?(?:a\s+)?(?:new\s+)?(?:(?:token|coin)\s*:?)?\s*([^,;|]{1,48}?)(?=\s+\$[A-Z][A-Z0-9]{0,11}\b|\s+(?:with\s+(?:a\s+)?)?(?:ticker|symbol)\b|\s+(?:and\s+)?paired?\s+(?:(?:it\s+)?with|against)\b|\s+(?:and\s+)?pair\s+(?:it\s+)?with\b|\s+with\s+\$?[A-Z][A-Z0-9]{0,11}\s+as\s+(?:the\s+)?(?:ticker|symbol)\b|\s+assign\s+fees\s+to\b|\s+holder\s+fee\s+sharing\b|\s+share\s+with\s+holders\b|\s*\(\s*\$?[A-Z][A-Z0-9]{0,11}\s*\)|\s*[,;|]|$)/i))?.[1];
   // A trailing bracketed ticker is a separate field, not part of an unquoted
   // name. Preserve explicitly quoted names, including their parentheses.
   const nameValue = quoted || (labeled || named || prefixed || "")

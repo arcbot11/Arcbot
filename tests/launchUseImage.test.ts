@@ -4,7 +4,8 @@ it.each(["Use the image on below", "use this logo on the token", "use the pictur
  const text = `@TheArgosBot launch HoodFi Ticker: $HDFI ${instruction}`;
  expect(requestedOperations(text)).toEqual(["launch"]);
  expect(straightforwardCommandOperation(text)).toBe("launch");
- expect(groundedCanonicalCommand(text)).toMatchObject({ kind: "launch", name: "HoodFi", symbol: "HDFI" });
+ // Launch metadata goes through the dedicated extractor, never the trade fallback.
+ expect(groundedCanonicalCommand(text)).toBeNull();
 });
 it("requires a trade verb rather than use", () => {
  expect(requestedOperations("use the image on below")).toEqual([]);

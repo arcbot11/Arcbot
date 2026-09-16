@@ -64,6 +64,8 @@ describe("referenced launch image source policy", () => {
 
 describe("direct launch image instruction", () => {
   it.each([
+    ["launch Odysseus ticker ODDY Use the image below", "launch Odysseus ticker ODDY"],
+    ["launch Odysseus ticker ODDY use the picture below", "launch Odysseus ticker ODDY"],
     ["use this image and launch Signal Bloom ticker BLOOM", "launch Signal Bloom ticker BLOOM"],
     ["launch Signal Bloom ticker BLOOM with this image", "launch Signal Bloom ticker BLOOM"],
     ["launch Signal Bloom ticker BLOOM, using this picture", "launch Signal Bloom ticker BLOOM,"],

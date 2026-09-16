@@ -4,7 +4,8 @@ export function disabledCreationRequest(text: string): boolean {
   return !LAUNCH_EXECUTION_ENABLED && creationRequest(text);
 }
 export function creationRequest(text: string): boolean {
-  const clean=text.replace(/"[^"\n]*"|“[^”\n]*”/g," ").replace(/\$[\w]+|0x[a-fA-F0-9]{40}/g,"TOKEN").replace(/^\s*(?:@\w+\s+)*/,"").trim();
+  const clean=text.replace(/"[^"\n]*"|“[^”\n]*”/g," ").replace(/\$[\w]+|0x[a-fA-F0-9]{40}/g,"TOKEN").trim()
+    .replace(/^(?:(?:@\w+|hey|hi|hello|yo|please)\b[\s,!:.]*)+/i,"").trim();
   return /^(?:launch(?:es|ing)?|deploy(?:ment|ing)?)\b/i.test(clean)
     || /\b(?:please|and|then|also|can you|could you|would you|help me|i want to|i would like to)\s+(?:please\s+)?(?:launch|deploy)\b/i.test(clean)
     || /\b(?:how|help|explain|about|support|supported|can i|can you|do you|what|instructions|guide)\b[^.!?\n]*\b(?:launch(?:es|ing)?|deploy(?:ment|ing)?)\b/i.test(clean)

@@ -6,6 +6,21 @@ import {walletExtractionSchema,walletIntentSchema} from "../convex/xWalletAiSche
 import {launchInputFromXCommand} from "../lib/launches/x-input";
 import {X_INTENT_CLASSIFIER_PROMPT} from "../lib/x-intent-prompt";
 beforeEach(()=>{m.llm.mockReset();});
+it("handles the exact ODDY attachment instruction without an initial buy",async()=>{
+ const text="Hey @TheArgosBot launch a token called Odysseus with a ticker of $ODDY Use the image below";
+ m.llm.mockResolvedValueOnce(JSON.stringify({kind:"command",operation:"launch"})).mockResolvedValueOnce(JSON.stringify({kind:"launch",name:"Odysseus",symbol:"ODDY"}));
+ const intent=await parseXWalletIntent(text,true);
+ expect(intent).toMatchObject({kind:"command",command:{kind:"launch",name:"Odysseus",symbol:"ODDY"}});
+ if(intent.kind!=="command"||intent.command.kind!=="launch")throw Error();
+ expect(launchInputFromXCommand(intent.command,text,"https://pbs.twimg.com/media/example.jpg")).toMatchObject({name:"Odysseus",symbol:"ODDY",devBuyUSDC:"0",pairToken:"USDC"});
+});
+it.each(["$20 usdc of it","20 USDC of it","$20 of it"])("recognizes a greeting and the new token's initial buy: %s",async amount=>{
+ const text=`Hey @TheArgosBot launch a token called Odysseus with a ticker of $ODDY buy ${amount}`;
+ m.llm.mockResolvedValueOnce(JSON.stringify({kind:"command",operation:"launch"})).mockResolvedValueOnce(JSON.stringify({kind:"launch",name:"Odysseus",symbol:"ODDY",devBuy:{amount:"20",unit:"usd"}}));
+ expect(requestedOperations(text)).toEqual(["launch"]);
+ const intent=await parseXWalletIntent(text,true);
+ expect(intent).toMatchObject({kind:"command",command:{kind:"launch",name:"Odysseus",symbol:"ODDY",devBuy:{amount:"20",unit:"usd"}}});
+});
 it.each(["USDC","ARGUS","ARCASH"])("routes a complete %s X launch through the shared input",async pair=>{
  const text=`@TheArgosBot launch Example Token ticker EXAMPLE. Dev buy 25 USDC. Allocation: half creator, half dividends.${pair==="USDC"?"":` Pair with ${pair}.`}`;
  m.llm.mockResolvedValueOnce(JSON.stringify({kind:"command",operation:"launch"})).mockResolvedValueOnce(JSON.stringify({kind:"launch",name:"Example Token",symbol:"EXAMPLE",devBuy:{amount:"25",unit:"usd"},pairToken:pair}));
