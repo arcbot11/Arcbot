@@ -11,7 +11,7 @@ import { prepareLaunch } from "./prepare";
 import { verifyLaunchImage } from "./image-preflight";
 import { assertLaunchEnabled, assertLaunchTransaction, assertLaunchAuthorization, launchCall } from "./execution-checks";
 import { launchTransactionId, type LaunchRun, type LaunchStepTerms } from "./execution-types";
-import { LaunchError, retryableLaunchError, LAUNCH_EXECUTION_ENABLED, launchPreparationEnabled } from "./policy";
+import { LaunchError, retryableLaunchError, LAUNCH_EXECUTION_ENABLED, launchPreparationEnabled, launchUserMessage } from "./policy";
 import { assertLaunchGasBudget } from "./gas-budget";
 import { tradeSimulationFailure } from "../arc/trade-errors";
 
@@ -28,7 +28,7 @@ export async function advanceLaunch(owner:string,address:string,requestId:string
     if(error instanceof LaunchError && !retryableLaunchError(error)){const backend=launchBackend(owner,address,requestId),run=await backend.read();
       if(run?.status==="running"){const id=run.steps.at(-1),tx=id?await repository().read<Transaction|null>({id}):null;
         if(tx?.status==="prepared"&&tx.recoveryVersion===1&&tx.signingStartedAt===undefined&&!tx.raw&&!tx.hash)await repository().command("cancel_unsigned_trade",{id,owner});
-        return backend.mutate<LaunchRun>("stopUnstarted",{note:error.message});}
+        return backend.mutate<LaunchRun>("stopUnstarted",{note:launchUserMessage(error)});}
     }
     throw error;
   }

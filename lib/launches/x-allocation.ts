@@ -2,7 +2,7 @@ import { parseAllocation, type Allocation } from "./allocation";
 import { LaunchError } from "./policy";
 
 /** Locate an allocation in the original post, never in model-generated text. */
-export function launchAllocationFromXText(text: string): Allocation {
+export function launchAllocationFromXText(text: string, onSpan?: (start:number,end:number)=>void): Allocation {
   if (text.length > 10_000) throw new LaunchError("ALLOCATION", "Launch command is too long.");
   // Preserve offsets; quoted names/descriptions and URLs cannot assign funds.
   const source = text.replace(/"[^"\n]*"|“[^”\n]*”|'[^'\n]*'|‘[^’\n]*’|https?:\/\/\S+/g, v => " ".repeat(v.length))
@@ -17,6 +17,7 @@ export function launchAllocationFromXText(text: string): Allocation {
   const natural = /\b(?:(?:all|everything|half|quarter|one\s+half|one\s+quarter|\d+(?:\.\d+)?\s*%)\s+(?:to\s+)?(?:creator|me|holders?|dividends?|burn|buyback|liquidity)\b|(?:creator|holders?|dividends?|burn|liquidity)\s+\d+(?:\.\d+)?\s*%|(?:split|spread|divide)\s+(?:the\s+)?(?:fees?|rewards?|evenly|equally)\b)/i.exec(source);
   const start = markers[0] ? markers[0].index! + markers[0][0].length : natural?.index;
   let allocationText = "";
+  let spanEnd: number | undefined;
   if (start !== undefined) {
     const remainder = source.slice(start);
     const end = remainder.search(/\b(?:description|desc|website|site|twitter|telegram|ticker|symbol|name|image|logo|pair(?:ed|ing)?|quote\s+(?:asset|token)|dev(?:eloper)?\s*(?:buy|purchase)|initial\s+buy)\b|\bx\s+@|\b(?:buy|purchase)\s+\$|@TheArgosBot\b/i);
@@ -25,11 +26,19 @@ export function launchAllocationFromXText(text: string): Allocation {
     if (end >= 0 && /\b(?:creator|holders?|dividends?|burn|buyback|liquidity|remainder|half|quarter|percent|evenly|equally)\b|\d\s*%/i.test(remainder.slice(end)))
       throw new LaunchError("ALLOCATION", "Keep the complete fee allocation together, before or after the other launch settings.");
     allocationText = (end < 0 ? remainder : remainder.slice(0, end)).replace(/[\s;,|]+$/, "").trim();
+    spanEnd=end<0?source.length:start+end;
     if (!allocationText) throw new LaunchError("ALLOCATION", "Specify the fee allocation.");
   } else if (/\b(?:assign\s+fees|holder\s+fee\s+sharing|share\s+with\s+holders|buyback\s+and\s+burn|fees?\s+to|rewards?\s+to|split|spread)\b|(?:%|\bpercent\b)[^;\n]{0,40}\b(?:creator|holders?|burn|dividends?|liquidity)\b/i.test(source)) {
     throw new LaunchError("ALLOCATION", "Specify the allocation: creator, buyback and burn, dividends, or liquidity.");
   }
   const { remainderToCreatorBps, ...allocation } = parseAllocation(allocationText);
+  if(start!==undefined&&spanEnd!==undefined)onSpan?.(markers[0]?.index??start,spanEnd);
   void remainderToCreatorBps;
   return allocation;
+}
+/** Remove only an allocation that passed the same parser used for execution. */
+export function withoutLaunchAllocation(text:string):string {
+  let result=text;
+  launchAllocationFromXText(text,(start,end)=>{result=text.slice(0,start)+" ".repeat(end-start)+text.slice(end);});
+  return result;
 }

@@ -23,7 +23,7 @@ export const accept=mutation({args:{...args,revision:v.number(),sourceRequestId:
   const draft=await ctx.db.query("launchDrafts").withIndex("by_owner_request",q=>q.eq("owner",a.owner).eq("requestId",a.requestId)).unique();
   if(!draft||draft.address!==identity.address||draft.status!=="prepared"||draft.revision!==a.revision||(draft.preparingUntil??0)>Date.now()||draft.expiresAt<=Date.now()||!draft.previewJson)rejectAcceptance("Launch review changed. Prepare again.");
   const preview=JSON.parse(draft.previewJson),input=JSON.parse(draft.inputJson);
-  try{assertLaunchPortal(preview.portal);}catch{rejectAcceptance("Prepare a new draft for the current launch Portal.");}
+  try{assertLaunchPortal(preview.portal);}catch{rejectAcceptance("Launch settings have changed. Prepare your token again.");}
   if(preview.expiresAt<=Date.now()||!preview.image?.sha256||preview.image.imageURI!==input.imageURI||!preview.quote||preview.fingerprint!==draft.fingerprint)rejectAcceptance("Launch review expired or lacks verified evidence.");
   if(await ctx.db.query("launchRuns").withIndex("by_address_status",q=>q.eq("address",identity.address).eq("status","running")).first())rejectAcceptance("A launch is already processing for this wallet.");
   let authorizationExpiresAt=Date.now()+LAUNCH_AUTHORIZATION_MS;

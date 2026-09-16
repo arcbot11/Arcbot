@@ -1,22 +1,22 @@
 import { SiteFooter, SiteHeader } from "@/components/SiteChrome";
 import { pageMetadata } from "@/lib/site-metadata";
-import { LAUNCH_EXECUTION_ENABLED } from "@/lib/launches/policy";
+import Link from "next/link";
 
 export const metadata = {
-  ...pageMetadata("/how-to-launch", "Token launch parameters and examples for Argos Bot."),
+  ...pageMetadata("/how-to-launch", "Create your token on Arc. Choose a name, logo and reward split, with simple launch examples."),
 };
 
 const parameters = [
-  ["Name and ticker", "Choose a name of up to 32 UTF-8 bytes and a ticker of up to 10 letters or numbers. Tickers are uppercase. USDC is reserved.", "Name: Example Token · Ticker: EXAMPLE"],
-  ["Image", "Provide a token image. Use a direct X photo URL or a pinned IPFS image URI. Preparation verifies that the image loads.", "Use a square logo that remains clear at small sizes."],
-  ["Description and links", "Description: up to 280 characters. Website, X and Telegram links are optional. Use HTTPS links, each no longer than 100 characters.", "Description: A community token on Arc."],
-  ["Buy and sell tax", "Both are fixed at 1%. The pool fee is separate. Tax rates and allocation are permanent once launched.", "Buy tax: 1% · Sell tax: 1%"],
-  ["Reward allocation", "Split 100% between creator, buyback and burn, dividends, and liquidity. Any unspecified remainder goes to the creator. With no allocation specified, the creator receives 100% of the allocatable share.", "50% creator, 25% dividends, 25% liquidity"],
-  ["Dividend minimum", "When dividends are enabled, the minimum holding is fixed at 100,000 launch tokens. This does not promise a fixed dividend amount or return.", "100,000 EXAMPLE minimum holding"],
-  ["Developer buy", "Optional. Enter a USDC budget, or a USD reference value for an ARGUS or ARCASH pair. Preparation shows the exact paired-token amount and freezes it for confirmation. Fund that amount in the chosen asset. Zero means no developer buy. Gas is additional in Arc USDC.", "USDC pair: 25 USDC · Other pair: $25 worth of ARGUS or ARCASH · No dev buy: 0"],
-  ["Supply and initial market", "The prepared launch uses 1 billion tokens, a $2,500 starting fully diluted valuation, and a $45,000 bonding threshold. These are configuration values, not guaranteed market prices or returns.", "Supply: 1,000,000,000 · Pair: Arc USDC"],
-  ["Paired asset", "USDC is the default. ARGUS and ARCASH are also supported while approved by the Portal. Fund the creator buy with the chosen asset. Rewards stay in that paired currency; preparation stops if the registry changes it.", "Pair with ARGUS · Pair with ARCASH"],
-  ["Creator wallet", "The wallet used to submit the launch is the creator. Check it before confirming. Portal #7 credits creator rewards for claiming; for our USDC pairs, the quote reward is USDC, and launch-token rewards may also accrue.", "Use the X-linked or Telegram-linked wallet you intend to receive creator rewards."],
+  ["Name and ticker", "Choose a short name and a ticker of up to 10 letters or numbers. Tickers appear in uppercase. USDC cannot be used as a ticker.", "Name: Example Token · Ticker: EXAMPLE"],
+  ["Image", "Attach your logo to the launch post, or include a direct X image link or an IPFS image link. We check that the image loads.", "Use a square logo that remains clear at small sizes."],
+  ["Description and links", "Add a description of up to 280 characters. You can also include your website, X profile and Telegram link. These are optional; use full links starting with https://.", "Description: A community token on Arc."],
+  ["Buy and sell tax", "Every launch has a 1% buy tax and a 1% sell tax. Trading-pool fees are separate. You cannot change the tax rates or reward split after launch.", "Buy tax: 1% · Sell tax: 1%"],
+  ["Reward allocation", "Choose where rewards go: you as the creator, buying back and burning tokens, holder dividends, or liquidity. With no split, all of your allocatable rewards go to you. Any percentage left unspecified also goes to you.", "50% creator, 25% dividends, 25% liquidity"],
+  ["Dividend minimum", "If you include dividends, holders need at least 100,000 of your tokens to qualify. Dividend amounts depend on the rewards available.", "100,000 EXAMPLE minimum holding"],
+  ["Developer buy", "Buy some of your token as part of the launch, or enter zero to skip it. Enter a USDC amount, or a dollar value if paired with ARGUS or ARCASH. Hold enough of the chosen asset in your wallet. Network fees are paid separately in Arc USDC.", "USDC pair: 25 USDC · Other pair: $25 worth of ARGUS or ARCASH · No dev buy: 0"],
+  ["Supply and initial market", "Each launch creates 1 billion tokens. The starting value of the full supply is set at $2,500, with a $45,000 graduation target. Market value changes as people trade.", "Supply: 1,000,000,000 · Pair: Arc USDC"],
+  ["Paired asset", "Your token trades against USDC by default. You can instead choose ARGUS or ARCASH. This is what people spend to buy your token and receive when selling it. Hold this asset if you want an initial buy.", "Pair with ARGUS · Pair with ARCASH"],
+  ["Creator wallet", "The wallet you launch from receives your creator rewards. Check that you are using the right wallet. Claimable rewards can include the paired asset and your own token.", "Use the X account linked to the wallet you want to receive creator rewards."],
 ];
 const allocations = [
   ["All to creator", "Creator 100%"],
@@ -28,16 +28,18 @@ const allocations = [
 export default function HowToLaunch(){
   return <main><SiteHeader/><section className="arc-container arc-guide">
     <p className="arc-kicker">Launch guide</p><h1>How to Launch</h1>
-    <p className="arc-intro">Prepare your token on Arc with Argus Portal #7. Review the token, allocation and creator wallet before submitting.</p>
-    {!LAUNCH_EXECUTION_ENABLED && <p className="otc-notice">Launch execution is currently disabled. Use this guide to plan your token.</p>}
+    <p className="arc-intro">Create your token on Arc. Choose a name, add your logo and decide how to share rewards.</p>
+    <div className="arc-actions"><Link className="arc-text-link" href="/tokens">Explore tokens</Link></div>
+    <h2>Launch on X</h2><p>Tag @TheArgosBot with your token details and attach your logo. A complete launch command authorizes the launch from your X-linked wallet. There is no separate confirmation reply to approve.</p>
+    <p><strong>Example:</strong> @TheArgosBot launch Example Token ticker EXAMPLE. Description: A community token on Arc. Dev buy 25 USDC. Allocation: half creator, half dividends.</p>
+    <p>Have the funds in your wallet before posting. Argos Bot replies with your token link after confirmation.</p>
     <div className="arc-command-list">{parameters.map(([name,description,example],i)=><article key={name}><span>{String(i+1).padStart(2,"0")}</span><h2>{name}</h2><div><p>{description}</p><p><strong>Example:</strong> {example}</p></div></article>)}</div>
     <h2>Allocation examples</h2>
-    <p>Allocation divides collected revenue after Argus’s share. It is not an extra percentage added to the trade tax. Review the resolved percentages before proceeding.</p>
+    <p>Your split applies after Argus’s share. It divides rewards; it does not add another tax to trades. Use percentages or phrases such as “half” and “spread evenly.”</p>
     <div className="arc-command-list">{allocations.map(([input,result],i)=><article key={input}><span>{i+1}</span><h2>{input}</h2><div><p>{result}</p></div></article>)}</div>
     <h2>A complete example</h2>
     <p>Name: Example Token. Ticker: EXAMPLE. Image: your token logo. Description: A community token on Arc. Dev buy: 25 USDC. Allocation: half creator, half dividends.</p>
     <p>This resolves to 1% buy tax, 1% sell tax, 50% creator, 50% dividends, a 100,000-token dividend minimum, and a 25 USDC developer-buy budget plus gas.</p>
-    <h2>What happens during preparation</h2>
-    <ol><li>Choose the creator wallet and enter the token details.</li><li>Review the exact allocation and USDC budget.</li><li>Check whether reward configuration or USDC approval is required. A launch with unmet prerequisites is not shown as successfully simulated.</li><li>Simulate against Portal #7 and refresh expired estimates. RPC failure is not a successful check.</li><li>When execution is enabled, verify the mined launch, creator and pool before reporting completion. A submitted transaction alone is not confirmation.</li></ol>
+    <h2>After your launch</h2><p>Open your token link to see it on Argus Pad. Your token also appears on our Tokens page. Claim creator rewards from your wallet when available.</p>
   </section><SiteFooter/></main>;
 }

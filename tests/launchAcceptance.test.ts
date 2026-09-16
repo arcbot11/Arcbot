@@ -18,7 +18,7 @@ beforeEach(()=>vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED","true"));afterEach(
 it.each([undefined, null, PORTAL6, 7])("rejects stale or missing Portal evidence before reserving a launch: %s",async portal=>{
   const f=fixture(),draft=f.tables.launchDrafts[0],preview=JSON.parse(String(draft.previewJson));
   preview.portal=portal;draft.previewJson=JSON.stringify(preview);
-  await expect(f.call(execution.accept)).rejects.toThrow("current launch Portal");
+  await expect(f.call(execution.accept)).rejects.toThrow("Launch settings have changed");
   expect(f.tables.launchRuns).toHaveLength(0);
   expect(f.ctx.scheduler.runAfter).not.toHaveBeenCalled();
   expect(draft.status).toBe("prepared");

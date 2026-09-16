@@ -1,7 +1,9 @@
 import { LAUNCH_EXECUTION_ENABLED } from "./launches/policy";
 /** Match creation requests, not token symbols that happen to use these words. */
 export function disabledCreationRequest(text: string): boolean {
-  if(LAUNCH_EXECUTION_ENABLED)return false;
+  return !LAUNCH_EXECUTION_ENABLED && creationRequest(text);
+}
+export function creationRequest(text: string): boolean {
   const clean=text.replace(/"[^"\n]*"|“[^”\n]*”/g," ").replace(/\$[\w]+|0x[a-fA-F0-9]{40}/g,"TOKEN").replace(/^\s*(?:@\w+\s+)*/,"").trim();
   return /^(?:launch(?:es|ing)?|deploy(?:ment|ing)?)\b/i.test(clean)
     || /\b(?:please|and|then|also|can you|could you|would you|help me|i want to|i would like to)\s+(?:please\s+)?(?:launch|deploy)\b/i.test(clean)

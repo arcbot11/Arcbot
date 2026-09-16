@@ -1,5 +1,5 @@
 import {runSocialLaunch} from "@/lib/launches/social-service";
-import {LaunchError,retryableLaunchError} from "@/lib/launches/policy";
+import {LaunchError,retryableLaunchError,launchUserMessage} from "@/lib/launches/policy";
 import {prepareBaseWithdrawal} from "@/lib/base/wallet-actions";
 import {runCreatorClaim} from "@/lib/launches/fee-service";
 import {FeeClaimError} from "@/lib/launches/fees";
@@ -81,7 +81,7 @@ export async function POST(request:NextRequest){
       catch(error){
         if(error instanceof LaunchError)return json(retryableLaunchError(error)
           ?{ok:false,pending:true,processing:true,message:"Launch processing."}
-          :{ok:false,message:error.message});
+          :{ok:false,message:launchUserMessage(error)});
         throw error;
       }
     }

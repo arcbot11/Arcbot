@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+vi.mock("../lib/launches/policy",async original=>({...await original<typeof import("../lib/launches/policy")>(),LAUNCH_EXECUTION_ENABLED:false}));
 import { disabledCreationKind, disabledCreationRequest, suppressCreationReply } from "../lib/disabled-creation";
 import { requestedOperations, parseXWalletIntent } from "../convex/xWalletIntent";
 vi.mock("../convex/llm",()=>({openRouter:vi.fn(async()=>{throw new Error("offline test");}),isStructuredOutputAvailabilityError:()=>false}));

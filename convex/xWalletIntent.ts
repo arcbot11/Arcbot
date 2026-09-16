@@ -1,12 +1,12 @@
 import { LAUNCH_EXECUTION_ENABLED, LaunchError } from "../lib/launches/policy";
 import { launchPairFromXText } from "../lib/launches/x-pair";
-import { launchAllocationFromXText } from "../lib/launches/x-allocation";
+import { launchAllocationFromXText, withoutLaunchAllocation } from "../lib/launches/x-allocation";
 import { X_INTENT_CLASSIFIER_PROMPT, currentXExtractorPrompt } from "../lib/x-intent-prompt";
 import { retiredSocialRequest, retiredSocialKind } from "../lib/retired-social-commands";
 import {normalizeXCommandLanguage,completeXCommand} from "../lib/x-command-language";
 import {hasMalformedNumericGrouping} from "../lib/command-amount-language";
 import {explicitArcSwap} from "../lib/arc-swap-command";
-import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
+import { creationRequest, disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 import { tokenPattern } from "../lib/token-pattern";
 import { isStructuredOutputAvailabilityError, openRouter } from "./llm";
 import { trailingLaunchBuy, ethDenominatedTokenAmount, extractGroundedLaunchName, extractGroundedPairToken, identifierAppearsAsKnownLaunchPair, identifierAppearsAsKnownRwa, knownLaunchPairTicker, knownRwaTicker, normalizeLaunchFeeOptions, parseTopFiveBuyCommand, parseWalletCommand, sharedLaunchNameAndTicker, tickerFromLaunchName, validateStructuredWalletCommand, type WalletCommand } from "./walletCommands";
@@ -65,7 +65,7 @@ export function walletHelpMessage(topic: WalletHelpTopic) {
     send: "Send: amount, token, recipient. Use a full wallet address. Review all three before submitting.",
     buy_sell: "Buy: USDC amount and token. Sell: token amount and token. Swap: amount, input token, output token. Arc gas is paid in USDC.",
     burn: "Burn: amount and token. Burns are permanent. A combined buy and burn requires both actions in the command.",
-    launch: "",
+    launch: "Tag @TheArgosBot with a name, ticker and logo. Example: Launch Example Token ticker EXAMPLE, dev buy 25 USDC, allocation all to creator. A complete command starts the launch. Guide: https://www.argosbot.io/how-to-launch",
     pairs: "",
     fees: "",
   };
@@ -351,7 +351,7 @@ const extractionInstructions: Record<WalletOperation, string> = {
   claim_fees: `Return {"kind":"claim_fees"} with optional "token" only when the user names a specific Argus launch ticker or contract. Direct requests using claim or collect qualify when they name fees or ask for everything. "Claim my fees", "claim my fees for my launch", "claim fees from my launches", "Claim everything available for me", "Claim everything I can claim", and "Collect everything" claim all supported native-pair fees and have no token. "Claim the ARCBOT launch fees" and "collect creator fees for ARCBOT" both use token ARCBOT. Never treat words such as my, the, everything, all, available, fees, creator, launch, launches, token, tokens, ETH, revenue, or rewards as a token.`,
   reassign_fees: `Return {"kind":"reassign_fees","token":"ARCBOT","recipient":"@user"} only for the complete exact forms "Reassign $TICKER fees to RECIPIENT" or "Reassign fees for $TICKER to RECIPIENT". A complete contract may replace TICKER. RECIPIENT must be an X handle, a complete wallet address, or the literal word "holders". Never accept synonyms, missing fields, extra instructions, or an inferred recipient.`,
   upgrade_fees: `Return {"kind":"upgrade_fees","token":"ARCBOT"} when a direct request contains "Upgrade TICKER" or "Upgrade CONTRACT". The ticker may have a leading $, which must be removed. The phrase is case-insensitive and may have conversational text before or after. Take only the identifier immediately following Upgrade; never infer another ticker from elsewhere in the post. Require one complete contract or one ticker, not multiple choices. Quoted examples, negation, hypotheticals, and help questions are not commands.`,
-  launch: `Return {"kind":"launch","launchMode":"argus","name":"token name","symbol":"TICKER"} with explicitly supplied description, website, twitter, telegram, and optional devBuy {"amount":"decimal","unit":"usd"}. Arc launches default to USDC. Pairing may be USDC, ARGUS, or ARCASH only. Recognize pair with, paired with, pair against, paired to, pairing, quote asset, and with TOKEN as the pair. Pair selection is verified from the original post; never infer it from the new token ticker or description. Other pairing choices receive Paired asset not supported. Arc launches use 1% buy tax, 1% sell tax, and a fixed 100,000-token dividend minimum. Name: at most 32 UTF-8 bytes. Ticker: at most 10 uppercase alphanumeric characters; USDC is reserved. Extract only metadata stated in the post; never invent links or an image. Photos are supplied separately by X retrieval. Fee allocation wording is parsed deterministically from the original post into creator, buyback-and-burn, dividends, and liquidity. Do not return feeRecipient, holderFeeSharing, selfBurnBps, allocation, or invented percentages. Users can state "allocation: half creator, half holders", "fee split: spread evenly between creator, burn, holders and liquidity", or "allocation: 20% burn, remainder to creator". Missing allocation defaults to creator. Preserve the allocation clause outside token names and descriptions. This extractor is preparation-only; public launch execution stays disabled.`,
+  launch: `Return {"kind":"launch","launchMode":"argus","name":"token name","symbol":"TICKER"} with explicitly supplied description, website, twitter, telegram, and optional devBuy {"amount":"decimal","unit":"usd"}. Arc launches default to USDC. Pairing may be USDC, ARGUS, or ARCASH only. Recognize pair with, paired with, pair against, paired to, pairing, quote asset, and with TOKEN as the pair. Pair selection is verified from the original post; never infer it from the new token ticker or description. Other pairing choices receive Paired asset not supported. Arc launches use 1% buy tax, 1% sell tax, and a fixed 100,000-token dividend minimum. Name: at most 32 UTF-8 bytes. Ticker: at most 10 uppercase alphanumeric characters; USDC is reserved. Extract only metadata stated in the post; never invent links or an image. Photos are supplied separately by X retrieval. Fee allocation wording is parsed deterministically from the original post into creator, buyback-and-burn, dividends, and liquidity. Do not return feeRecipient, holderFeeSharing, selfBurnBps, allocation, or invented percentages. Users can state "allocation: half creator, half holders", "fee split: spread evenly between creator, burn, holders and liquidity", or "allocation: 20% burn, remainder to creator". Missing allocation defaults to creator. Preserve the allocation clause outside token names and descriptions. A complete, explicit launch command authorizes execution; do not interpret questions or examples as commands.`,
 };
 
 const extractionReliabilityGuidance: Partial<Record<WalletOperation, string>> = {
@@ -528,6 +528,7 @@ export function straightforwardCommandOperation(text: string): WalletOperation |
     && !tokenPattern(/\b(?:token|coin|ticker|symbol)\b|\$[a-zA-Z][a-zA-Z0-9]{0,11}\b/i).test(unquoted)) return "create_wallet";
   if (asksWhatIsInMyWallet(text)) return "show_balance";
   if (requestedOperations(text).length > 1) return null;
+  if (requestedOperations(text)[0] === "launch") return "launch";
   if (explicitSelfWalletRequest(text)) return "show_wallet";
   let command = groundedCanonicalCommand(text);
   // Long posts can contain one self-contained launch instruction surrounded by
@@ -807,8 +808,10 @@ function isDirectCapabilitiesRequest(text: string) {
 
 export function requestedOperations(text: string): WalletOperation[] {
   if (asksWhatIsInMyWallet(text)) return ["show_balance"];
-  const unquotedText = withoutQuotedContent(text);
-  const hasLaunchDirective = disabledCreationRequest(unquotedText);
+  let operationSource=text;
+  if(creationRequest(text)){try{operationSource=withoutLaunchAllocation(text);}catch{/* Invalid allocations remain visible and are rejected by launch validation. */}}
+  const unquotedText = withoutQuotedContent(operationSource);
+  const hasLaunchDirective = creationRequest(unquotedText);
   const launchWorthAllocation = /\b(?:buy|purchase)\s+\$[0-9][0-9,.]*(?:\.\d+)?\s+(?:usd\s+)?worth\b(?!\s+of\b)/gi;
   const finalBuy = hasLaunchDirective ? trailingLaunchBuy(text) : undefined;
   const operationText = (finalBuy ? unquotedText.slice(0, finalBuy.index) : unquotedText)
@@ -826,7 +829,7 @@ export function requestedOperations(text: string): WalletOperation[] {
     const extras: WalletOperation[] = [];
     if (send) extras.push("send");
     if (burn) extras.push("burn");
-    if (disabledCreationRequest(operationText)) extras.push("launch");
+    if (creationRequest(operationText)) extras.push("launch");
     return extras.length ? ["swap_token_for_token", ...extras] : ["swap_token_for_token"];
   }
   if (buy && burn) return send ? ["buy_and_burn", "send"] : ["buy_and_burn"];
@@ -839,7 +842,7 @@ export function requestedOperations(text: string): WalletOperation[] {
     ["sell", /\b(?:sell|dump|cash\s+out|get\s+rid\s+of|unload|liquidate|trim|close\s+(?:my|the)|take[^.!?\n]{0,30}\bposition\s+off)\b/i],
     ["claim_fees", /\b(?:claim|collect|withdraw|get)\b[\s\S]{0,35}\b(?:fees?|revenue|rewards?)\b/i],
     ["upgrade_fees", parseFeeUpgradePhrase(text)?.kind === "upgrade_fees"],
-    ["launch", disabledCreationRequest(operationText)],
+    ["launch", creationRequest(operationText)],
   ];
   return patterns.filter(([, pattern]) => typeof pattern === "boolean" ? pattern : pattern.test(operationText))
     .map(([operation]) => operation).filter((operation, index, all) => all.indexOf(operation) === index);
@@ -1030,7 +1033,7 @@ export async function parseXWalletIntent(text: string, hasImage: boolean, diagno
   if (!hasPromptInjection(operativeText) && isGasCostQuestion(operativeText))
     return finish({ kind: "help", topic: "gas" }, "deterministic_guard");
   const unquotedOperative = withoutQuotedContent(operativeText);
-  if (/\b(?:buyback|buy\s+back)\b/i.test(unquotedOperative) && /\bburn\b/i.test(unquotedOperative)) {
+  if (!creationRequest(unquotedOperative) && /\b(?:buyback|buy\s+back)\b/i.test(unquotedOperative) && /\bburn\b/i.test(unquotedOperative)) {
     const target = unquotedOperative.match(tokenPattern(/\b(?:of|into)\s+\$?(0x[a-fA-F0-9]{40}|[a-zA-Z][a-zA-Z0-9]{0,31})\b/i))?.[1];
     if (!target || /^eth$/i.test(target)) return finish({ kind: "unknown_wallet" }, "deterministic_guard");
   }

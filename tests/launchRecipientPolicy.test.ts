@@ -1,4 +1,5 @@
 import { expect, it, vi } from "vitest";
+vi.mock("../lib/launches/policy",async original=>({...await original<typeof import("../lib/launches/policy")>(),LAUNCH_EXECUTION_ENABLED:false}));
 import { getFunctionName } from "convex/server";
 import { retryInteraction } from "../convex/xReplies";
 import { grokLaunchFeeRejection, GROK_EXTERNAL_LAUNCH_FEES } from "../lib/launch-recipient-policy";

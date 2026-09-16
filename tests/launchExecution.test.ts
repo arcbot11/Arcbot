@@ -61,7 +61,7 @@ it("safely closes an accepted run with no steps when preparation is paused",asyn
 it("stops a contract-rejected launch instead of retrying it until authorization expires",async()=>{
   m.prepare.mockRejectedValue(new LaunchError("SIMULATION_REVERTED","Launch simulation was rejected by the contract."));
   const result=await advanceLaunch(owner,address,requestId);
-  expect(result.status).toBe("blocked");expect(result.note).toContain("rejected by the contract");
+  expect(result.status).toBe("blocked");expect(result.note).toContain("launch check failed");
   expect(m.create).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
 });
 it.each(["Not enough funds for the amount and gas.","Gas exceeds the configured policy."])("stops if final transaction preparation fails permanently: %s",async message=>{

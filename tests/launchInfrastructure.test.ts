@@ -10,10 +10,10 @@ export const launchInput = { name: "Example Token", symbol: "EXAMPLE", imageURI:
   buyTaxBps: 100, sellTaxBps: 100, creatorBps: 10_000, burnBps: 0, dividendBps: 0, liquidityBps: 0 };
 const creator = "0x1111111111111111111111111111111111111111", salt = toHex(1n, { size: 32 });
 describe("launch input and execution boundary", () => {
-  it("is disabled by default, with no execution override", () => {
+  it("enables reviewed execution while requiring explicit preparation configuration", () => {
     expect(launchPreparationEnabled({})).toBe(false);
     expect(launchPreparationEnabled({ ARGUS_LAUNCH_PREPARATION_ENABLED: "true" })).toBe(true);
-    expect(LAUNCH_EXECUTION_ENABLED).toBe(false);
+    expect(LAUNCH_EXECUTION_ENABLED).toBe(true);
     expect(assertLaunchExecutionDisabled).toThrow("execution is disabled");
   });
   it.each([

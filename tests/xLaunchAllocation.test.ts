@@ -43,9 +43,9 @@ it("carries the grounded allocation into actual Portal 6 calldata with fixed tax
   expect(decoded.args?.[0]).toMatchObject({creatorBps:5000,dividendBps:5000,burnBps:0,liquidityBps:0,buyTaxBps:100,sellTaxBps:100,devBuyQuote:25_000_000n});
   expect(input.dividendMinimumTokens).toBe("100000");
 });
-it("does not enable public launch commands or execution", () => {
+it("uses the dedicated X launch extractor and enables reviewed execution", () => {
   expect(parseWalletCommand("@TheArgosBot launch Example ticker EX allocation: all creator").kind).toBe("unknown");
-  expect(LAUNCH_EXECUTION_ENABLED).toBe(false);
+  expect(LAUNCH_EXECUTION_ENABLED).toBe(true);
   expect(parameterExtractorPrompt("launch",false)).toContain("parsed deterministically from the original post");
 });
 

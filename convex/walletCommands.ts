@@ -3,7 +3,7 @@ import {DEFAULT_ARC_SLIPPAGE_BPS} from '../lib/arc/slippage';
 import { launchAllocationFromXText } from "../lib/launches/x-allocation";
 import type { Allocation } from "../lib/launches/allocation";
 import {explicitArcSwap} from "../lib/arc-swap-command";
-import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
+import { creationRequest, disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 import { tokenPattern, tokenCharacterCount, sliceTokenText } from "../lib/token-pattern";
 import { launchIdentityTooLong, LAUNCH_METADATA_BYTE_MESSAGE } from "../lib/launch-metadata-limits";
 import { parseBurnedTokenInquiry } from "../lib/burned-token-inquiry";
@@ -457,6 +457,9 @@ export function oversizedLaunchTicker(text: string) {
 export function parseWalletCommand(raw: string): WalletCommand {
   if(/\b(?:buy|purchase)\b/i.test(raw)&&/\bsell\b/i.test(raw))return {kind:"unknown",reason:"Use separate buy and sell commands."};
   if (disabledCreationRequest(raw)) return { kind: "unknown", reason: "Command not supported." };
+  // Launch metadata is extracted and grounded by the launch intent pipeline.
+  // Its optional developer buy must never become a standalone token purchase.
+  if (creationRequest(raw)) return {kind:"unknown",reason:"Include a token name, ticker and logo in your launch post. Guide: https://www.argosbot.io/how-to-launch"};
   const selfBurn=parseCreatorBurnCommand(raw);if(selfBurn)return selfBurn;
   const burned = parseBurnedTokenInquiry(raw);
   if (burned) return burned;

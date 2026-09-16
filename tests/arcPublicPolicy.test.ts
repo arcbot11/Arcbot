@@ -4,8 +4,8 @@ import { balanceRequestSchema, tokenMetadataRequestSchema, walletRequestSchema }
 import { ARC_BOT_TELEGRAM_USERNAME, ARC_BOT_TELEGRAM_URL } from "../lib/project-config";
 
 it("keeps Arc commands while rejecting retired workflows", () => {
-  for (const kind of ["claim_fees", "buy", "sell", "send", "burn", "swap_token_for_token", "buy_and_send", "buy_and_burn", "show_balance"]) expect(arcPublicCommand(kind)).toBe(true);
-  for (const kind of ["launch", "buy_top_five", "add_liquidity", "unknown"]) expect(arcPublicCommand(kind)).toBe(false);
+  for (const kind of ["launch", "claim_fees", "buy", "sell", "send", "burn", "swap_token_for_token", "buy_and_send", "buy_and_burn", "show_balance"]) expect(arcPublicCommand(kind)).toBe(true);
+  for (const kind of ["buy_top_five", "add_liquidity", "unknown"]) expect(arcPublicCommand(kind)).toBe(false);
 });
 it("does not expose the inherited signer execution or fee endpoints", () => {
   expect(arcSignerPath("v1/wallets/balance")).toBe(true);

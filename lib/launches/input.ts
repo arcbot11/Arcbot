@@ -18,7 +18,7 @@ const imageURI = z.string().transform((value, ctx) => {
   try { return launchImageURI(value); } catch { ctx.addIssue({ code: "custom", message: "Use an X photo URL or a pinned IPFS image URI." }); return z.NEVER; }
 });
 const schema = z.object({
-  name: cleanText(32).refine(s => s.length > 0 && !/[\r\n\t]/.test(s) && new TextEncoder().encode(s).length <= 32, "Use a name of at most 32 UTF-8 bytes."),
+  name: cleanText(32).refine(s => s.length > 0 && !/[\r\n\t]/.test(s) && new TextEncoder().encode(s).length <= 32, "Use a shorter token name. Emoji and some characters take extra space."),
   symbol: z.string().transform(s => s.trim().toUpperCase()).pipe(z.string().regex(/^[A-Z0-9]{1,10}$/))
     .refine(s => s !== "USDC", "USDC is reserved for the chain currency."),
   pairToken: z.enum(["USDC", "ARGUS", "ARCASH"]).default("USDC"),

@@ -3678,6 +3678,7 @@ export const executeCommand = internalAction({
     let command = structured || parseWalletCommand(args.text);
     if(command.kind==="send"&&command.chainId===8453&&args.source!=="telegram")return {ok:false,message:"Base withdrawals are available in Telegram and on the website."};
     if (disabledCreationKind(command.kind)) return { ok: false, message: "Command not supported." };
+    if(command.kind==="launch" && args.source!==undefined && args.source!=="x") return {ok:false,message:"Launches start on X. See https://www.argosbot.io/how-to-launch"};
     if (!arcPublicSource(args.source)) return { ok: false, message: "Use the wallet page controls." };
     if (!arcPublicCommand(command.kind) && command.kind !== "unknown") return { ok: false, message: "Command not supported. Use wallet, balance, buy, sell, swap, send or burn." };
     if (command.kind === "unknown")

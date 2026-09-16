@@ -104,7 +104,7 @@ function LaunchEditor({ session, preparationEnabled }: { session: WalletSession;
       }
       if (!response.ok) throw Error(result.error ?? "Preparation request failed.");
       accept(result);
-      notify(result.run ? result.run.status === "completed" ? "Launch confirmed." : result.run.note ?? "Launch processing." : body.action === "prepare" ? "Preparation complete. No transaction was submitted." : body.action === "cancel" ? "Draft cancelled." : "Draft saved.");
+      notify(result.run ? result.run.status === "completed" ? "Launch confirmed." : result.run.note ?? "Launch processing." : body.action === "prepare" ? "Launch check complete. Review the details before confirming." : body.action === "cancel" ? "Draft cancelled." : "Draft saved.");
     } catch (e) {
       if (alive.current && !controller.signal.aborted) notify(e instanceof Error && !/AbortError|TimeoutError/.test(e.name) ? e.message : body.action === "execute" || body.action === "resume" ? "Checking the saved launch status. Tracking will continue automatically." : "Request timed out. Reload the saved draft or retry the same request. No transaction was submitted.");
     } finally {
@@ -160,7 +160,7 @@ function LaunchEditor({ session, preparationEnabled }: { session: WalletSession;
       <div className={styles.actions}>
         {preparationEnabled && LAUNCH_EXECUTION_ENABLED && preview && !dirty && <div><p className={styles.hint}>{walletLabel}. This wallet receives creator rewards.</p><button type="button" disabled={!!(busy||pending||uncertainId)} onClick={()=>void write({action:"execute",requestId:draft!.requestId,revision:draft!.revision})}>Confirm launch</button></div>}
         {draft?.run && <p role="status">{draft.run.status === "completed" ? <>Launch confirmed. <a href={`https://arguspad.io/token/${draft.run.result?.token}`}>View token</a></> : draft.run.note ?? "Launch processing…"}</p>}
-        {validDraft && <button className="button" type="button" disabled={Boolean(busy || pending || uncertainId || dirty)} onClick={() => void write({ action: "prepare", requestId: draft.requestId })}>Prepare simulation</button>}
+        {validDraft && <button className="button" type="button" disabled={Boolean(busy || pending || uncertainId || dirty)} onClick={() => void write({ action: "prepare", requestId: draft.requestId })}>Check launch estimate</button>}
         {validDraft && <button type="button" disabled={Boolean(busy || (pending&&!uncertainId))} onClick={() => void write({ action: "cancel", requestId: draft.requestId })}>{uncertainId ? "Cancel unaccepted draft" : "Cancel draft"}</button>}
         {(draft || pending) && <button type="button" disabled={Boolean(busy)} onClick={() => void reload()}>Reload saved draft</button>}
         {preparationEnabled && LAUNCH_EXECUTION_ENABLED && uncertainId && !pending && !busy && draft?.status==="prepared" && <button type="button" onClick={()=>void write({action:"execute",requestId:draft.requestId,revision:draft.revision})}>Retry same confirmation</button>}

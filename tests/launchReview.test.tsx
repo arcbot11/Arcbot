@@ -16,9 +16,9 @@ afterEach(() => {vi.unstubAllEnvs();flags.enabled=false;});
 afterAll(() => vi.unstubAllGlobals());
 const input = parseLaunchInput({ name: "Example", symbol: "EXAMPLE", imageURI: "ipfs://Qm" + "a".repeat(44), allocationText: "half creator rest holders", description: "<script>secret()</script>" });
 const render = (preview: LaunchPreview | null, expired = false) => renderToStaticMarkup(<LaunchReview input={input} wallet="0x1111" walletLabel="X-linked wallet for @example" preview={preview} expired={expired} />);
-it("keeps the page unavailable unless preparation is explicitly enabled", () => {
-  vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED", "false"); expect(() => Page()).toThrow("404");
-  vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED", "true"); expect(() => Page()).not.toThrow();
+it("allows only existing draft tracking on the website", async () => {
+  await expect(Page({searchParams:Promise.resolve({})})).rejects.toThrow("404");
+  await expect(Page({searchParams:Promise.resolve({draft:"existing"})})).resolves.toBeDefined();
 });
 it("escapes metadata and shows the resolved split, fixed threshold and creator wallet", () => {
   const html = render(null);
@@ -48,9 +48,9 @@ it("labels expired simulations without showing a stale funding amount", () => {
   const html = render(null, true); expect(html).toContain("Simulation expired"); expect(html).not.toContain("Simulation passed");
 });
 
-it("describes signing authorization accurately when launch execution is enabled",()=>{
+it("keeps website tracking read-only when X launch execution is enabled",async()=>{
  flags.enabled=true;vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED","true");
- const review=render(null),page=renderToStaticMarkup(<Page/>);
+ const review=render(null),page=renderToStaticMarkup(await Page({searchParams:Promise.resolve({draft:"existing"})}));
  expect(review).toContain("Confirm launch authorizes");expect(review).not.toContain("No transaction will be signed or sent");
- expect(page).toContain("Launch a token");expect(page).not.toContain("Launch execution is disabled");
+ expect(page).toContain("New launches start on X");expect(page).not.toContain("Launch execution is disabled");
 });

@@ -1,3 +1,4 @@
+import { LAUNCH_EXECUTION_ENABLED } from "../lib/launches/policy";
 import type { JsonSchemaResponseFormat } from "./llm";
 
 const nullableString = (description: string) => ({ type: ["string", "null"], description });
@@ -13,12 +14,12 @@ export const walletIntentSchema: JsonSchemaResponseFormat = {
       kind: { type: "string", enum: ["irrelevant", "unknown_wallet", "question", "command"] },
       operation: {
         type: ["string", "null"],
-        enum: [null, "create_wallet", "show_wallet", "show_balance", "send", "burn", "buy", "buy_and_send", "buy_and_burn", "swap_token_for_token", "sell", "claim_fees", "reassign_fees", "upgrade_fees"],
+        enum: [null, "create_wallet", "show_wallet", "show_balance", "send", "burn", "buy", "buy_and_send", "buy_and_burn", "swap_token_for_token", "sell", "claim_fees", "reassign_fees", "upgrade_fees", ...(LAUNCH_EXECUTION_ENABLED ? ["launch"] : [])],
         description: "Command operation, or null unless kind is command.",
       },
       topic: {
         type: ["string", "null"],
-        enum: [null, "capabilities", "wallet", "fund", "gas", "balance", "send", "buy_sell", "burn", "pairs", "fees"],
+        enum: [null, "capabilities", "wallet", "fund", "gas", "balance", "send", "buy_sell", "burn", "pairs", "fees", ...(LAUNCH_EXECUTION_ENABLED ? ["launch"] : [])],
         description: "Help topic, or null unless kind is question.",
       },
     },
@@ -110,7 +111,7 @@ const operationProperties: Record<string, Record<string, unknown>> = {
 };
 
 export function walletExtractionSchema(operation: string): JsonSchemaResponseFormat {
-  if (operation === "launch") throw new Error("Operation not supported.");
+  if (operation === "launch" && !LAUNCH_EXECUTION_ENABLED) throw new Error("Operation not supported.");
   const properties = operationProperties[operation];
   if (!properties) throw new Error(`Unsupported wallet extraction schema: ${operation}`);
   return {
