@@ -12,11 +12,12 @@ beforeEach(() => {
 });
 afterEach(() => vi.unstubAllEnvs());
 const post = (body: unknown) => new NextRequest("https://www.argosbot.io/api/wallet/launches", { method: "POST", body: JSON.stringify(body) });
-it("hides both endpoints without authentication or storage calls while disabled", async () => {
+it("allows authenticated reads but rejects new drafts while preparation is disabled", async () => {
   vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED", "false");
-  expect((await GET(new NextRequest("https://www.argosbot.io/api/wallet/launches"))).status).toBe(404);
-  expect((await POST(post({ action: "create" }))).status).toBe(404);
-  expect(m.session).not.toHaveBeenCalled(); expect(m.mutation).not.toHaveBeenCalled();
+  m.query.mockResolvedValue({status:"prepared",requestId,address});
+  expect((await GET(new NextRequest(`https://www.argosbot.io/api/wallet/launches?requestId=${requestId}`))).status).toBe(200);
+  expect((await POST(post({ action: "create",requestId,input:{} }))).status).toBe(404);
+  expect(m.session).toHaveBeenCalled(); expect(m.mutation).not.toHaveBeenCalled();
 });
 it("derives wallet identity from the session and requires write authentication", async () => {
   await POST(post({ action: "cancel", requestId }));
@@ -26,7 +27,7 @@ it("derives wallet identity from the session and requires write authentication",
 it.each(["execute", "sign", "broadcast", "confirm"])("rejects an incomplete or unsupported %s operation", async action => {
   const r = await POST(post({ action, requestId })); expect(r.status).toBe(400); expect(m.mutation).not.toHaveBeenCalled();
 });
-it.each(["execute", "resume"])("keeps valid %s requests disabled before accepting or signing", async action => {
+it.each(["execute"])("keeps valid %s requests disabled before accepting or signing", async action => {
   const r = await POST(post({ action, requestId, ...(action === "execute" ? { revision: 1 } : {}) }));
   expect(r.status).toBe(400); expect(await r.text()).toContain("Launch execution is disabled");
   expect(m.mutation).not.toHaveBeenCalled();

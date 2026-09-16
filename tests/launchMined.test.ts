@@ -7,6 +7,7 @@ import { LAUNCH_PORTAL, reviewedImplementations } from "../lib/launches/contract
 import { ARC_USDC } from "../lib/arc/config";
 import { ARC_NATIVE_TRANSFER } from "../lib/arc/usdc-delivery";
 import { poolId } from "../lib/arc/routing";
+import { launchCall } from "../lib/launches/execution-checks";
 const m=vi.hoisted(()=>({client:{getChainId:vi.fn(),getTransactionReceipt:vi.fn(),getTransaction:vi.fn(),getBlock:vi.fn(),getCode:vi.fn(),readContract:vi.fn()}}));
 vi.mock("viem",async original=>({...await original<typeof import("viem")>(),createPublicClient:()=>m.client}));
 vi.mock("../lib/arc/config",async original=>({...await original<typeof import("../lib/arc/config")>(),arcConfigFromEnv:()=>({}),arcChain:()=>({})}));
@@ -32,7 +33,7 @@ function logs(){return [
 beforeEach(()=>{
   vi.resetAllMocks();m.client.getChainId.mockResolvedValue(5042);m.client.getBlock.mockResolvedValue({number:100n,hash:blockHash});
   m.client.getTransactionReceipt.mockResolvedValue({transactionHash:hash,blockNumber:100n,blockHash,status:"success",logs:logs()});
-  m.client.getTransaction.mockResolvedValue({from:creator,to:LAUNCH_PORTAL,value:0n,input:encodeLaunch(input,salt,salt,p.quote)});
+  m.client.getTransaction.mockResolvedValue({hash,blockNumber:100n,blockHash,from:creator,to:LAUNCH_PORTAL,value:0n,input:encodeLaunch(input,salt,salt,p.quote)});
   m.client.getCode.mockImplementation(async({address}:{address:string})=>{const impl=address===token?reviewedImplementations.tokenImpl:address===splitter?reviewedImplementations.splitterImpl:reviewedImplementations.lockerImpl;return `0x363d3d373d3d3d363d73${impl.slice(2)}5af43d82803e903d91602b57fd5bf3`;});
   m.client.readContract.mockImplementation(async({functionName}:{functionName:string})=>{
     switch(functionName){case "launches":return [creator,0,true,locker,hook,splitter,100,100,1n,0,ARC_USDC];case "creator":return creator;case "token":return token;case "quoteAsset":case "trackerPayoutAsset":return ARC_USDC;case "converts":return false;case "rewardMode":return 0;case "rewardTracker":return zeroAddress;case "creatorBps":return 10000;case "burnBps":case "dividendBps":case "liquidityBps":return 0;default:throw Error(functionName);}
@@ -57,8 +58,26 @@ it.each(["reorg","implementation","allocation","quote","delivery","refund"])("re
   await expect(verify()).rejects.toThrow();
 });
 
+it('accepts an unset tracker payout only when no dividend tracker exists',async()=>{
+ const original=m.client.readContract.getMockImplementation()!;
+ m.client.readContract.mockImplementation(async args=>args.functionName==='trackerPayoutAsset'?zeroAddress:original(args));
+ await expect(verify()).resolves.toMatchObject({token,creator});
+ m.client.readContract.mockImplementation(async args=>args.functionName==='trackerPayoutAsset'?zeroAddress:args.functionName==='rewardTracker'?token:original(args));
+ await expect(verify()).rejects.toThrow('payout currency');
+});
 it('rejects a payout currency change after deployment',async()=>{
  const original=m.client.readContract.getMockImplementation()!;
  m.client.readContract.mockImplementation(async args=>args.functionName==='trackerPayoutAsset'?token:original(args));
  await expect(verify()).rejects.toThrow('payout currency');
+});
+it.each(["approval","rewards"] as const)("verifies exact %s transaction as well as resulting state",async kind=>{
+  const terms={requestId:"request",index:0,kind,input,preview:p},call=launchCall(terms);
+  const tx={hash,blockNumber:100n,blockHash,from:creator,to:call.to,value:0n,input:call.data};
+  m.client.getTransaction.mockResolvedValue(tx);
+  m.client.readContract.mockResolvedValue(kind==="approval"?25_000_000n:[0,0n]);
+  await expect(verifyMinedLaunchStep("1",creator,hash,terms)).resolves.toBeUndefined();
+  for(const change of [{to:token},{input:"0x"},{value:1n},{hash:salt},{blockNumber:99n},{blockHash:salt}]){
+    m.client.getTransaction.mockResolvedValue({...tx,...change});
+    await expect(verifyMinedLaunchStep("1",creator,hash,terms)).rejects.toThrow("approved transaction");
+  }
 });

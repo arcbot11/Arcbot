@@ -1,4 +1,6 @@
-import { launchQuote, type LaunchQuote } from "./quote";
+import { launchQuote, assertLaunchQuote, type LaunchQuote } from "./quote";
+import { launchReadCache } from "./read-cache";
+import { tradeSimulationFailure } from "../arc/trade-errors";
 import { verifyLaunchHookStore } from "./hook-review";
 import type { LaunchImageEvidence } from "./image-preflight";
 import { decodeFunctionResult, encodeAbiParameters, encodeFunctionData, encodePacked, getAddress, getCreate2Address,
@@ -19,12 +21,14 @@ export type LaunchPreview = {
   hookInitCodeHash: Hex; rewardConfig: Address; block: string; blockHash: Hex; nonce: number;
   createdAt: number; expiresAt: number; status: "simulated" | "needs_setup";
   steps: LaunchStep[]; devBuyWei: string; gasWei: string | null; requiredWei: string | null;
+  setupFundingWei?: string;
   availableWei: string; maxFeePerGas: string; maxPriorityFeePerGas: string;
 };
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 const hash = /^0x[0-9a-fA-F]{64}$/;
 export function encodeLaunch(input: LaunchInput, tokenSalt: Hex, hookSalt: Hex, quote?: LaunchQuote): Hex {
   const p = parseLaunchInput(input);
+  if (quote) assertLaunchQuote(p.pairToken, parseUnits(p.devBuyUSDC, 6), quote);
   if (p.pairToken !== "USDC" && (!quote || quote.symbol !== p.pairToken)) throw new LaunchError("PAIRED_PREPARATION", "Prepare the paired asset amount first.");
   return encodeFunctionData({ abi: portalAbi, functionName: "launch", args: [{
     name: p.name, symbol: p.symbol, ...LAUNCH_DEFAULTS, buyTaxBps: p.buyTaxBps, sellTaxBps: p.sellTaxBps,
@@ -60,13 +64,14 @@ export async function prepareLaunch(options: {
   reservedWei: bigint; activeTransaction: boolean; now?: number; image?: LaunchImageEvidence; frozenQuote?: LaunchQuote;
   verifiedHook?: Pick<LaunchPreview, "creator" | "tokenSalt" | "hookSalt" | "hookInitCodeHash" | "predictedHook">;
 }): Promise<LaunchPreview> {
-  const { identity, rpc, config, tokenSalt } = options, input = parseLaunchInput(options.input);
+  const { identity, config, tokenSalt } = options, input = parseLaunchInput(options.input);
+  const rpc=launchReadCache(options.rpc);
   if (!hash.test(tokenSalt) || options.reservedWei < 0n) throw new LaunchError("INVALID_DRAFT", "Invalid launch draft.");
   if (options.activeTransaction) throw new LaunchError("WALLET_BUSY", "A wallet transaction is pending.");
 
   let head = await checkArcRpc(rpc, config, options.now);
   let quote = options.frozenQuote ?? await launchQuote(input.pairToken, parseUnits(input.devBuyUSDC,6), rpc, head.number);
-  if (quote.symbol !== input.pairToken) throw new LaunchError("QUOTE_ASSET", "Launch pair changed.");
+  assertLaunchQuote(input.pairToken, parseUnits(input.devBuyUSDC, 6), quote);
   const read = async <T>(address: Address, abi: Abi, functionName: string, args: readonly unknown[] = []): Promise<T> => {
     const data = encodeFunctionData({ abi, functionName, args });
     const raw = await rpc.call({ from: identity.address, to: address, value: 0n, data }, head.number);
@@ -148,24 +153,39 @@ export async function prepareLaunch(options: {
   let gasWei = 0n;
   for (const step of steps) {
     if (step.kind === "launch" && setup) continue; // Never claim a simulation passed with unmet prerequisites.
-    const raw = await rpc.call(step.call, head.number);
+    let raw: Hex, estimate: bigint;
+    try {
+      raw = await rpc.call(step.call, head.number);
+      estimate = await rpc.estimateGas(step.call, head.number);
+    } catch (error) {
+      if (tradeSimulationFailure(error)) throw new LaunchError("SIMULATION_REVERTED", `${step.kind === "launch" ? "Launch" : step.kind === "approval" ? "Creator-buy approval" : "Reward setup"} simulation was rejected by the contract. Review a new draft before continuing.`);
+      throw error; // Provider outages are retryable, not evidence of a contract rejection.
+    }
     if (step.kind === "approval" && !decodeFunctionResult({ abi: approvalAbi, functionName: "approve", data: raw }))
       throw new LaunchError("APPROVAL", "USDC approval simulation failed.");
     if (step.kind === "launch" && !same(decodeFunctionResult({ abi: portalAbi, functionName: "launch", data: raw }), predictedToken))
       throw new LaunchError("PREDICTION", "Launch simulation returned a different token.");
-    const estimate = await rpc.estimateGas(step.call, head.number), gas = (estimate * 120n + 99n) / 100n;
+    const gas = (estimate * 120n + 99n) / 100n;
     if (estimate <= 0n || gas > (step.kind === "launch" ? LAUNCH_MAX_GAS : config.maxGas)) throw new LaunchError("GAS_LIMIT", "Launch gas estimate exceeds the configured limit.");
     const cost = gas * fees.maxFeePerGas;
     step.estimatedGas = estimate.toString(); step.gas = gas.toString(); step.gasWei = cost.toString(); gasWei += cost;
   }
   if (gasWei > LAUNCH_TOTAL_GAS_WEI) throw new LaunchError("GAS_LIMIT", "Launch gas estimate exceeds 0.5 USDC.");
-  if (available < devBuyWei + gasWei) throw new LaunchError("BALANCE", "Not enough USDC for the dev buy and gas.");
+  // Before approvals/configuration, keep enough funding for deployment too.
+  // Its gas cannot be measured until setup is present; use the deployment gas
+  // ceiling at the checked fee, bounded by the authorized total allowance.
+  const provisionalGas = gasWei + LAUNCH_MAX_GAS * fees.maxFeePerGas;
+  const fundingGas = setup ? (provisionalGas < LAUNCH_TOTAL_GAS_WEI ? provisionalGas : LAUNCH_TOTAL_GAS_WEI) : gasWei;
+  if (available < devBuyWei + fundingGas) throw new LaunchError("BALANCE", setup
+    ? "Not enough USDC for the creator buy, setup and launch gas buffer. Add funds before starting setup."
+    : "Not enough USDC for the dev buy and gas.");
   if (!same((await rpc.block(head.number)).hash, head.hash)) throw new LaunchError("BLOCK_CHANGED", "Arc block changed. Prepare again.");
   if(options.now===undefined && Date.now()-Number(head.timestamp)*1000>config.maxHeadAgeSeconds*1000)throw new LaunchError("STALE_SIMULATION","Network checks took too long. Prepare again for a fresh simulation.");
   return { version: 1, executionEnabled: false, fingerprint: launchFingerprint(identity, input), creator: getAddress(identity.address), portal: LAUNCH_PORTAL,
     tokenSalt, hookSalt: mined.salt, predictedToken, predictedHook, predictedSplitter, hookInitCodeHash, rewardConfig,
     block: head.number.toString(), blockHash: head.hash, nonce, createdAt: options.now ?? Date.now(), expiresAt: (options.now ?? Date.now()) + LAUNCH_PREVIEW_MS, quote, ...(options.image ? {image: options.image} : {}),
     status: setup ? "needs_setup" : "simulated", steps, devBuyWei: devBuyWei.toString(), availableWei: available.toString(),
+    ...(setup ? {setupFundingWei:(devBuyWei+fundingGas).toString()} : {}),
     gasWei: setup ? null : gasWei.toString(), requiredWei: setup ? null : (devBuyWei + gasWei).toString(),
     maxFeePerGas: fees.maxFeePerGas.toString(), maxPriorityFeePerGas: fees.maxPriorityFeePerGas.toString() };
 }

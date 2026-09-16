@@ -10,7 +10,9 @@ export function repository() {
     pendingPurchases: async(owner:string,wallet:string):Promise<Order[]>=>client.query(makeFunctionReference<"query">("otc:pendingPurchases"),{secret,owner,wallet}),
     knownTokens:async(owner:string,address:string):Promise<string[]>=>client.query(makeFunctionReference<'query'>('walletData:knownTokens'),{secret,owner,address}),
     identity: async (owner:string,address:string):Promise<boolean> => client.query(makeFunctionReference<"query">("otc:identity"),{secret,owner,address}) as Promise<boolean>,
-    command: async <T = RecordValue>(command: string, input: unknown): Promise<T> => client.mutation(makeFunctionReference<"mutation">("otc:command"), { secret, command, json: JSON.stringify(input) }) as Promise<T>,
+    // Fresh launch previews contain bigint call values. The durable JSON model
+    // stores integer quantities as decimal strings, as the draft API does.
+    command: async <T = RecordValue>(command: string, input: unknown): Promise<T> => client.mutation(makeFunctionReference<"mutation">("otc:command"), { secret, command, json: JSON.stringify(input, (_, value) => typeof value === "bigint" ? value.toString() : value) }) as Promise<T>,
     read: async <T = RecordValue>(input: {id?:string;owner?:string;work?:boolean} = {}): Promise<T> => client.query(makeFunctionReference<"query">("otc:read"),{secret,...input}) as Promise<T>,
   };
 }

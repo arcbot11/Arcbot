@@ -3,7 +3,7 @@ const discovery=vi.hoisted(()=>vi.fn());
 vi.mock("../lib/arc/argus-discovery",()=>({discoverArgusPool:discovery}));
 beforeEach(()=>discovery.mockReset().mockResolvedValue(null));
 import { decodeFunctionData, encodeFunctionResult, parseAbi, parseUnits, toHex, type Hex } from "viem";
-import { launchQuote } from "../lib/launches/quote";
+import { launchQuote, assertLaunchQuote, type LaunchQuote } from "../lib/launches/quote";
 import { encodeLaunch } from "../lib/launches/prepare";
 import { parseLaunchInput } from "../lib/launches/input";
 import { portalAbi } from "../lib/launches/contracts";
@@ -11,6 +11,20 @@ import { LAUNCH_PAIRS } from "../lib/launches/x-pair";
 import { nativeSpend } from "../lib/otc/native-spend";
 const historicalBlock=vi.fn(async(number=100n)=>({number,hash:toHex(number,{size:32}),timestamp:number*60n}));
 const abi=parseAbi(["function getPool(address,address,uint24) view returns(address)","function slot0() view returns(uint160,int24,uint16,uint16,uint16,uint8,bool)","function liquidity() view returns(uint128)"]);
+it.each([
+  { devBuy: "26000000" }, { devBuy: "-1" }, { devBuy: String(2n**256n) },
+  { start: "1" }, { bond: "1" }, { decimals: 18 }, { address: LAUNCH_PAIRS.ARGUS.address },
+])("rejects a frozen USDC quote changed after review: %j", change => {
+  const quote={symbol:"USDC",...LAUNCH_PAIRS.USDC,start:"2500000000",bond:"45000000000",devBuy:"25000000",block:"1",...change} as LaunchQuote;
+  expect(()=>assertLaunchQuote("USDC",25_000_000n,quote)).toThrow("approved settings");
+});
+it("rejects paired amounts that no longer match their frozen price evidence",()=>{
+  const quote:LaunchQuote={symbol:"ARGUS",...LAUNCH_PAIRS.ARGUS,start:"2500000000",bond:"45000000000",devBuy:"25000000",block:"1",
+    priceEvidence:{method:"historical-median",pool:"test",sqrtPriceX96:String(1n<<96n),blocks:[]}};
+  expect(()=>assertLaunchQuote("ARGUS",25_000_000n,quote)).not.toThrow();
+  expect(()=>assertLaunchQuote("ARGUS",25_000_000n,{...quote,devBuy:"26000000"})).toThrow("approved settings");
+  expect(()=>assertLaunchQuote("ARGUS",25_000_000n,{...quote,priceEvidence:undefined})).toThrow("approved settings");
+});
 it.each(["ARGUS","ARCASH"] as const)("converts dollar valuations and developer buy into %s raw units",async pair=>{
   const rpc={block:historicalBlock,decimals:vi.fn(async()=>18),code:vi.fn(),call:vi.fn(async(tx:{data:Hex})=>{
     const fn=decodeFunctionData({abi,data:tx.data}).functionName;

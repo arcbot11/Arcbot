@@ -5,7 +5,7 @@ import { toHex, serializeTransaction } from "viem";
 import type { LaunchRun } from "../lib/launches/execution-types";
 const m=vi.hoisted(()=>({run:null as unknown,txs:new Map<string,Record<string,unknown>>(),prepare:vi.fn(),advance:vi.fn(),image:vi.fn(),create:vi.fn(),mutation:vi.fn()}));
 vi.mock("../lib/launches/policy",async original=>({...await original<typeof import("../lib/launches/policy")>(),LAUNCH_EXECUTION_ENABLED:true}));
-vi.mock("convex/browser",()=>({ConvexHttpClient:class{query=async()=>m.run;mutation=m.mutation;}}));
+vi.mock("convex/browser",()=>({ConvexHttpClient:class{query=async()=>structuredClone(m.run);mutation=m.mutation;}}));
 vi.mock("../lib/arc/config",async original=>({...await original<typeof import("../lib/arc/config")>(),arcConfigFromEnv:()=>({})}));
 vi.mock("../lib/arc/rpc",()=>({createArcRpc:()=>({})}));
 vi.mock("../lib/launches/image-preflight",()=>({verifyLaunchImage:m.image}));
@@ -18,6 +18,7 @@ import { LaunchError } from "../lib/launches/policy";
 import type { Transaction } from "../lib/otc/model";
 const owner="1",address="0x1111111111111111111111111111111111111111",requestId="00000000-0000-4000-8000-000000000001";
 beforeEach(()=>{
+  vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED","true");
   vi.clearAllMocks();m.txs.clear();vi.stubEnv("NEXT_PUBLIC_CONVEX_URL","https://example.convex.cloud");vi.stubEnv("WEB_AUTH_SECRET","secret");
   const input=parseLaunchInput({name:"Example",symbol:"EX",imageURI:"https://pbs.twimg.com/media/example.jpg"});
   m.run={owner,address,requestId,input,authorizationExpiresAt:Date.now()+1800000,status:"running",steps:[],preview:{tokenSalt:toHex(1,{size:32}),predictedToken:address,predictedHook:address,predictedSplitter:address,portal:LAUNCH_PORTAL,
@@ -43,6 +44,37 @@ it("expires an accepted run before preparing a new step", async()=>{
   (m.run as LaunchRun).authorizationExpiresAt=Date.now()-1;
   expect((await advanceLaunch(owner,address,requestId)).status).toBe("blocked");
   expect(m.prepare).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+});
+it("reconciles an existing signature while preparation is paused without new preparation",async()=>{
+  vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED","false");
+  const run=m.run as LaunchRun,id=`launch:${owner}:${requestId}:0`;run.steps=[id];
+  m.txs.set(id,{id,status:"signed",signingStartedAt:1,raw:"0x1234",launchStep:{kind:"launch"}});
+  m.advance.mockImplementation(async()=>{const tx=m.txs.get(id)!;tx.status="completed";return tx;});
+  expect((await advanceLaunch(owner,address,requestId)).status).toBe("completed");
+  expect(m.advance).toHaveBeenCalledWith(id);expect(m.prepare).not.toHaveBeenCalled();expect(m.create).not.toHaveBeenCalled();
+});
+it("safely closes an accepted run with no steps when preparation is paused",async()=>{
+  vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED","false");
+  expect((await advanceLaunch(owner,address,requestId)).status).toBe("blocked");
+  expect(m.advance).not.toHaveBeenCalled();expect(m.create).not.toHaveBeenCalled();
+});
+it("stops a contract-rejected launch instead of retrying it until authorization expires",async()=>{
+  m.prepare.mockRejectedValue(new LaunchError("SIMULATION_REVERTED","Launch simulation was rejected by the contract."));
+  const result=await advanceLaunch(owner,address,requestId);
+  expect(result.status).toBe("blocked");expect(result.note).toContain("rejected by the contract");
+  expect(m.create).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+});
+it.each(["Not enough funds for the amount and gas.","Gas exceeds the configured policy."])("stops if final transaction preparation fails permanently: %s",async message=>{
+  m.create.mockRejectedValue(new Error(message));
+  expect((await advanceLaunch(owner,address,requestId)).status).toBe("blocked");expect(m.advance).not.toHaveBeenCalled();
+});
+it("stops a revert during the second simulation but retries network failures",async()=>{
+  m.create.mockRejectedValue(Object.assign(new Error("hidden provider diagnostic"),{cause:{code:3}}));
+  const result=await advanceLaunch(owner,address,requestId);expect(result.status).toBe("blocked");expect(result.note).not.toContain("hidden provider");
+  (m.run as LaunchRun).status="running";
+  const outage=new Error("provider offline");m.create.mockRejectedValue(outage);
+  await expect(advanceLaunch(owner,address,requestId)).rejects.toBe(outage);
+  expect((m.run as LaunchRun).status).toBe("running");
 });
 it("recovers a signature after authorization expires without starting the next step",async()=>{
   const run=m.run as LaunchRun,id=`launch:${owner}:${requestId}:0`;run.steps=[id];run.authorizationExpiresAt=0;
@@ -92,4 +124,19 @@ it("executes setup, approval and launch in sequence with separate recoverable ID
   const run=await advanceLaunch(owner,address,requestId);
   expect(run.status).toBe("completed");expect(run.steps).toHaveLength(3);expect([...m.txs.values()].map(t=>(t.launchStep as {kind:string}).kind)).toEqual(["rewards","approval","launch"]);
   await advanceLaunch(owner,address,requestId);expect(m.create).toHaveBeenCalledTimes(3);
+});
+it("includes setup completed by another worker before preparing the next step",async()=>{
+  const run=m.run as LaunchRun,id=`launch:${owner}:${requestId}:0`;
+  run.steps=[id];
+  m.txs.set(id,{id,owner,wallet:address,status:"submitted",unsigned:(await m.create()).unsigned,launchStep:{requestId,index:0,kind:"approval"}});
+  m.advance.mockImplementation(async(txId:string)=>{
+    const first=m.txs.get(txId)!;first.status="completed";first.settlement={gasWei:"200000000000000000"};
+    const secondId=`launch:${owner}:${requestId}:1`;run.steps.push(secondId);
+    m.txs.set(secondId,{...first,id:secondId,launchStep:{requestId,index:1,kind:"rewards"}});
+    return first;
+  });
+  m.create.mockClear();m.create.mockResolvedValue({unsigned:"unused",gasWei:"100000000000000001"});
+  const result=await advanceLaunch(owner,address,requestId);
+  expect(result.status).toBe("blocked");expect(result.note).toContain("0.5 USDC");
+  expect(m.txs.has(`launch:${owner}:${requestId}:2`)).toBe(false);
 });

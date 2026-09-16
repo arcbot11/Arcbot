@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import { makeFunctionReference } from "convex/server";
+import { ConvexError } from "convex/values";
 import type { WalletCommand } from "../../convex/walletCommands";
 import { launchInputFromXCommand } from "./x-input";
 import { advanceLaunch, launchBackend } from "./service";
@@ -16,12 +17,12 @@ import { LaunchError } from "./policy";
 import type { Hex } from "viem";
 const serialize=(value:unknown)=>JSON.stringify(value,(_,v)=>typeof v==="bigint"?String(v):v);
 export async function runSocialLaunch(auth:{owner:string;wallet:string;source:string;createdAt:number;recoveryOnly?:boolean},sourceRequestId:string,command:Extract<WalletCommand,{kind:"launch"}>){
-  assertLaunchEnabled();
   if(auth.source!=="x")throw new LaunchError("SOURCE","Use an X launch command or the launch page.");
   const hex=createHash("sha256").update(sourceRequestId).digest("hex");
   const requestId=`${hex.slice(0,8)}-${hex.slice(8,12)}-4${hex.slice(13,16)}-8${hex.slice(17,20)}-${hex.slice(20,32)}`;
   const backend=launchBackend(auth.owner,auth.wallet,requestId),existing=await backend.read();
   if(!existing){
+    assertLaunchEnabled();
     if(auth.recoveryOnly||Date.now()-auth.createdAt>ARC_COMMAND_AUTHORIZATION_MS)throw new LaunchError("AUTH_EXPIRED","Launch authorization expired before execution. Post a new command.");
     const source=command.launchSource;if(!source?.text||!source.imageURI)throw new LaunchError("IMAGE_REQUIRED","Include a token image or direct X photo URL.");
     const input=launchInputFromXCommand(command,source.text,source.imageURI);
@@ -36,7 +37,12 @@ export async function runSocialLaunch(auth:{owner:string;wallet:string;source:st
         draft=await mutation("savePreview",{revision:draft.revision,prepareToken:lease.prepareToken,previewJson:serialize(preview)});
       }finally{await mutation("endPreparation",{prepareToken:lease.prepareToken}).catch(()=>undefined);}
     }
-    await backend.mutate("accept",{revision:draft.revision,sourceRequestId});
+    try{await backend.mutate("accept",{revision:draft.revision,sourceRequestId});}
+    catch(error){
+      if(error instanceof ConvexError&&error.data?.acceptance==="rejected"&&typeof error.data.message==="string")
+        throw new LaunchError("REVIEW_CHANGED",error.data.message);
+      throw error;
+    }
   }
   const run=await advanceLaunch(auth.owner,auth.wallet,requestId);
   if(run.status==="completed"&&run.result)return {ok:true,pending:false,hash:run.result.hash,

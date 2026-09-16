@@ -2,6 +2,7 @@ import { LaunchError } from "../lib/launches/policy";
 import { arcPublicCommand, arcPublicSource } from "../lib/arc/public-policy";
 import {ARC_COMMAND_HTTP_TIMEOUT_MS,arcPendingRetryDelay,arcServiceResult} from "../lib/arc/social-timing";
 import { arcWalletUrl, arcCommandResponse } from "../lib/public-links";
+import { launchImageFromText } from "../lib/launches/image";
 import { ARC_BOT_SITE_URL } from "../lib/project-config";
 import { isXBotAuthor } from "../lib/x-bot-identity";
 import { retiredFeatureEnabled } from "../lib/retired-features";
@@ -3867,7 +3868,7 @@ Your wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`,
     }
     if(command.kind==="launch"){
       if(source!=="x")return {ok:false,message:"Use an X launch command or the launch page."};
-      command={...command,launchSource:{text:args.text,imageURI:args.mediaUrl??args.text.match(/https:\/\/pbs\.twimg\.com\/[^\s]+|ipfs:\/\/[^\s]+/)?.[0]??""}};
+      command={...command,launchSource:{text:args.text,imageURI:args.mediaUrl||launchImageFromText(args.text)}};
     }
     const requestId =
       args.requestId || `x:${args.sourcePostId}:${command.kind}`;

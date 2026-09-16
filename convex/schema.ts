@@ -14,8 +14,8 @@ const intakeFilterGuardState = v.object({
 export default defineSchema({
   rpcCapacity: defineTable({key:v.string(),nextAt:v.number()}).index('by_key',['key']),
   // Execution stays gated in code; accepted terms and recovery are durable.
-  launchRuns: defineTable({requestId:v.string(),owner:v.string(),address:v.string(),status:v.string(),json:v.string(),updatedAt:v.number()})
-    .index("by_owner_request",["owner","requestId"]).index("by_address_status",["address","status"]),
+  launchRuns: defineTable({requestId:v.string(),owner:v.string(),address:v.string(),status:v.string(),json:v.string(),updatedAt:v.number(),recoveryUntil:v.optional(v.number()),recoveryLease:v.optional(v.string())})
+    .index("by_owner_request",["owner","requestId"]).index("by_address_status",["address","status"]).index("by_status_updated",["status","updatedAt"]),
   verifiedBotLaunches: defineTable({address:v.string(),creator:v.string(),symbol:v.string(),json:v.string(),createdAt:v.number()})
     .index("by_address",["address"]).index("by_creator",["creator"]),
   launchDrafts: defineTable({

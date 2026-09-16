@@ -7,7 +7,7 @@ import { LaunchError } from "./policy";
 export type LaunchImageEvidence = { imageURI: string; width: number; height: number; sha256: string };
 
 /** Read-only. Bounded download, pinned public DNS, real decoding; never a fallback logo. */
-export async function verifyLaunchImage(uri: string) {
+async function validateLaunchImage(uri: string) {
   try {
     const imageURI = launchImageURI(uri);
     const { bytes } = await fetchPublicImage(launchImageSource(imageURI));
@@ -21,4 +21,12 @@ export async function verifyLaunchImage(uri: string) {
   } catch {
     throw new LaunchError("IMAGE_UNAVAILABLE", "The launch image could not be verified. Use a working static X photo or IPFS image.");
   }
+}
+const pending=new Map<string,Promise<LaunchImageEvidence>>();
+/** Share concurrent downloads only. Later signing checks always read fresh bytes. */
+export function verifyLaunchImage(uri:string){
+  const existing=pending.get(uri);if(existing)return existing;
+  const work=validateLaunchImage(uri);
+  if(pending.size<32){pending.set(uri,work);void work.finally(()=>pending.delete(uri)).catch(()=>undefined);}
+  return work;
 }

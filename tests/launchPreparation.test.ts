@@ -71,6 +71,15 @@ it("rejects unreviewed hook code before constructing deployment predictions",asy
   await expect(prepareLaunch(f.options)).rejects.toThrow("Hook review required");
   expect(f.call.mock.calls.some(([tx])=>decodeFunctionData({abi,data:tx.data}).functionName==="predictHook")).toBe(false);
 });
+it("reports a definite deployment revert as a terminal launch error",async()=>{
+  const f=fixture();f.options.rpc.estimateGas=async()=>{throw Object.assign(new Error("provider detail must not be exposed"),{cause:{code:3}});};
+  await expect(prepareLaunch(f.options)).rejects.toMatchObject({code:"SIMULATION_REVERTED",message:"Launch simulation was rejected by the contract. Review a new draft before continuing."});
+});
+it("does not classify an RPC outage as a rejected deployment",async()=>{
+  const f=fixture(),outage=Object.assign(new Error("RPC unavailable"),{code:-32098});
+  f.options.rpc.estimateGas=async()=>{throw outage;};
+  await expect(prepareLaunch(f.options)).rejects.toBe(outage);
+});
 it("fully simulates a no-dev-buy launch without signing or approval", async () => {
   const f = fixture(), p = await prepareLaunch(f.options);
   expect(p.status).toBe("simulated"); expect(p.executionEnabled).toBe(false);
@@ -90,6 +99,16 @@ it("does not add another approval when existing allowance covers the dev buy", a
   const p = await prepareLaunch(f.options);
   expect(p.status).toBe("simulated"); expect(p.steps.map(s => s.kind)).toEqual(["launch"]);
   expect(BigInt(p.requiredWei!)).toBe(10n * 10n ** 18n + BigInt(p.gasWei!));
+});
+it("refuses setup when funds cover the approval but not the deployment buffer",async()=>{
+  const f=fixture();f.options.input.devBuyUSDC="10";f.state.balance=10n*10n**18n+2n*10n**15n;
+  await expect(prepareLaunch(f.options)).rejects.toMatchObject({code:"BALANCE",message:expect.stringContaining("before starting setup")});
+});
+it("reports a conservative setup funding requirement without claiming deployment simulation",async()=>{
+  const f=fixture();f.options.input.devBuyUSDC="10";
+  const preview=await prepareLaunch(f.options);
+  expect(preview.setupFundingWei).toBe(String(10n*10n**18n+51_200_000_000_000_000n));
+  expect(preview.status).toBe("needs_setup");expect(preview.gasWei).toBeNull();
 });
 it.each([true, false])("plans changed creator rewards, dividends=%s", async dividends => {
   const f = fixture();

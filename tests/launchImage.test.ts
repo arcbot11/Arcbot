@@ -6,7 +6,14 @@ import { launchImageURI, launchImageSource } from "../lib/launches/image";
 import { verifyLaunchImage } from "../lib/launches/image-preflight";
 import { parseLaunchInput } from "../lib/launches/input";
 const photo = "https://pbs.twimg.com/media/Example-Photo?format=jpg&name=large";
+const thumbnail="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTxSXfJ1OwltWjWWusU8jPpOnyQAdr1uGXjhmoz5QBLdQ&s=10";
 beforeEach(() => vi.resetAllMocks());
+it("accepts the selected Google thumbnail while rejecting redirects and alternate hosts",()=>{
+  expect(launchImageURI(thumbnail)).toBe(new URL(thumbnail).toString());
+  expect(parseLaunchInput({name:"test",symbol:"TEST",imageURI:thumbnail}).imageURI).toBe(new URL(thumbnail).toString());
+  for(const value of [thumbnail+"&url=https://localhost",thumbnail.replace("gstatic.com","gstatic.com.evil.test"),thumbnail+"&q=tbn:duplicate",thumbnail.replace("/images?","/redirect?")])
+    expect(()=>launchImageURI(value)).toThrow();
+});
 it("accepts API photo and profile photo URLs without changing the selected artwork", () => {
   expect(launchImageURI(photo)).toBe(photo);
   const profile = "https://pbs.twimg.com/profile_images/2098226697560625155/V-fOj5yJ_400x400.jpg";

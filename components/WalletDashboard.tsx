@@ -16,7 +16,6 @@ import { PersistentNotices, usePersistentNotices } from "./PersistentNotices";
 import { ArcTradeControls } from "./ArcTradeControls";
 import {readTransactionStatus,waitForTransaction,type TransactionStatus} from "@/lib/arc/transaction-progress";
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import { WalletControlsPreview } from "./WalletControlsPreview";
 import { CopyWalletAddress } from "./CopyWalletAddress";
 import { useOtcSession, units, usdcUnits, ethUnits, webPost } from "./OtcClient";
@@ -128,7 +127,7 @@ export function WalletDashboard({address}:{address?:string}){
     {session.walletAddress&&<CreatorFeeClaims key={session.walletAddress} wallet={session.walletAddress} onComplete={()=>{setHoldingsRefresh(value=>value+1);void refresh();}}/>}
     <div className="otc-wallet-balances">{balanceCard(8453)}</div>
     {data?.baseUsdc?.balance!=null&&(BigInt(data.baseUsdc.balance)>0n||tab==="withdraw"&&asset==="usdc")&&<div className="otc-wallet-balances"><article><p className="arc-kicker">BASE / USDC</p><h2>{units(data.baseUsdc.balance)} <small>USDC</small></h2><p className="otc-fine">Base ETH is required for gas.</p>{tab==="withdraw"&&asset==="usdc"?<div className="base-withdraw-controls"><div className="otc-panel-title"><button type="button" className="otc-inline-button" disabled={busy} onClick={()=>{setTab("buy");setChain(5042);setAsset("native");setQuote(null);}}>Close withdrawal ×</button></div>{sendControls}<PersistentNotices notices={notices} dismiss={dismiss}/></div>:<button className="arc-button" disabled={busy||data.baseUsdc.available==null||BigInt(data.baseUsdc.available)<=0n} onClick={()=>{setTab("withdraw");setChain(8453);setAsset("usdc");setAmount("");setRecipient("");setQuote(null);}}>Withdraw USDC</button>}</article></div>}
-    <div className="otc-panel-title"><h2 id="move-funds" style={{scrollMarginTop:100}} ref={tradeHeading} tabIndex={-1}>Move funds</h2><Link className="arc-text-link" href="/otc">Open OTC market ↗</Link></div>
+    <div className="otc-panel-title"><h2 id="move-funds" style={{scrollMarginTop:100}} ref={tradeHeading} tabIndex={-1}>Move funds</h2></div>
     <div className="otc-tabs wallet-action-tabs" role="group" aria-label="Wallet action">{["buy","sell","swap","send"].map(action=><button key={action} disabled={busy} aria-pressed={tab===action} onClick={()=>{setTab(action as typeof tab);setChain(5042);setAsset("native");setAmount("");setRecipient("");setQuote(null);}}>{action[0].toUpperCase()+action.slice(1)}</button>)}</div>
     {tab==="buy"||tab==="sell"||tab==="swap"?<ArcTradeControls key={`${tab}:${tradeSelection.revision}`} initialToken={tradeSelection.token} side={tab} onNotice={setError} onBusyChange={setBusy} onCompleted={refreshAfterTransaction} refreshKey={holdingsRefresh}><PersistentNotices notices={notices} dismiss={dismiss}/></ArcTradeControls>:tab==="send"?sendControls:null}
     {tab==="send"&&<PersistentNotices notices={notices} dismiss={dismiss}/>}

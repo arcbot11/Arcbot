@@ -13,7 +13,7 @@ it.each(["@someone", other, "@GrokFan"])("blocks Grok assigning fees to %s", rec
   expect(grokLaunchFeeRejection({ ...launch, feeRecipient: recipient }, "GrOk", wallet)).toBe(GROK_EXTERNAL_LAUNCH_FEES);
 });
 
-it.each(["@someone", other])("silently rejects the actual X handler for external recipient %s", async recipient => {
+it.each(["@someone", other])("rejects a disabled launch before legacy recipient handling: %s", async recipient => {
   vi.stubEnv("X_REPLIES_ENABLED", "true");
   vi.stubEnv("X_STANDALONE_MENTIONS_ENABLED", "false");
   const updates: any[] = [];
@@ -43,7 +43,7 @@ it.each(["@someone", other])("silently rejects the actual X handler for external
   };
   try {
     await (retryInteraction as any)._handler(ctx, { postId: "123" });
-    expect(updates).toContainEqual(expect.objectContaining({ status: "rejected", commandKind: "grok_external_launch_fees_blocked" }));
+    expect(updates).toContainEqual(expect.objectContaining({ status: "rejected", safeError: "Unsupported operation" }));
     expect(updates.every(update => !update.responsePostId)).toBe(true);
     expect(actions).toEqual([]);
     expect(mutations).not.toContain("xReplies:reservePublication");
@@ -69,7 +69,7 @@ it("rejects at the execution boundary before wallet creation, reservation or sig
     xUserId: "trusted-author-id", sourcePostId: "123", text: "launch Example $EXAMPLE assign fees to @someone",
     parsedCommandJson: JSON.stringify({ ...launch, feeRecipient: "@someone" }),
   });
-  expect(result).toEqual({ ok: false, message: GROK_EXTERNAL_LAUNCH_FEES });
+    expect(result).toEqual({ ok: false, message: "Command not supported." });
   expect(mutations).toBe(0);
   expect(actions).toBe(0);
 });

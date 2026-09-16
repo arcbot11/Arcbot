@@ -8,6 +8,8 @@ import { LAUNCH_PORTAL, reviewedImplementations, approvalAbi, configAbi } from "
 import { rewardTarget } from "./prepare";
 import { verifyLaunchReceipt } from "./receipt";
 import type { LaunchStepTerms, VerifiedLaunch } from "./execution-types";
+import { launchCall } from "./execution-checks";
+import { launchFingerprint } from "./input";
 const abi=parseAbi(["function creator() view returns(address)","function token() view returns(address)","function quoteAsset() view returns(address)",
   "function converts() view returns(bool)","function trackerPayoutAsset() view returns(address)",
   "function rewardMode() view returns(uint8)","function rewardTracker() view returns(address)","function minimumShareBalance() view returns(uint96)",
@@ -19,8 +21,13 @@ export async function verifyMinedLaunchStep(owner:string,wallet:string,hash:Hex,
   await checkArcRpc(createArcRpc(config,transport),config);
   const [receipt,tx]=await Promise.all([client.getTransactionReceipt({hash}),client.getTransaction({hash})]);
   const canonicalBlock=await client.getBlock({blockNumber:receipt.blockNumber});
-  if(receipt.status!=="success"||canonicalBlock.hash!==receipt.blockHash||!same(tx.from,wallet))throw Error("Launch receipt is not verified.");
   const blockNumber=receipt.blockNumber,p=terms.preview,input=terms.input,account=getAddress(wallet);
+  const expectedCall=launchCall(terms);
+  if(receipt.status!=="success"||canonicalBlock.hash!==receipt.blockHash||canonicalBlock.number!==blockNumber
+    ||!same(receipt.transactionHash,hash)||!same(tx.hash,hash)||tx.blockNumber!==blockNumber||tx.blockHash!==receipt.blockHash
+    ||!same(tx.from,wallet)||!tx.to||!same(tx.to,expectedCall.to)||!same(tx.input,expectedCall.data)||tx.value!==expectedCall.value
+    ||!same(p.creator,wallet)||p.fingerprint!==launchFingerprint({owner,address:account},input))
+    throw Error("Launch receipt does not match the approved transaction.");
   if(terms.kind==="rewards"){
     const target=rewardTarget(input),value=await client.readContract({address:p.rewardConfig,abi:configAbi,functionName:"configFor",args:[account],blockNumber});
     if(value[0]!==target.mode||value[1]!==target.minimumShareBalance)throw Error("Holder reward setup was not verified.");
@@ -49,7 +56,9 @@ export async function verifyMinedLaunchStep(owner:string,wallet:string,hash:Hex,
     client.readContract({address:verified.splitter,abi,functionName:'converts',blockNumber}),
     client.readContract({address:verified.splitter,abi,functionName:'trackerPayoutAsset',blockNumber}),
   ]);
-  if(converts||!same(payout,record[10]))throw Error('Deployed payout currency differs from approved settings.');
+  // Creator-only launches have no dividend tracker or tracker payout asset.
+  const noDividendTracker=input.dividendBps===0&&same(String(tracker),zeroAddress);
+  if(converts||!(same(payout,record[10])||(noDividendTracker&&same(payout,zeroAddress))))throw Error('Deployed payout currency differs from approved settings.');
   const numeric=shares.map(Number),sum=numeric.reduce((a,b)=>a+b,0);
   const expected=[input.creatorBps,input.burnBps,input.dividendBps,input.liquidityBps];
   // The splitter may store shares after treasury allocation. Compare proportions.

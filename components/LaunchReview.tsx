@@ -41,11 +41,13 @@ export function LaunchReview({ input, wallet, walletLabel, preview, expired = fa
         <div><dt>Spendable Arc USDC at check</dt><dd>{displayUsdc(formatUnits(BigInt(preview.availableWei), 18))}</dd></div>
         <div><dt>Gas allowance</dt><dd>{preview.gasWei === null ? "Pending setup simulation" : `${formatUnits(BigInt(preview.gasWei), 18)} USDC`}</dd></div>
         <div><dt>Total funding required</dt><dd>{preview.requiredWei === null ? "Pending setup simulation" : `${formatUnits(BigInt(preview.requiredWei), 18)} USDC`}</dd></div>
+        {preview.status === "needs_setup" && preview.setupFundingWei && <div><dt>USDC needed before setup</dt><dd>{formatUnits(BigInt(preview.setupFundingWei),18)} USDC</dd></div>}
       </dl>
       <ol>{preview.steps.map(step => <li key={step.kind}>
         {step.kind === "rewards" ? "Configure holder rewards" : step.kind === "approval" ? `Approve creator-buy ${input.pairToken}` : "Create token and pool"}
       </li>)}</ol>
       {preview.status === "needs_setup" && <p>Setup calls were checked. The launch still needs simulation after setup.</p>}
+      {preview.status === "needs_setup" && preview.setupFundingWei && <p className={styles.hint}>Includes a launch gas buffer. Only actual transaction fees are spent.</p>}
       <p className={styles.hint}>Predicted token address</p><code className={styles.address}>{preview.predictedToken}</code>
       <p className={styles.hint}>No token has been deployed at this predicted address by this preparation.</p>
     </div> : <p className={styles.hint}>{expired ? "Simulation expired. Prepare again for current network checks." : "Save and prepare to check funding and simulate."}</p>}

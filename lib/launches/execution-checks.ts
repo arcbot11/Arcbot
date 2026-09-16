@@ -3,6 +3,7 @@ import { approvalAbi, configAbi, LAUNCH_PORTAL, portalAbi } from "./contracts";
 import { encodeLaunch, rewardTarget } from "./prepare";
 import { launchFingerprint } from "./input";
 import { LAUNCH_PAIRS } from "./x-pair";
+import { assertLaunchQuote } from "./quote";
 import { LaunchError, LAUNCH_EXECUTION_ENABLED, LAUNCH_MAX_GAS, LAUNCH_TOTAL_GAS_WEI, LAUNCH_AUTHORIZATION_MS } from "./policy";
 import type { LaunchRun } from "./execution-types";
 import { ARC_GAS_POLICY } from "../project-config";
@@ -15,9 +16,14 @@ export function assertLaunchAuthorization(run: LaunchRun, now = Date.now()) {
   const expires = run.authorizationExpiresAt ?? run.preview.createdAt + LAUNCH_AUTHORIZATION_MS;
   if (!Number.isSafeInteger(expires) || now >= expires) throw new LaunchError("AUTH_EXPIRED", "Launch authorization expired. Review a new draft before continuing.");
 }
+export function assertLaunchPortal(portal: unknown) {
+  if (typeof portal !== "string" || portal.toLowerCase() !== LAUNCH_PORTAL.toLowerCase())
+    throw new LaunchError("PORTAL_CHANGED", "Prepare a new draft for the current launch Portal.");
+}
 export function launchCall(terms: LaunchStepTerms) {
   const p=terms.preview, input=terms.input, quote=LAUNCH_PAIRS[input.pairToken];
-  if(p.portal.toLowerCase()!==LAUNCH_PORTAL.toLowerCase())throw new LaunchError("PORTAL_CHANGED","Prepare a new draft for the current launch Portal.");
+  assertLaunchPortal(p.portal);
+  if (p.quote) assertLaunchQuote(input.pairToken, parseUnits(input.devBuyUSDC, 6), p.quote);
   const amount=p.quote ? BigInt(p.quote.devBuy) : parseUnits(input.devBuyUSDC,6);
   if (p.quote && (p.quote.address.toLowerCase()!==quote.address || p.quote.symbol!==input.pairToken || p.quote.decimals!==quote.decimals)) throw Error("Launch quote identity changed.");
   return terms.kind === "launch" ? {to:LAUNCH_PORTAL,data:encodeLaunch(input,p.tokenSalt,p.hookSalt,p.quote),value:0n}

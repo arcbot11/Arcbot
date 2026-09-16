@@ -6,8 +6,8 @@ import { launchPreparationEnabled, LAUNCH_DRAFT_TTL_MS, LAUNCH_PREVIEW_MS } from
 
 const args = { secret: v.string(), owner: v.string(), address: v.string(), requestId: v.string() };
 type Args = { secret: string; owner: string; address: string; requestId: string };
-export async function authorize(ctx: QueryCtx | MutationCtx, a: Args) {
-  if (!launchPreparationEnabled()) throw Error("Launch preparation is disabled.");
+export async function authorize(ctx: QueryCtx | MutationCtx, a: Args, requirePreparation = true) {
+  if (requirePreparation && !launchPreparationEnabled()) throw Error("Launch preparation is disabled.");
   const secret = process.env.WEB_AUTH_SECRET;
   if (!secret || secret.length < 32 || a.secret !== secret) throw Error("Unauthorized.");
   if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(a.requestId)) throw Error("Invalid request ID.");
@@ -61,7 +61,7 @@ export const create = mutation({ args: { ...args, inputJson: v.string() }, handl
   return publicDraft((await ctx.db.get(id))!);
 } });
 export const read = query({ args, handler: async (ctx, a) => {
-  const identity = await authorize(ctx, a), row = await find(ctx, a);
+  const identity = await authorize(ctx, a, false), row = await find(ctx, a);
   if (!row || row.address !== identity.address) return null;
   return publicDraft(row);
 } });

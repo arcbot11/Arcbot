@@ -9,6 +9,27 @@ import { launchPriceBlocks, stableLaunchPrice } from "./price-history";
 
 export type LaunchQuote = { symbol: LaunchPair; address: Address; decimals: number; start: string; bond: string; devBuy: string; block: string;
   priceEvidence?:{method:"historical-median";pool:string;sqrtPriceX96:string;blocks:Array<{number:string;hash:string;timestamp:string}>} };
+/** Validate frozen amounts before approval as well as before deployment. */
+export function assertLaunchQuote(pair: LaunchPair, devBuyUsdc6: bigint, quote: LaunchQuote) {
+  const token = LAUNCH_PAIRS[pair];
+  const fail = (): never => { throw new LaunchError("QUOTE_CHANGED", "Launch quote differs from the approved settings. Prepare a new draft."); };
+  if (!quote || quote.symbol !== pair || typeof quote.address !== "string" || quote.address.toLowerCase() !== token.address || quote.decimals !== token.decimals) fail();
+  for (const value of [quote.start, quote.bond, quote.devBuy])
+    if (typeof value !== "string" || !/^(0|[1-9][0-9]{0,77})$/.test(value) || BigInt(value) >= 2n ** 256n) fail();
+  const start = BigInt(quote.start), bond = BigInt(quote.bond), buy = BigInt(quote.devBuy);
+  if (start <= 0n || bond <= start || (devBuyUsdc6 > 0n ? buy <= 0n : buy !== 0n)) fail();
+  if (pair === "USDC") {
+    if (start !== 2_500_000_000n || bond !== 45_000_000_000n || buy !== devBuyUsdc6) fail();
+    return;
+  }
+  const reference = quote.priceEvidence;
+  if (!reference || reference.method !== "historical-median" || !/^[1-9][0-9]{0,48}$/.test(reference.sqrtPriceX96)) fail();
+  const sqrt = BigInt(reference!.sqrtPriceX96);
+  if (sqrt >= 2n ** 160n) fail();
+  const square = sqrt * sqrt, q192 = 1n << 192n;
+  const convert = (usdc: bigint) => BigInt(token.address) < BigInt(ARC_USDC) ? usdc * q192 / square : usdc * square / q192;
+  if (start !== convert(2_500_000_000n) || bond !== convert(45_000_000_000n) || buy !== convert(devBuyUsdc6)) fail();
+}
 const abi = parseAbi([
   "function getPool(address,address,uint24) view returns(address)",
   "function slot0() view returns(uint160,int24,uint16,uint16,uint16,uint8,bool)",

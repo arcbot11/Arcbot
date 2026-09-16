@@ -3,6 +3,7 @@ import { assertLaunchEnabled } from "../../../../lib/launches/execution-checks";
 import { NextRequest } from "next/server";
 import { ConvexHttpClient } from "convex/browser";
 import { makeFunctionReference } from "convex/server";
+import { ConvexError } from "convex/values";
 import { z } from "zod";
 import type { Hex } from "viem";
 import { websiteSession, WebError, json } from "../../../../lib/otc/http";
@@ -42,7 +43,6 @@ function backend() {
   return { client: new ConvexHttpClient(url), secret };
 }
 export async function GET(request: NextRequest) {
-  if (!launchPreparationEnabled()) return unavailable();
   try {
     const session = await websiteSession(request), requestId = z.string().uuid().parse(request.nextUrl.searchParams.get("requestId"));
     const { client, secret } = backend();
@@ -54,19 +54,30 @@ export async function GET(request: NextRequest) {
 }
 export async function POST(request: NextRequest) {
   let executionRequested=false;
-  if (!launchPreparationEnabled()) return unavailable();
+  let acceptanceAttempted=false;
   try {
     const session = await websiteSession(request, true);
     const body = payload.parse(await boundedJson(request, 8192));
     executionRequested=body.action==="execute"||body.action==="resume";
     const { client, secret } = backend(), args = { secret, owner: session.owner, address: session.walletAddress, requestId: body.requestId };
     if (body.action === "execute" || body.action === "resume") {
-      assertLaunchEnabled();
-      if(body.action === "execute") await launchBackend(session.owner,session.walletAddress,body.requestId).mutate("accept",{revision:body.revision});
+      if(body.action === "execute"){
+        if(!launchPreparationEnabled()) throw new LaunchError("EXECUTION_DISABLED", "Launch preparation is paused.");
+        assertLaunchEnabled();
+        acceptanceAttempted=true;
+        try{await launchBackend(session.owner,session.walletAddress,body.requestId).mutate("accept",{revision:body.revision});}
+        catch(error){
+          if(error instanceof ConvexError&&error.data?.acceptance==="rejected"&&typeof error.data.message==="string")
+            return json({error:error.data.message,acceptance:"rejected"},409);
+          throw error;
+        }
+      }
+      acceptanceAttempted=true;
       const run=await advanceLaunch(session.owner,session.walletAddress,body.requestId);
       const draft=await client.query(makeFunctionReference<"query">("launchDrafts:read"),args);
       return json({...draft,run});
     }
+    if(!launchPreparationEnabled()) return unavailable();
     if (body.action === "create") {
       const input = parseLaunchInput(body.input);
       return json(await client.mutation(makeFunctionReference<"mutation">("launchDrafts:create"), { ...args, inputJson: JSON.stringify(input) }));
@@ -96,5 +107,10 @@ export async function POST(request: NextRequest) {
       // This releases only the computation lease. It never touches funds or signing locks.
       await client.mutation(makeFunctionReference<"mutation">("launchDrafts:endPreparation"), { ...args, prepareToken: draft.prepareToken }).catch(() => {});
     }
-  } catch (e) { return failure(e,executionRequested); }
+  } catch (e) {
+    const response=failure(e,executionRequested);
+    if(!acceptanceAttempted && (e instanceof WebError || e instanceof LaunchError || e instanceof z.ZodError || e instanceof RequestBodyError))
+      return json({...await response.json(),acceptance:"rejected"},response.status);
+    return response;
+  }
 }

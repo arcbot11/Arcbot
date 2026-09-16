@@ -38,6 +38,12 @@ it("shows actual prepared funding and gas when a full simulation passed", () => 
     predictedToken: "0x2222", steps: [{ kind: "launch" }] } as unknown as LaunchPreview);
   expect(html).toContain("Simulation passed"); expect(html).toContain("0.155858648 USDC"); expect(html).toContain("30.155858648 USDC");
 });
+it("labels the setup funding buffer separately from actual estimated gas",()=>{
+  const html=render({status:"needs_setup",availableWei:"100000000000000000000",gasWei:null,requiredWei:null,setupFundingWei:"10120000000000000000",
+    predictedToken:"0x2222",steps:[{kind:"approval"},{kind:"launch"}]} as unknown as LaunchPreview);
+  expect(html).toContain("USDC needed before setup");expect(html).toContain("10.12 USDC");
+  expect(html).toContain("Only actual transaction fees are spent");expect(html).not.toContain("Simulation passed");
+});
 it("labels expired simulations without showing a stale funding amount", () => {
   const html = render(null, true); expect(html).toContain("Simulation expired"); expect(html).not.toContain("Simulation passed");
 });

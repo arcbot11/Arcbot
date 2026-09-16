@@ -1,5 +1,4 @@
-import {ConvexHttpClient} from "convex/browser";
-import {makeFunctionReference} from "convex/server";
+import {launchRegistryRows} from "./registry-pages";
 import { createHash } from "node:crypto";
 import { decodeFunctionResult, encodeFunctionData, getAddress, type Address } from "viem";
 import { arcConfigFromEnv } from "../arc/config";
@@ -13,7 +12,7 @@ import { PORTAL7 } from "./contracts";
 export async function creatorTokens(wallet:Address,diagnostics?:{incomplete?:boolean}) {
   const discoveries=await Promise.allSettled([
     fetch("https://arguspad.io/api/tokens",{cache:"no-store",signal:AbortSignal.timeout(15000)}).then(async r=>{if(!r.ok)throw Error("Creator discovery unavailable.");const rows:unknown=await r.json();if(!Array.isArray(rows))throw Error("Creator discovery unavailable.");return rows;}),
-    process.env.NEXT_PUBLIC_CONVEX_URL?new ConvexHttpClient(process.env.NEXT_PUBLIC_CONVEX_URL).query(makeFunctionReference<"query">("launchExecution:creatorTokens"),{address:wallet}):Promise.resolve([]),
+    launchRegistryRows("creatorTokens",wallet),
   ]);
   const rows:unknown[]=discoveries.flatMap(r=>r.status==="fulfilled"&&Array.isArray(r.value)?r.value:[]);
   if(diagnostics)diagnostics.incomplete=discoveries.some(r=>r.status==="rejected");

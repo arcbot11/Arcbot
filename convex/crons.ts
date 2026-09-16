@@ -2,6 +2,7 @@ import { cronJobs, makeFunctionReference } from "convex/server";
 import { internal } from "./_generated/api";
 
 const crons = cronJobs();
+crons.interval("recover unfinished launches", { seconds: 30 }, makeFunctionReference<"mutation">("launchExecution:sweep"));
 crons.interval("maintain export ownership indexes", { minutes: 1 }, makeFunctionReference<"mutation">("walletExportMaintenance:migrate"));
 crons.interval("clean up expired key export verification", { minutes: 1 }, makeFunctionReference<"mutation">("walletExportMaintenance:cleanup"));
 crons.interval("clean up expired web sign-ins", { minutes: 1 }, internal.webAuth.cleanup);

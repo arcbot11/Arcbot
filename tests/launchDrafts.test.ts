@@ -37,6 +37,12 @@ it("completed launches do not consume the active draft quota",async()=>{
   await expect(f.create()).resolves.toMatchObject({status:"draft"});
 });
 afterEach(() => vi.unstubAllEnvs());
+it("keeps paused draft reads authenticated while denying new preparation",async()=>{
+  const f=fixture();await f.create();vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED","false");
+  await expect(f.call(drafts.read)).resolves.toMatchObject({requestId,address});
+  await expect(f.call(drafts.read,{owner:"2"})).rejects.toThrow("ownership");
+  await expect(f.call(drafts.beginPreparation)).rejects.toThrow("disabled");
+});
 it("retains one salt and one draft when the request is retried", async () => {
   const f = fixture(), a = await f.create(), b = await f.create();
   expect(a).toEqual(b); expect(f.tables.launchDrafts).toHaveLength(1);

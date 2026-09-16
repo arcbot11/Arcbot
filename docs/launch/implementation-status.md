@@ -1,5 +1,7 @@
 # Launch infrastructure: preparation foundation
 
+Historical foundation notes follow. For the current Portal 7 implementation and validation, see [September 16 readiness](readiness-2026-09-16.md).
+
 Implemented locally on September 13, 2026. No deployment, environment change, transaction signing, token deployment, or customer feature enablement was performed.
 
 ## Built
