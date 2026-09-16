@@ -1,0 +1,5370 @@
+{
+  "snapshotAt": "2026-09-16T12:32:01.993Z",
+  "blockNumber": "21157643",
+  "screen": {
+    "minVolume24hUsd": 1000,
+    "minLiquidityUsd": 500,
+    "minTrades": 10,
+    "minVolumeToMarketCap": 0.01
+  },
+  "reviewed": 760,
+  "verified": [
+    {
+      "address": "0xb4337b8d148aa7a1f2124d9f6362234fff0fbbbb",
+      "name": "Tether",
+      "symbol": "USDT",
+      "marketCap": 6843190.581516413,
+      "volume24h": 170696.36060500005,
+      "liquidityUsd": 240811.378748,
+      "trades": 247,
+      "launchedAt": "2026-09-16T02:00:25.000Z",
+      "pool": "0x5dbf58814d0736fa09b6ad7f290800b805dd383d",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xa163d7624da3b5d9182c50eab5b8cd247ae861bb",
+      "name": "Minara",
+      "symbol": "MINARA",
+      "marketCap": 2443344.8421145245,
+      "volume24h": 408448.45818199887,
+      "liquidityUsd": 16035.65671,
+      "trades": 8273,
+      "launchedAt": "2026-09-16T09:54:01.000Z",
+      "pool": "0xfd0dc7b3591cb578fd1affcd652ca6e2907c63e9",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xf76b1d00bd3d63a37246b5f512074e864010e33d",
+      "name": "Polly",
+      "symbol": "POLL",
+      "marketCap": 2361382.157568915,
+      "volume24h": 2074389.5730349992,
+      "liquidityUsd": 135989.484796,
+      "trades": 9340,
+      "launchedAt": "2026-09-15T07:56:30.000Z",
+      "pool": "0x5bc5ced48bec9260c8d626269f44e22808b8d2c1",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x25b2f893ec15808dbdc542938a4a091ece7aec44",
+      "name": "Bozo.fun",
+      "symbol": "BOZO",
+      "marketCap": 809962.8356112756,
+      "volume24h": 66361.61744599999,
+      "liquidityUsd": 739.935674,
+      "trades": 1554,
+      "launchedAt": "2026-09-16T08:20:48.000Z",
+      "pool": "0xb5f114cfd2c6751219f9e803b662bb5aa1127eaf",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x1c98d896328c35a751ce18323f47139a44188001",
+      "name": "creo.family",
+      "symbol": "CREO",
+      "marketCap": 631756.0422818122,
+      "volume24h": 141817.8446830004,
+      "liquidityUsd": 2453.95048,
+      "trades": 5239,
+      "launchedAt": "2026-09-16T06:52:08.000Z",
+      "pool": "0x14d4cfffc3353f6728c4f4f932eb1e92c92e76ac",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x1cd3af163b1deb67d477aeb0d0ab1fae0955bbbb",
+      "name": "BigShort",
+      "symbol": "BIG",
+      "marketCap": 271020.1772986916,
+      "volume24h": 348746.143188,
+      "liquidityUsd": 48144.467914,
+      "trades": 991,
+      "launchedAt": "2026-09-16T03:48:54.000Z",
+      "pool": "0x1d70de4bd08a3741028ce053eec9c05ddace5f3e",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xcb92a075db3d4e965f37936da2100902344650e3",
+      "name": "ARCADE",
+      "symbol": "ARCADE",
+      "marketCap": 172258.70476239338,
+      "volume24h": 95185.14280799999,
+      "liquidityUsd": 32345.724046,
+      "trades": 1027,
+      "launchedAt": "2026-09-16T03:22:06.000Z",
+      "pool": "0x183fff18ccbdda0b5aa1c9d9ddeef00d3803b8c0",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x2c6988bccbf6cf2ec0f15bf1cae16309cdb4c90a",
+      "name": "getricher",
+      "symbol": "€€€€",
+      "marketCap": 155705.8497139972,
+      "volume24h": 363732.7813299996,
+      "liquidityUsd": 37260.136208,
+      "trades": 1042,
+      "launchedAt": "2026-09-16T11:57:01.000Z",
+      "pool": "0xb926c5441877ab73bdfbf89c3fa2b596631d0d59",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xe60e2bcd092b78092a4a4010de1ccaadf5c03cca",
+      "name": "Kennys 401K",
+      "symbol": "401K",
+      "marketCap": 88292.77442382251,
+      "volume24h": 394395.01717899856,
+      "liquidityUsd": 20316.434158,
+      "trades": 2416,
+      "launchedAt": "2026-07-30T04:19:29.000Z",
+      "pool": "0xdd58c894e2a0239a8aea88a9ebbcfe69fb23d43b",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x00db48c842c9f0224c991d0aa4f54fbfb7b11a49",
+      "name": "AKA OFFICIAL",
+      "symbol": "AKA",
+      "marketCap": 69808.78436578896,
+      "volume24h": 10696.775611,
+      "liquidityUsd": 19098.610758,
+      "trades": 33,
+      "launchedAt": "2026-09-16T05:11:30.000Z",
+      "pool": "0x14e62fa2d7937763b0af762c91275915e770e4f9",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x88714cb0a6ecba2897e3e9d79893fcf7b0e79d95",
+      "name": "Arc Pepe",
+      "symbol": "PEPE",
+      "marketCap": 55871.21309106965,
+      "volume24h": 131053.14764200001,
+      "liquidityUsd": 20928.603994,
+      "trades": 1829,
+      "launchedAt": "2026-08-01T13:47:52.000Z",
+      "pool": "0xff01ba36e0ff8bf0bf0c50353d3e7c09689c5dd3",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xebb871bc394e83008120fab3c9ed5773642a29a1",
+      "name": "Arcanium Trade",
+      "symbol": "ARCANIUM",
+      "marketCap": 48899.57300143211,
+      "volume24h": 151577.20267799997,
+      "liquidityUsd": 18165.102048,
+      "trades": 1307,
+      "launchedAt": "2026-09-06T14:53:45.000Z",
+      "pool": "0xcc35225ebf0bb79fc1e5a1c5ffe383ba06a6c1e8",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xca7fe9f7e50379c731d68347305822be9b50a628",
+      "name": "flamingo",
+      "symbol": "FLAMINGO",
+      "marketCap": 47878.955999723206,
+      "volume24h": 42452.42506999999,
+      "liquidityUsd": 21384.861028,
+      "trades": 366,
+      "launchedAt": "2026-09-15T23:41:47.000Z",
+      "pool": "0x4159b1a7ffa2b293d9fec87a549c1af71bd1502b",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x8b8b3f5ee2dddd6ef1850d97a267bc4848f6bd63",
+      "name": "pounch",
+      "symbol": "POUNCH",
+      "marketCap": 43817.949441181365,
+      "volume24h": 144778.04895800003,
+      "liquidityUsd": 17501.610504,
+      "trades": 1376,
+      "launchedAt": "2026-09-14T18:17:32.000Z",
+      "pool": "0x3dd4f5241722449b3e899584377d1ef68f9ed342",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x3ca1fcfd26cefbb1339ce42cafe1a9dc6107fa12",
+      "name": "Arcguy",
+      "symbol": "ARCGUY",
+      "marketCap": 35808.329901380566,
+      "volume24h": 190253.09057999912,
+      "liquidityUsd": 16977.593176,
+      "trades": 1738,
+      "launchedAt": "2026-08-03T14:00:27.000Z",
+      "pool": "0x27d946ff536360d4586c57b825e188ff6a6998cb",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x9012a7a28a91d30480e95e56efcbf610cadc6666",
+      "name": "POGOLaunch",
+      "symbol": "POGO",
+      "marketCap": 29064.264707158905,
+      "volume24h": 17519.345618999996,
+      "liquidityUsd": 12038.639662,
+      "trades": 1125,
+      "launchedAt": "2026-09-16T10:31:32.000Z",
+      "pool": "0x96a9646c756017458052a0a225cdeaea2ca95cad",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xd1c83baa481e88a33123f30853aead88223a3098",
+      "name": "Arc Pepe",
+      "symbol": "ARCPEPE",
+      "marketCap": 26502.90580880384,
+      "volume24h": 43828.74601200001,
+      "liquidityUsd": 12422.415834,
+      "trades": 532,
+      "launchedAt": "2026-07-17T07:46:45.000Z",
+      "pool": "0x1e1f4aee934b18422eacac428e65bdb6db9b0480",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x6d73b37e277e6e69956f261c5d215dfcbd7ddce1",
+      "name": "ArcPay",
+      "symbol": "ARCPAY",
+      "marketCap": 26038.35322194733,
+      "volume24h": 54791.360926999994,
+      "liquidityUsd": 13167.001038,
+      "trades": 1191,
+      "launchedAt": "2026-09-16T11:10:03.000Z",
+      "pool": "0x3f6c676fe2bd25138907ff8c6ee0d7b0dd980850",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x97796f26d55826f70463b27df719e2fadd162e97",
+      "name": "ARDOG",
+      "symbol": "ARDOG",
+      "marketCap": 25871.280474535455,
+      "volume24h": 109151.44966300005,
+      "liquidityUsd": 12748.909828,
+      "trades": 2042,
+      "launchedAt": "2026-07-29T19:42:00.000Z",
+      "pool": "0xa641216a5c47571dc90b5797d507bb191bbf1e24",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x7d3642e61d3c8b25496553f46e498d198e334760",
+      "name": "Boston Internet Financial Services",
+      "symbol": "BIFS",
+      "marketCap": 22985.051614561144,
+      "volume24h": 53901.26665800004,
+      "liquidityUsd": 11182.59795,
+      "trades": 1226,
+      "launchedAt": "2026-07-30T07:41:21.000Z",
+      "pool": "0x657bc20edaa7ac256a3d29f0ae2e53ed623803e5",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x0ceeae397a5ad7956b69bd248e8589cec90410b0",
+      "name": "Archeese",
+      "symbol": "CHZ",
+      "marketCap": 22511.996991779346,
+      "volume24h": 7505.365481000001,
+      "liquidityUsd": 1992.33707,
+      "trades": 32,
+      "launchedAt": "2026-09-16T11:12:54.000Z",
+      "pool": "0x608f793b811d83ba69106cbf1ef193e9686c5f0a",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x6af82910555d136702b2e0668e86341fa417b4fa",
+      "name": "CREDIT DOG",
+      "symbol": "CREDITDOG",
+      "marketCap": 20522.72143392829,
+      "volume24h": 97620.98946200007,
+      "liquidityUsd": 10391.269452,
+      "trades": 915,
+      "launchedAt": "2026-09-16T06:13:42.000Z",
+      "pool": "0xbb4c063694d1224e5efb4d977530a50b8959767b",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x38d5bd4737fc40cd4dfd5454c665024ed600c854",
+      "name": "Percy the Pensioner",
+      "symbol": "PERCY",
+      "marketCap": 20293.74888511738,
+      "volume24h": 14035.360224999999,
+      "liquidityUsd": 10211.843938,
+      "trades": 181,
+      "launchedAt": "2026-09-02T17:05:30.000Z",
+      "pool": "0x6d5dae4269bf99085e765766a56e61f8959fd6d3",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xaf71f8168ee9fe059efadd12a7c88a49f7051d0c",
+      "name": "just buy 1 USDC",
+      "symbol": "1",
+      "marketCap": 18192.49167826928,
+      "volume24h": 128596.81405799999,
+      "liquidityUsd": 9987.913292,
+      "trades": 1732,
+      "launchedAt": "2026-07-29T20:50:03.000Z",
+      "pool": "0x8f4d8cb103826ba6a14ce1a6b0ac2fdd71bda05b",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x96574e8169cdad3257ddbbe12b73503dc5bbb865",
+      "name": "ArcBrett",
+      "symbol": "BRETT",
+      "marketCap": 17034.77982218781,
+      "volume24h": 20731.955122999996,
+      "liquidityUsd": 8743.536022,
+      "trades": 314,
+      "launchedAt": "2026-09-16T12:00:19.000Z",
+      "pool": "0x4a8fb5213b25939114a5e51bbe24ad3550c8c4be",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x48711dcb2747740c5d0b7b0c070550d52bc285a0",
+      "name": "Koi fish",
+      "symbol": "KOI",
+      "marketCap": 16940.547287411777,
+      "volume24h": 141076.85438400102,
+      "liquidityUsd": 13074.629628,
+      "trades": 940,
+      "launchedAt": "2026-09-15T22:43:02.000Z",
+      "pool": "0xe577ef696e7417868833e8f2b90e1d4141e28d73",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x3d1c15916d852fa8ce41708bc55e55ba2cdd55d0",
+      "name": "ZYORA",
+      "symbol": "ZYORA",
+      "marketCap": 16893.136707575486,
+      "volume24h": 40528.70045799997,
+      "liquidityUsd": 12792.219786,
+      "trades": 500,
+      "launchedAt": "2026-09-16T11:27:17.000Z",
+      "pool": "0xde29cc42e9c5cd5ddafd421a9b432678dca42e52",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x688c763b0870d6e40bc605dc72405b0c789c0087",
+      "name": "Lift cat",
+      "symbol": "LIFTCAT",
+      "marketCap": 15954.008567509096,
+      "volume24h": 25855.22486200003,
+      "liquidityUsd": 6659.021908,
+      "trades": 428,
+      "launchedAt": "2026-09-13T12:12:20.000Z",
+      "pool": "0x1852dcbe4f3ab7417d4c0a7d6764253e8edf3ac4",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xf4daeeeecbc1b44c65562695428f597dbd436256",
+      "name": "Scout",
+      "symbol": "SCOUT",
+      "marketCap": 15495.069898712189,
+      "volume24h": 10823.767653999997,
+      "liquidityUsd": 7594.835442,
+      "trades": 94,
+      "launchedAt": "2026-08-03T09:51:29.000Z",
+      "pool": "0x41c7a88bf0bb6d32061494f154c83699c3b9e7d7",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xce722fad739e2dd07fb8bcfdfb2dc35e38575b19",
+      "name": "富贵",
+      "symbol": "富贵",
+      "marketCap": 14950.984463227,
+      "volume24h": 52731.68799899992,
+      "liquidityUsd": 5064.651328,
+      "trades": 984,
+      "launchedAt": "2026-09-16T06:14:33.000Z",
+      "pool": "0x20a3f858d56f7df3212c860b64c9c432f1a76825",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x01dc16d5b1ad7599b3468866eb074b194731390b",
+      "name": "Arcode",
+      "symbol": "ARCODE",
+      "marketCap": 13500.783524456263,
+      "volume24h": 3309.2120490000007,
+      "liquidityUsd": 11618.424098,
+      "trades": 121,
+      "launchedAt": "2026-09-16T10:56:17.000Z",
+      "pool": "0x58ed06f429bb0b6dc7f18fbf73760b658927810e",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x517b95ae1f8ccafaba3d84eb66e9df007b2ca88a",
+      "name": "Tolly Toad",
+      "symbol": "TOLLYTOAD",
+      "marketCap": 12770.541984097827,
+      "volume24h": 49225.60149799999,
+      "liquidityUsd": 6032.82807,
+      "trades": 702,
+      "launchedAt": "2026-09-16T02:40:09.000Z",
+      "pool": "0x9a07c91bda8232996471b76d96c11768d11709c0",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xae411587460f7eb8e689d800cd8ad52e35ebff0c",
+      "name": "ALLR",
+      "symbol": "ALLR",
+      "marketCap": 12616.086050874328,
+      "volume24h": 91786.16144399997,
+      "liquidityUsd": 5808.977026,
+      "trades": 1183,
+      "launchedAt": "2026-09-16T01:40:12.000Z",
+      "pool": "0x305967873f81d9b89f41548e4fdf698b131a55d7",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x893963d0c508912d8c2de816df9e185dc75fc97c",
+      "name": "Dog In Circle",
+      "symbol": "DIC",
+      "marketCap": 12086.595629499767,
+      "volume24h": 2480.53255,
+      "liquidityUsd": 6456.638634,
+      "trades": 33,
+      "launchedAt": "2026-07-29T20:32:16.000Z",
+      "pool": "0xb2a02b872b8766e3e7cd5134aadc5041c6ec5eb2",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xc4271bc608753630ca347b1e5227d13269a08330",
+      "name": "radardex",
+      "symbol": "RADAR",
+      "marketCap": 11994.828912907835,
+      "volume24h": 86486.07509299992,
+      "liquidityUsd": 6366.64271,
+      "trades": 1105,
+      "launchedAt": "2026-09-16T04:31:09.000Z",
+      "pool": "0x90fe1a8d652a95eeb4cc2a2cfc1253c84d9e9e7f",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x08735c3cdd759a2ab889be554e3641df6a4f60b2",
+      "name": "Arctificial Inu",
+      "symbol": "ARCINU",
+      "marketCap": 11879.925535815017,
+      "volume24h": 56696.84475300003,
+      "liquidityUsd": 6091.531142,
+      "trades": 892,
+      "launchedAt": "2026-09-16T11:09:13.000Z",
+      "pool": "0x86f9f85c89c18fce2e5e883ec4c0020e8cd89d02",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x874caacb95e0d03df5cc87367abcab57dac2e512",
+      "name": "Flappy Tolly",
+      "symbol": "FLAPPY",
+      "marketCap": 10685.407128859662,
+      "volume24h": 1952.7855350000002,
+      "liquidityUsd": 4594.404314,
+      "trades": 29,
+      "launchedAt": "2026-09-10T18:52:43.000Z",
+      "pool": "0x7e2f2383aaf30c5e5304ef53856302f08f71cc50",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x6695a0e3539435befeba98ee9a46cc4148d99616",
+      "name": "COALA",
+      "symbol": "COALA",
+      "marketCap": 10576.524136561042,
+      "volume24h": 45234.176390000015,
+      "liquidityUsd": 605.562496,
+      "trades": 515,
+      "launchedAt": "2026-09-16T05:49:23.000Z",
+      "pool": "0x932fc954cddfefb1a7876eeec9f58d850126f7ad",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x697477d050c83ee9de505766ecefa7862e50d70d",
+      "name": "Reactor Online",
+      "symbol": "REACTOR",
+      "marketCap": 10553.323505981287,
+      "volume24h": 11773.739233,
+      "liquidityUsd": 4546.569096,
+      "trades": 143,
+      "launchedAt": "2026-07-17T02:32:23.000Z",
+      "pool": "0x5aefe3d2aab7802d6a609db3c9bbe36bf39c9803",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x48070482e284eeed5c73db7994330d1176370087",
+      "name": "Tfil",
+      "symbol": "TFIL",
+      "marketCap": 10449.203513793062,
+      "volume24h": 16515.958851999996,
+      "liquidityUsd": 5187.005806,
+      "trades": 251,
+      "launchedAt": "2026-09-15T23:58:37.000Z",
+      "pool": "0x0818e84d87921aca350112fe2b7b55f02058b72c",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xbbed9083496c600289628b10b9dcf29199a30087",
+      "name": "TRENBOLON",
+      "symbol": "TRB",
+      "marketCap": 10416.805996110363,
+      "volume24h": 76835.61878300007,
+      "liquidityUsd": 6083.004988,
+      "trades": 861,
+      "launchedAt": "2026-09-09T03:09:55.000Z",
+      "pool": "0xa0af49c5be45d451d3cb9b6d945105933ca72de9",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xb76b1b6dea3dc3f040a07f9bc29150eefe1e8853",
+      "name": "USDC",
+      "symbol": "C",
+      "marketCap": 10291.70206025541,
+      "volume24h": 1483.949668,
+      "liquidityUsd": 1070.968536,
+      "trades": 49,
+      "launchedAt": "2026-09-16T02:13:09.000Z",
+      "pool": "0x89d3e2b2fdcd119934ef2ab8fd4b08cec1b1d773",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xa7c3295d031790010c0d6d659af3edd8d11f01b7",
+      "name": "PEGGED",
+      "symbol": "PEGGED",
+      "marketCap": 10232.112289761786,
+      "volume24h": 23128.316027000004,
+      "liquidityUsd": 5356.416146,
+      "trades": 157,
+      "launchedAt": "2026-07-29T21:01:45.000Z",
+      "pool": "0x43b38251ce23b4982d0c303086cb4d6c27c0e1f9",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xf58cd8a6c95e03037d1eda5c523ff4c1bdc1ff2d",
+      "name": "BUILT DIFFERENT",
+      "symbol": "BUILT",
+      "marketCap": 10092.980415209182,
+      "volume24h": 29477.115049000004,
+      "liquidityUsd": 4331.218166,
+      "trades": 324,
+      "launchedAt": "2026-08-08T20:16:11.000Z",
+      "pool": "0xce5830534abe76a6bd20c137e0435aa64009aa67",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x1061d7f4934542b654e2a4ef7f04f101b4e8018d",
+      "name": "UNISARC",
+      "symbol": "UNISARC",
+      "marketCap": 10037.62611706916,
+      "volume24h": 10003.614795999996,
+      "liquidityUsd": 3967.524118,
+      "trades": 141,
+      "launchedAt": "2026-08-18T13:35:16.000Z",
+      "pool": "0x7115c352b1726cb09dac8e44b385b8ed0b2bea31",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xc6874a8536933ee4fed6cfc51decb3733bc77e03",
+      "name": "TROLL",
+      "symbol": "TROLL",
+      "marketCap": 9940.409823056207,
+      "volume24h": 10679.394003000001,
+      "liquidityUsd": 5072.651008,
+      "trades": 232,
+      "launchedAt": "2026-07-29T20:33:29.000Z",
+      "pool": "0x9871a6115df6c960e2193558c778a94cc02788cd",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xf7985cedb8b31ab29e9b613068956644945b0000",
+      "name": "Arc",
+      "symbol": "A",
+      "marketCap": 9017.430222790725,
+      "volume24h": 6585.760826999999,
+      "liquidityUsd": 2892.942526,
+      "trades": 92,
+      "launchedAt": "2026-06-10T16:48:40.000Z",
+      "pool": "0xf7985cedb8b31ab29e9b613068956644945b0000",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x69ba8bcb78c9576986702a5f8a7543dd8462208e",
+      "name": "The Centre Token",
+      "symbol": "CENT",
+      "marketCap": 9016.239323118909,
+      "volume24h": 5960.871622999999,
+      "liquidityUsd": 3341.759164,
+      "trades": 98,
+      "launchedAt": "2026-08-06T13:04:04.000Z",
+      "pool": "0x60efede73e5212543125f1b7eeb7ef01c32843bb",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xdc3a43a49fa91c04ed1522496808ef65b5270000",
+      "name": "DOGE",
+      "symbol": "DOGE",
+      "marketCap": 8911.70154476129,
+      "volume24h": 2867.7151240000003,
+      "liquidityUsd": 2886.40911,
+      "trades": 36,
+      "launchedAt": "2026-06-17T21:45:23.000Z",
+      "pool": "0xdc3a43a49fa91c04ed1522496808ef65b5270000",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x0c86ecc7e51998ec611d73fcc041c75c050c6d0f",
+      "name": "ROBOT MONEY",
+      "symbol": "ROBOTMONEY",
+      "marketCap": 8818.891848331916,
+      "volume24h": 11201.960988000004,
+      "liquidityUsd": 3273.424054,
+      "trades": 120,
+      "launchedAt": "2026-07-24T01:00:26.000Z",
+      "pool": "0x1041f6a18f9300dc3e6986d85538864963505069",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x63c9a280e2756e5f190bf03d639c74b57bcdf85c",
+      "name": "ARC Money Glitch",
+      "symbol": "AMG",
+      "marketCap": 8607.333830877884,
+      "volume24h": 35219.44111799998,
+      "liquidityUsd": 3071.689108,
+      "trades": 371,
+      "launchedAt": "2026-08-14T02:23:22.000Z",
+      "pool": "0x7e67f9ebba6c3dc0378ee3b8f83a38ed01e279e5",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 6
+    },
+    {
+      "address": "0x30c1e1e4fa914eb326e23aff563b39d4dd1c4c48",
+      "name": "3.1415926535897932384626433832795028841971693993751058209749",
+      "symbol": "PI",
+      "marketCap": 8493.870571534022,
+      "volume24h": 134187.85571000015,
+      "liquidityUsd": 4067.83177,
+      "trades": 1986,
+      "launchedAt": "2026-07-29T21:05:06.000Z",
+      "pool": "0xc82afebd94728fa7814806ea40f6588771d52d0d",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x9a99c89514498a305af3272b75944a2d2bdb4341",
+      "name": "PIGU ARC",
+      "symbol": "PIGU",
+      "marketCap": 8412.279538476485,
+      "volume24h": 67905.69376699999,
+      "liquidityUsd": 2679.188808,
+      "trades": 909,
+      "launchedAt": "2026-08-13T12:25:06.000Z",
+      "pool": "0xfbf8d581c5460aef6074b47f1527e7b0525e1b77",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x14dad7bc6f67cac5e3950eac19381733e3f2dee3",
+      "name": "sushicat",
+      "symbol": "SUSHICAT",
+      "marketCap": 8281.684597817999,
+      "volume24h": 1468.1999959999998,
+      "liquidityUsd": 2936.399992,
+      "trades": 21,
+      "launchedAt": "2026-09-16T02:29:49.000Z",
+      "pool": "0x4d9c4809f47e7992d858b566fa739d219b56449f",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xc277f370d7f3d81234e103e2615065693c1f965b",
+      "name": "YLLOT",
+      "symbol": "YLLOT",
+      "marketCap": 8255.17501418002,
+      "volume24h": 5398.668921999998,
+      "liquidityUsd": 2981.454716,
+      "trades": 116,
+      "launchedAt": "2026-09-16T03:19:27.000Z",
+      "pool": "0x2d1973f4d10437f0e93f093621ebdab7f405dbe3",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x3b7c2b72c002d9662e5a74470066ecd8afa08356",
+      "name": "Arceus",
+      "symbol": "ARCEUS",
+      "marketCap": 7875.1507359478965,
+      "volume24h": 8676.970611000002,
+      "liquidityUsd": 3800.996228,
+      "trades": 63,
+      "launchedAt": "2026-07-29T20:32:45.000Z",
+      "pool": "0xbb21b3dcdfc30f1cccb537186f39171d73338e4d",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x4a2caf90d38b8cead3ac46057f17e5ebb980a160",
+      "name": "ARC",
+      "symbol": "弧",
+      "marketCap": 7779.661521087381,
+      "volume24h": 46990.70746199996,
+      "liquidityUsd": 3694.617624,
+      "trades": 757,
+      "launchedAt": "2026-07-29T21:32:30.000Z",
+      "pool": "0x996de8ffa3493d858ca73cc6331d3d5c3eeb4eca",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x36b1821f26e52e4f8a92eac5893fcfaa8c99c1a7",
+      "name": "aerc.fun",
+      "symbol": "AERC",
+      "marketCap": 7772.39641053211,
+      "volume24h": 25220.21129899999,
+      "liquidityUsd": 3673.651364,
+      "trades": 92,
+      "launchedAt": "2026-09-16T00:40:51.000Z",
+      "pool": "0xdbc89ce8ab66298db4e01af8b0333243e315ae93",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xb6a7f9e7ad75501859a5fa4b786a4d972f0f3dcc",
+      "name": "Baby Bat",
+      "symbol": "BABYBAT",
+      "marketCap": 7524.824478152136,
+      "volume24h": 2989.978108999999,
+      "liquidityUsd": 2468.881984,
+      "trades": 116,
+      "launchedAt": "2026-09-05T19:54:52.000Z",
+      "pool": "0x0e28525be3b3d157cc877324c53ef5d0d2e848a2",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xa085c86d01bed2f3349337b608a84b7f7cd53524",
+      "name": "MEOWSHI",
+      "symbol": "MEOWSHI",
+      "marketCap": 7483.2254005356135,
+      "volume24h": 2979.652586999999,
+      "liquidityUsd": 2238.134018,
+      "trades": 36,
+      "launchedAt": "2026-09-16T02:29:25.000Z",
+      "pool": "0x71b2259ee261a8f602a0cb8cd4ae851660628eda",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xc5e49382e59f956763580a71e08df3b34e8603a3",
+      "name": "Usdc.Stonks",
+      "symbol": "STONKS",
+      "marketCap": 7183.726855463126,
+      "volume24h": 6159.115978999999,
+      "liquidityUsd": 1876.48953,
+      "trades": 71,
+      "launchedAt": "2026-08-08T16:36:17.000Z",
+      "pool": "0x3cfd2ff31ef22a83dd63b53679f94a099364b67f",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x1e2b553e29de6c19e2b56f34c299972b9efe0000",
+      "name": "Bald",
+      "symbol": "BALD",
+      "marketCap": 6943.159487872555,
+      "volume24h": 1802.2820570000001,
+      "liquidityUsd": 1100.668392,
+      "trades": 19,
+      "launchedAt": "2026-07-01T17:17:33.000Z",
+      "pool": "0x1e2b553e29de6c19e2b56f34c299972b9efe0000",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x6b2cc2352099f8e9da600b18b60d9b52035999f9",
+      "name": "ABCAT",
+      "symbol": "ABCAT",
+      "marketCap": 6736.59774488238,
+      "volume24h": 2678.954955,
+      "liquidityUsd": 860.651992,
+      "trades": 20,
+      "launchedAt": "2026-08-31T12:22:42.000Z",
+      "pool": "0x1e72be51722a1a359f4e53dcd5e23eaa3a6ffc88",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x03e21dbfb27dd53ea97c9c872aa4e18a9b5ce5cf",
+      "name": "Archer",
+      "symbol": "ARCHER",
+      "marketCap": 6731.137381341565,
+      "volume24h": 7458.495990000003,
+      "liquidityUsd": 1378.602942,
+      "trades": 88,
+      "launchedAt": "2026-09-16T00:08:32.000Z",
+      "pool": "0x66da235fef96fd9b86e93dd7ef8cf1e9e8de8779",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x6360edfa9234609e08be4bd667c45dfbe53f86e8",
+      "name": "logo test",
+      "symbol": "LOGOTEST",
+      "marketCap": 6712.673260254854,
+      "volume24h": 2044.8103030000002,
+      "liquidityUsd": 1734.305884,
+      "trades": 24,
+      "launchedAt": "2026-08-24T16:22:28.000Z",
+      "pool": "0x3b475fe949dc9a7f39d899dedd359f59f52a28db",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x963c9ae54e03e64ed21f5e4f7452d11f72850000",
+      "name": "Pinline Chameleon",
+      "symbol": "CHAMELEON",
+      "marketCap": 6679.9784014916495,
+      "volume24h": 2277.4070349999997,
+      "liquidityUsd": 786.930992,
+      "trades": 29,
+      "launchedAt": "2026-07-29T21:40:34.000Z",
+      "pool": "0x963c9ae54e03e64ed21f5e4f7452d11f72850000",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x087922a0c67b181e170061784886bd353a6d3052",
+      "name": "SUSHI",
+      "symbol": "SUSHI",
+      "marketCap": 6513.036054695165,
+      "volume24h": 2442.1813010000005,
+      "liquidityUsd": 1329.076598,
+      "trades": 25,
+      "launchedAt": "2026-09-16T02:28:38.000Z",
+      "pool": "0x59e61835872a51524bbe7fdfb95ec985a9873637",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xcd48135f9d2093c08c533acb26f30899154e6c77",
+      "name": "stables.cool",
+      "symbol": "SCOOL",
+      "marketCap": 6475.575371455254,
+      "volume24h": 3873.028129,
+      "liquidityUsd": 1302.800508,
+      "trades": 130,
+      "launchedAt": "2026-08-07T09:50:41.000Z",
+      "pool": "0xa6bab69faebb343b3466b67f9aef5db51d59a98a",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xfea77941f80904f1d8e2f2ef8ab4d828e2e68e5b",
+      "name": "Tolly Dog",
+      "symbol": "TOLLYDOG",
+      "marketCap": 6375.090102354849,
+      "volume24h": 16737.414006999992,
+      "liquidityUsd": 1351.20971,
+      "trades": 314,
+      "launchedAt": "2026-09-16T03:06:41.000Z",
+      "pool": "0x21d31173755cecf2a4d32a6f3d9bb5d4f7af47a6",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xde7c626877d343a07fc72092ead07bfa1a7e3abe",
+      "name": "CAESAR",
+      "symbol": "CAESAR",
+      "marketCap": 6366.578090712824,
+      "volume24h": 1397.095819,
+      "liquidityUsd": 1300.847562,
+      "trades": 25,
+      "launchedAt": "2026-09-16T02:26:46.000Z",
+      "pool": "0xbd3faceb8b4487b1316de4e26ac3bdc606a78c17",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x86a58c9f2159e7e397c61cbacd70f33785236f91",
+      "name": "six seven",
+      "symbol": "67",
+      "marketCap": 6327.9489700834065,
+      "volume24h": 49556.49999400001,
+      "liquidityUsd": 3172.948732,
+      "trades": 886,
+      "launchedAt": "2026-07-29T21:05:21.000Z",
+      "pool": "0xf87eb86abc0c84a1ca54bcb5bdbf4746c2704266",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x04c0109d18c6ec3198258463bd660afeee929ede",
+      "name": "BOND PAD",
+      "symbol": "BOND",
+      "marketCap": 6321.102128850943,
+      "volume24h": 66398.00043400003,
+      "liquidityUsd": 1297.501772,
+      "trades": 606,
+      "launchedAt": "2026-09-15T23:50:35.000Z",
+      "pool": "0xbc294f54a2ad3684b172b721bb5cf535eeba84e4",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xf3729ac6530f9c8e9875728faacc6ca3f374371a",
+      "name": "ArcAngel",
+      "symbol": "ARCANGEL",
+      "marketCap": 6287.225325628364,
+      "volume24h": 26649.370085000013,
+      "liquidityUsd": 1371.779902,
+      "trades": 500,
+      "launchedAt": "2026-09-16T07:27:27.000Z",
+      "pool": "0x5a26a88568cab870dd1a15c6d25f25d42a5895a0",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x7d3aba409099a41f7799ecd2851fc804cda50d8f",
+      "name": "QUAKE",
+      "symbol": "QUAKE",
+      "marketCap": 6224.051924121814,
+      "volume24h": 23675.466630000024,
+      "liquidityUsd": 1261.84631,
+      "trades": 452,
+      "launchedAt": "2026-09-16T11:23:03.000Z",
+      "pool": "0x06fcbfcf4432801c253960498807a85e78765a20",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xf6599eae944aef5fc0cb078f2c472f34a753a0cd",
+      "name": "ARC FLY",
+      "symbol": "FLY",
+      "marketCap": 6177.151600917464,
+      "volume24h": 1398.6496880000004,
+      "liquidityUsd": 1075.093946,
+      "trades": 68,
+      "launchedAt": "2026-09-16T07:54:49.000Z",
+      "pool": "0x0384038fa30e4216967e35144b1c76fe542409e8",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x05727c5f09278d03be3ccf3c647a2fc36da730bf",
+      "name": "Stamford the Lion",
+      "symbol": "STAMFORD",
+      "marketCap": 6047.440274115351,
+      "volume24h": 1878.9579250000006,
+      "liquidityUsd": 788.365276,
+      "trades": 21,
+      "launchedAt": "2026-08-28T11:10:05.000Z",
+      "pool": "0x1ccce5cd139288e08bad55e624503c00a1c0ee95",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xa095177012016406a4056d9ac1e2c5532e63fa7b",
+      "name": "VITAEL",
+      "symbol": "VITAELDEFI",
+      "marketCap": 6022.4795,
+      "volume24h": 8523.887314000001,
+      "liquidityUsd": 840.309426,
+      "trades": 199,
+      "launchedAt": "2026-09-15T14:01:53.000Z",
+      "pool": "0xab1466830980f2ef67aea0b1f570e142a943b1ce",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xc5f0555b2a9de6d280b5c719c1b9d1df025f7a35",
+      "name": "Tolly Frog",
+      "symbol": "FROQI",
+      "marketCap": 6013.16438811595,
+      "volume24h": 2212.9404400000003,
+      "liquidityUsd": 1038.735108,
+      "trades": 56,
+      "launchedAt": "2026-09-16T03:51:51.000Z",
+      "pool": "0xc03f45ae9eb776c2ccdd3a18f5a3ba99f1c1d462",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x47eaf81ace689ba33a40a3d6cfa8f5be8d8768ed",
+      "name": "Sonora Field Token",
+      "symbol": "SONORA",
+      "marketCap": 5997.644280297926,
+      "volume24h": 17635.259485999995,
+      "liquidityUsd": 1005.065986,
+      "trades": 181,
+      "launchedAt": "2026-09-16T00:12:30.000Z",
+      "pool": "0x7cef19f69f79abfe9a0709d162caf8535ff3439c",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xbe1420b2b98f73e7e0b27ad1b91b7ac391fd1838",
+      "name": "Circle Doge",
+      "symbol": "CDOGE",
+      "marketCap": 5995.840405365477,
+      "volume24h": 4616.410161,
+      "liquidityUsd": 1011.063648,
+      "trades": 68,
+      "launchedAt": "2026-09-16T03:20:45.000Z",
+      "pool": "0x6f0cf24718fe8b61bf9cd5f94652e5d069c5b87b",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x88d93ee337464368c81c8ca180da38fdad3397bb",
+      "name": "MarsCoin",
+      "symbol": "MARSCOIN",
+      "marketCap": 5933.989273929383,
+      "volume24h": 8714.476936,
+      "liquidityUsd": 2481.611916,
+      "trades": 179,
+      "launchedAt": "2026-07-29T20:31:16.000Z",
+      "pool": "0xc2b5540caab12ab0ec5c7973e5b72e25dfd39f07",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x26c0362346d69e7295cc52f3eb86f915b09c5aa3",
+      "name": "SQUIRREL ON CIRCLE",
+      "symbol": "SQUIRCLE",
+      "marketCap": 5911.242923131835,
+      "volume24h": 1713.7233860000001,
+      "liquidityUsd": 853.717104,
+      "trades": 32,
+      "launchedAt": "2026-09-16T11:29:02.000Z",
+      "pool": "0xdf5dffbcb6c296157fa0d6c9da33e9db32c6afb9",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x7e421237570dbcc59ce6f39245d9b60eddfdc5d1",
+      "name": "Pink Sprinkle",
+      "symbol": "DONUT",
+      "marketCap": 5905.182170393233,
+      "volume24h": 4204.592624000001,
+      "liquidityUsd": 858.996094,
+      "trades": 64,
+      "launchedAt": "2026-09-15T22:54:34.000Z",
+      "pool": "0x17734939e65e7fe3c8117ccf3bb392ce63d3d22e",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xf5a17d28aca5381fc199452bb72512fab0a95f4e",
+      "name": "Arc Pepe",
+      "symbol": "ARCE",
+      "marketCap": 5860.605780363567,
+      "volume24h": 15071.471731,
+      "liquidityUsd": 793.479394,
+      "trades": 210,
+      "launchedAt": "2026-09-16T03:20:41.000Z",
+      "pool": "0xbb8e947b039f9d737b6fa8e0cd6f09693ed4c1b1",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xa6d2fa7f322e8a9676ba944022165eede772814c",
+      "name": "Florida Gator",
+      "symbol": "GATOR",
+      "marketCap": 5851.773788534153,
+      "volume24h": 10242.511865000004,
+      "liquidityUsd": 751.439206,
+      "trades": 97,
+      "launchedAt": "2026-07-25T11:28:52.000Z",
+      "pool": "0x266777fed7e67b85858d3a443dbdd97a76401ca2",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xcbf6c0570bd4e9c46a9922899ced7be93f22f732",
+      "name": "π",
+      "symbol": "Π",
+      "marketCap": 5794.771108270441,
+      "volume24h": 37939.92314500005,
+      "liquidityUsd": 2725.985748,
+      "trades": 623,
+      "launchedAt": "2026-07-29T21:06:03.000Z",
+      "pool": "0xc44d39aede3eee00417874691f266744d57724b2",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xf4afe42b8f93479372d1f467c21d607a1d59aaaa",
+      "name": "Triple",
+      "symbol": "TRIPLE",
+      "marketCap": 5792.938408155762,
+      "volume24h": 24627.033467999998,
+      "liquidityUsd": 1068.08732,
+      "trades": 344,
+      "launchedAt": "2026-09-15T15:37:46.000Z",
+      "pool": "0x0bb14964edfd94321e395cf7ecec941d60721614",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xef2d6886877ee6f21d3e85d8126dcc307f38b897",
+      "name": "ArcPeg",
+      "symbol": "ARCPEG",
+      "marketCap": 5782.633707642056,
+      "volume24h": 1030.713532,
+      "liquidityUsd": 803.026314,
+      "trades": 15,
+      "launchedAt": "2026-09-16T03:34:24.000Z",
+      "pool": "0x86453cd9029581cc21d693bf7f9042a048f6cec6",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x139a83b4704593f21c84713a0c44d9190a49f1ea",
+      "name": "ARCHEMIST",
+      "symbol": "ARCHEMIST",
+      "marketCap": 5780.528261732392,
+      "volume24h": 10478.547035000001,
+      "liquidityUsd": 802.29957,
+      "trades": 139,
+      "launchedAt": "2026-09-16T02:05:28.000Z",
+      "pool": "0x3ff982c6260dc45868b9d4075b300a9d77c9201f",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x513c13bcfce57f544e1a32accd7e07373aaf0087",
+      "name": "Andúril's Sword",
+      "symbol": "ANDÚRIL",
+      "marketCap": 5690.19840744798,
+      "volume24h": 9385.743432999994,
+      "liquidityUsd": 2377.4155,
+      "trades": 108,
+      "launchedAt": "2026-09-09T11:37:40.000Z",
+      "pool": "0xc20c0ec45075880fe916220e87e74560e2e670b9",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x278c6003240cb8e01a2f6ff43b4c829b63f522c0",
+      "name": "The Bored Room",
+      "symbol": "BORED",
+      "marketCap": 5685.021313352235,
+      "volume24h": 9826.592572000003,
+      "liquidityUsd": 2311.535676,
+      "trades": 245,
+      "launchedAt": "2026-07-24T17:11:39.000Z",
+      "pool": "0xd54c5cd41a2aa787263c0332294e4b2c385df956",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x67d0b16abc29bf3110c1fe5879071b406d7a6f58",
+      "name": "Flex",
+      "symbol": "FLEX",
+      "marketCap": 5670.25327497327,
+      "volume24h": 20579.649852999988,
+      "liquidityUsd": 907.975874,
+      "trades": 290,
+      "launchedAt": "2026-09-16T03:27:20.000Z",
+      "pool": "0xfe2a4fe45afed51b6647c9ee0a5efc201b353dc9",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xb20c0920fa5a68ebcc8f796ea62782e5894dd745",
+      "name": "Paper",
+      "symbol": "PAPER",
+      "marketCap": 5658.834321630139,
+      "volume24h": 2553.665698,
+      "liquidityUsd": 526.504774,
+      "trades": 47,
+      "launchedAt": "2026-08-03T15:07:05.000Z",
+      "pool": "0x4b26a5e826badd6b98a443b2243e13d9745fbb69",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x751e78b142db3e09eab0a377f2ce2e05d670c472",
+      "name": "TOLLY MOON",
+      "symbol": "MOON",
+      "marketCap": 5607.593678371263,
+      "volume24h": 2857.5476150000004,
+      "liquidityUsd": 670.279878,
+      "trades": 40,
+      "launchedAt": "2026-09-16T03:24:42.000Z",
+      "pool": "0xecf6579c87716c69d47d558c4c58171f6a574e37",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x7b250712d49d2430633dc37f323ed45eb91fcfd3",
+      "name": "豆",
+      "symbol": "DOU",
+      "marketCap": 5565.4795379265415,
+      "volume24h": 1303.8587539999999,
+      "liquidityUsd": 579.572504,
+      "trades": 20,
+      "launchedAt": "2026-09-16T03:19:32.000Z",
+      "pool": "0x4d993e4b472eda3c73bcdfe8ed66728e3a9ef196",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x8a74703061c59a4f5471c2b81386111f1880f35f",
+      "name": "WOJAK",
+      "symbol": "WOJAK",
+      "marketCap": 5551.960832105425,
+      "volume24h": 2406.129750000001,
+      "liquidityUsd": 2170.97662,
+      "trades": 80,
+      "launchedAt": "2026-07-29T20:31:13.000Z",
+      "pool": "0x14cabf72d0a85aa2af409b92430606ad346f9c8b",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0xa58956c4379f0870e4a3f55f496143512b7bd2d0",
+      "name": "ARCAT",
+      "symbol": "ARCATS",
+      "marketCap": 5471.028114894517,
+      "volume24h": 3766.828976,
+      "liquidityUsd": 516.779698,
+      "trades": 68,
+      "launchedAt": "2026-09-16T02:06:15.000Z",
+      "pool": "0x2129435743d0f63eddc1107785327f6ad1f2372a",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    },
+    {
+      "address": "0x724321a3d343d66ad8c71b9bf539b62a380a5313",
+      "name": "Mossward",
+      "symbol": "MOSW",
+      "marketCap": 5348.348973289302,
+      "volume24h": 16230.259121,
+      "liquidityUsd": 554.321014,
+      "trades": 276,
+      "launchedAt": "2026-09-16T03:56:55.000Z",
+      "pool": "0xf7258d4e4440bc8b377998339e970878acd38917",
+      "source": "Arc Explorer deepest USD-anchored pool",
+      "decimals": 18
+    }
+  ],
+  "skipped": [
+    {
+      "address": "0x89c4492c10b96b394fd1d2613eaf13370ed6ba4a",
+      "symbol": "TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7559d85ce89fe643d96777e13e84dba76d942d28",
+      "symbol": "TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdb07d187ed6ba6790ec1fc473a386fa1106db697",
+      "symbol": "ARCSAFE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe913fbe4d25714d31a8538f06590a2e2abeb6839",
+      "symbol": "TALLY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0b5b9d774c8c94d0fb35e6f87fca2818c7d70598",
+      "symbol": "AGI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xea55710f49dd1219521445e5738b8b21f77c4f08",
+      "symbol": "TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9081faa0a8578d30fb6a94b6a158db63725a95ab",
+      "symbol": "ARCPUMP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe638efe03e33daa69230b92c6729cc0971a5ff87",
+      "symbol": "TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5b60a84b1876f261ad1e9ad69876aca44a919630",
+      "symbol": "TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3b2f41ec838fa290060afbb698a8d2ad8211fcad",
+      "symbol": "TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf3592a1237be3fa22ebf67a01d9c9fadb5e68c2b",
+      "symbol": "SMKU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x48f86c7f0a4275b2a54108322fd8a5af6839df6f",
+      "symbol": "RETARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd6eaf691d61def5f922fef040d1b65e4b839ac0e",
+      "symbol": "ARCWIFHAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xca114e9c3a41ce0e3f48210d5f198f7664c168b2",
+      "symbol": "ARCHITECTS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x46504a87106ff21c4efcdca2e6184c7cf1a620e4",
+      "symbol": "FISH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbc14ec97b5616ce9948a414ba616802ed2a69f73",
+      "symbol": "ARGUS BABY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9cf3d20bdee36c9fc02da1e08cca4f72f8ca4fb6",
+      "symbol": "DUCK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe819837fd010f323cddcad868cc07e7fcedfae7e",
+      "symbol": "ARCWIFHAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x51d6c44c4515c94529c772f21980298c285d4a89",
+      "symbol": "ARCCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdabcb608a6dcd729d4e69ea49e09a493072e497e",
+      "symbol": "MEME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2164bb17a2d38c1b5170e987b2c0416df1efc752",
+      "symbol": "LONG",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x8e98a62a995a50eca9979bfa016f91bf36a8f9d9",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x12ce1f970722ca6e08364b60099b3d25c09b5434",
+      "symbol": "ARCX10",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6f3841bdebbb7ec6508161fed2b414829b7d4f7c",
+      "symbol": "ARCOON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4753c45fb550fecaa143a47968659117e6ffc2ce",
+      "symbol": "BARC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x15e04c5cb0a514ed35032d8e6b4e6de95cfdc24c",
+      "symbol": "ARC-TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x178b01f61cbea1d2a5581fe1621be607835ec349",
+      "symbol": "XAUM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x30ac39dec8a854c5fd03aa429e3bef32a7e4c84a",
+      "symbol": "PI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd626630dc244e50272017cc55a361d096c3a9062",
+      "symbol": "PEG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x12dd36a10604a07832c0a4e72949e2cbb24aa8f9",
+      "symbol": "FIAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x03d21d6b5dacd424784dd93a634dfb9da839a135",
+      "symbol": "AFTER RIDERS CALL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdeb939f12bbb58891f1e39e2cc53237057decb3c",
+      "symbol": "ARGUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcab41af697cdd8d880ad3252b5bb6ea4569f6c1f",
+      "symbol": "TOLLY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0006ed5d37a9d6687d1ecc8b642ff9c4760d9a16",
+      "symbol": "USDC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xcba80b8ce1edd1672c5f02bf106f231834acd207",
+      "symbol": "CRCL",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xdf698ca6ebccc4fc078eb8124a0914e4b35cbe43",
+      "symbol": "ARSE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x86f7424c3e1ebb3f42e1e687468e36d5f2a1222e",
+      "symbol": "ELLIPSE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5b1e512d9b8bb0b16dc7550b70ec4f21fdbc359a",
+      "symbol": "WORM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2bfe315f219cc9fdc9ce0266e6c115927f0e4c10",
+      "symbol": "PEG",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x127f80844ff3d672410ce4b6f4f9ea1a8d6a7ae6",
+      "symbol": "SLJ",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x04f0e3107f5e3a9cb795314e722f4021e338ff87",
+      "symbol": "ARCADE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x20279c113b35d12ec5ecdb78117928e3688cf64d",
+      "symbol": "AKA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe816fe58b7e64f2fcde14a74835b65247fc66f7e",
+      "symbol": "USDUC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xf2007bc7146a0723c98b15c3d31d10f03e923fc5",
+      "symbol": "TOLLYCAT",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x313c87e367791fe16ae97754554f4871bfe7fcb6",
+      "symbol": "AROS",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x1f649d788b1b57d4d7ec042bc7c8ae09bdac1b4c",
+      "symbol": "USDC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x3c40a8c861f79745b6e04365152543686bb45274",
+      "symbol": "TINY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x50f74a0c7bef5b7ef9a14bb9ec37a5ee13e63147",
+      "symbol": "NOAH",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x0dae7090f57501df6f7455e25b0082a5956799e6",
+      "symbol": "BOBO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbd88cf25a230f971adbf31efa30ed0d1bd3338be",
+      "symbol": "SHARC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x3af1d499cb46cd5504a5a3cb864dcc105b74470d",
+      "symbol": "AROS",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xfe69c79714ce65f27edeb3edbc8b3532ce2be6a1",
+      "symbol": "PRIM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0da9f11a6eb31c5ce4f9563c59620b10f1d79ae0",
+      "symbol": "ARCHOUSE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x35d8618ab988d5a208ae80fea2d20a3c8f9ef126",
+      "symbol": "U1",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6b3cbae6ab910e4dbaeb1cabb7b7327cc32544b4",
+      "symbol": "ARC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x8d79252b3bfcb17e5c1072f671e8f177e79f5dad",
+      "symbol": "ASTOCKS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xacd3c4ae00ddac5cd857d83424cf4eb85f32ad8f",
+      "symbol": "COOL",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x7b504d734ffb55be30ba8fc66d45c1f50decbd2b",
+      "symbol": "USDC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xb65295e3cee4619290b1722f625a73d523b84b16",
+      "symbol": "AROS",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x8c9a39b835a5ae66b18d60a2336a0f2fd5896aab",
+      "symbol": "ARDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9d10d1fa5ba83ee73214b7a170bb5b1476e7e538",
+      "symbol": "CIRCLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3e0db7d370c35ea5264129ca3825fb1ea415659a",
+      "symbol": "ARCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2204891803c9b7efa9df008fe0f55e6c01bf23c0",
+      "symbol": "4YIELD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7e6521193075756202d632e6855996625551e151",
+      "symbol": "BARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x82788f32dc2edd4f76260078bf6ad2dd4f7dac31",
+      "symbol": "ARCX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x642880c27d237799b7191189ad4b5d8a12bdecc3",
+      "symbol": "BCTEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x41977d114dbc7b5bbe26acd27714b04f6857f43c",
+      "symbol": "TEST2",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd68d667fc31b77e41847fe140bf28dae4b85eede",
+      "symbol": "SMOKE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8a15d4c95c031e5f21b6eb62cb0d2cf9256b18f6",
+      "symbol": "CBALL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3d49eefd227888234f7a3d80bea752ddb31a1b57",
+      "symbol": "ACAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x46752e1495d2e4bc13ead2e9021d38322aec966a",
+      "symbol": "TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa0e65266c56f74813c41406ba85a20ca713a42a1",
+      "symbol": "TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcb7689404a0500f2c907c97b8980db8872e59fc9",
+      "symbol": "CIRCLE",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xadb2b630110bdf2d425570e38bb7a76306f7bbbb",
+      "symbol": "BIG",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x4021807892cf9ac94b01f3a71176d4aaf5007cd8",
+      "symbol": "SASHIMI",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xc57c4ce7164bc964efb2c21333367b8209faff52",
+      "symbol": "LAZY",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xc2e7d8a989cbbc5a7c9190b30f24c12c24254b63",
+      "symbol": "5042",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x532ee921c2f581da3efef514bc6ffba1aee1e64f",
+      "symbol": "1USDC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x83fa6e78df6a1d863566ed9c998139aaf1192bad",
+      "symbol": "ARCX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe5df4262ae46170b7fdc3c67515a98dabb7e27ab",
+      "symbol": "MERRYMEN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x34230f342b76c7163f0d0d54b06ff57bb2cc3d8e",
+      "symbol": "TRUST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8e604ae97dda3deb77d9856606a8dc3135998fc4",
+      "symbol": "BIRDIE",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xef4ddaaf18c700394f358719f893f01629bf1c0c",
+      "symbol": "JADE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x38266d481a9179e898ea4903faba81303ef3d95d",
+      "symbol": "MOCHI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6ccc346d6790cf0545df1cf0da0a4ff2816621f0",
+      "symbol": "ARCSNEK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7a58d9bc713c77549e52b9b5029e686c6d5f369f",
+      "symbol": "IGNITE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2a63a78575a7f9f95f5cd7942b3ca83b647d68a5",
+      "symbol": "BIRDIE",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x78509bcee65a29d1f9571f07108037c0cd560000",
+      "symbol": "BOA",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x19b94c2037b89a002ff4a445618d26b8ed9ffebc",
+      "symbol": "5042",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x5ec8a02eaf992acc54ded69e42ea1f961ae6be7d",
+      "symbol": "SASHIMI",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x250015532a0d6c57fd22d263e128ad5e933e6b14",
+      "symbol": "BIFS",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xc6d6f1fc29acd081e94909ea60e2307339e551e0",
+      "symbol": "ARCHITECTS",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xe40c6243a13e49aa3f0a2ab6d3d8e740539d6d8a",
+      "symbol": "BULL",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xc8d3b4f3577049e95fe64c0e7449724c1b2c2f91",
+      "symbol": "KITE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6d7b040d70b687bd8f676abf68159cab73672989",
+      "symbol": "FLUTCH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe3ef67cd59121504319d1f8010835a3394f23c45",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x5c7404118e3f028d202f9fb78da2681bd68482cb",
+      "symbol": "EOS",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x5f72a290a81bc666fa980f51d6b56dd327c47e0e",
+      "symbol": "STEVE",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x699ea129024049cc5b7ae86d2564ef10ec6e50ac",
+      "symbol": "GARC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xab57b4999fd55323f11c24a0635951538c0f9e67",
+      "symbol": "BEANCAT",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xe28a59358702d03408d9f6917f7307da847f25f5",
+      "symbol": "DYSON",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xd1cda12a6f5edce69223454ef3f6f0324f1ca823",
+      "symbol": "FOMO",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x41c9c02762fce8459fb9aef7331339b2b7d40000",
+      "symbol": "ARCDOG",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x5b5329e9c0dc8825589a2012cdaf31e3461d8536",
+      "symbol": "AROS",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xf7c87abfffa1eedfe1dde43536a4396378a71395",
+      "symbol": "GIZMO",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x891406ac300c330a58a2adde58d46673f32d3521",
+      "symbol": "TEST",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x30aa5a06ca393ffffb7a5739935bcfbee7b31891",
+      "symbol": "CIRCLERS",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x7a575c9acfdc723601db79d30bbba3cb7d76237e",
+      "symbol": "SASHIMI",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xf4f051b5fb106d19d8eb75cf1aa6485ded92a211",
+      "symbol": "ARCASH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf9205da24334244d59ec3ef48e4bc6f1c8b1f67d",
+      "symbol": "RESERVE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd3bb9d0a74fb437df045020e5d2c226f4704bf76",
+      "symbol": "AGENT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x95fdc61e328defd012ad67305465f8d8f56376dd",
+      "symbol": "1USDC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xfc3c926d0ca9c0ecc925d23376cf429f606265a8",
+      "symbol": "ONS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6bbde01e986c01dca708a49d071437afb55a1546",
+      "symbol": "ONS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdb97324d983bb2c9327d278449467064ebf76bd8",
+      "symbol": "AAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9056fa6d51e91b3bc04a641daee35a0a5028ab15",
+      "symbol": "ARR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3714de6a0dd9b52c06f8d8b675bb1771237fe606",
+      "symbol": "ARR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xadb6fc899d5e17fbed9e92b4c993153c8cca2b49",
+      "symbol": "DMR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0f7c51a44c3925505424c4e6ed40dd50d7309d29",
+      "symbol": "BEANCAT",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xff328d0e2b9898189bde4b671d1729cefe13e87b",
+      "symbol": "USDC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x83cba82229c726e1f994e9412299d696a7f23146",
+      "symbol": "RAMBO",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x98ba88522b9d36400ae8a9fae989fe9f7070c222",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x80c0e0d2e9985456475be538ba5ddab24a920000",
+      "symbol": "USDC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x0d629d452555a62b4aa252039dde3520f3316262",
+      "symbol": "GREENBACK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1d5e39a742131d24858a2fd4f9cd6d50f326790c",
+      "symbol": "GREENBACK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x28da4c2841075084f8b2a7ef927568ad4e7bf21c",
+      "symbol": "USTR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9937bdb8fece8ec53b54bbd7fefb9d3ed053ef95",
+      "symbol": "AGED",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9aeebc0566519d77dd009e1bfad11c967eebe0bf",
+      "symbol": "AI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x314652ef449e4963c4e79dc0dafe359f4d30e8b7",
+      "symbol": "JERK",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xe1dbc80aaf3462e011bf9803c9be4e2b691abad2",
+      "symbol": "SYMBOL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3cf48ebdab8851c2fdd0d62e0585f857be45efbd",
+      "symbol": "1USDC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x52303c846f1285fe48cfc44cbe5cda11e7801b82",
+      "symbol": "FOMO",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xd40ed72054bce37d2284bb315ffca122b690dc4b",
+      "symbol": "CRCL",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xd198abe7400dc28d3509aea6dc282ead8533ea71",
+      "symbol": "ARCMOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x05a2380173bf5309bd7fb1bc2a10f6c418dd40b7",
+      "symbol": "ARCBOBO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0741d8cb51773fc3cd11c2d1aa8bb8e070f9ad28",
+      "symbol": "ACAT",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x0f1e1ed53a4293d358831b93a999c80fab2e2d18",
+      "symbol": "MISCHA",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xd4e572e019b72acc79e951141e66be1dce2ede2f",
+      "symbol": "牛",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4aa51b9a4877d321f01b9cf3140fc48c91060000",
+      "symbol": "NIPS",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x0c9f60aacaa6f9cbee22aff7b959f454cecaf96d",
+      "symbol": "KAITO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x37ff4a31ad65da0a55d3248a485c6310e1b3319e",
+      "symbol": "LION",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8330ebc1433ea8e8ee85d980e26c8bab71c804df",
+      "symbol": "DYOR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe322ee5afd769c14824945c7e0ae75ded3da9978",
+      "symbol": "ARCDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8701c79eff2f47198fb8c62451986d2e914effb9",
+      "symbol": "ARCBANK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6dea39bc1399151bdbf013533e743017395aafb1",
+      "symbol": "DYORCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x345c53c212e765aed55a8941700619c3eb03e122",
+      "symbol": "TWAP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9a4c550526b48577d894353144a53b850c19f9c3",
+      "symbol": "SHL0MS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x366449c19338b54d651e59c09e8154c21ab1d749",
+      "symbol": "MEOWNA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcc80020503c0cd8b1b30939d3ad8f75edf438314",
+      "symbol": "TESTS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x69c09b476b6adf8cbb1a4535d8db2298542dc95a",
+      "symbol": "ARCANUM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5f9f9b47ccf82b82f65d2471548a0b25f60ab10c",
+      "symbol": "C",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcdf33e182459f89567465c3716d4de500366806c",
+      "symbol": "建筑师",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x21b2416f98f464de5a646a9d6f86e95e1ef78523",
+      "symbol": "ALWAYS DYOR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7ebf76529a20a7befc37b45bf67a70ed05921c8b",
+      "symbol": "1",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd8f6f4593e0bdd6a6f0aa6dee4bef9c04f44439b",
+      "symbol": "GORILLA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7d6df43e388cd37b9df15aa9b03c7a518230ae00",
+      "symbol": "ARCOW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa06fc470593f8fddaafefa0db8e5fd91aabb01de",
+      "symbol": "UBI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6520feceeff3474020ebf9b59234575e94655ec2",
+      "symbol": "MISCHA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x89824051df76b8eddba8dab1106f0e362ba65445",
+      "symbol": "ARBULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4f3e9972707b804701502eb80b3756242c1a9f59",
+      "symbol": "OBF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf27115bd4b12bd34629490f4e5b71febafc8d595",
+      "symbol": "ANSEM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb878749905994fb50dd99db2e414a4243fba84f4",
+      "symbol": "UNIPART",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x59a71d121b55b39bca2554d29e1d141f94237111",
+      "symbol": "BSTONK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdc7d5d95a3fc8a563c67e05e657db5ab65618627",
+      "symbol": "礼服",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb47989a9444c87d9089c92a7b03fb6c19e7e0094",
+      "symbol": "YELLOWCHIP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x42dc9baf6daba01fc3f65959673aa3859420e5d7",
+      "symbol": "STEVE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7a2ee93e7b6aa80a4ddf8eeba89da0bde2faa00d",
+      "symbol": "SWOLEDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfc0f6e1230446528fbe9b35dca7023b8ce6120b5",
+      "symbol": "RIPARGUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf9d44177502b103f343df72da06b65b3c8030277",
+      "symbol": "EVE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4bf7422c6c388ed19da3b2f7ed9989086e6f2e32",
+      "symbol": "LIONESS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa752c449595db38355ba81dab83b08b9674d13b7",
+      "symbol": "ARC1",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe151bfa5a56f47571f445f7742352321e74081a3",
+      "symbol": "捏捏",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1402a45ff88cde4f8fdfa9eae65a5b9bba93e0eb",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x74a66c09a35665c293869dc759e466ccaddbd054",
+      "symbol": "CASHARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8c73f1f0d3a12c11910f8c3071dc6fdc311ef23e",
+      "symbol": "NPC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd2c00f7d43b71c34bddb148e8c0d9b969ac003f5",
+      "symbol": "果蝇",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0db4cae7dd2295f2a40b3b08dc499149532b9cb1",
+      "symbol": "$28",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc811ecd2ca9e80785947b9f7071b2a8f8190fb9b",
+      "symbol": "宝贝富贵",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5e191a39b522f3ecd80e8ac2ad2881cc1ebb5c3f",
+      "symbol": "ARRAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x80e2284f2aaaf56d4dcfd1a1c70c93980066d9a0",
+      "symbol": "ARCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb6888ca363dd7ade59c860d91184aa505cb35c6f",
+      "symbol": "USDCMOON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x60cb705baf837539a6b94681977c30cc1a3507e9",
+      "symbol": "BINANCETOWN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0ef7060a260fa63f142f22313fa0bbf9e9472d93",
+      "symbol": "ARK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x98e25aece950f6f20fcd618b0d8c37643b8ae31f",
+      "symbol": "SHL0MS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2069d978e6016257adfeadde4e7d449511bd09f5",
+      "symbol": "ARC.FROG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2989b6a4075afc6fcca6524e3294f86d655cefda",
+      "symbol": "ARCHIMEDEES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe85e530a1ac354b4f00be99ecac1c4b94211b51b",
+      "symbol": "福",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x99a606c61ceca3b3a3f7315a0961cf2c840ae4a8",
+      "symbol": "4STOCK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb784834093e62d503d6d70f522ea8c5f7b53ccd0",
+      "symbol": "BNC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x42ea6b71d00cfbb75ad19b60197edf1c9996568c",
+      "symbol": "VC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x82247c5a06171f532796c8af5d36683abaa263c8",
+      "symbol": "10",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x17288240a69bb2a15dca41d42ca56a881dcfd107",
+      "symbol": "GMORNIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x99d994e2d2a9e49975b62a4afaa978999103aeda",
+      "symbol": "ARCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf61aedd18ff8b0d6d7853c943eb931fc7438d45d",
+      "symbol": "1BNB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc064750f426372b8d04c39c9667a71801ce6b589",
+      "symbol": "DIABLO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x24c85616736003a6703eb2ee30af4352f1620858",
+      "symbol": "AI ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7f4d130e974b608dd3e0c0a00c0189027afcc3f4",
+      "symbol": "CULT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9e62af64c75ca0e4c99b2f2ff20691e5a9edf624",
+      "symbol": "JTT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf5665b664071ed5f29438a94c15aa0d87a6a0ac0",
+      "symbol": "PTKR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x94f5d66b030e5a38e465ab5b2d7c9834d836a77f",
+      "symbol": "BAPPA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x00b1b358ff7857e30984028b313762d1b562359c",
+      "symbol": "BUBBLECAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd4eb4ac65ab850dc3d6c85633ab9a7e420d18787",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4634255be0bd4e46cf771db802e01dcf72a1b622",
+      "symbol": "AISTABLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8d600933b53bd73a7f6a97cd369ff4ee35d0bf08",
+      "symbol": "ARCOORS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5bc7fe002a63c21b9ee11fbccbdcefedefe6999e",
+      "symbol": "FATPANDA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa44e7742f8bb6bf0d9dea13429cf1314da4a16ec",
+      "symbol": "币安镇长",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3832c4a5701cda48579e37be67ed4b03ed0090b1",
+      "symbol": "MARGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5e8210b78e883f15a305992339c283d8064cd170",
+      "symbol": "人生回忆录",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbee38b9db83aa7adabe3f2d65837d26fa6782e1a",
+      "symbol": "BWHEEL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc38f0eadc10a4639b47098b117b79690b9ab807b",
+      "symbol": "LUCKPANDA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0b586b22939ff6b82f8576a7d17e13190c73445d",
+      "symbol": "SINAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5ce53632fa0cd84213711365be1aa1125b7032d0",
+      "symbol": "M2M",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x699c031e15930109742088ebe3474ea14ec7fe68",
+      "symbol": "DEEPROCK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf1ed6d96c48f58f69fd15c870e9b4ffc3e2b9c97",
+      "symbol": "POOPYPEE67",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcbf29a7339a7715cbcdf5e3199a9296f4561e14f",
+      "symbol": "APPLECAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf5fae6e3c4b966dd645fdf2fc9d434e820868393",
+      "symbol": "ETHGLOBAL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1a371ed88fda303b3c95f70d400d273f4ac894c6",
+      "symbol": "GOLDCHAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8df7227d6056c511e681a2259c279e0fe528328d",
+      "symbol": "LIDSHUT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe8c45bfa46f31b58d7b5e58aa7125988ce4501c8",
+      "symbol": "IMTOKEN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x289a96ce2841a4f13bf982d8cadd35bdc21d1670",
+      "symbol": "CASHCAT ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x22ddc46fb31e4647e67b08f6a79fd5b728a0049e",
+      "symbol": "SLUMPARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9b041badff70f255ada71af10cb61fee4f42cd2f",
+      "symbol": "1",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xfbd78f3c6e6c7e42d28729a5dcc950f829fd94d4",
+      "symbol": "CLARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4e2d129ee9e716e917ba0dda254470ac88a2d842",
+      "symbol": "ARCANSEM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc4366377e3aecb952087d70bb263d58a6e473858",
+      "symbol": "ARCHITECTS",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x786a352a5ad3905fe2ff4c0849fa8da849281991",
+      "symbol": "PEGGED",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x63a60947c480181632ab0a81d48cb9c714955e65",
+      "symbol": "CRCL",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xa64dc7b2d7187a663d13ff860244c50da532d149",
+      "symbol": "ARCPUMP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x63832e00119f8bc98f503876b86a1eed89434f93",
+      "symbol": "MISCHA",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xa6509b0bf07b1ffa03c298271feb969483a80741",
+      "symbol": "ACAT",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xe0cda94bed0dde3f8f6ad495970714244d450000",
+      "symbol": "BALDGUY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfc0baa9342c4a020ce0ee5b0cfd94c1972d8212f",
+      "symbol": "ARCH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6efd30d371e0ef92dcc70f46b240040258618f5a",
+      "symbol": "SCOTT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1f821b31a514f4c1d5f10eb91a4509c870680000",
+      "symbol": "USDUC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x49c6d0d76961d3d0a021cd771734f4459c580000",
+      "symbol": "BITS",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x4c9d1c8f7837af4bd458381b153a8e3503ac0000",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0xd8c80c9aca899e3f642e862d241ac8600394b715",
+      "symbol": "5042",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x3db49a7d8c6632ba04dd83e9e51147bc35c3499f",
+      "symbol": "STEVE",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x0a02bd35ebe0bc06e3ca85dee5695298cd80526e",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0xd4391685c969debfc85eb466fdf362356c821111",
+      "symbol": "PSMOKE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9feac5ebed27005a3d31f1b49bfb9831d5787abf",
+      "symbol": "PI",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xe0e3a6a636ece8b21c243df9f658391d57f23a34",
+      "symbol": "C",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x7c5c37a803978a2ea04029273cdf5e309a750000",
+      "symbol": "EOS",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x33f245ca756c43d793a27e401ad44e56163cf844",
+      "symbol": "PEGCOIN",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xc5a0c9b1f19810a4352bb802f4a472f6158a1780",
+      "symbol": "USDUC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x0982179d8b0780c446ef370d50b677862ffa55d6",
+      "symbol": "ARCHITECTS",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x8a763fc3ea1fee03dfe431ca236f816ba383ef99",
+      "symbol": "CRCL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd72caf1209b17fed2368ea0903abc1b65b0ba6e7",
+      "symbol": "MINARA",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x8ccf8043a67a341f4277ea91c449c3770ecad7d1",
+      "symbol": "PEPE",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x3a80e6f5cf679dcb74f8db2beaf32446831e0000",
+      "symbol": "ARCHOUSE",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xc6d44a055b64b04a7800a4e896a8d6ebc6b2af6f",
+      "symbol": "BARKETS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xac517a431a53b78b80c6da1c5831c5a29ab22ff8",
+      "symbol": "VITAELL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7c620c2c91902e0d949deaecc27e988cf8b03dbe",
+      "symbol": "NIPS",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x7350aa5892a07c915ff0f5e10abde1e17b6e0000",
+      "symbol": "BLUEWHALE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x38497b23ae9dbfb0cf3498cbb8197bca284cc27e",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0xad440dcef5f41ee10be3fbe26cae58d64d860000",
+      "symbol": "C",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xa290731b7b6247e2b4e397092bdddb03c6f20000",
+      "symbol": "BIRDIE",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x53806c03b6566dc93e2345adbe1f73e197f212b8",
+      "symbol": "AROS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x83cb0d60f47174ca99e4eec8c15bdcf0c7c2eeb3",
+      "symbol": "AKA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7a69f0f23749f10ed1e365664cc03e6268150000",
+      "symbol": "SASHIMI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xec10a6101e140836859638ea2375678e734c86ae",
+      "symbol": "AI",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x69369ad3868ee0ff580a928e898f6791b3e40000",
+      "symbol": "STAPLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x878ebbed706cf2a25a0d80958f15500bd0008e7f",
+      "symbol": "BIRDIE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xea66f8215c60c8902e0fdc441d89bb0af89cb73d",
+      "symbol": "ONGR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe683af4c2269d628f3b8a915b3735603896e5d27",
+      "symbol": "STEVE",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x4bdc8d1c4e1b297b5c1fc6ef997e4ad049178f66",
+      "symbol": "CBULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x247c25617b49a5e5ea5f3074c3dc918ed86d0000",
+      "symbol": "COOL",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x4620490a0831ffae71b892cf419377cba1e80000",
+      "symbol": "STABULL",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xbe578abae7178963fa32aff253914c4720140000",
+      "symbol": "DPRK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x11bc568ca48e5195b305c562e07733dcbaa7c7aa",
+      "symbol": "PEGCOIN",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x6d2c1d0a1f94d50f11b227fafaf64418c3e6bdb6",
+      "symbol": "STAFF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1caa4fffb23e09fab2b6e3db5fd3ead0c3528b20",
+      "symbol": "ARCHITECTS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf61a1478195cdbba699d497549b99dfe95bc5428",
+      "symbol": "ARCHITECT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2e21aadac136f4676703a83add6723b0df828599",
+      "symbol": "CRUCIBLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd0ed06204b64ec0ca35334ece761f4d8459e9623",
+      "symbol": "BULL",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xe85ef2c4dc670e2ac127018a740acdd630af4349",
+      "symbol": "COOL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1db203a39e86099c64da98f52a1825d0da4dd0b1",
+      "symbol": "WHALE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x07bfb66d61f4d576dadf9dca118cc023abaa0000",
+      "symbol": "ARCDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5a9bb0e452a7aa20ac39af6c6e8327aceeea89fe",
+      "symbol": "MISCHA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x12dc5318a6e4d44b37dfef9a7dc89f8da68ba3df",
+      "symbol": "RESERVE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf2b3a709e16164997841ff9c62fa70b590591cd6",
+      "symbol": "LAZY",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x5723224c96d18300acbbc8607e9fa7580b42e1f5",
+      "symbol": "DARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x812f44ac73bec6174055358aca555f3107c7b451",
+      "symbol": "ARCEUS",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x6fedc26525a5febbc63bc95701eed76b80338492",
+      "symbol": "PI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3d302cd848b30d26c7d4a7158e8b035b737f0000",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9003836a66f3328321bab337d9aae67cf68e0000",
+      "symbol": "888.532.6733",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2ff9b4e00affea506f9fc97cc234cc60abc20000",
+      "symbol": "CDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7ca99101d39a3ff52eb440b2f19c5b5cdb4a0087",
+      "symbol": "SUSHI",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xdcebd66e804abdf605399b6f95a7a5574f520000",
+      "symbol": "ARCY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x61249ea6b49f76455623ed91f3bde2b6abbc0000",
+      "symbol": "ARCFROG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8e1f0c5d4c7ce8c12b1f356cc4d45a7c3c39904f",
+      "symbol": "DE1",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfd94d8bf88bf914b2f8d85b25c22c0a06a6cfebf",
+      "symbol": "PEG",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xbfceb89a32fdde420edfac8a47af1af14941b8b2",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0xe014617aee057005802a065acd40dc3d4e4c0904",
+      "symbol": "SHARP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x55fd22ea79aa68e1346196315dbd75c6d62ef6bc",
+      "symbol": "TOLLYCAT",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xb17e2b07ad41d6bb02ff619bfd019683a6f60000",
+      "symbol": "5042",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd1fedc8729ec72a3846f4441c81714dd2e5b43f3",
+      "symbol": "ARCMAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1957353f0fe9b79326a2625b04042a27a2250000",
+      "symbol": "1",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc41ac3d578bd55efb9752f6dc8230d2226950000",
+      "symbol": "CREDITDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x79cef31226c7803395b37661810968880d970000",
+      "symbol": "1$",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6d1fe18efffb95757822da67ceeaf340f97050d6",
+      "symbol": "BEANCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xed0d33e066c35596f368f9bb184537c475150000",
+      "symbol": "金狗",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5f318efac08ba766c19ede154bfef9e2beac0000",
+      "symbol": "TAE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x37d455710a74cdabeee07ca5804ca081210e0000",
+      "symbol": "PIZZA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3133f0e8a3cf06974055c872a8911d5e537cee7d",
+      "symbol": "BIRDIE",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xa6fe05d5c5beb68aae0496830199f9b36a5d4483",
+      "symbol": "SLJ",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd4468d337bf34e5b77881b0159be96ca00714ea8",
+      "symbol": "STONKS",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x21469f125c88b3a2a49f0fed9cc4877820480000",
+      "symbol": "STARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x135d05f7c5aa1a2f1e52512776b7bdfb563e3b4d",
+      "symbol": "CRCL",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xe7c4bbf29a1d978e914bac155441fdd9e885db0d",
+      "symbol": "ORANGMAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc1915fd0858cf47599fc6e60928032fcb3fea6bf",
+      "symbol": "SHARCFARMER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6066990c223c32da924c7c1edf1b1ce10bc1fa65",
+      "symbol": "CRA",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xba9fef9808000c42e45725914c51515f99e380d6",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x18e90e79773b06166730fd27a9be67901202ee59",
+      "symbol": "ARK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd3f299b27555e0a210e55134ddee6b2f2e290000",
+      "symbol": "ARCBULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xed79cd0d5698b56f8316dcb95d47b2765405eacd",
+      "symbol": "CRAB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5c06025c1d85d17d2de4055515333e2b02650000",
+      "symbol": "ARCPIG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x68a15270ee46249ebd9c70786cb0305f27550000",
+      "symbol": "ARCRAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7f5a04f270316588540393564d19201f17bc0000",
+      "symbol": "WOJARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x234e9ff5cd92afe6f45bc7b06e2a2ce7f44ac430",
+      "symbol": "PAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3fb78e4d75e1bc54a5eb5b2c2d67981156663284",
+      "symbol": "MOSS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xed12bf47737516094f358f2b1495a848fed90000",
+      "symbol": "REBELLION",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6cb89cff8f2d06f9d6fa33d778986d997abc0000",
+      "symbol": "TOTORO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd0551661f92ec679bc4a34993aa55b0922ca418a",
+      "symbol": "AOA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0e5ff0e48619e6cbd1e62228c5bb9c1f55930000",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x63fcac4f4c48a77739305575ca20a02fd9280000",
+      "symbol": "HIB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x68c3cab3305b4ec16b6ac4ca20e7ecce4fa50000",
+      "symbol": "ARC6900",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1819adbf16e18b03d5b48d4a4b38b7ded1e40000",
+      "symbol": "WAGMI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3c058f78b504b442f6860c738fb1d7573de60000",
+      "symbol": "GARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x63fb91e0e95b0a45d572f56c8586dd1e6cd50000",
+      "symbol": "DREAM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcdadaf3ddbc3f864d83dabb3bc6ce72f6af65903",
+      "symbol": "USDUC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7c71be6195452fb6a985fdf2ff1d44c13fc00000",
+      "symbol": "ARCRABBIT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x77dcfaeaec4429f80966dc2cb9c22b6fc2ca0000",
+      "symbol": "ASTEROID",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x935ab8e46b64337a537cb1f71a892194071c3a28",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0xd5da59ac5964272b97453d7138299267cc9a0000",
+      "symbol": "LUNA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x37653a39f53dc1fea7dd33c3617440851c1d0000",
+      "symbol": "USDCLIFE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb5b8175f40415cbc9953ce66ad37a1e694d10000",
+      "symbol": "GIKO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc2b127f12e563311d254b62540b163181797eb6f",
+      "symbol": "AOA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7cbda938f8979b16821752312c8b414e6bf00000",
+      "symbol": "MAM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2c77d7b76053408669c160c59ada3560beb40000",
+      "symbol": "ARCPEPE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9295200eb0cd47824bbff07aba74d6615b880000",
+      "symbol": "STEVE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9c03bdf65591f17d855b9c385397b6a484960000",
+      "symbol": "BOARDROOM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd6c457c1c166ef0a5097f03e97118c92fac93931",
+      "symbol": "AROS",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x569a59d1c0b0556c3b90705a2ca026eaf9ab23b9",
+      "symbol": "CRCL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x61ba3913ef4cb4556a7c1883d5e3a6e2f1760000",
+      "symbol": "CATBATHATFATRAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8f7e94eae6fb5b69b08536dd5737268799fdae9d",
+      "symbol": "STEVE",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xcb5f9a4d0ec6ef9f1f46f0741236bdf5ef910000",
+      "symbol": "ADOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0e43e997a553d3fb4225ba90809d81068dc40000",
+      "symbol": "🔵",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x23edb9be094962627dfe3212afec11783860694d",
+      "symbol": "SONIC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x45007f6072a62d282b0e7e64d6d0d34be9fb17db",
+      "symbol": "NOVA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xad9d5a7d51b0baed0a8ae469d425c0a14f01015e",
+      "symbol": "USDCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc94e9e7be361b676edfbc79f1a20233ee9ba2c52",
+      "symbol": "ARCHITECTS",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x94fba8f453b21d55259329ed983d2a719b3fa33e",
+      "symbol": "FLP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc4cb13c3053a2417422a2e151480b00c4f3a0000",
+      "symbol": "USYC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xccd90bf0a752f4117ce37af84c4714a11cb227e5",
+      "symbol": "DOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1ac78e719f948838ade6442c269ff167df850000",
+      "symbol": "DEPEG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc3b9f2a3b415e4e80b005f9eecb85dbcd6850000",
+      "symbol": "MMM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa856b21457904ace3674752d6eb466cbe4bc0000",
+      "symbol": "0X3600",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x719bcaabf8a3d9ed3266283c846d6a8af04d37a0",
+      "symbol": "AMOUSE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x278c0d88267d702c46f1d00f513614d1d93e605c",
+      "symbol": "AD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6768de781f728144a07e08efb6a970688b710000",
+      "symbol": "SSSSS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9d46b997850f594a20508a8985a55295763b3ac6",
+      "symbol": "LINCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x08e51a05b013febd39f95ec9889d7f2a7387da56",
+      "symbol": "ARCATO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xef869b627ad7fd8eaae9b2ccf21225dc17ff7126",
+      "symbol": "VOLT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8cc2f625cab9225054c53b4da3655b92454c7115",
+      "symbol": "67",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xb3c9d95b5aeba9fd9ef8b14096baf9eaf490a8cc",
+      "symbol": "AROS",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xedb5a43e830d517e1b3672569168606d7c9e1e71",
+      "symbol": "BANCOR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x019c3a6cc916a7cf5fc0665b4a74b1035d955376",
+      "symbol": "CAPYBARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc23c71e5fcfbf69f62e7fc7eb8917fcbe3eb3dbf",
+      "symbol": "BULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbe6d8a9fc43bd9ba3828777b9dc4b1a3df1902ea",
+      "symbol": "BEANCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe7485f19624a013ea3f371645c93ee274592b960",
+      "symbol": "CINU",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x48eb76eb08adaa2a3cef0338dfc1cb94f3fe4323",
+      "symbol": "AROS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xac9e20d28b42b01846342d794e54db2c192009b1",
+      "symbol": "BOZOFUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbfab3e8707f055a9718ce1d286916cd4e38f8258",
+      "symbol": "CHELSEAUSDC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x75b2d867980d8ecbf5388afa2ebdfc04333587d8",
+      "symbol": "GASDC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3326225e69f1e2ac75b865539f65e56a33411b0b",
+      "symbol": "ARCPAW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfda0ca9c83b8c011bf66f20a7b6b6e770b573142",
+      "symbol": "COOL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3aa37775d9884d42d047c67f6139c4f66c235837",
+      "symbol": "ARCMAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8393ad9d00109f299eee97e390e498f9155a3a4b",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x257a4365b8231fb638c3287e0e00e039bdacc356",
+      "symbol": "ARCANINE",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x16d96bd67b4e1d1667bf9f3a694ec015f48d7ca6",
+      "symbol": "COOL",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x01ef564cd88ccedf245c8319ce34909bbe84bcc4",
+      "symbol": "RADAR",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x4b1a3b46d7cf9a5098cd9d687d15ac14dbcb3bcd",
+      "symbol": "ARCHANGEL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x386eb6a338033939dedd2bbcd9306f062d3503af",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0xe50b3b1de88d13aaf1b5bafac3faf12170c14291",
+      "symbol": "TEAMUSDC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x769a2a6ef0645c09ad72c8d89908af048a3e2838",
+      "symbol": "PATAGONIA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdb41a736dbf22d22046496fc90fb02b39cfc5014",
+      "symbol": "ARC5042",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9303b9442d30e4cdaea7b5b4627929219cabea9f",
+      "symbol": "NCA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xeb084d480aef8bbf9ab14dfd1df5b9c16356f0cf",
+      "symbol": "5042",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7bd0e1e916b4780e2cb4b57a9f57f3202d45bd77",
+      "symbol": "CHZLND",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc29b1ceaec373baaf001925fd3dc505360793f81",
+      "symbol": "JEREME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x64247a498f85e2cf2bdfea39c7a927ac0546b886",
+      "symbol": "NECO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3955f040152c84b231ff4248819a33efcdc879e4",
+      "symbol": "UNICAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3239061ae8b9de2092a097b3acdd2d7ff1af8946",
+      "symbol": "RUBIE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x635bda8e52da875d2c1faa09fed1965613430b1f",
+      "symbol": "ARCN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfe3c72ff96b53e34aa81bbede7102e1f52e8d0d8",
+      "symbol": "BRIDGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4f74aacab97a0dcab89ee11c172c2f2a04a690c3",
+      "symbol": "ARCDOG",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x00c88d16355e4c45c46cd6b9c192c1049731efa2",
+      "symbol": "CLARKITTY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe004f2806b9eea192dce34011d9479fdaee5025c",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7371ba9934507c94e2ac77109e1eeb40f6eeefd9",
+      "symbol": "UBI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb95184326b49d266be3fafec30bb669f4c91ded5",
+      "symbol": "TOLLYBAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x05622b99a826ca6c357f534375b80b98e80e0668",
+      "symbol": "USDC CAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd8773c2787127ffb6181b8ab6339111b9fa8ef23",
+      "symbol": "PEPE",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x53d7ff0e6836cb1b1d278308115ef0abee0de9af",
+      "symbol": "TITANIC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbaa844f9fdfd289eb2920dd13864ffc8f73922a8",
+      "symbol": "MISCHA",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x1f2aae3befcdb877a4b5e5c6dd5fa19b2a8bb3ca",
+      "symbol": "ARCHERS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe2956af66e06e2df1e0750353f001904435828da",
+      "symbol": "XNAN",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xa7cbf54d4632060c27c41b80c68e2544bdd3296c",
+      "symbol": "DEPEG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0a6d887e4694930e8c1360bfa8748eb415a1c46b",
+      "symbol": "DWA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7ccb014b30d17f18c0ed0f70c11795b53fcee586",
+      "symbol": "PEGCOIN",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x96d1c72e07dd4a4744d72b52ac41ae617133b753",
+      "symbol": "BESSENT",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x21952d3c2b56f634aec4e01198b1183ca976fe94",
+      "symbol": "ARCMAN",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x811923f2c060faae620f13094015ef6e0f01c710",
+      "symbol": "PARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x00ff9a772abe08e38e36c3f36b6583f318267fe0",
+      "symbol": "SEMI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3996ce47b792cd6340f8ee31d3ab122de7f3ba0e",
+      "symbol": "ACAT",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x9dc54af839355f4e5f3ec8cb662e46f8b86b4342",
+      "symbol": "DOGNOLEGS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8fb034fbe29d012d5f24c873eefb5db489366fa1",
+      "symbol": "SUIT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7e83119b4b85e4d0868062479bce3601178525a5",
+      "symbol": "THEO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdf1d5a28c21b9d447a78eb4bb5711dba67618c63",
+      "symbol": "TOLLY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x885e02ae736310d3d0eb64a6d0750d026cff6b27",
+      "symbol": "ARCDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x67bfc03a123092ac2493fbcba41a074704235519",
+      "symbol": "ARCONIC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x18161b2c462f9464cb5421fa43b429453bde5d07",
+      "symbol": "PERIMETER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe71f4dcd23bb5ce3a59b17afd906fe7989ae3139",
+      "symbol": "ARCDOGG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x525aa6d2ff7b693fe64899e28b5bce0f5ce5935f",
+      "symbol": "RADARDEX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd4d221a505ea7ce159b1c816196c4569fdef0a48",
+      "symbol": "STEPHANE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7babf6c969020014b55bd26d5baa8025a846acd2",
+      "symbol": "CATNIP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd4630bd9b45291edfb2086b2848f120fa43a0e4b",
+      "symbol": "ALLR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd398248257d464985dea1080ee98ec8485af453f",
+      "symbol": "RADAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xab1fdde087d7ee170a70578960dc5a98c7b236d6",
+      "symbol": "ARCHINU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf8ef0b4f60230abe7b19d1f7bd0b1cc3ee9a124e",
+      "symbol": "MAXUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdbc3a96754233793ac82163e9338834ea904a9e9",
+      "symbol": "STÉPHANE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3d24e46bea1c66209dff31652a8148cadeb51f0f",
+      "symbol": "MALARCHITE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbd35d29e40b74a5934dfdec307036825a16e77e7",
+      "symbol": "CRA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe7b73eea93f976c9e4286c7ae94a2a04ca592f1b",
+      "symbol": "SHING",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbab6b4b036d8599828bff54785551fdc074b0e65",
+      "symbol": "HELLO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x86059f7faeb74eac2cd6ef5e504b83d11d2703dd",
+      "symbol": "CNT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8d59723a4a75e5cbb454f27d9874d01510a79eab",
+      "symbol": "CRCL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc7e5c42ac263df654e22f894acd86ba4bd71ea2f",
+      "symbol": "RADAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x13861e4b9e451cb924c45f183d5ecb7632cca513",
+      "symbol": "BOZO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x01b0fd32343d159b3c3e01875c0c14640e9545cc",
+      "symbol": "CBITS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe6a608f765f6b990ce44ce065ef22071cd77b54e",
+      "symbol": "$RUG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2864d8d603963ee31d383326032e815983f3cd39",
+      "symbol": "BLOP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb457f7ac386e444574a8e68cf5f6f8677cb70d77",
+      "symbol": "CERCUL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x88419737b8bf181d3252b907f050059918fbe6af",
+      "symbol": "ARCPIG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x927edd5e29b520c2bd316f3a4edf254985adafa7",
+      "symbol": "ARCHER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbc0ccd844a80bc2c6dadda090b3265c3f671f9c7",
+      "symbol": "STEGO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa91948d5254d4a53d6b09b82f18a5bfa3a930916",
+      "symbol": "ARCCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0a1c0dc0ea9b3f4bc43db727eff31327e51741fa",
+      "symbol": "CENT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd6733c2aaa2420616aa61a112bc96953184b0982",
+      "symbol": "MONEYFRIEND",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe32c938e4711e02ca698c315d2d0adc8b535da37",
+      "symbol": "REVSHARE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe78a1735b1547e79af01fd9fe2b3f9da4edc3a6b",
+      "symbol": "ARCINUPEPE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x50ac9338fab3729ee716b406982c0f08d962822b",
+      "symbol": "U.S.D.C",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdf0d7fded5aef66bded9ea9183d6ab0bc18089e3",
+      "symbol": "PUMP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc292542b100a751ce58fbb56ddedd9e5f1fd4c7f",
+      "symbol": "$1",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xaa1d5b49ea7f408ba0041674b9b0418769b3c300",
+      "symbol": "KIB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd562964b68a8009f0fd162ba73db975552c80b10",
+      "symbol": "EYES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa1438cc9f78e5bb6df3bc2dc09a8e498eaf4c9d7",
+      "symbol": "ECOOL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x05b0d95b115f555742d5799384b1e5757d5e2e14",
+      "symbol": "ARCFUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x61ab0e00821ec8cb8c4f4c01955bec417469dd1e",
+      "symbol": "NOAH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf94f23a12f2ae51c59a3b69079e6ac1409be2076",
+      "symbol": "CRA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xaa88cafa816eb7c84b7320249709ecaafd546f7c",
+      "symbol": "RADARDEX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1cc2b2b39620bf721230e80a83b996bdb74f8eed",
+      "symbol": "ARCDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf89628f4ba31309d5e23a4b84daf040b89eee3ee",
+      "symbol": "BBAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1d8df3f2e669b4b05b879cfd82d896c839e034c5",
+      "symbol": "ARCTEMBER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd821913114fbb506e12e6113b09744664d648a68",
+      "symbol": "NGEK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdf84ff66d37788ec8d302905f68987ac2f4d1533",
+      "symbol": "STEPHANE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x24b5e785ce1507b7d2eb3f7705375d309aca7688",
+      "symbol": "MSFT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb53bae81c75c96ff5ee49a5795147ba3fa8247fd",
+      "symbol": "ARCA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa3c8864548d825aba676f60f376fb3634d815d8d",
+      "symbol": "STABLEMAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x93e050c72074732f93754acd86ccff3c3f7ed432",
+      "symbol": "ETH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5512e0e64e5799d98c0d4822dddf58cc9def8843",
+      "symbol": "BALD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8277bf94c4b55148615a70c6a3e14be67c3073a0",
+      "symbol": "A402",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8c1392dfe0c888630063039fd8d54d3073510acb",
+      "symbol": "AHYPE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x43d0069c9a4bf985385336281000857e41896a73",
+      "symbol": "MOSS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf5680e5231461cddb5ea894f47d7b2b12b0e0f6d",
+      "symbol": "MONGER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xab809561a7387a3355c92a4a0b55cb10edb38ee5",
+      "symbol": "MINARA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcc92244118b5f1f08291838f54d8d129dfd5c7b1",
+      "symbol": "KASHED",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8477c46e0f2922dc601d33510db054a1cfc527b1",
+      "symbol": "CROCO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe536ccfe35b1b3df81df7160683a8e92c5958091",
+      "symbol": "AA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x40ffe78ce65de9771b52442c1b41095e5d907f0d",
+      "symbol": "ARCMON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x242b08ed8470c44d773942958c4f5df29ab29832",
+      "symbol": "ARCLENS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x355d1d72a262014f3786b5f781de319efebe6285",
+      "symbol": "ARCLENS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x41a58daeb8f8edb75245bb48ee3d97522abc0839",
+      "symbol": "MCARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x52dc97d0fc82b0c11179cbc54f5a8d9b953eb7b5",
+      "symbol": "SHARCHITECT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x055b96d19ef2797af8ac75fe267c730a8b8b03da",
+      "symbol": "ARCOS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6ece0f401df07d0d3579f2959907b0a22daa8d8c",
+      "symbol": "ARCADE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6d28be9c9e5390ce63206d7902878a6bfdf65b1c",
+      "symbol": "ARCFUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0228f4ae783fe6e1965d112f4374ae459982c72c",
+      "symbol": "AKA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x65bb7a17306244205d0040f79db433f61b9a56ac",
+      "symbol": "CLARITY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x97020e0373b4a560da6e9626f602b364a0b2d522",
+      "symbol": "FAZE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6867584b302a6a91c7dd744b5529de6129581a11",
+      "symbol": "ARCKITTY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc0169fe460fc7a6eaf0be2049c4d8c73e597211b",
+      "symbol": "NEBULA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe8921e102e67b85c44cb18b8aebe8e6f990de41f",
+      "symbol": "CRA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0ee402d1fbb9819e3b5c69e4099c6ca791de61ec",
+      "symbol": "ARCDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6a20b2d18a03de34d035f4d252d787fd12018c6a",
+      "symbol": "STONKS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x77dfc2394837f641b97421458450633c631c9c67",
+      "symbol": "PUSDC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0000004581e5ee97018458282f258d9a00a9ec1e",
+      "symbol": "TEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7dd644b9a94a99917b871316fa7bcee9cc5fdf54",
+      "symbol": "OPEN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9ec411e65ab6450c8ae676631de5354b0c19c746",
+      "symbol": "USDCSTONKS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x72f95063edef49bc32c19b02e1aa7594d506573b",
+      "symbol": "360",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf5d440fd74f33141df26249cb8fa84d12d65a65e",
+      "symbol": "CLRT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf51d3f2068a6802bb21e49df7b3ad92dea8d58e7",
+      "symbol": "ARCFUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x044739cd56309c33bc10d7498834aa97c0949c68",
+      "symbol": "NEBULA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb5782c314c3af53255482009321c7ca1aa9d3264",
+      "symbol": "NEBULA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5b21ad85bc4a78be1955467e9605fc97e4a648e8",
+      "symbol": "TWINE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7ca0c70361476095b47bf8ac153f6262bd032793",
+      "symbol": "NAZGUL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x59870453d74c961da789db3d5e230936d44180d3",
+      "symbol": "REAP3R",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf17c1f6ecca20f1f984428d167ddafae53aa0e8e",
+      "symbol": "SLIPPY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8ddf4260ad9ca555a9215dca20be0f3b309891fa",
+      "symbol": "NODROP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa8e6f1737aa934709eb9f08a9d596736e824ed69",
+      "symbol": "ARCOINER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x54fb4f5b9588f90f41b5710610782b3dbc1e6dc6",
+      "symbol": "BONK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb3984112d2ff023ffb2845c157ce223add2f57a7",
+      "symbol": "RADAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x77f310f0f045ff0cafb16821fd136c01bf366a5a",
+      "symbol": "GIZMO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc26b0f0ad77a6f2ec838a37bff5af5bab368180f",
+      "symbol": "TBC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa2df625cee557f94a0210be5a52e00bd52108578",
+      "symbol": "GOBLINER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7cdf7ddd36e3784d4a9d3505253db3be3389350f",
+      "symbol": "EXITLABS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xef0f413ed6219789d5977939cc7401072df4e878",
+      "symbol": "TRUMP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4ca5ffefa5c07d3c565cab6d2ca10261dd8bfb80",
+      "symbol": "SLX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x450cd15688b9d18dac2900990f1fa8225a80bd1d",
+      "symbol": "100T",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcb1d24d206fffea68996525a1983e66d16d6a63d",
+      "symbol": "ARCTOUNON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x931b614cd9906f09c1712f85d21e0600502b3757",
+      "symbol": "$BITS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2f7edcf0d8d83c388ba9abbb774ea8a7b61c3f99",
+      "symbol": "BIRDIE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x10a0bb7071d68c5866e18acd1cc9941f9652739d",
+      "symbol": "USD//C",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x09119ab9e1a810a53bc777a1a27195c17f737e9a",
+      "symbol": "MCARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8f7c80681a44936d6a8d1ccfd3b7bbb1c01416f7",
+      "symbol": "CURCLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3a05ccd366424623d3999e8c1fa454cd87e659f0",
+      "symbol": "TRENCH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x068aab6d31a7caa532430ee823b8f35b547281a2",
+      "symbol": "PIXELDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x224b653a7fd736b0c3f87ae15d4464f13408bffe",
+      "symbol": "IF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2465e4386152065ad60fb2452f8e4b0e25fe89a6",
+      "symbol": "AROS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf1a45896704d1fdfbb218b7c9d733deb99497442",
+      "symbol": "ACAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x013078023cabb60856977a825f38eb217e932725",
+      "symbol": "COL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x08fad02f5a937201234265eff3b1a4f25326d341",
+      "symbol": "VIVIAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x29961123bc55a5de204afec2dcc1a1ed75067fdf",
+      "symbol": "ACR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfb45772827634fe9553b59de9149a59a9e022629",
+      "symbol": "BIRDIE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa482c6574bf0a0f188754bb33cae4d84f08bd248",
+      "symbol": "OWFT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfc5d348901eb8107a2435df3183f7ccf3e2a0b4c",
+      "symbol": "BLUE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2c004e827fbd416e058c109d71090bec83a4cc54",
+      "symbol": "WOJAK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x10664f1c36a4bdc8fde8e41b7da48ae1f44b3269",
+      "symbol": "CRABS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x087e2d38db5f396296a398dd7b32cc1b031f7309",
+      "symbol": "ARC0",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3f9e8bad31adb6c853962fea42f0a949325c0373",
+      "symbol": "NGEKCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xaa5e295f9b76f2d53e625ea6ce9fd0197077750a",
+      "symbol": "ACROSS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa1e34b1c9f9586b1be5a5c62770aa8d00b8e94a5",
+      "symbol": "RETARDEX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x33185db1dd2a74582c9e039ff6300cd1dcacebc4",
+      "symbol": "GRID",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd52918830c86548cdd3aa666df37da0818999423",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x051fe0e87c81efbded26b1ef26f82ad3a65573cf",
+      "symbol": "BILL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x13f820b226694e4afc8f2448d3cac90b2c941c79",
+      "symbol": "AKA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2d6e4ec779902e6b1a9fe2ec5edd4f0ecf224dfe",
+      "symbol": "SHARCFARM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xaf8174ed983be4be4969c0f10f61d2de3d987a9b",
+      "symbol": "CATNIP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9c40a0f0c9644e298d52e87c2edc7fe77a5727f3",
+      "symbol": "BCOOL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x749fc5a0aca0f0b4d92c1bf39370b03b03e90a10",
+      "symbol": "GATOR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa6c213c2c0e0939bbf7d57cbdd5c540426b01ea8",
+      "symbol": "CHAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xecade76b4d831d9e9e9bd4a294cff99ab656c173",
+      "symbol": "BANKAI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7ef6400899a0bcdd5195a2e2f06433852c5def7e",
+      "symbol": "TEAMCIRCLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x458c2a294e0164a437576187e963bfa04660cda7",
+      "symbol": "CIRCLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbfab5e1feb54610d97c25cdfdd41669b06e7c1a4",
+      "symbol": "CX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf272638123e9e97f11f64c63ba6c89428ff86ef9",
+      "symbol": "ARM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8613155ff713c13f6c177275af9bf195e69ded34",
+      "symbol": "CPLAY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x12ff07fc913e6d14b225e70b3e63fd28a6c55b08",
+      "symbol": "JOTCHUA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9ce454b154dc262f14433d2c3cf2184d6c2b5f0e",
+      "symbol": "ARCADE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x563eae55f5341a2f08989e5b674ddcfadaccb3d8",
+      "symbol": "POOLS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x465cd9840e60f510094dd5c3e3ca6c9d2b945c7e",
+      "symbol": "TCKR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x326a03bb7faaa95e64e954e97fbf555efdf80496",
+      "symbol": "ORIXA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4b2fd31fde513298c69c18c66964850e20ba2d01",
+      "symbol": "MINARAFUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x007be03971c48ed1696af619ed1531194ab014ad",
+      "symbol": "UNSTABLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8a497e5a94359f67fc3b8ebc4ee475958dfa973d",
+      "symbol": "RIPSTER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfd5c2aea2a4cb594dc25e4d99b29be8240935441",
+      "symbol": "NARCOS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x91a73b4e7f7984fdf1de6d9ed7e82c35b3adcd72",
+      "symbol": "RADAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf2ea15be9a03e04de15deb11c27739abbfd61215",
+      "symbol": "AKAARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x74b32f98045d68db8875f6bac14e550dd405f620",
+      "symbol": "EBULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5008ddda92b58feabe62558881a5aed4fe065bfd",
+      "symbol": "BEAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf86cbe880ee7d688857d819d9c5f660482b8e527",
+      "symbol": "RADAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x86a1623551834ae651c8d82daf8a2842b061cab2",
+      "symbol": "MEW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x14137074cc5be40f4037172e55317d09b84057c1",
+      "symbol": "MTK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0e9e0ea86fd1620c6f3284420829bb992fa4a519",
+      "symbol": "TC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd7dd346270c9c88421f11181560732d897521831",
+      "symbol": "NARCOS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdcda1d647a99973515c9b58f7db689845cf0bd1f",
+      "symbol": "RADAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7a37e5de6a84bb7a4dc1dbf40635ea6473154c8a",
+      "symbol": "ANBL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x35c11ab5fce30bc322d5099dba6405bf6fee402f",
+      "symbol": "REAP3R",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9aa63281ae2a92e757cb5c2b5a520ada5b1eafb1",
+      "symbol": "KNOT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6d680bf162261be4079cbc2603498c9363d925f7",
+      "symbol": "REAP3R",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x897108f03aaecf7e28bc646eb722852f8dac59a4",
+      "symbol": "AKACAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9e544b3bb40081c7942326406bdb120e4ec7efdd",
+      "symbol": "ARCODIO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5d9330bf15aa778d9f5749469bbc481eae94f37e",
+      "symbol": "BIKETYSON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x396b8c23a63938fdc85e00eb6e410aa985710000",
+      "symbol": "UITGV",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdd81e8842dd1e943d51cdc97a310db08ec6ddeee",
+      "symbol": "NEXURA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4eb6713c3b3ef2379dd1caf86aedf932d89a89d8",
+      "symbol": "TRILLION",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1adb906e5837bb92ce8ac16b06866ec5db65c55e",
+      "symbol": "ARCEUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x24be454dddd12076fc237e3a5493bfeaa3a44535",
+      "symbol": "HYPE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4dd3c27c9d09aab390dc59586e1f020d9813832c",
+      "symbol": "USDCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4bff7bb585ccc84fdfa87865704e4bbc1b4e4618",
+      "symbol": "PEPEARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xaa26e2ca318db76102c73fb6fc6f5b0cc466773d",
+      "symbol": "ARCSHI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf0fe5ac27949721203f8a8a6a1b26bb97a3f353f",
+      "symbol": "TOWER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0201098410a8f5c6e200a5e15d00f7f7b494e609",
+      "symbol": "BRAINLET",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1dafff0928080c44f5b381629f400d89cdbc3282",
+      "symbol": "STABLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x48dba5ea295c8e83eb4c0ce026e102ebf310c7f2",
+      "symbol": "ARCX4",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xaea1030d230527b62d871502da52d78986a3a1ed",
+      "symbol": "THRD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc645ecc9dbd1055a1d7c824420639a4f70602709",
+      "symbol": "ARCUSDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2c35fcdd0ef08feca409edfe3e974678899cf035",
+      "symbol": "ARCTIC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0591603b2ffaf10d4a87bea3770ef28b84150b90",
+      "symbol": "HOUSE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcc209c9ccfe0f3765cb4124f12abf95620e387f2",
+      "symbol": "SUBORN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5c08e006108cb56b75a19376dc6ec38f3203e657",
+      "symbol": "SHYCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xad8e2e7849afcd15ad06ed7883f8acb40ae19467",
+      "symbol": "RADAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x013a653f250fe3a960450f11beb929c6eeccd479",
+      "symbol": "DYSON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5361f44b59e7c4c77a53da084f603759106f0a05",
+      "symbol": "PEG",
+      "reason": "Preserve higher-cap existing entry: explorer-only volume omits other pools; incomplete evidence cannot justify replacement"
+    }
+  ],
+  "duplicateComparisons": [
+    {
+      "symbol": "MINARA",
+      "selected": "0xa163d7624da3b5d9182c50eab5b8cd247ae861bb",
+      "previous": "0xd72caf1209b17fed2368ea0903abc1b65b0ba6e7",
+      "previousMetrics": {
+        "address": "0xd72caf1209b17fed2368ea0903abc1b65b0ba6e7",
+        "name": "Minara AI",
+        "symbol": "MINARA",
+        "marketCap": 7251.866547563206,
+        "volume24h": 14672.097896999998,
+        "liquidityUsd": 2254.530302,
+        "trades": 225,
+        "launchedAt": "2026-08-31T17:30:46.000Z",
+        "pool": "0x77c38028044cbc50881d78d0810dbf492ae4af47",
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "C",
+      "selected": "0xb76b1b6dea3dc3f040a07f9bc29150eefe1e8853",
+      "previous": "0xe0e3a6a636ece8b21c243df9f658391d57f23a34",
+      "previousMetrics": {
+        "address": "0xe0e3a6a636ece8b21c243df9f658391d57f23a34",
+        "name": "Look for the C",
+        "symbol": "C",
+        "marketCap": 7489.904027470158,
+        "volume24h": 6061.643177,
+        "liquidityUsd": 3484.364458,
+        "trades": 60,
+        "launchedAt": "2026-07-29T19:48:42.000Z",
+        "pool": "0x2e2dd74ba818281549a6f70ca9570908c7c1ccd2",
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    }
+  ],
+  "sources": [
+    "https://www.arcexplorer.org/api/v1/dex/pools"
+  ],
+  "coverage": "800 pools ordered by market cap, representing 760 tokens. Deepest USD-anchored pool used per token. Argus board returned HTTP 429; recent Argus launch feed could not be refreshed. All added tokens have on-chain metadata; no matching launch records found at the configured Argus portals, so these are not marked as Argus launches.",
+  "caveat": "Reported volume does not establish organic activity or guarantee token safety. Market caps use full-supply spot valuations. No new launch-pair approvals are granted.",
+  "added": [
+    {
+      "chainId": 5042,
+      "address": "0xb4337b8d148aa7a1f2124d9f6362234fff0fbbbb",
+      "symbol": "USDT",
+      "name": "Tether",
+      "decimals": 18,
+      "marketCapUsd": 6843190.581516413,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa163d7624da3b5d9182c50eab5b8cd247ae861bb",
+      "symbol": "MINARA",
+      "name": "Minara",
+      "decimals": 18,
+      "marketCapUsd": 2443344.8421145245,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xf76b1d00bd3d63a37246b5f512074e864010e33d",
+      "symbol": "POLL",
+      "name": "Polly",
+      "decimals": 18,
+      "marketCapUsd": 2361382.157568915,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x25b2f893ec15808dbdc542938a4a091ece7aec44",
+      "symbol": "BOZO",
+      "name": "Bozo.fun",
+      "decimals": 18,
+      "marketCapUsd": 809962.8356112756,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x1c98d896328c35a751ce18323f47139a44188001",
+      "symbol": "CREO",
+      "name": "creo.family",
+      "decimals": 18,
+      "marketCapUsd": 631756.0422818122,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x1cd3af163b1deb67d477aeb0d0ab1fae0955bbbb",
+      "symbol": "BIG",
+      "name": "BigShort",
+      "decimals": 18,
+      "marketCapUsd": 271020.1772986916,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xcb92a075db3d4e965f37936da2100902344650e3",
+      "symbol": "ARCADE",
+      "name": "ARCADE",
+      "decimals": 18,
+      "marketCapUsd": 172258.70476239338,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x2c6988bccbf6cf2ec0f15bf1cae16309cdb4c90a",
+      "symbol": "€€€€",
+      "name": "getricher",
+      "decimals": 18,
+      "marketCapUsd": 155705.8497139972,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xe60e2bcd092b78092a4a4010de1ccaadf5c03cca",
+      "symbol": "401K",
+      "name": "Kennys 401K",
+      "decimals": 18,
+      "marketCapUsd": 88292.77442382251,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x00db48c842c9f0224c991d0aa4f54fbfb7b11a49",
+      "symbol": "AKA",
+      "name": "AKA OFFICIAL",
+      "decimals": 18,
+      "marketCapUsd": 69808.78436578896,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x88714cb0a6ecba2897e3e9d79893fcf7b0e79d95",
+      "symbol": "PEPE",
+      "name": "Arc Pepe",
+      "decimals": 18,
+      "marketCapUsd": 55871.21309106965,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xebb871bc394e83008120fab3c9ed5773642a29a1",
+      "symbol": "ARCANIUM",
+      "name": "Arcanium Trade",
+      "decimals": 18,
+      "marketCapUsd": 48899.57300143211,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xca7fe9f7e50379c731d68347305822be9b50a628",
+      "symbol": "FLAMINGO",
+      "name": "flamingo",
+      "decimals": 18,
+      "marketCapUsd": 47878.955999723206,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x8b8b3f5ee2dddd6ef1850d97a267bc4848f6bd63",
+      "symbol": "POUNCH",
+      "name": "pounch",
+      "decimals": 18,
+      "marketCapUsd": 43817.949441181365,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x3ca1fcfd26cefbb1339ce42cafe1a9dc6107fa12",
+      "symbol": "ARCGUY",
+      "name": "Arcguy",
+      "decimals": 18,
+      "marketCapUsd": 35808.329901380566,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x9012a7a28a91d30480e95e56efcbf610cadc6666",
+      "symbol": "POGO",
+      "name": "POGOLaunch",
+      "decimals": 18,
+      "marketCapUsd": 29064.264707158905,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xd1c83baa481e88a33123f30853aead88223a3098",
+      "symbol": "ARCPEPE",
+      "name": "Arc Pepe",
+      "decimals": 18,
+      "marketCapUsd": 26502.90580880384,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x6d73b37e277e6e69956f261c5d215dfcbd7ddce1",
+      "symbol": "ARCPAY",
+      "name": "ArcPay",
+      "decimals": 18,
+      "marketCapUsd": 26038.35322194733,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x97796f26d55826f70463b27df719e2fadd162e97",
+      "symbol": "ARDOG",
+      "name": "ARDOG",
+      "decimals": 18,
+      "marketCapUsd": 25871.280474535455,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x7d3642e61d3c8b25496553f46e498d198e334760",
+      "symbol": "BIFS",
+      "name": "Boston Internet Financial Services",
+      "decimals": 18,
+      "marketCapUsd": 22985.051614561144,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x0ceeae397a5ad7956b69bd248e8589cec90410b0",
+      "symbol": "CHZ",
+      "name": "Archeese",
+      "decimals": 18,
+      "marketCapUsd": 22511.996991779346,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x6af82910555d136702b2e0668e86341fa417b4fa",
+      "symbol": "CREDITDOG",
+      "name": "CREDIT DOG",
+      "decimals": 18,
+      "marketCapUsd": 20522.72143392829,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x38d5bd4737fc40cd4dfd5454c665024ed600c854",
+      "symbol": "PERCY",
+      "name": "Percy the Pensioner",
+      "decimals": 18,
+      "marketCapUsd": 20293.74888511738,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xaf71f8168ee9fe059efadd12a7c88a49f7051d0c",
+      "symbol": "1",
+      "name": "just buy 1 USDC",
+      "decimals": 18,
+      "marketCapUsd": 18192.49167826928,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x96574e8169cdad3257ddbbe12b73503dc5bbb865",
+      "symbol": "BRETT",
+      "name": "ArcBrett",
+      "decimals": 18,
+      "marketCapUsd": 17034.77982218781,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x48711dcb2747740c5d0b7b0c070550d52bc285a0",
+      "symbol": "KOI",
+      "name": "Koi fish",
+      "decimals": 18,
+      "marketCapUsd": 16940.547287411777,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x3d1c15916d852fa8ce41708bc55e55ba2cdd55d0",
+      "symbol": "ZYORA",
+      "name": "ZYORA",
+      "decimals": 18,
+      "marketCapUsd": 16893.136707575486,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x688c763b0870d6e40bc605dc72405b0c789c0087",
+      "symbol": "LIFTCAT",
+      "name": "Lift cat",
+      "decimals": 18,
+      "marketCapUsd": 15954.008567509096,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xf4daeeeecbc1b44c65562695428f597dbd436256",
+      "symbol": "SCOUT",
+      "name": "Scout",
+      "decimals": 18,
+      "marketCapUsd": 15495.069898712189,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xce722fad739e2dd07fb8bcfdfb2dc35e38575b19",
+      "symbol": "富贵",
+      "name": "富贵",
+      "decimals": 18,
+      "marketCapUsd": 14950.984463227,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x01dc16d5b1ad7599b3468866eb074b194731390b",
+      "symbol": "ARCODE",
+      "name": "Arcode",
+      "decimals": 18,
+      "marketCapUsd": 13500.783524456263,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x517b95ae1f8ccafaba3d84eb66e9df007b2ca88a",
+      "symbol": "TOLLYTOAD",
+      "name": "Tolly Toad",
+      "decimals": 18,
+      "marketCapUsd": 12770.541984097827,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xae411587460f7eb8e689d800cd8ad52e35ebff0c",
+      "symbol": "ALLR",
+      "name": "ALLR",
+      "decimals": 18,
+      "marketCapUsd": 12616.086050874328,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x893963d0c508912d8c2de816df9e185dc75fc97c",
+      "symbol": "DIC",
+      "name": "Dog In Circle",
+      "decimals": 18,
+      "marketCapUsd": 12086.595629499767,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xc4271bc608753630ca347b1e5227d13269a08330",
+      "symbol": "RADAR",
+      "name": "radardex",
+      "decimals": 18,
+      "marketCapUsd": 11994.828912907835,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x08735c3cdd759a2ab889be554e3641df6a4f60b2",
+      "symbol": "ARCINU",
+      "name": "Arctificial Inu",
+      "decimals": 18,
+      "marketCapUsd": 11879.925535815017,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x874caacb95e0d03df5cc87367abcab57dac2e512",
+      "symbol": "FLAPPY",
+      "name": "Flappy Tolly",
+      "decimals": 18,
+      "marketCapUsd": 10685.407128859662,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x6695a0e3539435befeba98ee9a46cc4148d99616",
+      "symbol": "COALA",
+      "name": "COALA",
+      "decimals": 18,
+      "marketCapUsd": 10576.524136561042,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x697477d050c83ee9de505766ecefa7862e50d70d",
+      "symbol": "REACTOR",
+      "name": "Reactor Online",
+      "decimals": 18,
+      "marketCapUsd": 10553.323505981287,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x48070482e284eeed5c73db7994330d1176370087",
+      "symbol": "TFIL",
+      "name": "Tfil",
+      "decimals": 18,
+      "marketCapUsd": 10449.203513793062,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xbbed9083496c600289628b10b9dcf29199a30087",
+      "symbol": "TRB",
+      "name": "TRENBOLON",
+      "decimals": 18,
+      "marketCapUsd": 10416.805996110363,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xb76b1b6dea3dc3f040a07f9bc29150eefe1e8853",
+      "symbol": "C",
+      "name": "USDC",
+      "decimals": 18,
+      "marketCapUsd": 10291.70206025541,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa7c3295d031790010c0d6d659af3edd8d11f01b7",
+      "symbol": "PEGGED",
+      "name": "PEGGED",
+      "decimals": 18,
+      "marketCapUsd": 10232.112289761786,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xf58cd8a6c95e03037d1eda5c523ff4c1bdc1ff2d",
+      "symbol": "BUILT",
+      "name": "BUILT DIFFERENT",
+      "decimals": 18,
+      "marketCapUsd": 10092.980415209182,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x1061d7f4934542b654e2a4ef7f04f101b4e8018d",
+      "symbol": "UNISARC",
+      "name": "UNISARC",
+      "decimals": 18,
+      "marketCapUsd": 10037.62611706916,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xc6874a8536933ee4fed6cfc51decb3733bc77e03",
+      "symbol": "TROLL",
+      "name": "TROLL",
+      "decimals": 18,
+      "marketCapUsd": 9940.409823056207,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xf7985cedb8b31ab29e9b613068956644945b0000",
+      "symbol": "A",
+      "name": "Arc",
+      "decimals": 18,
+      "marketCapUsd": 9017.430222790725,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x69ba8bcb78c9576986702a5f8a7543dd8462208e",
+      "symbol": "CENT",
+      "name": "The Centre Token",
+      "decimals": 18,
+      "marketCapUsd": 9016.239323118909,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xdc3a43a49fa91c04ed1522496808ef65b5270000",
+      "symbol": "DOGE",
+      "name": "DOGE",
+      "decimals": 18,
+      "marketCapUsd": 8911.70154476129,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x0c86ecc7e51998ec611d73fcc041c75c050c6d0f",
+      "symbol": "ROBOTMONEY",
+      "name": "ROBOT MONEY",
+      "decimals": 18,
+      "marketCapUsd": 8818.891848331916,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x63c9a280e2756e5f190bf03d639c74b57bcdf85c",
+      "symbol": "AMG",
+      "name": "ARC Money Glitch",
+      "decimals": 6,
+      "marketCapUsd": 8607.333830877884,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x30c1e1e4fa914eb326e23aff563b39d4dd1c4c48",
+      "symbol": "PI",
+      "name": "3.1415926535897932384626433832795028841971693993751058209749",
+      "decimals": 18,
+      "marketCapUsd": 8493.870571534022,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x9a99c89514498a305af3272b75944a2d2bdb4341",
+      "symbol": "PIGU",
+      "name": "PIGU ARC",
+      "decimals": 18,
+      "marketCapUsd": 8412.279538476485,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x14dad7bc6f67cac5e3950eac19381733e3f2dee3",
+      "symbol": "SUSHICAT",
+      "name": "sushicat",
+      "decimals": 18,
+      "marketCapUsd": 8281.684597817999,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xc277f370d7f3d81234e103e2615065693c1f965b",
+      "symbol": "YLLOT",
+      "name": "YLLOT",
+      "decimals": 18,
+      "marketCapUsd": 8255.17501418002,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x3b7c2b72c002d9662e5a74470066ecd8afa08356",
+      "symbol": "ARCEUS",
+      "name": "Arceus",
+      "decimals": 18,
+      "marketCapUsd": 7875.1507359478965,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x4a2caf90d38b8cead3ac46057f17e5ebb980a160",
+      "symbol": "弧",
+      "name": "ARC",
+      "decimals": 18,
+      "marketCapUsd": 7779.661521087381,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x36b1821f26e52e4f8a92eac5893fcfaa8c99c1a7",
+      "symbol": "AERC",
+      "name": "aerc.fun",
+      "decimals": 18,
+      "marketCapUsd": 7772.39641053211,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xb6a7f9e7ad75501859a5fa4b786a4d972f0f3dcc",
+      "symbol": "BABYBAT",
+      "name": "Baby Bat",
+      "decimals": 18,
+      "marketCapUsd": 7524.824478152136,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa085c86d01bed2f3349337b608a84b7f7cd53524",
+      "symbol": "MEOWSHI",
+      "name": "MEOWSHI",
+      "decimals": 18,
+      "marketCapUsd": 7483.2254005356135,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xc5e49382e59f956763580a71e08df3b34e8603a3",
+      "symbol": "STONKS",
+      "name": "Usdc.Stonks",
+      "decimals": 18,
+      "marketCapUsd": 7183.726855463126,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x1e2b553e29de6c19e2b56f34c299972b9efe0000",
+      "symbol": "BALD",
+      "name": "Bald",
+      "decimals": 18,
+      "marketCapUsd": 6943.159487872555,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x6b2cc2352099f8e9da600b18b60d9b52035999f9",
+      "symbol": "ABCAT",
+      "name": "ABCAT",
+      "decimals": 18,
+      "marketCapUsd": 6736.59774488238,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x03e21dbfb27dd53ea97c9c872aa4e18a9b5ce5cf",
+      "symbol": "ARCHER",
+      "name": "Archer",
+      "decimals": 18,
+      "marketCapUsd": 6731.137381341565,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x6360edfa9234609e08be4bd667c45dfbe53f86e8",
+      "symbol": "LOGOTEST",
+      "name": "logo test",
+      "decimals": 18,
+      "marketCapUsd": 6712.673260254854,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x963c9ae54e03e64ed21f5e4f7452d11f72850000",
+      "symbol": "CHAMELEON",
+      "name": "Pinline Chameleon",
+      "decimals": 18,
+      "marketCapUsd": 6679.9784014916495,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x087922a0c67b181e170061784886bd353a6d3052",
+      "symbol": "SUSHI",
+      "name": "SUSHI",
+      "decimals": 18,
+      "marketCapUsd": 6513.036054695165,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xcd48135f9d2093c08c533acb26f30899154e6c77",
+      "symbol": "SCOOL",
+      "name": "stables.cool",
+      "decimals": 18,
+      "marketCapUsd": 6475.575371455254,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xfea77941f80904f1d8e2f2ef8ab4d828e2e68e5b",
+      "symbol": "TOLLYDOG",
+      "name": "Tolly Dog",
+      "decimals": 18,
+      "marketCapUsd": 6375.090102354849,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xde7c626877d343a07fc72092ead07bfa1a7e3abe",
+      "symbol": "CAESAR",
+      "name": "CAESAR",
+      "decimals": 18,
+      "marketCapUsd": 6366.578090712824,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x86a58c9f2159e7e397c61cbacd70f33785236f91",
+      "symbol": "67",
+      "name": "six seven",
+      "decimals": 18,
+      "marketCapUsd": 6327.9489700834065,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x04c0109d18c6ec3198258463bd660afeee929ede",
+      "symbol": "BOND",
+      "name": "BOND PAD",
+      "decimals": 18,
+      "marketCapUsd": 6321.102128850943,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xf3729ac6530f9c8e9875728faacc6ca3f374371a",
+      "symbol": "ARCANGEL",
+      "name": "ArcAngel",
+      "decimals": 18,
+      "marketCapUsd": 6287.225325628364,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x7d3aba409099a41f7799ecd2851fc804cda50d8f",
+      "symbol": "QUAKE",
+      "name": "QUAKE",
+      "decimals": 18,
+      "marketCapUsd": 6224.051924121814,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xf6599eae944aef5fc0cb078f2c472f34a753a0cd",
+      "symbol": "FLY",
+      "name": "ARC FLY",
+      "decimals": 18,
+      "marketCapUsd": 6177.151600917464,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x05727c5f09278d03be3ccf3c647a2fc36da730bf",
+      "symbol": "STAMFORD",
+      "name": "Stamford the Lion",
+      "decimals": 18,
+      "marketCapUsd": 6047.440274115351,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa095177012016406a4056d9ac1e2c5532e63fa7b",
+      "symbol": "VITAELDEFI",
+      "name": "VITAEL",
+      "decimals": 18,
+      "marketCapUsd": 6022.4795,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xc5f0555b2a9de6d280b5c719c1b9d1df025f7a35",
+      "symbol": "FROQI",
+      "name": "Tolly Frog",
+      "decimals": 18,
+      "marketCapUsd": 6013.16438811595,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x47eaf81ace689ba33a40a3d6cfa8f5be8d8768ed",
+      "symbol": "SONORA",
+      "name": "Sonora Field Token",
+      "decimals": 18,
+      "marketCapUsd": 5997.644280297926,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xbe1420b2b98f73e7e0b27ad1b91b7ac391fd1838",
+      "symbol": "CDOGE",
+      "name": "Circle Doge",
+      "decimals": 18,
+      "marketCapUsd": 5995.840405365477,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x88d93ee337464368c81c8ca180da38fdad3397bb",
+      "symbol": "MARSCOIN",
+      "name": "MarsCoin",
+      "decimals": 18,
+      "marketCapUsd": 5933.989273929383,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x26c0362346d69e7295cc52f3eb86f915b09c5aa3",
+      "symbol": "SQUIRCLE",
+      "name": "SQUIRREL ON CIRCLE",
+      "decimals": 18,
+      "marketCapUsd": 5911.242923131835,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x7e421237570dbcc59ce6f39245d9b60eddfdc5d1",
+      "symbol": "DONUT",
+      "name": "Pink Sprinkle",
+      "decimals": 18,
+      "marketCapUsd": 5905.182170393233,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xf5a17d28aca5381fc199452bb72512fab0a95f4e",
+      "symbol": "ARCE",
+      "name": "Arc Pepe",
+      "decimals": 18,
+      "marketCapUsd": 5860.605780363567,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa6d2fa7f322e8a9676ba944022165eede772814c",
+      "symbol": "GATOR",
+      "name": "Florida Gator",
+      "decimals": 18,
+      "marketCapUsd": 5851.773788534153,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xcbf6c0570bd4e9c46a9922899ced7be93f22f732",
+      "symbol": "Π",
+      "name": "π",
+      "decimals": 18,
+      "marketCapUsd": 5794.771108270441,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xf4afe42b8f93479372d1f467c21d607a1d59aaaa",
+      "symbol": "TRIPLE",
+      "name": "Triple",
+      "decimals": 18,
+      "marketCapUsd": 5792.938408155762,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xef2d6886877ee6f21d3e85d8126dcc307f38b897",
+      "symbol": "ARCPEG",
+      "name": "ArcPeg",
+      "decimals": 18,
+      "marketCapUsd": 5782.633707642056,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x139a83b4704593f21c84713a0c44d9190a49f1ea",
+      "symbol": "ARCHEMIST",
+      "name": "ARCHEMIST",
+      "decimals": 18,
+      "marketCapUsd": 5780.528261732392,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x513c13bcfce57f544e1a32accd7e07373aaf0087",
+      "symbol": "ANDÚRIL",
+      "name": "Andúril's Sword",
+      "decimals": 18,
+      "marketCapUsd": 5690.19840744798,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x278c6003240cb8e01a2f6ff43b4c829b63f522c0",
+      "symbol": "BORED",
+      "name": "The Bored Room",
+      "decimals": 18,
+      "marketCapUsd": 5685.021313352235,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x67d0b16abc29bf3110c1fe5879071b406d7a6f58",
+      "symbol": "FLEX",
+      "name": "Flex",
+      "decimals": 18,
+      "marketCapUsd": 5670.25327497327,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xb20c0920fa5a68ebcc8f796ea62782e5894dd745",
+      "symbol": "PAPER",
+      "name": "Paper",
+      "decimals": 18,
+      "marketCapUsd": 5658.834321630139,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x751e78b142db3e09eab0a377f2ce2e05d670c472",
+      "symbol": "MOON",
+      "name": "TOLLY MOON",
+      "decimals": 18,
+      "marketCapUsd": 5607.593678371263,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x7b250712d49d2430633dc37f323ed45eb91fcfd3",
+      "symbol": "DOU",
+      "name": "豆",
+      "decimals": 18,
+      "marketCapUsd": 5565.4795379265415,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x8a74703061c59a4f5471c2b81386111f1880f35f",
+      "symbol": "WOJAK",
+      "name": "WOJAK",
+      "decimals": 18,
+      "marketCapUsd": 5551.960832105425,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa58956c4379f0870e4a3f55f496143512b7bd2d0",
+      "symbol": "ARCATS",
+      "name": "ARCAT",
+      "decimals": 18,
+      "marketCapUsd": 5471.028114894517,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x724321a3d343d66ad8c71b9bf539b62a380a5313",
+      "symbol": "MOSW",
+      "name": "Mossward",
+      "decimals": 18,
+      "marketCapUsd": 5348.348973289302,
+      "snapshotAt": "2026-09-16T12:32:01.993Z",
+      "argus": false
+    }
+  ],
+  "replaced": [
+    {
+      "symbol": "MINARA",
+      "selected": "0xa163d7624da3b5d9182c50eab5b8cd247ae861bb",
+      "previous": "0xd72caf1209b17fed2368ea0903abc1b65b0ba6e7",
+      "previousMetrics": {
+        "address": "0xd72caf1209b17fed2368ea0903abc1b65b0ba6e7",
+        "name": "Minara AI",
+        "symbol": "MINARA",
+        "marketCap": 7251.866547563206,
+        "volume24h": 14672.097896999998,
+        "liquidityUsd": 2254.530302,
+        "trades": 225,
+        "launchedAt": "2026-08-31T17:30:46.000Z",
+        "pool": "0x77c38028044cbc50881d78d0810dbf492ae4af47",
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "C",
+      "selected": "0xb76b1b6dea3dc3f040a07f9bc29150eefe1e8853",
+      "previous": "0xe0e3a6a636ece8b21c243df9f658391d57f23a34",
+      "previousMetrics": {
+        "address": "0xe0e3a6a636ece8b21c243df9f658391d57f23a34",
+        "name": "Look for the C",
+        "symbol": "C",
+        "marketCap": 7489.904027470158,
+        "volume24h": 6061.643177,
+        "liquidityUsd": 3484.364458,
+        "trades": 60,
+        "launchedAt": "2026-07-29T19:48:42.000Z",
+        "pool": "0x2e2dd74ba818281549a6f70ca9570908c7c1ccd2",
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    }
+  ],
+  "catalogCount": 469,
+  "argusCount": 289
+}

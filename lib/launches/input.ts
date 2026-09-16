@@ -1,4 +1,5 @@
 import { launchImageURI } from "./image";
+import { LAUNCH_PAIR_SYMBOLS } from "./x-pair";
 import { z } from "zod";
 import { formatUnits, getAddress, keccak256, parseUnits, toHex, type Address } from "viem";
 import { LaunchError, LAUNCH_TAX_BPS, LAUNCH_DIVIDEND_MINIMUM_TOKENS } from "./policy";
@@ -21,7 +22,7 @@ const schema = z.object({
   name: cleanText(32).refine(s => s.length > 0 && !/[\r\n\t]/.test(s) && new TextEncoder().encode(s).length <= 32, "Use a shorter token name. Emoji and some characters take extra space."),
   symbol: z.string().transform(s => s.trim().toUpperCase()).pipe(z.string().regex(/^[A-Z0-9]{1,10}$/))
     .refine(s => s !== "USDC", "USDC is reserved for the chain currency."),
-  pairToken: z.enum(["USDC", "ARGUS", "ARCASH"]).default("USDC"),
+  pairToken: z.enum(LAUNCH_PAIR_SYMBOLS).default("USDC"),
   imageURI, description: cleanText(280).default(""), website: link, twitter: link, telegram: link,
   buyTaxBps: z.literal(LAUNCH_TAX_BPS).default(LAUNCH_TAX_BPS), sellTaxBps: z.literal(LAUNCH_TAX_BPS).default(LAUNCH_TAX_BPS),
   creatorBps: bps, burnBps: bps, dividendBps: bps, liquidityBps: bps,

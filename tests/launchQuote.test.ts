@@ -13,6 +13,18 @@ import { LAUNCH_PAIRS } from "../lib/launches/x-pair";
 import { nativeSpend } from "../lib/otc/native-spend";
 const historicalBlock=vi.fn(async(number=100n)=>({number,hash:toHex(number,{size:32}),timestamp:number*60n}));
 const abi=parseAbi(["function getPool(address,address,uint24) view returns(address)","function slot0() view returns(uint160,int24,uint16,uint16,uint16,uint8,bool)","function liquidity() view returns(uint128)"]);
+it.each(["EURC","CIRBTC"] as const)("converts non-dollar %s prices in the correct pool direction",async pair=>{
+  const rpc={block:historicalBlock,decimals:async()=>LAUNCH_PAIRS[pair].decimals,code:vi.fn(),call:vi.fn(async(tx:{data:Hex})=>{
+    const fn=decodeFunctionData({abi,data:tx.data}).functionName;
+    if(fn==="getPool")return encodeFunctionResult({abi,functionName:fn,result:"0x1111111111111111111111111111111111111111"});
+    if(fn==="liquidity")return encodeFunctionResult({abi,functionName:fn,result:10_000_000_000n});
+    return encodeFunctionResult({abi,functionName:"slot0",result:[2n<<96n,0,0,0,0,0,true]});
+  })};
+  const quote=await launchQuote(pair,25_000_000n,rpc,100n);
+  expect(quote.devBuy).toBe(pair==="EURC"?"100000000":"6250000");
+  expect(()=>assertLaunchQuote(pair,25_000_000n,quote)).not.toThrow();
+  expect(()=>assertLaunchQuote(pair,25_000_000n,{...quote,devBuy:"25000000"})).toThrow();
+});
 it.each([
   { devBuy: "26000000" }, { devBuy: "-1" }, { devBuy: String(2n**256n) },
   { start: "1" }, { bond: "1" }, { decimals: 18 }, { address: LAUNCH_PAIRS.ARGUS.address },
@@ -27,8 +39,8 @@ it("rejects paired amounts that no longer match their frozen price evidence",()=
   expect(()=>assertLaunchQuote("ARGUS",25_000_000n,{...quote,devBuy:"26000000"})).toThrow("approved settings");
   expect(()=>assertLaunchQuote("ARGUS",25_000_000n,{...quote,priceEvidence:undefined})).toThrow("approved settings");
 });
-it.each(["ARGUS","ARCASH"] as const)("converts dollar valuations and developer buy into %s raw units",async pair=>{
-  const rpc={block:historicalBlock,decimals:vi.fn(async()=>18),code:vi.fn(),call:vi.fn(async(tx:{data:Hex})=>{
+it.each(["ARGUS","ARCASH","EURC","CIRBTC"] as const)("converts dollar valuations and developer buy into %s raw units",async pair=>{
+  const rpc={block:historicalBlock,decimals:vi.fn(async()=>LAUNCH_PAIRS[pair].decimals),code:vi.fn(),call:vi.fn(async(tx:{data:Hex})=>{
     const fn=decodeFunctionData({abi,data:tx.data}).functionName;
     if(fn==="getPool")return encodeFunctionResult({abi,functionName:fn,result:"0x1111111111111111111111111111111111111111"});
     if(fn==="liquidity")return encodeFunctionResult({abi,functionName:fn,result:10_000_000_000n});
@@ -36,7 +48,7 @@ it.each(["ARGUS","ARCASH"] as const)("converts dollar valuations and developer b
     return encodeFunctionResult({abi,functionName:"slot0",result:[1n<<96n,0,0,0,0,0,true]});
   })};
   const quote=await launchQuote(pair,25_000_000n,rpc,100n);
-  expect(quote).toMatchObject({address:LAUNCH_PAIRS[pair].address,decimals:18,start:"2500000000",bond:"45000000000",devBuy:"25000000",block:"100"});
+  expect(quote).toMatchObject({address:LAUNCH_PAIRS[pair].address,decimals:LAUNCH_PAIRS[pair].decimals,start:"2500000000",bond:"45000000000",devBuy:"25000000",block:"100"});
   const input=parseLaunchInput({name:"Example",symbol:"EX",imageURI:"https://pbs.twimg.com/media/example.jpg",pairToken:pair,devBuyUSDC:"25"});
   const data=encodeLaunch(input,toHex(1,{size:32}),toHex(2,{size:32}),quote);
   const decoded=decodeFunctionData({abi:portalAbi,data});

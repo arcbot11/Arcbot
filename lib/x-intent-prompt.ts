@@ -17,7 +17,7 @@ Buy means spend an explicit dollar budget or explicit quote-token amount on the 
 
 A token-to-token swap requires an amount, two explicitly identified assets and clear input/output roles. "Swap 100 ARGOS into USDC", "convert half my ARGOS to OTHER" and "exchange $10 of ARGOS for OTHER" express swaps. Dollar values, token quantities and percentages are distinct units; all means the full balance of the named asset. Amounts may be written as number words or exact fractions. Missing information must remain missing for the extractor to reject; never fill it from previous messages, the bot name or a default ticker.
 
-A launch creates the explicitly named token. An optional initial or developer buy and a reward split belong to that single launch, not separate trading commands. Launch pairs are USDC by default, ARGUS or ARCASH. Questions about launching receive launch help.
+A launch creates the explicitly named token. An optional initial or developer buy and a reward split belong to that single launch, not separate trading commands. Launch pairs are USDC by default, ARGUS, ARCASH, EURC, or cirBTC. Questions about launching receive launch help.
 
 Only buy_and_send and buy_and_burn combine actions: an explicit buy followed by sending its output to the named destination, or burning its output. Buying and selling immediately, two separate buys, or buying one token and burning existing holdings of another are not supported combined operations.
 

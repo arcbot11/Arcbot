@@ -3,16 +3,17 @@ import { ARC_TOKEN_CATALOG, canIndexArcToken } from "../lib/arc/token-catalog";
 import snapshot from "../docs/research/arc-index-selection-2026-09-13.json";
 import additions from "../docs/research/argus-index-additions-2026-09-14.json";
 import refresh from "../docs/research/argus-index-additions-2026-09-16.json";
+import latest from "../docs/research/arc-index-additions-2026-09-16-afternoon.json";
 import excluded from "../lib/arc/excluded-catalog-addresses.json";
 import { RETIRED_TOKEN_ADDRESSES } from "../lib/token-index-exclusions";
-import { seedArcTokenCatalog } from "../convex/arcTokenCatalog";
+import { seedArcTokenCatalog, refreshCatalogBatch } from "../convex/arcTokenCatalog";
 import type { MutationCtx } from "../convex/_generated/server";
 
 describe("Arc snapshot index selection", () => {
   it("keeps the refreshed unique tickers and Argus launches, with no retired addresses", () => {
-    expect(ARC_TOKEN_CATALOG).toHaveLength(refresh.catalogCount);
-    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol.normalize("NFKC").toUpperCase())).size).toBe(refresh.catalogCount);
-    expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(refresh.argusCount);
+    expect(ARC_TOKEN_CATALOG).toHaveLength(latest.catalogCount);
+    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol.normalize("NFKC").toUpperCase())).size).toBe(latest.catalogCount);
+    expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(latest.argusCount);
     for (const t of ARC_TOKEN_CATALOG) {
       expect(t.chainId).toBe(5042);
       expect(Number.isInteger(t.decimals)).toBe(true);
@@ -23,7 +24,7 @@ describe("Arc snapshot index selection", () => {
     const contracts = new Map<string, { address: string; symbol: string; marketCapUsd: number }>();
     // Fresh source valuations include on-chain fallbacks for unpriced old tokens.
     for (const t of snapshot.candidates) contracts.set(t.address.toLowerCase(), t);
-    for (const selected of ARC_TOKEN_CATALOG.filter(t => t.symbol !== "USDC" && contracts.has(t.address))) {
+    for (const selected of ARC_TOKEN_CATALOG.filter(t => t.symbol !== "USDC" && contracts.has(t.address) && !latest.added.some(n => n.address === t.address))) {
       const candidates = [...contracts.values()].filter(t => t.symbol.normalize("NFKC").toUpperCase() === selected.symbol.normalize("NFKC").toUpperCase());
       expect(selected.marketCapUsd).toBe(Math.max(...candidates.map(t => t.marketCapUsd)));
     }
@@ -31,7 +32,7 @@ describe("Arc snapshot index selection", () => {
   it("adds verified recent launches once and excludes their rejected duplicates", () => {
     expect(additions.added).toHaveLength(63);
     for (const token of additions.added) {
-      if (refresh.replaced.some(t => t.previous === token.address)) continue;
+      if ([...refresh.replaced, ...latest.replaced].some(t => t.previous === token.address)) continue;
       expect(ARC_TOKEN_CATALOG.filter(t => t.address === token.address)).toEqual([token]);
       const candidates = additions.candidates.filter(t => t.symbol === token.symbol);
       expect(token.marketCapUsd).toBe(Math.max(...candidates.map(t => t.marketCapUsd)));
@@ -45,6 +46,7 @@ describe("Arc snapshot index selection", () => {
   });
   it("admits only screened, on-chain verified additions and retires replaced ticker addresses", () => {
     for (const token of refresh.added) {
+      if (latest.replaced.some(t => t.previous === token.address)) continue;
       expect(ARC_TOKEN_CATALOG.find(t => t.address === token.address)).toEqual(token);
       const evidence = refresh.verified.find(t => t.address === token.address)!;
       expect(evidence.portal).toMatch(/^0x[0-9a-f]{40}$/);
@@ -57,6 +59,18 @@ describe("Arc snapshot index selection", () => {
       expect(ARC_TOKEN_CATALOG.some(t => t.address === token.previous)).toBe(false);
       expect(canIndexArcToken(token.previous, token.symbol)).toBe(false);
     }
+  });
+  it("screens the latest explorer additions without claiming Argus launch provenance", () => {
+    for (const token of latest.added) {
+      expect(ARC_TOKEN_CATALOG.find(t => t.address === token.address)).toEqual(token);
+      expect(token.argus).toBe(false);
+      const evidence = latest.verified.find(t => t.address === token.address)!;
+      expect(evidence.volume24h).toBeGreaterThanOrEqual(latest.screen.minVolume24hUsd);
+      expect(evidence.liquidityUsd).toBeGreaterThanOrEqual(latest.screen.minLiquidityUsd);
+      expect(evidence.trades).toBeGreaterThanOrEqual(latest.screen.minTrades);
+      expect(evidence.volume24h / evidence.marketCap).toBeGreaterThanOrEqual(latest.screen.minVolumeToMarketCap);
+    }
+    for (const token of latest.replaced) expect(canIndexArcToken(token.previous, token.symbol)).toBe(false);
   });
   it("allows only canonical USDC and prevents rejected addresses from bypassing ticker rules", () => {
     const usdc = ARC_TOKEN_CATALOG.filter(t => t.symbol === "USDC");
@@ -106,9 +120,25 @@ describe("Arc snapshot index selection", () => {
     } } as unknown as MutationCtx;
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
-    expect(tables.tokenRegistry).toHaveLength(refresh.catalogCount);
+    expect(tables.tokenRegistry).toHaveLength(latest.catalogCount);
     expect(tables.walletTokenIndex).toEqual([]);
     expect(tables.walletTransactions).toHaveLength(1);
     for (const token of tables.tokenRegistry) expect(token).toMatchObject({ chainId: 5042, active: true, pairCandidate: false, pairApproved: false });
+    tables.tokenRegistry = [];
+    tables.walletTokenIndex = Array.from({ length: 110 }, (_, i) => ({ _id: `rejected${i}`, normalizedTokenAddress: excluded[0] }));
+    await expect(refreshCatalogBatch(ctx, -1)).rejects.toThrow("Invalid catalog offset");
+    await expect(refreshCatalogBatch(ctx, 1.5)).rejects.toThrow("Invalid catalog offset");
+    expect(await refreshCatalogBatch(ctx, 0)).toEqual({ complete: false, nextOffset: 0 });
+    expect(tables.walletTokenIndex).toHaveLength(10);
+    let cursor = 0, complete = false;
+    for (let attempt = 0; attempt < 100 && !complete; attempt++) {
+      const batch = await refreshCatalogBatch(ctx, cursor);
+      expect(batch.nextOffset - cursor).toBeLessThanOrEqual(25);
+      cursor = batch.nextOffset; complete = batch.complete;
+    }
+    expect(complete).toBe(true);
+    expect(tables.tokenRegistry).toHaveLength(latest.catalogCount);
+    expect(tables.walletTokenIndex).toEqual([]);
+    expect(tables.walletTransactions).toHaveLength(1);
   });
 });

@@ -671,16 +671,6 @@
   },
   {
     "chainId": 5042,
-    "address": "0xe0e3a6a636ece8b21c243df9f658391d57f23a34",
-    "symbol": "C",
-    "name": "Look for the C",
-    "decimals": 18,
-    "marketCapUsd": 11133.626501520628,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
     "address": "0x3f380813cb5045ff5b052583176ffa716e5cfec6",
     "symbol": "ECONOMICOS",
     "name": "THE ECONOMIC OS  FOR THE INTERNET",
@@ -916,16 +906,6 @@
     "name": "ARCMAN",
     "decimals": 18,
     "marketCapUsd": 7108.193898147745,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
-    "address": "0xd72caf1209b17fed2368ea0903abc1b65b0ba6e7",
-    "symbol": "MINARA",
-    "name": "Minara AI",
-    "decimals": 18,
-    "marketCapUsd": 5848.8070347740295,
     "snapshotAt": "2026-09-13T17:22:36.243Z",
     "argus": false
   },
@@ -3181,16 +3161,6 @@
   },
   {
     "chainId": 5042,
-    "address": "0xd626630dc244e50272017cc55a361d096c3a9062",
-    "symbol": "PEG",
-    "name": "peg",
-    "decimals": 18,
-    "marketCapUsd": 493392.409989601,
-    "snapshotAt": "2026-09-16T04:49:32.559Z",
-    "argus": true
-  },
-  {
-    "chainId": 5042,
     "address": "0xeb5294495134c29d40b38a51986ab98144ab8a52",
     "symbol": "ARGEN",
     "name": "ARGUS EARN",
@@ -3726,6 +3696,996 @@
     "name": "Stable Coastco Hotdog",
     "decimals": 18,
     "marketCapUsd": 3605.226001986,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xb4337b8d148aa7a1f2124d9f6362234fff0fbbbb",
+    "symbol": "USDT",
+    "name": "Tether",
+    "decimals": 18,
+    "marketCapUsd": 6843190.581516413,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa163d7624da3b5d9182c50eab5b8cd247ae861bb",
+    "symbol": "MINARA",
+    "name": "Minara",
+    "decimals": 18,
+    "marketCapUsd": 2443344.8421145245,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xf76b1d00bd3d63a37246b5f512074e864010e33d",
+    "symbol": "POLL",
+    "name": "Polly",
+    "decimals": 18,
+    "marketCapUsd": 2361382.157568915,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x25b2f893ec15808dbdc542938a4a091ece7aec44",
+    "symbol": "BOZO",
+    "name": "Bozo.fun",
+    "decimals": 18,
+    "marketCapUsd": 809962.8356112756,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x1c98d896328c35a751ce18323f47139a44188001",
+    "symbol": "CREO",
+    "name": "creo.family",
+    "decimals": 18,
+    "marketCapUsd": 631756.0422818122,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x1cd3af163b1deb67d477aeb0d0ab1fae0955bbbb",
+    "symbol": "BIG",
+    "name": "BigShort",
+    "decimals": 18,
+    "marketCapUsd": 271020.1772986916,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xcb92a075db3d4e965f37936da2100902344650e3",
+    "symbol": "ARCADE",
+    "name": "ARCADE",
+    "decimals": 18,
+    "marketCapUsd": 172258.70476239338,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x2c6988bccbf6cf2ec0f15bf1cae16309cdb4c90a",
+    "symbol": "€€€€",
+    "name": "getricher",
+    "decimals": 18,
+    "marketCapUsd": 155705.8497139972,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xe60e2bcd092b78092a4a4010de1ccaadf5c03cca",
+    "symbol": "401K",
+    "name": "Kennys 401K",
+    "decimals": 18,
+    "marketCapUsd": 88292.77442382251,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x00db48c842c9f0224c991d0aa4f54fbfb7b11a49",
+    "symbol": "AKA",
+    "name": "AKA OFFICIAL",
+    "decimals": 18,
+    "marketCapUsd": 69808.78436578896,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x88714cb0a6ecba2897e3e9d79893fcf7b0e79d95",
+    "symbol": "PEPE",
+    "name": "Arc Pepe",
+    "decimals": 18,
+    "marketCapUsd": 55871.21309106965,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xebb871bc394e83008120fab3c9ed5773642a29a1",
+    "symbol": "ARCANIUM",
+    "name": "Arcanium Trade",
+    "decimals": 18,
+    "marketCapUsd": 48899.57300143211,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xca7fe9f7e50379c731d68347305822be9b50a628",
+    "symbol": "FLAMINGO",
+    "name": "flamingo",
+    "decimals": 18,
+    "marketCapUsd": 47878.955999723206,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x8b8b3f5ee2dddd6ef1850d97a267bc4848f6bd63",
+    "symbol": "POUNCH",
+    "name": "pounch",
+    "decimals": 18,
+    "marketCapUsd": 43817.949441181365,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x3ca1fcfd26cefbb1339ce42cafe1a9dc6107fa12",
+    "symbol": "ARCGUY",
+    "name": "Arcguy",
+    "decimals": 18,
+    "marketCapUsd": 35808.329901380566,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x9012a7a28a91d30480e95e56efcbf610cadc6666",
+    "symbol": "POGO",
+    "name": "POGOLaunch",
+    "decimals": 18,
+    "marketCapUsd": 29064.264707158905,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xd1c83baa481e88a33123f30853aead88223a3098",
+    "symbol": "ARCPEPE",
+    "name": "Arc Pepe",
+    "decimals": 18,
+    "marketCapUsd": 26502.90580880384,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x6d73b37e277e6e69956f261c5d215dfcbd7ddce1",
+    "symbol": "ARCPAY",
+    "name": "ArcPay",
+    "decimals": 18,
+    "marketCapUsd": 26038.35322194733,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x97796f26d55826f70463b27df719e2fadd162e97",
+    "symbol": "ARDOG",
+    "name": "ARDOG",
+    "decimals": 18,
+    "marketCapUsd": 25871.280474535455,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x7d3642e61d3c8b25496553f46e498d198e334760",
+    "symbol": "BIFS",
+    "name": "Boston Internet Financial Services",
+    "decimals": 18,
+    "marketCapUsd": 22985.051614561144,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x0ceeae397a5ad7956b69bd248e8589cec90410b0",
+    "symbol": "CHZ",
+    "name": "Archeese",
+    "decimals": 18,
+    "marketCapUsd": 22511.996991779346,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x6af82910555d136702b2e0668e86341fa417b4fa",
+    "symbol": "CREDITDOG",
+    "name": "CREDIT DOG",
+    "decimals": 18,
+    "marketCapUsd": 20522.72143392829,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x38d5bd4737fc40cd4dfd5454c665024ed600c854",
+    "symbol": "PERCY",
+    "name": "Percy the Pensioner",
+    "decimals": 18,
+    "marketCapUsd": 20293.74888511738,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xaf71f8168ee9fe059efadd12a7c88a49f7051d0c",
+    "symbol": "1",
+    "name": "just buy 1 USDC",
+    "decimals": 18,
+    "marketCapUsd": 18192.49167826928,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x96574e8169cdad3257ddbbe12b73503dc5bbb865",
+    "symbol": "BRETT",
+    "name": "ArcBrett",
+    "decimals": 18,
+    "marketCapUsd": 17034.77982218781,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x48711dcb2747740c5d0b7b0c070550d52bc285a0",
+    "symbol": "KOI",
+    "name": "Koi fish",
+    "decimals": 18,
+    "marketCapUsd": 16940.547287411777,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x3d1c15916d852fa8ce41708bc55e55ba2cdd55d0",
+    "symbol": "ZYORA",
+    "name": "ZYORA",
+    "decimals": 18,
+    "marketCapUsd": 16893.136707575486,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x688c763b0870d6e40bc605dc72405b0c789c0087",
+    "symbol": "LIFTCAT",
+    "name": "Lift cat",
+    "decimals": 18,
+    "marketCapUsd": 15954.008567509096,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xf4daeeeecbc1b44c65562695428f597dbd436256",
+    "symbol": "SCOUT",
+    "name": "Scout",
+    "decimals": 18,
+    "marketCapUsd": 15495.069898712189,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xce722fad739e2dd07fb8bcfdfb2dc35e38575b19",
+    "symbol": "富贵",
+    "name": "富贵",
+    "decimals": 18,
+    "marketCapUsd": 14950.984463227,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x01dc16d5b1ad7599b3468866eb074b194731390b",
+    "symbol": "ARCODE",
+    "name": "Arcode",
+    "decimals": 18,
+    "marketCapUsd": 13500.783524456263,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x517b95ae1f8ccafaba3d84eb66e9df007b2ca88a",
+    "symbol": "TOLLYTOAD",
+    "name": "Tolly Toad",
+    "decimals": 18,
+    "marketCapUsd": 12770.541984097827,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xae411587460f7eb8e689d800cd8ad52e35ebff0c",
+    "symbol": "ALLR",
+    "name": "ALLR",
+    "decimals": 18,
+    "marketCapUsd": 12616.086050874328,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x893963d0c508912d8c2de816df9e185dc75fc97c",
+    "symbol": "DIC",
+    "name": "Dog In Circle",
+    "decimals": 18,
+    "marketCapUsd": 12086.595629499767,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xc4271bc608753630ca347b1e5227d13269a08330",
+    "symbol": "RADAR",
+    "name": "radardex",
+    "decimals": 18,
+    "marketCapUsd": 11994.828912907835,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x08735c3cdd759a2ab889be554e3641df6a4f60b2",
+    "symbol": "ARCINU",
+    "name": "Arctificial Inu",
+    "decimals": 18,
+    "marketCapUsd": 11879.925535815017,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x874caacb95e0d03df5cc87367abcab57dac2e512",
+    "symbol": "FLAPPY",
+    "name": "Flappy Tolly",
+    "decimals": 18,
+    "marketCapUsd": 10685.407128859662,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x6695a0e3539435befeba98ee9a46cc4148d99616",
+    "symbol": "COALA",
+    "name": "COALA",
+    "decimals": 18,
+    "marketCapUsd": 10576.524136561042,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x697477d050c83ee9de505766ecefa7862e50d70d",
+    "symbol": "REACTOR",
+    "name": "Reactor Online",
+    "decimals": 18,
+    "marketCapUsd": 10553.323505981287,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x48070482e284eeed5c73db7994330d1176370087",
+    "symbol": "TFIL",
+    "name": "Tfil",
+    "decimals": 18,
+    "marketCapUsd": 10449.203513793062,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xbbed9083496c600289628b10b9dcf29199a30087",
+    "symbol": "TRB",
+    "name": "TRENBOLON",
+    "decimals": 18,
+    "marketCapUsd": 10416.805996110363,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xb76b1b6dea3dc3f040a07f9bc29150eefe1e8853",
+    "symbol": "C",
+    "name": "USDC",
+    "decimals": 18,
+    "marketCapUsd": 10291.70206025541,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa7c3295d031790010c0d6d659af3edd8d11f01b7",
+    "symbol": "PEGGED",
+    "name": "PEGGED",
+    "decimals": 18,
+    "marketCapUsd": 10232.112289761786,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xf58cd8a6c95e03037d1eda5c523ff4c1bdc1ff2d",
+    "symbol": "BUILT",
+    "name": "BUILT DIFFERENT",
+    "decimals": 18,
+    "marketCapUsd": 10092.980415209182,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x1061d7f4934542b654e2a4ef7f04f101b4e8018d",
+    "symbol": "UNISARC",
+    "name": "UNISARC",
+    "decimals": 18,
+    "marketCapUsd": 10037.62611706916,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xc6874a8536933ee4fed6cfc51decb3733bc77e03",
+    "symbol": "TROLL",
+    "name": "TROLL",
+    "decimals": 18,
+    "marketCapUsd": 9940.409823056207,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xf7985cedb8b31ab29e9b613068956644945b0000",
+    "symbol": "A",
+    "name": "Arc",
+    "decimals": 18,
+    "marketCapUsd": 9017.430222790725,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x69ba8bcb78c9576986702a5f8a7543dd8462208e",
+    "symbol": "CENT",
+    "name": "The Centre Token",
+    "decimals": 18,
+    "marketCapUsd": 9016.239323118909,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xdc3a43a49fa91c04ed1522496808ef65b5270000",
+    "symbol": "DOGE",
+    "name": "DOGE",
+    "decimals": 18,
+    "marketCapUsd": 8911.70154476129,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x0c86ecc7e51998ec611d73fcc041c75c050c6d0f",
+    "symbol": "ROBOTMONEY",
+    "name": "ROBOT MONEY",
+    "decimals": 18,
+    "marketCapUsd": 8818.891848331916,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x63c9a280e2756e5f190bf03d639c74b57bcdf85c",
+    "symbol": "AMG",
+    "name": "ARC Money Glitch",
+    "decimals": 6,
+    "marketCapUsd": 8607.333830877884,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x30c1e1e4fa914eb326e23aff563b39d4dd1c4c48",
+    "symbol": "PI",
+    "name": "3.1415926535897932384626433832795028841971693993751058209749",
+    "decimals": 18,
+    "marketCapUsd": 8493.870571534022,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x9a99c89514498a305af3272b75944a2d2bdb4341",
+    "symbol": "PIGU",
+    "name": "PIGU ARC",
+    "decimals": 18,
+    "marketCapUsd": 8412.279538476485,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x14dad7bc6f67cac5e3950eac19381733e3f2dee3",
+    "symbol": "SUSHICAT",
+    "name": "sushicat",
+    "decimals": 18,
+    "marketCapUsd": 8281.684597817999,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xc277f370d7f3d81234e103e2615065693c1f965b",
+    "symbol": "YLLOT",
+    "name": "YLLOT",
+    "decimals": 18,
+    "marketCapUsd": 8255.17501418002,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x3b7c2b72c002d9662e5a74470066ecd8afa08356",
+    "symbol": "ARCEUS",
+    "name": "Arceus",
+    "decimals": 18,
+    "marketCapUsd": 7875.1507359478965,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x4a2caf90d38b8cead3ac46057f17e5ebb980a160",
+    "symbol": "弧",
+    "name": "ARC",
+    "decimals": 18,
+    "marketCapUsd": 7779.661521087381,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x36b1821f26e52e4f8a92eac5893fcfaa8c99c1a7",
+    "symbol": "AERC",
+    "name": "aerc.fun",
+    "decimals": 18,
+    "marketCapUsd": 7772.39641053211,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xb6a7f9e7ad75501859a5fa4b786a4d972f0f3dcc",
+    "symbol": "BABYBAT",
+    "name": "Baby Bat",
+    "decimals": 18,
+    "marketCapUsd": 7524.824478152136,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa085c86d01bed2f3349337b608a84b7f7cd53524",
+    "symbol": "MEOWSHI",
+    "name": "MEOWSHI",
+    "decimals": 18,
+    "marketCapUsd": 7483.2254005356135,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xc5e49382e59f956763580a71e08df3b34e8603a3",
+    "symbol": "STONKS",
+    "name": "Usdc.Stonks",
+    "decimals": 18,
+    "marketCapUsd": 7183.726855463126,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x1e2b553e29de6c19e2b56f34c299972b9efe0000",
+    "symbol": "BALD",
+    "name": "Bald",
+    "decimals": 18,
+    "marketCapUsd": 6943.159487872555,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x6b2cc2352099f8e9da600b18b60d9b52035999f9",
+    "symbol": "ABCAT",
+    "name": "ABCAT",
+    "decimals": 18,
+    "marketCapUsd": 6736.59774488238,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x03e21dbfb27dd53ea97c9c872aa4e18a9b5ce5cf",
+    "symbol": "ARCHER",
+    "name": "Archer",
+    "decimals": 18,
+    "marketCapUsd": 6731.137381341565,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x6360edfa9234609e08be4bd667c45dfbe53f86e8",
+    "symbol": "LOGOTEST",
+    "name": "logo test",
+    "decimals": 18,
+    "marketCapUsd": 6712.673260254854,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x963c9ae54e03e64ed21f5e4f7452d11f72850000",
+    "symbol": "CHAMELEON",
+    "name": "Pinline Chameleon",
+    "decimals": 18,
+    "marketCapUsd": 6679.9784014916495,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x087922a0c67b181e170061784886bd353a6d3052",
+    "symbol": "SUSHI",
+    "name": "SUSHI",
+    "decimals": 18,
+    "marketCapUsd": 6513.036054695165,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xcd48135f9d2093c08c533acb26f30899154e6c77",
+    "symbol": "SCOOL",
+    "name": "stables.cool",
+    "decimals": 18,
+    "marketCapUsd": 6475.575371455254,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xfea77941f80904f1d8e2f2ef8ab4d828e2e68e5b",
+    "symbol": "TOLLYDOG",
+    "name": "Tolly Dog",
+    "decimals": 18,
+    "marketCapUsd": 6375.090102354849,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xde7c626877d343a07fc72092ead07bfa1a7e3abe",
+    "symbol": "CAESAR",
+    "name": "CAESAR",
+    "decimals": 18,
+    "marketCapUsd": 6366.578090712824,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x86a58c9f2159e7e397c61cbacd70f33785236f91",
+    "symbol": "67",
+    "name": "six seven",
+    "decimals": 18,
+    "marketCapUsd": 6327.9489700834065,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x04c0109d18c6ec3198258463bd660afeee929ede",
+    "symbol": "BOND",
+    "name": "BOND PAD",
+    "decimals": 18,
+    "marketCapUsd": 6321.102128850943,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xf3729ac6530f9c8e9875728faacc6ca3f374371a",
+    "symbol": "ARCANGEL",
+    "name": "ArcAngel",
+    "decimals": 18,
+    "marketCapUsd": 6287.225325628364,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x7d3aba409099a41f7799ecd2851fc804cda50d8f",
+    "symbol": "QUAKE",
+    "name": "QUAKE",
+    "decimals": 18,
+    "marketCapUsd": 6224.051924121814,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xf6599eae944aef5fc0cb078f2c472f34a753a0cd",
+    "symbol": "FLY",
+    "name": "ARC FLY",
+    "decimals": 18,
+    "marketCapUsd": 6177.151600917464,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x05727c5f09278d03be3ccf3c647a2fc36da730bf",
+    "symbol": "STAMFORD",
+    "name": "Stamford the Lion",
+    "decimals": 18,
+    "marketCapUsd": 6047.440274115351,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa095177012016406a4056d9ac1e2c5532e63fa7b",
+    "symbol": "VITAELDEFI",
+    "name": "VITAEL",
+    "decimals": 18,
+    "marketCapUsd": 6022.4795,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xc5f0555b2a9de6d280b5c719c1b9d1df025f7a35",
+    "symbol": "FROQI",
+    "name": "Tolly Frog",
+    "decimals": 18,
+    "marketCapUsd": 6013.16438811595,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x47eaf81ace689ba33a40a3d6cfa8f5be8d8768ed",
+    "symbol": "SONORA",
+    "name": "Sonora Field Token",
+    "decimals": 18,
+    "marketCapUsd": 5997.644280297926,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xbe1420b2b98f73e7e0b27ad1b91b7ac391fd1838",
+    "symbol": "CDOGE",
+    "name": "Circle Doge",
+    "decimals": 18,
+    "marketCapUsd": 5995.840405365477,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x88d93ee337464368c81c8ca180da38fdad3397bb",
+    "symbol": "MARSCOIN",
+    "name": "MarsCoin",
+    "decimals": 18,
+    "marketCapUsd": 5933.989273929383,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x26c0362346d69e7295cc52f3eb86f915b09c5aa3",
+    "symbol": "SQUIRCLE",
+    "name": "SQUIRREL ON CIRCLE",
+    "decimals": 18,
+    "marketCapUsd": 5911.242923131835,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x7e421237570dbcc59ce6f39245d9b60eddfdc5d1",
+    "symbol": "DONUT",
+    "name": "Pink Sprinkle",
+    "decimals": 18,
+    "marketCapUsd": 5905.182170393233,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xf5a17d28aca5381fc199452bb72512fab0a95f4e",
+    "symbol": "ARCE",
+    "name": "Arc Pepe",
+    "decimals": 18,
+    "marketCapUsd": 5860.605780363567,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa6d2fa7f322e8a9676ba944022165eede772814c",
+    "symbol": "GATOR",
+    "name": "Florida Gator",
+    "decimals": 18,
+    "marketCapUsd": 5851.773788534153,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xcbf6c0570bd4e9c46a9922899ced7be93f22f732",
+    "symbol": "Π",
+    "name": "π",
+    "decimals": 18,
+    "marketCapUsd": 5794.771108270441,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xf4afe42b8f93479372d1f467c21d607a1d59aaaa",
+    "symbol": "TRIPLE",
+    "name": "Triple",
+    "decimals": 18,
+    "marketCapUsd": 5792.938408155762,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xef2d6886877ee6f21d3e85d8126dcc307f38b897",
+    "symbol": "ARCPEG",
+    "name": "ArcPeg",
+    "decimals": 18,
+    "marketCapUsd": 5782.633707642056,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x139a83b4704593f21c84713a0c44d9190a49f1ea",
+    "symbol": "ARCHEMIST",
+    "name": "ARCHEMIST",
+    "decimals": 18,
+    "marketCapUsd": 5780.528261732392,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x513c13bcfce57f544e1a32accd7e07373aaf0087",
+    "symbol": "ANDÚRIL",
+    "name": "Andúril's Sword",
+    "decimals": 18,
+    "marketCapUsd": 5690.19840744798,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x278c6003240cb8e01a2f6ff43b4c829b63f522c0",
+    "symbol": "BORED",
+    "name": "The Bored Room",
+    "decimals": 18,
+    "marketCapUsd": 5685.021313352235,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x67d0b16abc29bf3110c1fe5879071b406d7a6f58",
+    "symbol": "FLEX",
+    "name": "Flex",
+    "decimals": 18,
+    "marketCapUsd": 5670.25327497327,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xb20c0920fa5a68ebcc8f796ea62782e5894dd745",
+    "symbol": "PAPER",
+    "name": "Paper",
+    "decimals": 18,
+    "marketCapUsd": 5658.834321630139,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x751e78b142db3e09eab0a377f2ce2e05d670c472",
+    "symbol": "MOON",
+    "name": "TOLLY MOON",
+    "decimals": 18,
+    "marketCapUsd": 5607.593678371263,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x7b250712d49d2430633dc37f323ed45eb91fcfd3",
+    "symbol": "DOU",
+    "name": "豆",
+    "decimals": 18,
+    "marketCapUsd": 5565.4795379265415,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x8a74703061c59a4f5471c2b81386111f1880f35f",
+    "symbol": "WOJAK",
+    "name": "WOJAK",
+    "decimals": 18,
+    "marketCapUsd": 5551.960832105425,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa58956c4379f0870e4a3f55f496143512b7bd2d0",
+    "symbol": "ARCATS",
+    "name": "ARCAT",
+    "decimals": 18,
+    "marketCapUsd": 5471.028114894517,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x724321a3d343d66ad8c71b9bf539b62a380a5313",
+    "symbol": "MOSW",
+    "name": "Mossward",
+    "decimals": 18,
+    "marketCapUsd": 5348.348973289302,
+    "snapshotAt": "2026-09-16T12:32:01.993Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xd626630dc244e50272017cc55a361d096c3a9062",
+    "symbol": "PEG",
+    "name": "peg",
+    "decimals": 18,
+    "marketCapUsd": 493392.409989601,
     "snapshotAt": "2026-09-16T04:49:32.559Z",
     "argus": true
   }

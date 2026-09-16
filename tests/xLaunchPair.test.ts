@@ -5,6 +5,11 @@ import { launchInputFromXCommand } from "../lib/launches/x-input";
 import { encodeLaunch } from "../lib/launches/prepare";
 import { toHex } from "viem";
 const command={kind:"launch" as const,launchMode:"argus" as const,name:"Example",symbol:"EX"};
+it.each([["pair with EURC","EURC"],["paired with $eurc","EURC"],["pair against cirBTC","CIRBTC"],["quote asset: $CIRBTC","CIRBTC"]])("accepts the new approved pair: %s",(clause,pairToken)=>{
+  const input=launchInputFromXCommand(command,`launch Example ticker EX ${clause}`,"https://pbs.twimg.com/media/example.jpg");
+  expect(input.pairToken).toBe(pairToken);
+  expect(()=>encodeLaunch(input,toHex(1,{size:32}),toHex(2,{size:32}))).toThrow("Prepare the paired asset");
+});
 it.each(["pair with ARGUS","paired with $argus","pair it with ARGUS","pair against ARGUS","paired to ARGUS","pairing ARGUS","quote asset: ARGUS","with ARGUS as the pair"])("recognizes %s", clause=>{
   expect(launchPairFromXText(`launch Example ticker EX ${clause}`)).toBe("ARGUS");
 });
