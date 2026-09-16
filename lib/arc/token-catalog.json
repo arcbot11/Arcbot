@@ -141,16 +141,6 @@
   },
   {
     "chainId": 5042,
-    "address": "0xd40ed72054bce37d2284bb315ffca122b690dc4b",
-    "symbol": "CRCL",
-    "name": "Just a Circle",
-    "decimals": 18,
-    "marketCapUsd": 174947.93632630302,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
     "address": "0xf3715bf5c2de299f08b81180ffb739a8372a175f",
     "symbol": "ARCANINE",
     "name": "Arcanine",
@@ -281,16 +271,6 @@
   },
   {
     "chainId": 5042,
-    "address": "0x127f80844ff3d672410ce4b6f4f9ea1a8d6a7ae6",
-    "symbol": "SLJ",
-    "name": "Supreme Leader Jeremy",
-    "decimals": 18,
-    "marketCapUsd": 53908.15351353389,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
     "address": "0xf2627e7566d01f6c8ff2892f4a802fee6d2898af",
     "symbol": "SHARC",
     "name": "Sharc",
@@ -301,31 +281,11 @@
   },
   {
     "chainId": 5042,
-    "address": "0x313c87e367791fe16ae97754554f4871bfe7fcb6",
-    "symbol": "AROS",
-    "name": "Aros",
-    "decimals": 18,
-    "marketCapUsd": 51625.71250527215,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
     "address": "0x5042419b1f2498959787bc23be1f484ed1306650",
     "symbol": "ARCH",
     "name": "Archemist",
     "decimals": 18,
     "marketCapUsd": 45053.87985796569,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
-    "address": "0xe816fe58b7e64f2fcde14a74835b65247fc66f7e",
-    "symbol": "USDUC",
-    "name": "Unstable Coin",
-    "decimals": 18,
-    "marketCapUsd": 44875.053477183406,
     "snapshotAt": "2026-09-13T17:22:36.243Z",
     "argus": false
   },
@@ -371,26 +331,6 @@
   },
   {
     "chainId": 5042,
-    "address": "0x4021807892cf9ac94b01f3a71176d4aaf5007cd8",
-    "symbol": "SASHIMI",
-    "name": "sashimi",
-    "decimals": 18,
-    "marketCapUsd": 30743.966655784803,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
-    "address": "0x2bfe315f219cc9fdc9ce0266e6c115927f0e4c10",
-    "symbol": "PEG",
-    "name": "peg",
-    "decimals": 18,
-    "marketCapUsd": 30271.544243721983,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
     "address": "0xe8519c472fba2a0f81e756aa5240f9d2ba152183",
     "symbol": "TENDREN",
     "name": "Project Tendren",
@@ -416,16 +356,6 @@
     "name": "CUSP",
     "decimals": 18,
     "marketCapUsd": 28062.70359296415,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
-    "address": "0x3cf48ebdab8851c2fdd0d62e0585f857be45efbd",
-    "symbol": "1USDC",
-    "name": "Just buy 1 usdc",
-    "decimals": 18,
-    "marketCapUsd": 26751.401796806025,
     "snapshotAt": "2026-09-13T17:22:36.243Z",
     "argus": false
   },
@@ -471,16 +401,6 @@
   },
   {
     "chainId": 5042,
-    "address": "0x19b94c2037b89a002ff4a445618d26b8ed9ffebc",
-    "symbol": "5042",
-    "name": "5042",
-    "decimals": 18,
-    "marketCapUsd": 21604.65920430739,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
     "address": "0x7c15af1985d8c659789757ea3ca77309d6690cc9",
     "symbol": "UPEG",
     "name": "UPEG",
@@ -521,31 +441,11 @@
   },
   {
     "chainId": 5042,
-    "address": "0x8e604ae97dda3deb77d9856606a8dc3135998fc4",
-    "symbol": "BIRDIE",
-    "name": "Chris Ries dog",
-    "decimals": 18,
-    "marketCapUsd": 18512.149442578353,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
     "address": "0xf77aec0f5ea8c23e69396515aa76521a57addad5",
     "symbol": "SPATIAL",
     "name": "SpatialOS",
     "decimals": 18,
     "marketCapUsd": 18211.848517572867,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
-    "address": "0x33f245ca756c43d793a27e401ad44e56163cf844",
-    "symbol": "PEGCOIN",
-    "name": "pegcoin",
-    "decimals": 18,
-    "marketCapUsd": 16923.677622926854,
     "snapshotAt": "2026-09-13T17:22:36.243Z",
     "argus": false
   },
@@ -791,16 +691,6 @@
   },
   {
     "chainId": 5042,
-    "address": "0x30aa5a06ca393ffffb7a5739935bcfbee7b31891",
-    "symbol": "CIRCLERS",
-    "name": "The Circlers",
-    "decimals": 18,
-    "marketCapUsd": 10713.541091635529,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
     "address": "0x96cf6e8ab5141080ae7ae1d61ef728a8a8eee619",
     "symbol": "FORREST",
     "name": "Forrest",
@@ -846,16 +736,6 @@
     "name": "eve.fun",
     "decimals": 9,
     "marketCapUsd": 9800,
-    "snapshotAt": "2026-09-13T17:22:36.243Z",
-    "argus": false
-  },
-  {
-    "chainId": 5042,
-    "address": "0xe28a59358702d03408d9f6917f7307da847f25f5",
-    "symbol": "DYSON",
-    "name": "Dyson Toothbrush",
-    "decimals": 18,
-    "marketCapUsd": 9698.136409859342,
     "snapshotAt": "2026-09-13T17:22:36.243Z",
     "argus": false
   },
@@ -3281,16 +3161,6 @@
   },
   {
     "chainId": 5042,
-    "address": "0x8d03c69c3e055c81d67f3430b3a4f7f16bf10426",
-    "symbol": "AI",
-    "name": "Argus Inu",
-    "decimals": 18,
-    "marketCapUsd": 2423.930435,
-    "snapshotAt": "2026-09-14T16:07:29.618Z",
-    "argus": true
-  },
-  {
-    "chainId": 5042,
     "address": "0xa7b2f4c665e3bdda8ec8bb487242afd0c9e36ce3",
     "symbol": "ARGUSSY",
     "name": "Argussy",
@@ -3307,6 +3177,556 @@
     "decimals": 18,
     "marketCapUsd": 2188.213687,
     "snapshotAt": "2026-09-14T16:07:29.618Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xd626630dc244e50272017cc55a361d096c3a9062",
+    "symbol": "PEG",
+    "name": "peg",
+    "decimals": 18,
+    "marketCapUsd": 493392.409989601,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xeb5294495134c29d40b38a51986ab98144ab8a52",
+    "symbol": "ARGEN",
+    "name": "ARGUS EARN",
+    "decimals": 18,
+    "marketCapUsd": 449581.63812984654,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xe05ac58d429e3a8f9f272533c19fb7f75d1fdf63",
+    "symbol": "USDUC",
+    "name": "Unstable Coin",
+    "decimals": 18,
+    "marketCapUsd": 338931.918911486,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xcdf59e06dcbc3a6ae662f66b35aaebd8decccb2c",
+    "symbol": "AROS",
+    "name": "Aros",
+    "decimals": 18,
+    "marketCapUsd": 317406.860013542,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa39c8e2ceb2a0f9d6e9d059f5e470edfda691c15",
+    "symbol": "AI",
+    "name": "Arc Inu",
+    "decimals": 18,
+    "marketCapUsd": 244712.766238291,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x56ec9a8a835e507d057b9c0b3b75f14b4424522b",
+    "symbol": "BIRDIE",
+    "name": "BIRDIE",
+    "decimals": 18,
+    "marketCapUsd": 145801.711987931,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x5c192bd145afb849621c5e0eee3f451d73ff7d16",
+    "symbol": "CRCL",
+    "name": "just a circle",
+    "decimals": 18,
+    "marketCapUsd": 136752.22155281302,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xeaf3a25850b0c2e0f1c648459b60cba7bfa4ae70",
+    "symbol": "FYN",
+    "name": "FYN",
+    "decimals": 18,
+    "marketCapUsd": 129883.77170929199,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xfb05aa6eca43a170ec6737721d1acdd14daea2a8",
+    "symbol": "ARSE",
+    "name": "Arse",
+    "decimals": 18,
+    "marketCapUsd": 126117.67469669001,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x38dccd1fedd12f73737f6c1ee19b2d311e048909",
+    "symbol": "XNAN",
+    "name": "Nanite",
+    "decimals": 18,
+    "marketCapUsd": 115306.610907304,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xf69285fbfb809328eaa0de92024479258416864c",
+    "symbol": "SLJ",
+    "name": "Supreme Leader Jeremy",
+    "decimals": 18,
+    "marketCapUsd": 101888.69602017099,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xb979079eb9efae01aaeffeb010ab0bcffacc510c",
+    "symbol": "MISCHA",
+    "name": "MISCHA",
+    "decimals": 18,
+    "marketCapUsd": 84026.50803968399,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xdf37c130b39f8a44c16741e025bcc217d3c87919",
+    "symbol": "ARGUSIANS",
+    "name": "The Argusians",
+    "decimals": 18,
+    "marketCapUsd": 81761.001417227,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xe91fb303572651971f7cb1404e3af08bcbdd6b07",
+    "symbol": "ARGSTR",
+    "name": "Argus strategy",
+    "decimals": 18,
+    "marketCapUsd": 77744.06277426686,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xd3c7678eedf0512d3c9b2cdb62104cac497376af",
+    "symbol": "PEGCOIN",
+    "name": "Pegcoin",
+    "decimals": 18,
+    "marketCapUsd": 71383.635250693,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x9a5c92e4dc9e19ec1b1c24e9b5efa8575d32be31",
+    "symbol": "CIRCLE",
+    "name": "You looked, buy.",
+    "decimals": 18,
+    "marketCapUsd": 61893.93360173901,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x49c298e55566c05fc93f857d59e60d7e3a5d1a50",
+    "symbol": "SASHIMI",
+    "name": "Sashimi",
+    "decimals": 18,
+    "marketCapUsd": 61495.039715072,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x9ed6eec197acc84eb96aaa8059040b8cc38608ed",
+    "symbol": "VISTA",
+    "name": "Project Vista",
+    "decimals": 18,
+    "marketCapUsd": 60927.302458618,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa4af6e7aaa2807b53cbd084dfe77334117e9ef3c",
+    "symbol": "SIDEQUESTR",
+    "name": "SIDEQUESTOR",
+    "decimals": 18,
+    "marketCapUsd": 46600.674979624,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xc981320cc4c8159c1a22150243190ab31b3504aa",
+    "symbol": "CIRCLERS",
+    "name": "Circlers",
+    "decimals": 18,
+    "marketCapUsd": 46509.501798048,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x93b3a20ef10c54e133501d6e612fcbc0c2dce2cb",
+    "symbol": "BITS",
+    "name": "BITS",
+    "decimals": 18,
+    "marketCapUsd": 46003.454444181,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x700052862222115e5c81f7a3da7c47986b0b8422",
+    "symbol": "C-USD",
+    "name": "Sample Fiat Token",
+    "decimals": 18,
+    "marketCapUsd": 40849.131857673005,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x09aa05a68672a0c524fccd2a56fb95ab61e3aee2",
+    "symbol": "HEDGE",
+    "name": "HEDGE",
+    "decimals": 18,
+    "marketCapUsd": 38229.308379641,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xec79bb70ce2364a6b174e7b62d4fb54ffa668375",
+    "symbol": "MMM",
+    "name": "Machines Muxing Money",
+    "decimals": 18,
+    "marketCapUsd": 34440.773332296005,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x69d1352035a9814d2749d87974da8661d39138b6",
+    "symbol": "PINLINE",
+    "name": "Pinline Chameleon",
+    "decimals": 18,
+    "marketCapUsd": 33660.540888917,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xc281dff1a3ed6943123f53aeccdc571dab1ce099",
+    "symbol": "STABLE",
+    "name": "STABLE COIN",
+    "decimals": 18,
+    "marketCapUsd": 31430.969853223003,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xac97429fee14caf3055dec364c94a31d638bb5a8",
+    "symbol": "5042",
+    "name": "5042",
+    "decimals": 18,
+    "marketCapUsd": 30494.3934251,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x5cc5cd8d418cd20a642687d6262bf43a6a354379",
+    "symbol": "1USDC",
+    "name": "Just buy 1 usdc",
+    "decimals": 18,
+    "marketCapUsd": 29266.546366863,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x538eec8812529bc7d5bcf9634c83caf4e91a645c",
+    "symbol": "CINU",
+    "name": "Circle Inu",
+    "decimals": 18,
+    "marketCapUsd": 28897.764306275,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x60f4d66b464bfce01ffa6b8145a1116dc537de65",
+    "symbol": "RAMBO",
+    "name": "Rambo Cat",
+    "decimals": 18,
+    "marketCapUsd": 27538.668557711,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xea1ab5226753c68a3bd37c82c44affe9185e8ece",
+    "symbol": "ELSA",
+    "name": "Elsa",
+    "decimals": 18,
+    "marketCapUsd": 25908.649941675998,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xbcbb16ff4ea712a9c02ef598b915af86a3267a94",
+    "symbol": "CASHPEPE",
+    "name": "Cash Pepe",
+    "decimals": 18,
+    "marketCapUsd": 25773.102860306,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xdf30da54ec121b8a4f9afb1cca731315a3a8e302",
+    "symbol": "BANKLESS",
+    "name": "Bankless",
+    "decimals": 18,
+    "marketCapUsd": 24071.346746824,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa5314ff551fdf0985fed2e38ff9a9f6e4858b5ec",
+    "symbol": "STABULL",
+    "name": "the stable bull",
+    "decimals": 18,
+    "marketCapUsd": 21828.110879738,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x35586e545ead3b55b6aec86ddec42041b5d7c645",
+    "symbol": "IFM",
+    "name": "Internet Funny Money",
+    "decimals": 18,
+    "marketCapUsd": 20657.489362104,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa17e7fd6e176a09c0313a1a7e8ef629f9b949cc8",
+    "symbol": "JERK",
+    "name": "Circle Jerk",
+    "decimals": 18,
+    "marketCapUsd": 20617.042684966,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xd90b803908e26f3a92c316b8e4dd3598351ace61",
+    "symbol": "DYSON",
+    "name": "Dyson toothbrush",
+    "decimals": 18,
+    "marketCapUsd": 19684.711452508,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x1deb9741535067f20c36b75c987a0ec7de66f2c4",
+    "symbol": "ARCDOG",
+    "name": "Arcdog",
+    "decimals": 18,
+    "marketCapUsd": 19646.467329901,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x2d0edb99be0822f8e19acd0ce9a694639aa2a23e",
+    "symbol": "BESSENT",
+    "name": "USDC Bull",
+    "decimals": 18,
+    "marketCapUsd": 19367.664957616,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x6ea3649ea06068f074fa2807d41a0b3e1294cd16",
+    "symbol": "NINJACAT",
+    "name": "Welcome to the Internet",
+    "decimals": 18,
+    "marketCapUsd": 19327.98079302,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x68c8eeca577f3479c9ebf1a63aa76fb293916ac7",
+    "symbol": "ORO",
+    "name": "Ouroboros",
+    "decimals": 18,
+    "marketCapUsd": 17512.752520680002,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x67137d72cca5cf032be97029be482c02b48cda04",
+    "symbol": "CHAIREMY",
+    "name": "Jeremy A Chair",
+    "decimals": 18,
+    "marketCapUsd": 17392.511702537002,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x2bb16082b8394618db3d092967db135ba342e377",
+    "symbol": "THUG",
+    "name": "Thug Life Cult",
+    "decimals": 18,
+    "marketCapUsd": 16160.179524666002,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x35758140502ac53b630188614ad35c682c9813bf",
+    "symbol": "AFLY",
+    "name": "ARCFLY",
+    "decimals": 18,
+    "marketCapUsd": 15625.778531584,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa8944927956684f737ff13f3d1093d9f8f5056f5",
+    "symbol": "AMC",
+    "name": "Arc Meme Coin",
+    "decimals": 18,
+    "marketCapUsd": 15430.890770278,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x418c9defd8221fe922b5bf69d42cc0636e255a0c",
+    "symbol": "AMD",
+    "name": "ARC MEME DOG",
+    "decimals": 18,
+    "marketCapUsd": 15397.130969773998,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x7c512409288352d03bf5dcf9a3e6ea6334421610",
+    "symbol": "EOS",
+    "name": "Economic OS",
+    "decimals": 18,
+    "marketCapUsd": 15183.283372971,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x435895e6b1d9076720ed6acdf2a7c91d30529258",
+    "symbol": "STABLECOIN",
+    "name": "Stablecoin",
+    "decimals": 18,
+    "marketCapUsd": 14497.382576464,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x42da81fd2ccd8c3c0ce44d5f856f86491654f79c",
+    "symbol": "VIEWS",
+    "name": "All views are my own",
+    "decimals": 18,
+    "marketCapUsd": 14372.593464795002,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x341c1e304be69aeccb67ddd626a9b8372badf236",
+    "symbol": "WORKCHAIN",
+    "name": "WorkChain",
+    "decimals": 18,
+    "marketCapUsd": 12111.518545476,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa4200cb5f146621379a805476cb8f7d46380dd16",
+    "symbol": "OS",
+    "name": "Arc OS",
+    "decimals": 18,
+    "marketCapUsd": 9367.598599891,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x1602579f404dd8b20014c8d225d627bd81663b5d",
+    "symbol": "ATLAS",
+    "name": "ALL THE STABLECOINS",
+    "decimals": 18,
+    "marketCapUsd": 7047.056734699,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x1ddafe8fb49c5071b2cdd78eea6e10a4a5de11b5",
+    "symbol": "ASANDWICH",
+    "name": "Stablecoin sandwich",
+    "decimals": 18,
+    "marketCapUsd": 6601.618181056,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0xb0c71188acdd64b692483a06d058ca9733f7a6f9",
+    "symbol": "5042002",
+    "name": "5042002",
+    "decimals": 18,
+    "marketCapUsd": 3957.3935590240003,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
+    "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x225826ad219868ecb1aa1862fbcf3b6a52276fd8",
+    "symbol": "STABLEDOG",
+    "name": "Stable Coastco Hotdog",
+    "decimals": 18,
+    "marketCapUsd": 3605.226001986,
+    "snapshotAt": "2026-09-16T04:49:32.559Z",
     "argus": true
   }
 ]

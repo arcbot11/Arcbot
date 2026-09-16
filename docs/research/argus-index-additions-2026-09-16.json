@@ -1,0 +1,4857 @@
+{
+  "snapshotAt": "2026-09-16T04:49:32.559Z",
+  "blockNumber": "21102940",
+  "screen": {
+    "minVolume24hUsd": 1000,
+    "minLiquidityUsd": 500,
+    "minTrades": 10,
+    "minVolumeToMarketCap": 0.01
+  },
+  "reviewed": 308,
+  "verified": [
+    {
+      "address": "0xd626630dc244e50272017cc55a361d096c3a9062",
+      "name": "peg",
+      "symbol": "PEG",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreidlhnewzoy2jpizrk7bymxpjiges7fgmh2q4eiwds4vr62n5q5ulq",
+      "description": "",
+      "creator": "0xf0B443209b93c0c8303F9f46878e3f565e977A90",
+      "launchedAt": "2026-09-15T23:08:47.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:09:49.000Z",
+      "marketCap": 493392.409989601,
+      "peakMarketCap": 1493969.497706977,
+      "crossedFloorAt": "2026-09-15T23:09:40.000Z",
+      "price": 0.000493392409989601,
+      "change24h": 19788.888105800634,
+      "volume24h": 1997018.135924,
+      "liquidityUsd": 33171.589676,
+      "holders": 1310,
+      "trades": 10548,
+      "lastTradeAt": "2026-09-16T04:46:02.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000399947481690269,
+        0.000283586922166565,
+        0.000258800761231015,
+        0.000614769352388679,
+        0.000549789611597726,
+        0.000493392409989601,
+        0.000493392409989601
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xeb5294495134c29d40b38a51986ab98144ab8a52",
+      "name": "ARGUS EARN",
+      "symbol": "ARGEN",
+      "quoteAsset": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "quoteSymbol": "ARGUS",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeicany52cdnxqjhl7gsw2zj7h4tjuowmens3v2ztmgbls6ihnnxnem",
+      "description": "The first meme on Argus that rewards in $ARGUS. 100% of the 3% tax goes straight back to holders as $ARGUS rewards, creating a simple flywheel: reward holders, drive buying pressure for $ARGUS, and grow together.",
+      "creator": "0x4b4cC07Ed9Fd65B31A4717b81621074dbB52cDb5",
+      "launchedAt": "2026-09-15T09:18:37.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T14:47:09.000Z",
+      "marketCap": 449581.63812984654,
+      "peakMarketCap": 879111.2988616835,
+      "crossedFloorAt": "2026-09-15T09:18:37.000Z",
+      "price": 0.00044958163812984655,
+      "change24h": 1327.5492365563553,
+      "volume24h": 869730.4525437801,
+      "liquidityUsd": 87497.45026662151,
+      "holders": 310,
+      "trades": 1391,
+      "lastTradeAt": "2026-09-16T04:44:50.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 35755.868202091275,
+      "sparkline": [
+        0.00033057968865629053,
+        0.0002992850925072571,
+        0.00029475326006955224,
+        0.00040090735467364304,
+        0.00043117719048128855,
+        0.0005693077421803365,
+        0.0006669087090020164,
+        0.0006658177908990653,
+        0.0006801744808884094,
+        0.0006899183884279795,
+        0.00045714331001029665,
+        0.00043028369452010164,
+        0.00035578360862605546,
+        0.0002686984706749954,
+        0.00026494552846007956,
+        0.00027795200547311435,
+        0.0003773621803247915,
+        0.00045099202467515005,
+        0.00044958163812984655,
+        0.00044958163812984655
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xe05ac58d429e3a8f9f272533c19fb7f75d1fdf63",
+      "name": "Unstable Coin",
+      "symbol": "USDUC",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreiboledomslhsctauigp6fbump54rxuha2q7ujqizhzct6nvypov64",
+      "description": "Unstable Coin",
+      "creator": "0x0D9ccCD879dA69C3e376A17f812e550Fe4502857",
+      "launchedAt": "2026-09-15T23:11:52.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:55:23.000Z",
+      "marketCap": 338931.918911486,
+      "peakMarketCap": 338931.918911486,
+      "crossedFloorAt": "2026-09-15T23:55:01.000Z",
+      "price": 0.000338931918911486,
+      "change24h": 13562.510557989566,
+      "volume24h": 206541.614535,
+      "liquidityUsd": 26515.865123,
+      "holders": 287,
+      "trades": 1624,
+      "lastTradeAt": "2026-09-16T04:46:02.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000063564434965249,
+        0.000044097878821416,
+        0.000077094885224403,
+        0.000074943405858673,
+        0.000071109794158017,
+        0.000338931918911486,
+        0.000338931918911486
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xcdf59e06dcbc3a6ae662f66b35aaebd8decccb2c",
+      "name": "Aros",
+      "symbol": "AROS",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreib6pgrej6ybnps2xppe74v42ccrfulqsduyry5npztypihfpqvzr4",
+      "description": "",
+      "creator": "0xeB68D4A0347782A785a7975eEBbbBB1ba1aC17f1",
+      "launchedAt": "2026-09-15T23:24:15.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:40:38.000Z",
+      "marketCap": 317406.860013542,
+      "peakMarketCap": 443541.266866631,
+      "crossedFloorAt": "2026-09-15T23:39:35.000Z",
+      "price": 0.000317406860013542,
+      "change24h": 12694.824960837796,
+      "volume24h": 571971.503827,
+      "liquidityUsd": 25579.996881,
+      "holders": 585,
+      "trades": 4256,
+      "lastTradeAt": "2026-09-16T04:44:41.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000017257424953388,
+        0.000096262207864861,
+        0.000127469186248381,
+        0.000209710721219461,
+        0.00035157284337293,
+        0.000317406860013542,
+        0.000317406860013542
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xa39c8e2ceb2a0f9d6e9d059f5e470edfda691c15",
+      "name": "Arc Inu",
+      "symbol": "AI",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreicafys7lf4frrb2p6wncontbhzc4tynfwwqbyreqhdxkxkiis33lq",
+      "description": "The ticker is $AI (Arc Inu)",
+      "creator": "0x1B8461b314f35743147c2eDDd3aC4FdA63B4E0aa",
+      "launchedAt": "2026-09-16T03:20:03.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T04:08:37.000Z",
+      "marketCap": 244712.766238291,
+      "peakMarketCap": 246905.72820677,
+      "crossedFloorAt": "2026-09-16T03:54:47.000Z",
+      "price": 0.000244712766238291,
+      "change24h": 9764.49067158714,
+      "volume24h": 272879.809644,
+      "liquidityUsd": 22158.041237,
+      "holders": 507,
+      "trades": 2700,
+      "lastTradeAt": "2026-09-16T04:46:07.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000015689291126898,
+        0.000244712766238291,
+        0.000244712766238291
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x56ec9a8a835e507d057b9c0b3b75f14b4424522b",
+      "name": "BIRDIE",
+      "symbol": "BIRDIE",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreidq67q7yuptt5bs6t56l7er5mkm6ffsovu7nsbztwjrpvrxrtie4q",
+      "description": "",
+      "creator": "0x36c76408549D21b95B25B739fc100EE6E5bA6693",
+      "launchedAt": "2026-09-15T23:15:12.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:43:38.000Z",
+      "marketCap": 145801.711987931,
+      "peakMarketCap": 191502.033306743,
+      "crossedFloorAt": "2026-09-15T23:43:37.000Z",
+      "price": 0.000145801711987931,
+      "change24h": 5777.337949773587,
+      "volume24h": 312468.567125,
+      "liquidityUsd": 16537.582122,
+      "holders": 388,
+      "trades": 2717,
+      "lastTradeAt": "2026-09-16T04:46:08.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000063167598841803,
+        0.000050067237877039,
+        0.000074835420400106,
+        0.000090302861595213,
+        0.000123920782370856,
+        0.000145801711987931,
+        0.000145801711987931
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x5c192bd145afb849621c5e0eee3f451d73ff7d16",
+      "name": "just a circle",
+      "symbol": "CRCL",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreic6txfw5gkod34vkiq7h5frjax5oejllunjgsz77mds2d7wbspi2e",
+      "description": "",
+      "creator": "0xeB68D4A0347782A785a7975eEBbbBB1ba1aC17f1",
+      "launchedAt": "2026-09-15T23:28:33.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:31:38.000Z",
+      "marketCap": 136752.22155281302,
+      "peakMarketCap": 288277.506807886,
+      "crossedFloorAt": "2026-09-15T23:31:34.000Z",
+      "price": 0.000136752221552813,
+      "change24h": 5412.548587321968,
+      "volume24h": 459711.640637,
+      "liquidityUsd": 15937.922046,
+      "holders": 380,
+      "trades": 3328,
+      "lastTradeAt": "2026-09-16T04:46:06.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000194500529785215,
+        0.000028721697356185,
+        0.000043815105304724,
+        0.00009113684959838,
+        0.000075143672124441,
+        0.000136752221552813,
+        0.000136752221552813
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xeaf3a25850b0c2e0f1c648459b60cba7bfa4ae70",
+      "name": "FYN",
+      "symbol": "FYN",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreigc54mqeodpr6jnueojyweigr7472cwyel63cnsi37sik3mrpi2uy",
+      "description": "",
+      "creator": "0x9796680b5b896E88E510E9C23E488C7a5F04E675",
+      "launchedAt": "2026-09-16T01:37:15.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T04:34:07.000Z",
+      "marketCap": 129883.77170929199,
+      "peakMarketCap": 152402.64921154,
+      "crossedFloorAt": "2026-09-16T04:33:44.000Z",
+      "price": 0.000129883771709292,
+      "change24h": 5135.67803229869,
+      "volume24h": 118438.56844100001,
+      "liquidityUsd": 15469.420145,
+      "holders": 382,
+      "trades": 1821,
+      "lastTradeAt": "2026-09-16T04:46:08.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000003016404466626,
+        0.00001085702093492,
+        0.000012734873950419,
+        0.000129883771709292,
+        0.000129883771709292
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xfb05aa6eca43a170ec6737721d1acdd14daea2a8",
+      "name": "Arse",
+      "symbol": "ARSE",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreihdi3f5bv6pe5y3zdv2g2h4j2vchi3f4gmbpqs52n6v6w5vhjlwsm",
+      "description": "",
+      "creator": "0x081e2844390d19DEcB8864b4A6D4F652B6aE38fc",
+      "launchedAt": "2026-09-16T01:26:29.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T01:31:31.000Z",
+      "marketCap": 126117.67469669001,
+      "peakMarketCap": 209896.649813263,
+      "crossedFloorAt": "2026-09-16T01:31:11.000Z",
+      "price": 0.00012611767469669,
+      "change24h": 4983.864829333509,
+      "volume24h": 412656.575984,
+      "liquidityUsd": 15377.901639,
+      "holders": 403,
+      "trades": 3898,
+      "lastTradeAt": "2026-09-16T04:45:59.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 10,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 90
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000071689743342228,
+        0.000075807499002557,
+        0.000145940878248089,
+        0.00012611767469669,
+        0.00012611767469669
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x38dccd1fedd12f73737f6c1ee19b2d311e048909",
+      "name": "Nanite",
+      "symbol": "XNAN",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreigcrt5tov2simlwionuivnmpsj3oqgwzxwapepiagvbllsfysrc3i",
+      "description": "",
+      "creator": "0x341973812Fe273C26B0FDfb01ED815a9488c60e8",
+      "launchedAt": "2026-09-16T01:20:24.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T01:21:53.000Z",
+      "marketCap": 115306.610907304,
+      "peakMarketCap": 336837.663048103,
+      "crossedFloorAt": "2026-09-16T01:21:15.000Z",
+      "price": 0.000115306610907304,
+      "change24h": 4548.065587881248,
+      "volume24h": 652813.322637,
+      "liquidityUsd": 14432.156045,
+      "holders": 546,
+      "trades": 5777,
+      "lastTradeAt": "2026-09-16T04:45:58.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.00011147603705446,
+        0.000118784649481134,
+        0.000112553554940076,
+        0.000115306610907304,
+        0.000115306610907304
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xf69285fbfb809328eaa0de92024479258416864c",
+      "name": "Supreme Leader Jeremy",
+      "symbol": "SLJ",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreiglsgfkxljmejygsaaafdvwqni3siwokzpqlxxk34lldfbjsvka3y",
+      "description": "",
+      "creator": "0xfF9a533f8F2368232f6eF59De2Cd81d228243524",
+      "launchedAt": "2026-09-15T23:38:34.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:43:27.000Z",
+      "marketCap": 101888.69602017099,
+      "peakMarketCap": 156757.93573158898,
+      "crossedFloorAt": "2026-09-15T23:43:18.000Z",
+      "price": 0.000101888696020171,
+      "change24h": 4007.182910320461,
+      "volume24h": 145178.382132,
+      "liquidityUsd": 13417.676532,
+      "holders": 225,
+      "trades": 1108,
+      "lastTradeAt": "2026-09-16T04:47:17.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000023174057075355,
+        0.000013143354480219,
+        0.000021135466740042,
+        0.000024831740614329,
+        0.000029032124059338,
+        0.000101888696020171,
+        0.000101888696020171
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xb979079eb9efae01aaeffeb010ab0bcffacc510c",
+      "name": "MISCHA",
+      "symbol": "MISCHA",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeicnvjskytw6jckqil2tpubmqjdkejgkhdrvantthzr26xjmut5use",
+      "description": "",
+      "creator": "0x7b0E34e088C717BA7Eebb0130109D240BA4D517c",
+      "launchedAt": "2026-09-15T23:02:31.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:26:10.000Z",
+      "marketCap": 84026.50803968399,
+      "peakMarketCap": 277411.767688341,
+      "crossedFloorAt": "2026-09-15T23:21:08.000Z",
+      "price": 0.000084026508039684,
+      "change24h": 3287.149422014123,
+      "volume24h": 360815.164324,
+      "liquidityUsd": 11956.993318,
+      "holders": 298,
+      "trades": 2747,
+      "lastTradeAt": "2026-09-16T04:46:46.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000028255832973309,
+        0.00002833809388989,
+        0.000147861286248191,
+        0.000116759506383729,
+        0.000097921714815794,
+        0.000084026508039684,
+        0.000084026508039684
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xdf37c130b39f8a44c16741e025bcc217d3c87919",
+      "name": "The Argusians",
+      "symbol": "ARGUSIANS",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://m.rapidlaunch.io/images/ILu1Tw89P.jpg",
+      "description": "",
+      "creator": "0x609F2C912175f8cD4438C1882F291FA6A4b4c735",
+      "launchedAt": "2026-09-16T03:30:48.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T03:31:55.000Z",
+      "marketCap": 81761.001417227,
+      "peakMarketCap": 122947.937746226,
+      "crossedFloorAt": "2026-09-16T03:31:42.000Z",
+      "price": 0.000081761001417227,
+      "change24h": 3195.82574778503,
+      "volume24h": 148141.90277699998,
+      "liquidityUsd": 11761.029654,
+      "holders": 320,
+      "trades": 1967,
+      "lastTradeAt": "2026-09-16T04:46:53.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000031193564795008,
+        0.000081761001417227,
+        0.000081761001417227
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xe91fb303572651971f7cb1404e3af08bcbdd6b07",
+      "name": "Argus strategy",
+      "symbol": "ARGSTR",
+      "quoteAsset": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "quoteSymbol": "ARGUS",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeiaffcdphkw5qeckwh35ify3uucupjvykguvv6gpdfwv4v2enbdgme",
+      "description": "Argus strategy that pays in ARGUS. Every trade generates fees, all fees buy ARGUS, and holders receive their share based on how much ARGSTR they hold. More volume. More ARGUS. Bigger bag, bigger cut.",
+      "creator": "0x08dBD4347AC04A8DC6BC24fa6511A03aBDA3E05e",
+      "launchedAt": "2026-09-16T04:42:24.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T04:46:47.000Z",
+      "marketCap": 77744.06277426686,
+      "peakMarketCap": 79569.34969427591,
+      "crossedFloorAt": "2026-09-16T04:45:01.000Z",
+      "price": 0.00007774406277426686,
+      "change24h": 2721.809943991053,
+      "volume24h": 38475.544561345116,
+      "liquidityUsd": 11880.244716698247,
+      "holders": 139,
+      "trades": 385,
+      "lastTradeAt": "2026-09-16T04:47:22.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.0000733824824688123,
+        0.00007544321559933109,
+        0.00007645976894207891,
+        0.00007748281373395468,
+        0.0000795693496942759,
+        0.00007031339791765633,
+        0.00007080402302596657,
+        0.00007228532855611622,
+        0.00007238262718534211,
+        0.00007287997136663524,
+        0.00007320255303423215,
+        0.00007388906982607923,
+        0.00007408577965137564,
+        0.00007324048572467412,
+        0.00007238440856680732,
+        0.00007338177502503518,
+        0.00007343203962758093,
+        0.00007187534223732504,
+        0.00007195355895063412,
+        0.00007344321601490264,
+        0.00007394300822349432,
+        0.0000735997769539352,
+        0.00007764701936238944,
+        0.00007774406277426686,
+        0.00007774406277426686
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xd3c7678eedf0512d3c9b2cdb62104cac497376af",
+      "name": "Pegcoin",
+      "symbol": "PEGCOIN",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreibzydxbpl4reve2klc3jejnrx7grioszphriibvlk7g5lpv2vewpe",
+      "description": "",
+      "creator": "0xeB68D4A0347782A785a7975eEBbbBB1ba1aC17f1",
+      "launchedAt": "2026-09-15T23:22:21.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:54:45.000Z",
+      "marketCap": 71383.635250693,
+      "peakMarketCap": 251412.390368952,
+      "crossedFloorAt": "2026-09-15T23:50:47.000Z",
+      "price": 0.000071383635250693,
+      "change24h": 2777.50906852467,
+      "volume24h": 452079.648994,
+      "liquidityUsd": 10826.567053,
+      "holders": 231,
+      "trades": 2790,
+      "lastTradeAt": "2026-09-16T04:46:59.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000143051841200092,
+        0.000052543232348836,
+        0.000044262841316875,
+        0.000076248359087067,
+        0.000063910814636817,
+        0.000071383635250693,
+        0.000071383635250693
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x9a5c92e4dc9e19ec1b1c24e9b5efa8575d32be31",
+      "name": "You looked, buy.",
+      "symbol": "CIRCLE",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeigzt7y5bwvwgibws3sqtyniysgjb45fwp2qoiyigvucl5fqfb5p24",
+      "description": "",
+      "creator": "0x8A2886c265E512c5C24D81B06495b98d4338010C",
+      "launchedAt": "2026-09-16T02:00:31.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T02:11:29.000Z",
+      "marketCap": 61893.93360173901,
+      "peakMarketCap": 177646.611606226,
+      "crossedFloorAt": "2026-09-16T02:07:56.000Z",
+      "price": 0.000061893933601739,
+      "change24h": 2394.974577859409,
+      "volume24h": 342234.544124,
+      "liquidityUsd": 9910.503176,
+      "holders": 355,
+      "trades": 3167,
+      "lastTradeAt": "2026-09-16T04:46:29.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000108085573822111,
+        0.000068154104985936,
+        0.000061893933601739,
+        0.000061893933601739
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x49c298e55566c05fc93f857d59e60d7e3a5d1a50",
+      "name": "Sashimi",
+      "symbol": "SASHIMI",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreibhikwq46ymrffiy7hf7hh7ezpjj2wi3ulqs4oavgtnh2slni5cpu",
+      "description": "",
+      "creator": "0x36c76408549D21b95B25B739fc100EE6E5bA6693",
+      "launchedAt": "2026-09-15T23:03:15.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T03:40:43.000Z",
+      "marketCap": 61495.039715072,
+      "peakMarketCap": 80758.474999698,
+      "crossedFloorAt": "2026-09-15T23:50:25.000Z",
+      "price": 0.000061495039715072,
+      "change24h": 2378.8949712068156,
+      "volume24h": 79276.20897800001,
+      "liquidityUsd": 9870.509092,
+      "holders": 122,
+      "trades": 814,
+      "lastTradeAt": "2026-09-16T04:44:41.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.00002992025443031,
+        0.000017707196948026,
+        0.000015317912169517,
+        0.000033682230514422,
+        0.000056868625577263,
+        0.000061495039715072,
+        0.000061495039715072
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x9ed6eec197acc84eb96aaa8059040b8cc38608ed",
+      "name": "Project Vista",
+      "symbol": "VISTA",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreifkhqyjxdsb37cjhoxj3pw4t225gtufjhejri5tsvh6kh7r6v7smu",
+      "description": "before Circle before USDC\n\nIn 2002, Jeremy Allaire(Circle CEO) worked on Vista, a browser tool to capture, upload and publish video.\n\nIt never launched. Twenty years later, Vista gets a second life on Arc\n\nVISTA is now live on Arc",
+      "creator": "0x1951834C25801500C3d0AbCFB806fDE13faC24e9",
+      "launchedAt": "2026-09-16T03:23:52.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T04:40:39.000Z",
+      "marketCap": 60927.302458618,
+      "peakMarketCap": 74555.715591096,
+      "crossedFloorAt": "2026-09-16T03:26:45.000Z",
+      "price": 0.000060927302458618,
+      "change24h": 2356.009206167694,
+      "volume24h": 62854.389773,
+      "liquidityUsd": 9813.361991,
+      "holders": 181,
+      "trades": 974,
+      "lastTradeAt": "2026-09-16T04:47:21.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000015374949697807,
+        0.000060927302458618,
+        0.000060927302458618
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xa4af6e7aaa2807b53cbd084dfe77334117e9ef3c",
+      "name": "SIDEQUESTOR",
+      "symbol": "SIDEQUESTR",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreibm44hmxenjiwbcxrblbh3a3yjs5ks27guxbbicuhhst6azanexcu",
+      "description": "Circle’s AI mascot",
+      "creator": "0x0D9ccCD879dA69C3e376A17f812e550Fe4502857",
+      "launchedAt": "2026-09-16T02:07:03.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T02:23:08.000Z",
+      "marketCap": 46600.674979624,
+      "peakMarketCap": 176703.826424541,
+      "crossedFloorAt": "2026-09-16T02:15:10.000Z",
+      "price": 0.000046600674979624,
+      "change24h": 1778.495881896642,
+      "volume24h": 248182.489441,
+      "liquidityUsd": 8271.202164,
+      "holders": 266,
+      "trades": 2741,
+      "lastTradeAt": "2026-09-16T04:46:29.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000125998691668304,
+        0.000042252912229755,
+        0.000046600674979624,
+        0.000046600674979624
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xc981320cc4c8159c1a22150243190ab31b3504aa",
+      "name": "Circlers",
+      "symbol": "CIRCLERS",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeiecox4devg2nut4r3wprtcoyk4i6mnsbxgpndm44aj7supvhvk7g4",
+      "description": "",
+      "creator": "0x141002106345bfB04eCEECc300652Ff72dbd75A5",
+      "launchedAt": "2026-09-16T02:44:30.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T03:10:12.000Z",
+      "marketCap": 46509.501798048,
+      "peakMarketCap": 68286.21775421,
+      "crossedFloorAt": "2026-09-16T02:56:34.000Z",
+      "price": 0.000046509501798048,
+      "change24h": 1774.8206465871785,
+      "volume24h": 128849.27393599998,
+      "liquidityUsd": 8260.679043,
+      "holders": 194,
+      "trades": 1753,
+      "lastTradeAt": "2026-09-16T04:47:14.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000019936734285738,
+        0.000054327908610418,
+        0.000046509501798048,
+        0.000046509501798048
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x93b3a20ef10c54e133501d6e612fcbc0c2dce2cb",
+      "name": "BITS",
+      "symbol": "BITS",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreichu6mstcssjekos5adg3actjjbneljiar6bzjbjlywhyfpjvaiqy",
+      "description": "https://x.com/circle/status/2023759340079927315",
+      "creator": "0xfF9a533f8F2368232f6eF59De2Cd81d228243524",
+      "launchedAt": "2026-09-15T23:19:38.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T00:26:11.000Z",
+      "marketCap": 46003.454444181,
+      "peakMarketCap": 57993.065539281,
+      "crossedFloorAt": "2026-09-16T00:08:24.000Z",
+      "price": 0.000046003454444181,
+      "change24h": 1754.421631536442,
+      "volume24h": 125100.85562199999,
+      "liquidityUsd": 8202.083108,
+      "holders": 154,
+      "trades": 1246,
+      "lastTradeAt": "2026-09-16T04:47:41.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000008197090670417,
+        0.000008221171341115,
+        0.000023554703858728,
+        0.000038095212513222,
+        0.000041626309289363,
+        0.000046003454444181,
+        0.000046003454444181
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x700052862222115e5c81f7a3da7c47986b0b8422",
+      "name": "Sample Fiat Token",
+      "symbol": "C-USD",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreidu5eagilufhwe4bziss5osbvmfeuh53c7yk43lbxmllfwdameqpm",
+      "description": "The @circle stablecoin, before $USDC.",
+      "creator": "0xE0AAbC533ff4E4a625055D195c4E0AB28883be18",
+      "launchedAt": "2026-09-16T03:02:59.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T03:11:03.000Z",
+      "marketCap": 40849.131857673005,
+      "peakMarketCap": 99438.61465686299,
+      "crossedFloorAt": "2026-09-16T03:09:26.000Z",
+      "price": 0.000040849131857673,
+      "change24h": 1546.6483802486503,
+      "volume24h": 135485.272727,
+      "liquidityUsd": 7585.846285,
+      "holders": 172,
+      "trades": 1399,
+      "lastTradeAt": "2026-09-16T04:47:27.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000029809009165526,
+        0.000040849131857673,
+        0.000040849131857673
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x09aa05a68672a0c524fccd2a56fb95ab61e3aee2",
+      "name": "HEDGE",
+      "symbol": "HEDGE",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreictdjyq4linjju4hwdh2zdpnufavf2r5q3oqie63su3pj2u7sodxu",
+      "description": "",
+      "creator": "0x34E104673AcaA680C474170525208B96bd8e6B2a",
+      "launchedAt": "2026-09-16T00:20:01.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T00:23:10.000Z",
+      "marketCap": 38229.308379641,
+      "peakMarketCap": 216112.48602991,
+      "crossedFloorAt": "2026-09-16T00:21:59.000Z",
+      "price": 0.000038229308379641,
+      "change24h": 1441.0420211791497,
+      "volume24h": 292665.151788,
+      "liquidityUsd": 7257.691628,
+      "holders": 236,
+      "trades": 2339,
+      "lastTradeAt": "2026-09-16T04:46:07.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000082701327758112,
+        0.00004539499986374,
+        0.000088030938065675,
+        0.000037621129620974,
+        0.000038229308379641,
+        0.000038229308379641
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xec79bb70ce2364a6b174e7b62d4fb54ffa668375",
+      "name": "Machines Muxing Money",
+      "symbol": "MMM",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeif2b2ibifqkdmdxt7cfn3mloqslqrt4ib3zwp7alyc5ye3db5oyta",
+      "description": "",
+      "creator": "0xC14624aFdEc86103f4dCF7A8aD12580B1d81aaB9",
+      "launchedAt": "2026-09-15T23:57:18.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T00:04:34.000Z",
+      "marketCap": 34440.773332296005,
+      "peakMarketCap": 96064.48122729,
+      "crossedFloorAt": "2026-09-16T00:04:28.000Z",
+      "price": 0.000034440773332296,
+      "change24h": 1288.324330116296,
+      "volume24h": 137127.979368,
+      "liquidityUsd": 6762.563997,
+      "holders": 92,
+      "trades": 1062,
+      "lastTradeAt": "2026-09-16T04:47:41.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000003977145155324,
+        0.000010948738034671,
+        0.000031284466039342,
+        0.00002117763789331,
+        0.000033924197219913,
+        0.000034440773332296,
+        0.000034440773332296
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x69d1352035a9814d2749d87974da8661d39138b6",
+      "name": "Pinline Chameleon",
+      "symbol": "PINLINE",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreihxll73dst7ttvzq5mm2tvchpt5z424vuxqrajymownc3n4on35qu",
+      "description": "https://www.circle.com/404",
+      "creator": "0xaE86C0171313f24D189B9DC75A66c0B144E548bD",
+      "launchedAt": "2026-09-15T23:22:40.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T02:47:26.000Z",
+      "marketCap": 33660.540888917,
+      "peakMarketCap": 182128.445979899,
+      "crossedFloorAt": "2026-09-16T02:47:17.000Z",
+      "price": 0.000033660540888917,
+      "change24h": 1256.872780703107,
+      "volume24h": 194940.080086,
+      "liquidityUsd": 6657.263755,
+      "holders": 146,
+      "trades": 1813,
+      "lastTradeAt": "2026-09-16T04:46:23.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000012571586284023,
+        0.000006030197732869,
+        0.000005689501790915,
+        0.000034616109435813,
+        0.000024145267194477,
+        0.000033660540888917,
+        0.000033660540888917
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xc281dff1a3ed6943123f53aeccdc571dab1ce099",
+      "name": "STABLE COIN",
+      "symbol": "STABLE",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreibskbfvriw3ayngr6k6gie4ur37fk6sdefdwt6szczd2vv4bonbra",
+      "description": "The Rise of Stablecoins",
+      "creator": "0x220D040eA1Cc9b7399D2f290eb9A7f5bFa88e79E",
+      "launchedAt": "2026-09-15T15:03:56.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T00:12:35.000Z",
+      "marketCap": 31430.969853223003,
+      "peakMarketCap": 85162.0444097,
+      "crossedFloorAt": "2026-09-16T00:09:41.000Z",
+      "price": 0.000031430969853223,
+      "change24h": 1166.99768746082,
+      "volume24h": 77414.778404,
+      "liquidityUsd": 6349.442333,
+      "holders": 101,
+      "trades": 678,
+      "lastTradeAt": "2026-09-16T04:46:13.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000003267309879193,
+        0.000003496141707487,
+        0.000009856846786319,
+        0.000037202698929106,
+        0.000021867633160334,
+        0.000021389890849467,
+        0.000022397743331785,
+        0.000031430969853223,
+        0.000031430969853223
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xac97429fee14caf3055dec364c94a31d638bb5a8",
+      "name": "5042",
+      "symbol": "5042",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreiawwbejt57tqkqlacbmcx6t6yceemdghb5n5obtjwhymvhysfwxlu",
+      "description": "",
+      "creator": "0x36c76408549D21b95B25B739fc100EE6E5bA6693",
+      "launchedAt": "2026-09-15T23:32:01.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:50:20.000Z",
+      "marketCap": 30494.3934251,
+      "peakMarketCap": 49023.724769403,
+      "crossedFloorAt": "2026-09-15T23:50:19.000Z",
+      "price": 0.0000304943934251,
+      "change24h": 1129.2438359537377,
+      "volume24h": 59187.34345500001,
+      "liquidityUsd": 6216.886958,
+      "holders": 83,
+      "trades": 552,
+      "lastTradeAt": "2026-09-16T04:46:58.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000017402067361344,
+        0.0000112559568385,
+        0.000022637906724312,
+        0.000026312907374511,
+        0.000026369505836042,
+        0.0000304943934251,
+        0.0000304943934251
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x5cc5cd8d418cd20a642687d6262bf43a6a354379",
+      "name": "Just buy 1 usdc",
+      "symbol": "1USDC",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreid5qn7kjxi2tgjc7k736dz6knqrxlwhc5wu2tg7wvnccofzwdjppm",
+      "description": "",
+      "creator": "0x36c76408549D21b95B25B739fc100EE6E5bA6693",
+      "launchedAt": "2026-09-15T23:26:29.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:40:59.000Z",
+      "marketCap": 29266.546366863,
+      "peakMarketCap": 45626.210321946004,
+      "crossedFloorAt": "2026-09-15T23:40:15.000Z",
+      "price": 0.000029266546366863,
+      "change24h": 1079.7487236296006,
+      "volume24h": 90158.50825600002,
+      "liquidityUsd": 6039.984256,
+      "holders": 135,
+      "trades": 854,
+      "lastTradeAt": "2026-09-16T04:47:39.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000044732681209953,
+        0.000010748949259861,
+        0.000014695330832441,
+        0.000014072031551865,
+        0.000027850664125374,
+        0.000029266546366863,
+        0.000029266546366863
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x538eec8812529bc7d5bcf9634c83caf4e91a645c",
+      "name": "Circle Inu",
+      "symbol": "CINU",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreibhux2icadveclx5wx7ckl65sy36ekjef7haw7c5nbdbhprbdmoii",
+      "description": "",
+      "creator": "0x679775F5C7F7d851Ad5D339671Ce1FFAb769CE38",
+      "launchedAt": "2026-09-16T01:04:39.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T01:37:28.000Z",
+      "marketCap": 28897.764306275,
+      "peakMarketCap": 90583.749934892,
+      "crossedFloorAt": "2026-09-16T01:23:10.000Z",
+      "price": 0.000028897764306275,
+      "change24h": 1064.882939337102,
+      "volume24h": 145729.48860799999,
+      "liquidityUsd": 5986.130046,
+      "holders": 189,
+      "trades": 1626,
+      "lastTradeAt": "2026-09-16T04:45:55.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000021915152928604,
+        0.000031503543253828,
+        0.000029659604838889,
+        0.000028897764306275,
+        0.000028897764306275
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x60f4d66b464bfce01ffa6b8145a1116dc537de65",
+      "name": "Rambo Cat",
+      "symbol": "RAMBO",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeihtygw5rckhgibfcywrbmbpuilmv2kiruruqyghvps6v3wmhh3a74",
+      "description": "https://x.com/0xrachelita",
+      "creator": "0xbE8af7E12B536aB55fbaf92EDbb512972e0504dA",
+      "launchedAt": "2026-09-15T23:34:28.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:54:55.000Z",
+      "marketCap": 27538.668557711,
+      "peakMarketCap": 64799.772243274,
+      "crossedFloorAt": "2026-09-15T23:53:35.000Z",
+      "price": 0.000027538668557711,
+      "change24h": 1010.0971284470877,
+      "volume24h": 87519.11329099999,
+      "liquidityUsd": 5784.628794,
+      "holders": 65,
+      "trades": 652,
+      "lastTradeAt": "2026-09-16T04:38:37.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000041634056945469,
+        0.000016282900262946,
+        0.000047824475039665,
+        0.000026160513402602,
+        0.000025257783918977,
+        0.000027538668557711,
+        0.000027538668557711
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xea1ab5226753c68a3bd37c82c44affe9185e8ece",
+      "name": "Elsa",
+      "symbol": "ELSA",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeieucdeqsx3uwy2ootn2w7hcilbducr3vmwvwdkc6gppi72lncdoe4",
+      "description": "",
+      "creator": "0x141002106345bfB04eCEECc300652Ff72dbd75A5",
+      "launchedAt": "2026-09-16T04:00:44.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T04:14:44.000Z",
+      "marketCap": 25908.649941675998,
+      "peakMarketCap": 65317.31419920301,
+      "crossedFloorAt": "2026-09-16T04:11:49.000Z",
+      "price": 0.000025908649941676,
+      "change24h": 944.3902849523216,
+      "volume24h": 113795.328533,
+      "liquidityUsd": 5536.283408,
+      "holders": 285,
+      "trades": 1803,
+      "lastTradeAt": "2026-09-16T04:47:41.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000023066303522108,
+        0.000023366131999959,
+        0.000025205761064232,
+        0.000025362209656273,
+        0.000024435147010318,
+        0.000024439408012317,
+        0.000024643624991141,
+        0.000024529457934258,
+        0.000024431328025389,
+        0.000024447331262402,
+        0.000024428594476908,
+        0.000024185112087179,
+        0.000024198176209451,
+        0.000024259435974281,
+        0.000024568323334468,
+        0.00002463004955577,
+        0.000024691853221258,
+        0.000025314149306313,
+        0.000025420709823193,
+        0.000025647106205877,
+        0.000026153802688694,
+        0.000026345091698804,
+        0.000026003646538844,
+        0.000025908649941676,
+        0.000025908649941676
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xbcbb16ff4ea712a9c02ef598b915af86a3267a94",
+      "name": "Cash Pepe",
+      "symbol": "CASHPEPE",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://m.rapidlaunch.io/images/QiZhXUXIw.jpg",
+      "description": "",
+      "creator": "0xB52F82a6ad928CE253C58d352D6e8865c6894Fbe",
+      "launchedAt": "2026-09-16T00:48:25.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 25773.102860306,
+      "peakMarketCap": 41313.630593919,
+      "crossedFloorAt": "2026-09-16T04:46:44.000Z",
+      "price": 0.000025773102860306,
+      "change24h": 938.9263161521275,
+      "volume24h": 31315.525577,
+      "liquidityUsd": 5515.284442,
+      "holders": 112,
+      "trades": 396,
+      "lastTradeAt": "2026-09-16T04:47:41.000Z",
+      "milestoneProgress": 54.7,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1.5,
+        "sell": 1.5
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000003181466495828,
+        0.000003122712696664,
+        0.000003135218762215,
+        0.000025773102860306,
+        0.000025773102860306
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xdf30da54ec121b8a4f9afb1cca731315a3a8e302",
+      "name": "Bankless",
+      "symbol": "BANKLESS",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeiemn2d6ghko3u3pddt2dtsulhftemr3uqyifxraksobfuknfhk42a",
+      "description": "Hold your money in USDC, ditch the banks. Go Bankless.",
+      "creator": "0xc08B967E2DcFB489ed059089adB4A9bFd63d176c",
+      "launchedAt": "2026-09-16T01:00:30.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T01:10:14.000Z",
+      "marketCap": 24071.346746824,
+      "peakMarketCap": 57392.299933725,
+      "crossedFloorAt": "2026-09-16T01:09:17.000Z",
+      "price": 0.000024071346746824,
+      "change24h": 870.3276992315327,
+      "volume24h": 97847.614852,
+      "liquidityUsd": 5246.794386,
+      "holders": 117,
+      "trades": 1081,
+      "lastTradeAt": "2026-09-16T04:43:35.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000027921675726928,
+        0.000039636531898556,
+        0.000028899113587314,
+        0.000024071346746824,
+        0.000024071346746824
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xa5314ff551fdf0985fed2e38ff9a9f6e4858b5ec",
+      "name": "the stable bull",
+      "symbol": "STABULL",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeigmdoit4ghpngtqscrqgqxpi5zeskbpk5djfun57iudjwdru7cuue",
+      "description": "the stable bull on arc",
+      "creator": "0xe3B2799E9b73F62247Eae8DB575c4db8C52132c8",
+      "launchedAt": "2026-09-16T00:15:55.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T00:21:31.000Z",
+      "marketCap": 21828.110879738,
+      "peakMarketCap": 108104.45663911,
+      "crossedFloorAt": "2026-09-16T00:16:51.000Z",
+      "price": 0.000021828110879738,
+      "change24h": 779.9017699872371,
+      "volume24h": 156194.93150700003,
+      "liquidityUsd": 4877.921334,
+      "holders": 144,
+      "trades": 1539,
+      "lastTradeAt": "2026-09-16T04:46:39.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 71,
+        "dividends": 0,
+        "liquidity": 29
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000031797723457578,
+        0.000017043824655393,
+        0.000026319007832683,
+        0.00002000056606101,
+        0.000021828110879738,
+        0.000021828110879738
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x35586e545ead3b55b6aec86ddec42041b5d7c645",
+      "name": "Internet Funny Money",
+      "symbol": "IFM",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreig3rjgiik443bz3ve4obzhdmjtaem57unetemp55wbur4v57dpwni",
+      "description": "",
+      "creator": "0x8Bdc904Af99AB81506DCccdB48d8B0484dd9c7f7",
+      "launchedAt": "2026-09-16T03:06:34.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 20657.489362104,
+      "peakMarketCap": 25807.74121612,
+      "crossedFloorAt": null,
+      "price": 0.000020657489362104,
+      "change24h": 732.7134470477824,
+      "volume24h": 51094.895098,
+      "liquidityUsd": 4677.883184,
+      "holders": 97,
+      "trades": 588,
+      "lastTradeAt": "2026-09-16T04:47:45.000Z",
+      "milestoneProgress": 42.7,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000011681932398564,
+        0.000020657489362104,
+        0.000020657489362104
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xa17e7fd6e176a09c0313a1a7e8ef629f9b949cc8",
+      "name": "Circle Jerk",
+      "symbol": "JERK",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeig2f6n3zm3pspuerfwxronqu6646isledoc3bihorcthawmg3vl4m",
+      "description": "",
+      "creator": "0x141002106345bfB04eCEECc300652Ff72dbd75A5",
+      "launchedAt": "2026-09-16T01:35:40.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 20617.042684966,
+      "peakMarketCap": 36601.109479758,
+      "crossedFloorAt": "2026-09-16T01:36:44.000Z",
+      "price": 0.000020617042684966,
+      "change24h": 731.0830218130974,
+      "volume24h": 56801.437287,
+      "liquidityUsd": 4670.871573,
+      "holders": 81,
+      "trades": 666,
+      "lastTradeAt": "2026-09-16T04:45:07.000Z",
+      "milestoneProgress": 42.6,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000008277461390808,
+        0.000009933439168282,
+        0.000012126660740299,
+        0.000020617042684966,
+        0.000020617042684966
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xd90b803908e26f3a92c316b8e4dd3598351ace61",
+      "name": "Dyson toothbrush",
+      "symbol": "DYSON",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreieeshhdt7z5cacp5adtknzyyxp4v3ptmawhrqxxumutyz3sp25v4a",
+      "description": "The biggest launch of the year is Arc\n\nThe second biggest is the Dyson toothbrush",
+      "creator": "0x27e804D188Ba6c50c93a09e0850cca8BE385DABf",
+      "launchedAt": "2026-09-16T01:22:07.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T02:47:20.000Z",
+      "marketCap": 19684.711452508,
+      "peakMarketCap": 63596.995801133,
+      "crossedFloorAt": "2026-09-16T02:41:09.000Z",
+      "price": 0.000019684711452508,
+      "change24h": 693.5002962087632,
+      "volume24h": 77534.458687,
+      "liquidityUsd": 4507.29794,
+      "holders": 152,
+      "trades": 1063,
+      "lastTradeAt": "2026-09-16T04:47:13.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000008998134619376,
+        0.000028923085680255,
+        0.000025747753828153,
+        0.000019684711452508,
+        0.000019684711452508
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x1deb9741535067f20c36b75c987a0ec7de66f2c4",
+      "name": "Arcdog",
+      "symbol": "ARCDOG",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreiapvakti72y3lr7ygn3ofpbkg7t7txhtxxebf6yqpr7vlbu4ybs7m",
+      "description": "Arcdog",
+      "creator": "0xCadE3c5BBE317D342507be058B3af5190CCCC821",
+      "launchedAt": "2026-09-16T02:21:42.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T03:23:55.000Z",
+      "marketCap": 19646.467329901,
+      "peakMarketCap": 50218.478271564,
+      "crossedFloorAt": "2026-09-16T03:13:18.000Z",
+      "price": 0.000019646467329901,
+      "change24h": 691.9586570188712,
+      "volume24h": 93065.395103,
+      "liquidityUsd": 4500.506338,
+      "holders": 281,
+      "trades": 1617,
+      "lastTradeAt": "2026-09-16T04:47:23.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000011240275537322,
+        0.000033473326283599,
+        0.000019439134873473,
+        0.000019646467329901
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x2d0edb99be0822f8e19acd0ce9a694639aa2a23e",
+      "name": "USDC Bull",
+      "symbol": "BESSENT",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeih5j6h4vnl5golvcuiodetzrmxyi4qiw7vigabipp4c4sz3d4xh7u",
+      "description": "",
+      "creator": "0xbE8af7E12B536aB55fbaf92EDbb512972e0504dA",
+      "launchedAt": "2026-09-15T23:17:21.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 19367.664957616,
+      "peakMarketCap": 42735.656424368,
+      "crossedFloorAt": "2026-09-15T23:44:24.000Z",
+      "price": 0.000019367664957616,
+      "change24h": 680.7199977413097,
+      "volume24h": 69331.47334199998,
+      "liquidityUsd": 4450.793993,
+      "holders": 78,
+      "trades": 624,
+      "lastTradeAt": "2026-09-16T04:47:44.000Z",
+      "milestoneProgress": 39.6,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000016837060941628,
+        0.000009088997256026,
+        0.000011019019709145,
+        0.000017554813606578,
+        0.000028864340695023,
+        0.000019367664957616,
+        0.000019367664957616
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x6ea3649ea06068f074fa2807d41a0b3e1294cd16",
+      "name": "Welcome to the Internet",
+      "symbol": "NINJACAT",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreie2comwemaau2unohifwxyynri62n46oqqv65hshm6m64akqz5sfq",
+      "description": "''Welcome to the internet'', Ninja cat.",
+      "creator": "0x736a5475937A77f3D12c7D8bdCa51252cf2b7A5C",
+      "launchedAt": "2026-09-16T00:20:00.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T00:56:57.000Z",
+      "marketCap": 19327.98079302,
+      "peakMarketCap": 54608.919742663,
+      "crossedFloorAt": "2026-09-16T00:28:31.000Z",
+      "price": 0.00001932798079302,
+      "change24h": 679.1203097581916,
+      "volume24h": 74482.319414,
+      "liquidityUsd": 4443.689024,
+      "holders": 66,
+      "trades": 704,
+      "lastTradeAt": "2026-09-16T04:40:49.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 100
+      },
+      "tax": {
+        "buy": 2,
+        "sell": 2
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000027131576765202,
+        0.000010081128759794,
+        0.000024730684155259,
+        0.000015759744350116,
+        0.00001932798079302,
+        0.00001932798079302
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x68c8eeca577f3479c9ebf1a63aa76fb293916ac7",
+      "name": "Ouroboros",
+      "symbol": "ORO",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreiddwzeswre3ghjaezzee6wjle3gfinoxpax3bgeixk2ean6iel2lm",
+      "description": "",
+      "creator": "0xBF0c000ABFEd6a0184a30D0E5cDfd1C59878174f",
+      "launchedAt": "2026-09-15T23:48:41.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:50:02.000Z",
+      "marketCap": 17512.752520680002,
+      "peakMarketCap": 146860.604681223,
+      "crossedFloorAt": "2026-09-15T23:49:54.000Z",
+      "price": 0.00001751275252068,
+      "change24h": 605.9475749043721,
+      "volume24h": 95324.117379,
+      "liquidityUsd": 4110.512025,
+      "holders": 93,
+      "trades": 782,
+      "lastTradeAt": "2026-09-16T04:47:40.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000033902855157657,
+        0.000008344041779329,
+        0.00001172099790661,
+        0.000016279776341122,
+        0.000013577546368447,
+        0.00001751275252068,
+        0.00001751275252068
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x67137d72cca5cf032be97029be482c02b48cda04",
+      "name": "Jeremy A Chair",
+      "symbol": "CHAIREMY",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeihsmvi65p7wrjdrdorqi43nj23qp6fw45u3aty4zklwzymcewm2qa",
+      "description": "",
+      "creator": "0x280334E3905569788BA585c080Ad1Cb5a1cC735e",
+      "launchedAt": "2026-09-16T04:40:44.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 17392.511702537002,
+      "peakMarketCap": 31947.977968708,
+      "crossedFloorAt": "2026-09-16T04:43:08.000Z",
+      "price": 0.000017392511702537,
+      "change24h": 601.100609022091,
+      "volume24h": 26935.835688,
+      "liquidityUsd": 4087.845597,
+      "holders": 97,
+      "trades": 355,
+      "lastTradeAt": "2026-09-16T04:47:35.000Z",
+      "milestoneProgress": 35,
+      "taxSplit": {
+        "creator": 33,
+        "burn": 25,
+        "dividends": 32,
+        "liquidity": 10
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000019404093542906,
+        0.000018614960666817,
+        0.000018089970237844,
+        0.000017470395056367,
+        0.000017452062810203,
+        0.000017133966231783,
+        0.000016616142509932,
+        0.000015959172876585,
+        0.000015943253570617,
+        0.00001568332439398,
+        0.000015707977352258,
+        0.000015668101356198,
+        0.000016164599862205,
+        0.000016929686943933,
+        0.000015959844604505,
+        0.000016714344392006,
+        0.00001681626091482,
+        0.000016789398404701,
+        0.000016776848817551,
+        0.000016615196457145,
+        0.000016767734003849,
+        0.000016793224691962,
+        0.00001730710427393,
+        0.000017392511702537,
+        0.000017392511702537
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x2bb16082b8394618db3d092967db135ba342e377",
+      "name": "Thug Life Cult",
+      "symbol": "THUG",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreihcyoeks4onundpicgtsamynrj47ovyma76ydt6uyszf7j5f4ccpe",
+      "description": "",
+      "creator": "0x141002106345bfB04eCEECc300652Ff72dbd75A5",
+      "launchedAt": "2026-09-16T03:09:53.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 16160.179524666002,
+      "peakMarketCap": 32851.261305522,
+      "crossedFloorAt": "2026-09-16T04:28:11.000Z",
+      "price": 0.000016160179524666,
+      "change24h": 551.4246993432808,
+      "volume24h": 49105.728793999995,
+      "liquidityUsd": 3850.864689,
+      "holders": 134,
+      "trades": 850,
+      "lastTradeAt": "2026-09-16T04:47:23.000Z",
+      "milestoneProgress": 32.1,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000003452849732342,
+        0.000016160179524666,
+        0.000016160179524666
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x35758140502ac53b630188614ad35c682c9813bf",
+      "name": "ARCFLY",
+      "symbol": "AFLY",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeigxwz7oducspwin6uiofjztl2ro5r46z2ltksgizsbjqf6sau6k5i",
+      "description": "A degenerate gambler chasing the next big flap.",
+      "creator": "0x23bc333b9FfDE6699f56c034a8b3afD8eFf115A7",
+      "launchedAt": "2026-09-16T01:30:10.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-16T01:36:02.000Z",
+      "marketCap": 15625.778531584,
+      "peakMarketCap": 61785.252898554005,
+      "crossedFloorAt": "2026-09-16T01:35:49.000Z",
+      "price": 0.000015625778531584,
+      "change24h": 529.882735300379,
+      "volume24h": 118339.31073200001,
+      "liquidityUsd": 3745.294589,
+      "holders": 140,
+      "trades": 1502,
+      "lastTradeAt": "2026-09-16T04:46:30.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 2,
+        "sell": 2
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000005219455402553,
+        0.000008647037022235,
+        0.00002694549085872,
+        0.000015625778531584,
+        0.000015625778531584
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xa8944927956684f737ff13f3d1093d9f8f5056f5",
+      "name": "Arc Meme Coin",
+      "symbol": "AMC",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeibcatlq2kq3cx3yeumxxmyktzdyvsbhj7shp7pvlrjpn7esdzmvq4",
+      "description": "",
+      "creator": "0x926BB24ac46207F419d7D2560a24eeadd26D2aa5",
+      "launchedAt": "2026-09-16T01:34:03.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 15430.890770278,
+      "peakMarketCap": 23283.960740565,
+      "crossedFloorAt": null,
+      "price": 0.000015430890770278,
+      "change24h": 522.0267148198719,
+      "volume24h": 65929.746038,
+      "liquidityUsd": 3706.346582,
+      "holders": 166,
+      "trades": 1530,
+      "lastTradeAt": "2026-09-16T04:47:49.000Z",
+      "milestoneProgress": 30.4,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000006484622817657,
+        0.00000456138070886,
+        0.000006646874814308,
+        0.000015430890770278,
+        0.000015430890770278
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x418c9defd8221fe922b5bf69d42cc0636e255a0c",
+      "name": "ARC MEME DOG",
+      "symbol": "AMD",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeifgjjh7v4ooe4eav3mxi6ewjolywk52fd65lkcdb7gw2c3uigugpq",
+      "description": "",
+      "creator": "0x603F9f25ea89F465E36E2E9a9eB13289F0e7DaE8",
+      "launchedAt": "2026-09-16T02:10:43.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 15397.130969773998,
+      "peakMarketCap": 17194.751692866,
+      "crossedFloorAt": null,
+      "price": 0.000015397130969774,
+      "change24h": 520.6658408357902,
+      "volume24h": 16135.339635,
+      "liquidityUsd": 3699.574798,
+      "holders": 70,
+      "trades": 238,
+      "lastTradeAt": "2026-09-16T04:47:45.000Z",
+      "milestoneProgress": 30.3,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000003119431425505,
+        0.000003086229487227,
+        0.000015397130969774,
+        0.000015397130969774
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x7c512409288352d03bf5dcf9a3e6ea6334421610",
+      "name": "Economic OS",
+      "symbol": "EOS",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreihx2hzssiihwth3z4rw6aoace3p6bnkzhcccodgit6rncyztvlpdy",
+      "description": "The Economic OS for the internet.",
+      "creator": "0x96386D316Db06752e86C84750B253dc4D2802c0E",
+      "launchedAt": "2026-09-16T00:06:20.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 15183.283372971,
+      "peakMarketCap": 26450.832127814,
+      "crossedFloorAt": null,
+      "price": 0.000015183283372971,
+      "change24h": 512.045540161528,
+      "volume24h": 87159.969834,
+      "liquidityUsd": 3656.506141,
+      "holders": 75,
+      "trades": 920,
+      "lastTradeAt": "2026-09-16T04:47:32.000Z",
+      "milestoneProgress": 29.8,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 2,
+        "sell": 2
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000008165450710514,
+        0.000009177213531363,
+        0.000017144531938126,
+        0.000021653499898163,
+        0.000015183283372971,
+        0.000015183283372971
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x435895e6b1d9076720ed6acdf2a7c91d30529258",
+      "name": "Stablecoin",
+      "symbol": "STABLECOIN",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreif7adwukpfevpu3mrt3no6x7rhi2kplopjq3y7ye5jksim7jk6fte",
+      "description": "",
+      "creator": "0xeB68D4A0347782A785a7975eEBbbBB1ba1aC17f1",
+      "launchedAt": "2026-09-15T23:43:29.000Z",
+      "status": "graduated",
+      "graduatedAt": "2026-09-15T23:44:51.000Z",
+      "marketCap": 14497.382576464,
+      "peakMarketCap": 84913.94603984599,
+      "crossedFloorAt": "2026-09-15T23:44:46.000Z",
+      "price": 0.000014497382576464,
+      "change24h": 484.3965453306291,
+      "volume24h": 140797.194037,
+      "liquidityUsd": 3516.279844,
+      "holders": 105,
+      "trades": 1318,
+      "lastTradeAt": "2026-09-16T04:47:21.000Z",
+      "milestoneProgress": 100,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 2,
+        "sell": 2
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000018883978801901,
+        0.000007738590562311,
+        0.000008090703931842,
+        0.000012397785855046,
+        0.000021142504559634,
+        0.000014497382576464,
+        0.000014497382576464
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x42da81fd2ccd8c3c0ce44d5f856f86491654f79c",
+      "name": "All views are my own",
+      "symbol": "VIEWS",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreiad4lj7hoks3ojp34mlu225xd3xfqcbab2dpmssamhjrqjkfwe6ke",
+      "description": "in all the arc employees bio",
+      "creator": "0x8047c3A474389B3bcBF2e1Fb508172cc8eA12EC7",
+      "launchedAt": "2026-09-16T03:18:08.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 14372.593464795002,
+      "peakMarketCap": 28212.811867681,
+      "crossedFloorAt": null,
+      "price": 0.000014372593464795,
+      "change24h": 479.3662355233516,
+      "volume24h": 56152.877248,
+      "liquidityUsd": 3490.413772,
+      "holders": 63,
+      "trades": 748,
+      "lastTradeAt": "2026-09-16T04:47:53.000Z",
+      "milestoneProgress": 27.9,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000012196667754604,
+        0.000014372593464795,
+        0.000014372593464795
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x341c1e304be69aeccb67ddd626a9b8372badf236",
+      "name": "WorkChain",
+      "symbol": "WORKCHAIN",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeiedq6mapymztnwxxcrqi6krdleao3jdsjip6aijutwbdpafu2gy2e",
+      "description": "Jerallaire Agent Project",
+      "creator": "0xaE86C0171313f24D189B9DC75A66c0B144E548bD",
+      "launchedAt": "2026-09-16T04:45:35.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 12111.518545476,
+      "peakMarketCap": 16787.768595059,
+      "crossedFloorAt": null,
+      "price": 0.000012111518545476,
+      "change24h": 388.2212054039875,
+      "volume24h": 13435.159315,
+      "liquidityUsd": 3000.64059,
+      "holders": 50,
+      "trades": 152,
+      "lastTradeAt": "2026-09-16T04:47:40.000Z",
+      "milestoneProgress": 22.6,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 3,
+        "sell": 3
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000013757053018519,
+        0.000013826381149289,
+        0.000012664867033398,
+        0.000012669296461839,
+        0.000012673726664722,
+        0.000012012097155717,
+        0.000011359038790407,
+        0.000011956578962569,
+        0.00001194643718657,
+        0.000012162484537342,
+        0.000012380467992741,
+        0.000012154413203182,
+        0.000012263472589022,
+        0.000012285273720173,
+        0.00001230709421237,
+        0.000012089134234729,
+        0.000011617401213027,
+        0.000011543377729424,
+        0.000010903102693033,
+        0.000010944235986614,
+        0.000010765184481853,
+        0.000010847007035277,
+        0.000011682270290235,
+        0.000012111518545476,
+        0.000012111518545476
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xa4200cb5f146621379a805476cb8f7d46380dd16",
+      "name": "Arc OS",
+      "symbol": "OS",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreihk3kowo5dyg3aogig3ycegtjgf2tslg5vvbpltgfdeovgehf3eeu",
+      "description": "The Economic OS for the internet",
+      "creator": "0xc7c651c1F1846c62A008514964b4FfC205194f1B",
+      "launchedAt": "2026-09-16T04:45:10.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 9367.598599891,
+      "peakMarketCap": 16116.429686649999,
+      "crossedFloorAt": null,
+      "price": 0.000009367598599891,
+      "change24h": 277.61245734853026,
+      "volume24h": 15014.629285,
+      "liquidityUsd": 2339.900563,
+      "holders": 39,
+      "trades": 203,
+      "lastTradeAt": "2026-09-16T04:47:40.000Z",
+      "milestoneProgress": 16.2,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 10,
+        "sell": 10
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000008401658091168,
+        0.000008269494878566,
+        0.000008152022835763,
+        0.000007906148233124,
+        0.000007913031728512,
+        0.000008266994867016,
+        0.000008628702424029,
+        0.000008665299122748,
+        0.000008701973265652,
+        0.000008675623184642,
+        0.000008769104007227,
+        0.000008787689851855,
+        0.000009160494434127,
+        0.000009541043434906,
+        0.000010325374691989,
+        0.000010335906206639,
+        0.000010404726820147,
+        0.000011223103240603,
+        0.000011023256927989,
+        0.00001114756658483,
+        0.000011358416507465,
+        0.000009991233315236,
+        0.000009755684078954,
+        0.000009367598599891,
+        0.000009367598599891
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x1602579f404dd8b20014c8d225d627bd81663b5d",
+      "name": "ALL THE STABLECOINS",
+      "symbol": "ATLAS",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreihwtvp75ica6sxabgzgiozoiqhdgu2wb5ngookujjhabd6n6ajp5u",
+      "description": "",
+      "creator": "0xAC3D70CC6DC9F4f0c59CbAa5fa28D828341481B3",
+      "launchedAt": "2026-09-16T04:31:51.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 7047.056734699,
+      "peakMarketCap": 10802.177849201,
+      "crossedFloorAt": null,
+      "price": 0.000007047056734699,
+      "change24h": 184.07028570749853,
+      "volume24h": 13281.769814,
+      "liquidityUsd": 1700.397427,
+      "holders": 34,
+      "trades": 156,
+      "lastTradeAt": "2026-09-16T04:47:55.000Z",
+      "milestoneProgress": 10.7,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 100
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.0000106879683059,
+        0.000010667311321772,
+        0.000010599661757309,
+        0.00001047912822341,
+        0.000010246670347962,
+        0.000009996452597379,
+        0.000009760419923591,
+        0.000009542319899326,
+        0.000009376432760752,
+        0.000009228151767507,
+        0.000009077085412525,
+        0.000008919767314819,
+        0.000009110725717183,
+        0.000008676760707355,
+        0.000008246552716464,
+        0.000007855896973682,
+        0.000007521702987444,
+        0.000007377197942695,
+        0.000007329553192103,
+        0.000007329586951117,
+        0.000007324684486382,
+        0.000007301482751479,
+        0.00000706849452231,
+        0.000007047056734699,
+        0.000007047056734699
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x1ddafe8fb49c5071b2cdd78eea6e10a4a5de11b5",
+      "name": "Stablecoin sandwich",
+      "symbol": "ASANDWICH",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreicmwt7zz4s5koqlbyjra6lvnfrawpd6kabmrlvjbbujhhh5s2wn6a",
+      "description": "ASANDWICH",
+      "creator": "0xAC3D70CC6DC9F4f0c59CbAa5fa28D828341481B3",
+      "launchedAt": "2026-09-16T04:36:28.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 6601.618181056,
+      "peakMarketCap": 10178.267091633,
+      "crossedFloorAt": null,
+      "price": 0.000006601618181056,
+      "change24h": 166.1144408828851,
+      "volume24h": 10714.337527,
+      "liquidityUsd": 1566.097312,
+      "holders": 32,
+      "trades": 127,
+      "lastTradeAt": "2026-09-16T04:46:42.000Z",
+      "milestoneProgress": 9.7,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 100
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000008528611058253,
+        0.000008619716384421,
+        0.000008988977950664,
+        0.00000880756381117,
+        0.000007937169798134,
+        0.00000791986904044,
+        0.00000757866136731,
+        0.00000723773497226,
+        0.000006942668188388,
+        0.00000669003123771,
+        0.000006603212982062,
+        0.000006560944352833,
+        0.000006883597674687,
+        0.000006965471070543,
+        0.000007213995415049,
+        0.000007382098442171,
+        0.000007129900377695,
+        0.000006719150415062,
+        0.000006735849799898,
+        0.000006801096899475,
+        0.000006692944209139,
+        0.000006589386577304,
+        0.000007248894130037,
+        0.000006601618181056,
+        0.000006601618181056
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0xb0c71188acdd64b692483a06d058ca9733f7a6f9",
+      "name": "5042002",
+      "symbol": "5042002",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafkreid2mynmee22wvmzq7g23vqfdduek77s4jsdwjk4vxp4a7raijd7p4",
+      "description": "链 ID：5042002",
+      "creator": "0xCadE3c5BBE317D342507be058B3af5190CCCC821",
+      "launchedAt": "2026-09-16T04:30:15.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 3957.3935590240003,
+      "peakMarketCap": 4985.563860114001,
+      "crossedFloorAt": null,
+      "price": 0.000003957393559024,
+      "change24h": 59.5244598264156,
+      "volume24h": 2809.209283,
+      "liquidityUsd": 652.50993,
+      "holders": 10,
+      "trades": 29,
+      "lastTradeAt": "2026-09-16T04:38:55.000Z",
+      "milestoneProgress": 3.5,
+      "taxSplit": {
+        "creator": 0,
+        "burn": 0,
+        "dividends": 100,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000003053153060198,
+        0.000003388058767922,
+        0.000003621009762872,
+        0.000003740389417288,
+        0.00000386170517633,
+        0.000003985512055303,
+        0.000004110708673825,
+        0.00000436691022475,
+        0.000004630856194182,
+        0.000004902546582123,
+        0.000004985563860114,
+        0.000004696796979129,
+        0.000004416914245059,
+        0.000004110559554081,
+        0.00000398344724143,
+        0.000004235712214434,
+        0.000004487887471725,
+        0.000004515509912018,
+        0.000004365381092386,
+        0.000004470406747822,
+        0.000004471722532674,
+        0.000004473038511137,
+        0.000004446343807884,
+        0.000003957393559024,
+        0.000003957393559024
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    },
+    {
+      "address": "0x225826ad219868ecb1aa1862fbcf3b6a52276fd8",
+      "name": "Stable Coastco Hotdog",
+      "symbol": "STABLEDOG",
+      "quoteAsset": "0x3600000000000000000000000000000000000000",
+      "quoteSymbol": "USDC",
+      "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/bafybeibmoxykdepiolhzag6v7n66ie2xyp52paplqnjnf4jwsstoiiiufq",
+      "description": "",
+      "creator": "0x347ffC6DB9aCc54ac2019795173B9599E8B82BD9",
+      "launchedAt": "2026-09-16T04:44:53.000Z",
+      "status": "live",
+      "graduatedAt": null,
+      "marketCap": 3605.226001986,
+      "peakMarketCap": 3739.593692244,
+      "crossedFloorAt": null,
+      "price": 0.000003605226001986,
+      "change24h": 45.3284142557722,
+      "volume24h": 1141.697059,
+      "liquidityUsd": 509.848355,
+      "holders": 13,
+      "trades": 26,
+      "lastTradeAt": "2026-09-16T04:47:25.000Z",
+      "milestoneProgress": 2.6,
+      "taxSplit": {
+        "creator": 100,
+        "burn": 0,
+        "dividends": 0,
+        "liquidity": 0
+      },
+      "tax": {
+        "buy": 1,
+        "sell": 1
+      },
+      "dividendsPaid": 0,
+      "sparkline": [
+        0.000002942007300907,
+        0.000003159346771311,
+        0.000003384430660223,
+        0.000003617258967643,
+        0.00000361964668948,
+        0.000003622035199114,
+        0.000003040027583428,
+        0.000003138459105061,
+        0.000003238458871442,
+        0.00000334002688257,
+        0.000003443163138447,
+        0.000003454719527664,
+        0.000003501138694998,
+        0.000003547867639071,
+        0.000003704271020486,
+        0.000003728262790422,
+        0.000003715565433386,
+        0.000003727569882292,
+        0.000003739593692244,
+        0.00000372777063529,
+        0.000003716041334699,
+        0.000003692640096436,
+        0.000003643364612665,
+        0.000003605226001986,
+        0.000003605226001986
+      ],
+      "decimals": 18,
+      "portal": "0xb021be536808f551b31789422fd28a6c9c6e97da"
+    }
+  ],
+  "skipped": [
+    {
+      "address": "0xb67f50fde86e09b5da963c4251cbd4788b151ed5",
+      "symbol": "USDC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x67b7fb9c33a8e67d5b5c1dbc028f5277c77b792b",
+      "symbol": "ARCHITECTS",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xd6509e6b2c2c3494bec027d81952e5079112adc6",
+      "symbol": "LAZY",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x7e573c3cdfb144d12abbc669f84c4bee045ac8e3",
+      "symbol": "ARC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x8d03c69c3e055c81d67f3430b3a4f7f16bf10426",
+      "symbol": "AI",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xc4990c021870093094d8b2baed027245b26c8368",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x50481d0cae825363d982f05348d1e01d3a0d731e",
+      "symbol": "STEVE",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0x4396b044a3e73c327df2d3ebd7a5910a7d7b75f6",
+      "symbol": "TENDREN",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x7900cac01db6a328e2a236e6479caed5c249deb0",
+      "symbol": "ARC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x5597c9f604ff53a0ec51cb057e9aef9b9eabaa5f",
+      "symbol": "ARGUSTRONG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa56e9de98a9748757e671bd49c01197540b6d586",
+      "symbol": "豆",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0x5fb9db883c8896fb05fa54d9fc97eb9ad21f4c53",
+      "symbol": "ARCARG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa57f31f4c42207f212914891f40d374a63888cba",
+      "symbol": "BEANCAT",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0x23755a74c27fafe6e2dbbc3e5ab0ab97beebc074",
+      "symbol": "ARCADIA",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x1879ab9d4c4f451c31d9f1f9dfdba052a675369d",
+      "symbol": "ARC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x9ba1c12f15c101abee17d6735895514f748db3a7",
+      "symbol": "ARCH",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0xc02c7e3bcac17603dbd65c58d561cdd99a5e1538",
+      "symbol": "WHAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc225b533ea80e9d31d2011e6ec5e3007fd84de05",
+      "symbol": "FEG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4e5de473cc2a189ee53ec8108558fcb4aa86d463",
+      "symbol": "PURGUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf2c4695c947e404f4ccc6fceb888b7826d7e17f6",
+      "symbol": "CHESTER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe6602d40e86f3dd9c32d3865b2f9dc71875cef91",
+      "symbol": "PAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3b5114813b9e386d2105597c0995f1b891e6ea78",
+      "symbol": "ARGUSPEPE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x272bf3aeb099004172679c8bf48bc89185c76521",
+      "symbol": "BULL",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0x3891748b3a51cd8810b4f4a6da343e0ced24e471",
+      "symbol": "LONGCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x70771d373c38ff5433801f63192e844dc847a65d",
+      "symbol": "PAD",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xa7b2f4c665e3bdda8ec8bb487242afd0c9e36ce3",
+      "symbol": "ARGUSSY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5d0db7e16f2bff88759af39df3eaecde790ba644",
+      "symbol": "ARGUSCAT",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xdc7dc189b6f6091b21d1c9f87f27db26080ed843",
+      "symbol": "EYE",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0x7a2a37561678e118ac8497505891d3a526515a15",
+      "symbol": "ARGUSCHAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb77ceca0708535f762af032fba6ffb2e26fff565",
+      "symbol": "PARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd67d3d504c646fc75053dba37ceb86ac26eaba9d",
+      "symbol": "ARCHSTONKS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6bd94dff9efa7b4fd87ce79339f5e0619d83eb86",
+      "symbol": "ARC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xf889ac196a4372bd000827eaa3463c254d1bfbf8",
+      "symbol": "ARCADIA",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x289cd1d8401613459f55bc24e36aa6c723605001",
+      "symbol": "CRA",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0x4a8e09c449a507d0307328952adc07ad1a57042f",
+      "symbol": "ARGES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2f4741053d78f953a74fecc0b3e6cd047aedd4ff",
+      "symbol": "POOLS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x08b4d64686591243c1c7287a4a4d72d774fec89a",
+      "symbol": "ARCADIA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc77f912c4758071cd1f80ab37c61ee2c0f8ff103",
+      "symbol": "POOLS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x993cfd63d2ca506c0567e704ef23a86ddd6560fa",
+      "symbol": "ARCANINE",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0xdb3e2dcd4b273790dfe75672899421074e610b2d",
+      "symbol": "SUGRA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbcdde3e0a22e378367832874ac0edf00348a50b4",
+      "symbol": "GARGUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfd74c166f057dd79eaa8848f4512a5fe6eb4670e",
+      "symbol": "COCOA",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0x5ed30cc5406ff9950716ac35d46055278172127d",
+      "symbol": "ARGUSCD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5afcaf084bc1258c710bda47bcb5799c36a1e14e",
+      "symbol": "BANCOR",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0xf5ed0e420804739abf1e6e15246bde40ac0ed903",
+      "symbol": "BUILDERS",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xede90fe3113aaa5bdbdae6e6c1853dc49c62aa95",
+      "symbol": "SUGRA",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xc5e7136bed753b40dfdce2535877a139d6e6d699",
+      "symbol": "BLUEWHALE",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0x041d3031b8fd0f53d8cd6e085c15a75bbd5728eb",
+      "symbol": "FYN",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x259d22aac450789a71f6ca7f3e07501c187f9ace",
+      "symbol": "1USDC",
+      "reason": "Previously excluded or private test"
+    },
+    {
+      "address": "0xb7bc0059b78160270050e2e21ce9262e0484476b",
+      "symbol": "POTATO",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0xdf694d83a30ec8c12c74abd1fab7f50d7e5f007e",
+      "symbol": "ARC",
+      "reason": "Existing duplicate lacks fresh comparable metrics"
+    },
+    {
+      "address": "0xb254250d64ded1093e041340c82ba8443ce50f26",
+      "symbol": "COOL",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0xa7bf0e78fc353dbc34319cc3604258e18f45d05b",
+      "symbol": "CRCL",
+      "reason": "Lower-cap duplicate in current feed"
+    },
+    {
+      "address": "0x6dd14771564029f8829eff73082d38c90000f224",
+      "symbol": "CHELSEA",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0x67806d65af3f8dc2060a05776d619c3c38e90527",
+      "symbol": "BUILDERS",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0xa1d3432d1b763f1b495447b493f07f33406d14ba",
+      "symbol": "ARCAT",
+      "reason": "Existing qualified duplicate has higher market cap"
+    },
+    {
+      "address": "0xb8032c0040e7c841ef4949461fc3b8d591acfd38",
+      "symbol": "ARCTARDIO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4f89da7236bd66949560f94be6b21c8cf3c84e50",
+      "symbol": "WIF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6943b17e6a3c39a2674d89ebe9ece8426c4bef8d",
+      "symbol": "ARCGASM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x188f55c68b3f0edb8bdcdda56cc424aed840f5e3",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x2fbc32cea7b1be602f72e012fdf91e0c13ef0c5b",
+      "symbol": "BITCOIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3fc79ac87010b427dc22cec9149f089b9337fa7d",
+      "symbol": "AIRPORTCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x791a0fb9505c73f4a2e7b6ae5c0bf9b721e7e6ed",
+      "symbol": "JEEPREMY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfdecf8ce1d4eac259144b72b553cb463b677983e",
+      "symbol": "BULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf048bf88b5a50c5c7eba06551ac69f0aae9bf28d",
+      "symbol": "BLUE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x436509b0c45f12975198b716cc32f5b1b5dd467a",
+      "symbol": "ODDY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe3b7267ec3ff25ce03407170f45cb5911c7c7613",
+      "symbol": "ARSE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x22121d18c9a8c0b149cade8ce29c09caba2988fa",
+      "symbol": "DOOMERS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6aaa9cacd57c547bbb2cbae4aff893a9c57edc7a",
+      "symbol": "PURR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x914852ffe061bb4ef69f50c2741a135f9083e374",
+      "symbol": "ROCK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x59315c0a0a33cda37abc2c056d96da8b02685193",
+      "symbol": "TRIPLET",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbe31c9f98b5ed732e2b262fa70042d1697590225",
+      "symbol": "FIAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8698418c6b9d3f966e36cf8aec7cff0efaea48f2",
+      "symbol": "POTATO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdf83500c026ee282c99833456501468ba89103e6",
+      "symbol": "INVEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xace5e0ba3177dabce8e63bfe2b21b55e32a4e24f",
+      "symbol": "FARCOIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdcf43ac8862b84b72897548bd2b12595a6a63ac9",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x8c19c88a259bff5f4ba02e589a06dc1c7f02aea6",
+      "symbol": "AP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x87570d23f2b17d3259622487bb5ccb033ee764e3",
+      "symbol": "ARCADIA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9122b65029a26e1a0c7bfc84d29cc867b5b68fcb",
+      "symbol": "DEPEG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x06309af09a93c2271745ceadc96ede39ec5b8f0e",
+      "symbol": "ARCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc497e8c7b2d11d4df8d8097d4834cef3031cb00a",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0xfcbc5a8938472dcc0e85e949e4ee49550b66a084",
+      "symbol": "BITCOIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcd24ef5d9d2d26ed4ac12820e4bb4f076079f122",
+      "symbol": "ARGUSAI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x76eb60aaceffc8f0bdf64591ab59d1c51bf9a2dc",
+      "symbol": "MINARA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc1f5727fd87f788363dac185ac8dbe5cd66b0305",
+      "symbol": "UNEMPLOYEE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd1f0d077da1dac2d2c87481a3614e0429fb1c1eb",
+      "symbol": "MINARA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb1543a28129f21837df0f8ed8c8fa02bf154d078",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x11e4f09c39ecf7e74d1f4ff5aac247dcdd4d9cc0",
+      "symbol": "NULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc224e990be59435f4fea5826397e8460a19af94a",
+      "symbol": "COOL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1a51fea382a0fc7ed370d0252f3cb758a6ae1cc1",
+      "symbol": "TEARS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x90e4c4ac6203cad836697c81042e44d9c60f1822",
+      "symbol": "VILN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa251f4e6d358dadb45420cb6ff10c3a4f5ef1fbf",
+      "symbol": "CYC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcca25747f6fe133271157a853e42183f4052d31d",
+      "symbol": "FORWARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x069ad89a375a3cc3c2de785de4dc76e6e130c7b8",
+      "symbol": "3Y3",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdb11140e50bc3944e80b8bf9ee1233d79e364ad4",
+      "symbol": "SHIRT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8fcbbe8762918372c7dd9694af4ecc2d3f5171e5",
+      "symbol": "BALLIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb9e00020521a894d62d5761f08c70abc693064b4",
+      "symbol": "MOSW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6e39b67f7662c60ca2cce5f00cd56deda39793ae",
+      "symbol": "USDCOOL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3a7b143aef8de23c46a4479002893d8356d5a62d",
+      "symbol": "CHELSEAL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5d324efe297d4bdb4096b41bd63a347727390ba3",
+      "symbol": "SHUSD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfb5bf2170232a9991abe39c6a5ea9e6cfca351a7",
+      "symbol": "ARCANA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x05df1973c6732732aac5559dcb58b952209ae311",
+      "symbol": "XPP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5290009d18e8d3924a29a7af408079f8e33e1532",
+      "symbol": "FIX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc182c8a5a2864bff54b097004d8573d2f8772425",
+      "symbol": "XPAY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x05e20b0c9f053b52b0d7cb6fa01a58dbf526ea85",
+      "symbol": "ASH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2e1955463ed0e4a770803bb2af6af6edce5b3283",
+      "symbol": "CRCLJERK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x17da99709dfc268fb47b1c59fda4983a2c8015d0",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0xc04e7e2188d426af4d5b47c4e41aaba0e0427a54",
+      "symbol": "ANALONG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x97638c1fee13838338f2187ac1e72b656056cdad",
+      "symbol": "ANGUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1d2cf3587d30e5cc8758c8e81438c47b11ae1712",
+      "symbol": "BULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x55c141e5aa8e4e5d353d7a9e2cccc8b3526df5a9",
+      "symbol": "CA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7cc94a3620d7cde3ce830cc3f7d7e30ca7897c26",
+      "symbol": "ARCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa51574d5b19076d4d1a008e55e6e2c5474e8b4a8",
+      "symbol": "GIGACHAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0e08e1cd604084e837df555231177183865f7ee9",
+      "symbol": "SHERBLOCK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x97cb16dc443347fae8dff0ed90c5f24d6d2beb66",
+      "symbol": "BOZO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf1f992d934037c7d8fc73618214a0f50c9eb9ba9",
+      "symbol": "SNOO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xca0fdac4ecbb0e908355e249889bec9d55448306",
+      "symbol": "MINARA.AI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8cc6968ea558b42e0c02b10100dd08255703c286",
+      "symbol": "PLOTHUNT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x456d4e0bea6634d59448f01cc80b90beccb4c902",
+      "symbol": "ONE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbc37ff961ea17fa13968ad3e4d4d7082e56eb74d",
+      "symbol": "USDC",
+      "reason": "USDC ticker reserved for chain currency"
+    },
+    {
+      "address": "0x17a07fb601951cc73f8bee274a0ded7f88fed0d2",
+      "symbol": "SATS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2b71a1bcd952b493f1ecfe337ed471fafeb85fc9",
+      "symbol": "CHAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5fa35c07ed8453529b4d8f242d69f6717bc088f5",
+      "symbol": "TOKABONER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc133980758bbf6b90c74adfea3d42738efc6e9fe",
+      "symbol": "NARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4222c7671ca03cd84c8395af72ff680980867a75",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x986bed267e15e2928627b5ae37b749bc9e8975ec",
+      "symbol": "CF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xed01e84c8007a02b51c82a549037e574e3987208",
+      "symbol": "PIZZA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcf15b7766ed7605def1ee64a2ed6c4c05f8f1dd3",
+      "symbol": "ARCT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb35f6ac5251b11f889df47505fcd1082521c3edf",
+      "symbol": "RICH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x91ccbc1d7866828b31cec167ecde650413dd9f5b",
+      "symbol": "ARCIO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xebbf508bf4fa642c307fa7e77f0d924e840a168a",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x72c77a1a61f7968b2ceaf243058c726ae2684718",
+      "symbol": "BABYDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x572bca3a2960b742499ab60f98d25a13c253a724",
+      "symbol": "ARKM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1858e62c94166594e72c84ca253f8668c55c1f65",
+      "symbol": "ARCEUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa21ae105c088c84c87d0881ec7567c94f8bac730",
+      "symbol": "SCOUNDREL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x35e04183f245d1cde009e4b0b47549843e11ccef",
+      "symbol": "ARCHER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x306e1abd7bdf6cab64c147786e89016b143e50d1",
+      "symbol": "SUGAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x18b1c41bc17f3c0daf324f1b865739cb9a90e739",
+      "symbol": "ROCK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x79bbef334165fc2d4e5d37e0f0b3db2defeefc89",
+      "symbol": "ARCBULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbb4405d1775d81fcd10e81a9f9fc96570c21fab9",
+      "symbol": "ASSCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf984db1984da16d9521b7db48785759219f7f232",
+      "symbol": "CRA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x838a93391eda5b6480302cc56d413e4f57fdab04",
+      "symbol": "MARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7d5704a2058736dc3c8371e35ac89ab1de7e5d1a",
+      "symbol": "CASHCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf0a0526bab5eb619af5d07498b5fb6a2c6c49229",
+      "symbol": "LENNY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc32c6ae487620aa08b5347e14585da906cc353b8",
+      "symbol": "PHERA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8420e179a765b9927ad4405feed907bb78ade366",
+      "symbol": "ANSEM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa12fbe6f93cd280c098fc8e109771c4c6a1bd333",
+      "symbol": "CLARUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb8e697a9136a67cfda104ec74feac39a9afbd588",
+      "symbol": "BOY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb2baeb758b8e79bda5da1db9f0835b59b415bf2c",
+      "symbol": "NARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfd1746e2ca17b6a767b2437be3c1f215bce14f4d",
+      "symbol": "BULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x039655c6f4a970f2ab28d23e6da49257090332de",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x10ceeb4e119a443ca81d1376fbd4098dd88b38a9",
+      "symbol": "BULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf7005b1a95fe61bb32e9f8391828c9ebe836c2ee",
+      "symbol": "BOZO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xacec84eee71049b8f059d7a85a0ecfb94c714614",
+      "symbol": "SHARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x23505f641d2225016a82026ae46316f984fd2c09",
+      "symbol": "BRAINARM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x62a5986018507711f5f52809859f5811548c8944",
+      "symbol": "ARCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6df8df38361f9720ea0999242009996e78259e40",
+      "symbol": "SUGAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3c31ead1f9d5282dcf85c357455f8b97f19582e3",
+      "symbol": "ARCHITECT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xeabe36bf7c972ad581a7c76d635056b318bcbd89",
+      "symbol": "JEEPREMY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x612a40b2b6895451a16bd1e90de1f238f8455d3d",
+      "symbol": "MM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1a313fcc419ac13070ec9b9d343859036907d039",
+      "symbol": "CHRISRIES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x32d29fae229cf84f38252e024f72bf613ebfb61c",
+      "symbol": "HAWC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x219aff8a53843c1a23bed33d2dfc1d2cf6b1a39b",
+      "symbol": "GOTEM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x31771a103c3ff367065a2bd41d06c38825b3b8b9",
+      "symbol": "KID",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x07299b099851389f433ad4a265702fd0def4cfd3",
+      "symbol": "ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x248145b2dee381640fc4ba83eb9c688d1feb4087",
+      "symbol": "GARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x606bffd19be9b03a3e5709d90728920f3e542375",
+      "symbol": "ARCHOUSE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0dcede2747062e162c0f6abf720844830c8b9586",
+      "symbol": "ARGUSX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc5caad9c7b2d87bcb2b52bf7200c8a841ba35cfd",
+      "symbol": "ARC INDEX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xae3d3bcd84ccc4d15001f578fefadd676fc1a36b",
+      "symbol": "UNIPCS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xce7b7b08bdaaf31b7c2529f5efda4e0c1b09eb4b",
+      "symbol": "ARDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x31b0c7e78c698cea488082220297373c50a082ef",
+      "symbol": "BREEDING",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcc1ce496e3f91a8c6af2197f5e43ca768adab84b",
+      "symbol": "CHOCO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3b1bbf67b89415c84c987c4f7249cfc10611f08f",
+      "symbol": "CHOCO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc8f5bfba984c1ed3e460bd07a1fd8753b81f1882",
+      "symbol": "CHOCO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd53f756f3a4e0344b806d87ffcca755a6f539e81",
+      "symbol": "CHOCO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3f52a4040da414c99c867c4ac147ec4c370ba83f",
+      "symbol": "TH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4f69498f5990bca313d3bee55c2ede41736e5d71",
+      "symbol": "MACHINE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x555951170a02a39d72deb23bdcb07e7c6c1ea3e3",
+      "symbol": "USDUC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x13238d486dfe26d81e37059b25ea239d51509d91",
+      "symbol": "EARTH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfe9a6f32a907449190aead31e39d1777388e6c17",
+      "symbol": "APEPE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1dcbc06f6d35030dcecc09102b18562214991a5e",
+      "symbol": "ARCINU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2c8f52b65ffa2c104e1c32dc2d8a6d16ca464363",
+      "symbol": "ARCINU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x75be76e94774189e0f70665f2b31d3fc3da4d196",
+      "symbol": "ARCHORSE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xced01b70caf047a9b2057758e2f5d67b6384cf98",
+      "symbol": "TICK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xba0703b91e551b70382d4e4a2a4d285e2d87de62",
+      "symbol": "行李猫",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd6ca35c7f2310bc2a6c6e022f0973d566b16851e",
+      "symbol": "行李猫",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcb9d8e29270ace85c6b1dfc8b12d6c95708ba4d6",
+      "symbol": "行李猫",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x969db67e4873fa5e3a33b2ad668d48a46b786e7e",
+      "symbol": "AIRPORTCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x324302604f0b1d7e05b8363ec9f2ae6c752a257c",
+      "symbol": "AIRPORTCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe8c6663f57f0af7b7c2aa7e321f585fa96e5b96c",
+      "symbol": "BCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x90e6f2644cbc080cdf1a1118f292c967dd90d3db",
+      "symbol": "AIRPORTCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x85482f7204106c6127e89882f20c5359dd94260e",
+      "symbol": "旅行猫",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7b955e560bc876299f2347d4bde1329bd60483d8",
+      "symbol": "BCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x241cc4695406029eca9dc7c1be9f7f60e7b73ae8",
+      "symbol": "CATBOX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2263953e581514face9db3c3bf6f12fa69e94542",
+      "symbol": "旅行猫",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xceffdc5506bd303d269b22283d89d563187de67c",
+      "symbol": "AIRPORTCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5cd6150315fd0dbd9e18b0966d13fe54205c7234",
+      "symbol": "CATBOX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfc7cafaa7d38ff32ab727fa203ce85176f685e29",
+      "symbol": "旅行猫",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xef3d391c438ef9beecfd516e7cc53aae092e2f6e",
+      "symbol": "BCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe49a0467dad075d6ee31ae0744fa27eb3c710572",
+      "symbol": "CATBOX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc2d19678b7e120afad2fcdefdb5f45a213fa97dd",
+      "symbol": "旅行猫",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x49c12c5c7cfa0cc73ca643e364a67a5bbe2e3390",
+      "symbol": "BCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5d29172b95ab95748311b02ad5f4e9f6216f9514",
+      "symbol": "CATBOX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdc2d3f11c9b291ea94835ab7a96e577b27635c3e",
+      "symbol": "PISSSINK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x57e6b4ebcb7756df55c3567cadce0d0a1a3d8f85",
+      "symbol": "PISSSINK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdae1ca3af071770ed88672817b9f081452a35484",
+      "symbol": "POOL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0f696ad9beb85b33d83b73abdd47ee775529683e",
+      "symbol": "PISSSINK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf2d36d2a7a9477d6b48d8d16734249dfca8f558b",
+      "symbol": "PISSSINK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x79d07904565be12671dc8fffe10eac55afa9051b",
+      "symbol": "KU CAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf755e61220d7e3bd5460f6f3b0ee10a6606c46e1",
+      "symbol": "LARP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf62c8ec59238df9298291511e303fc28fb4b0d9a",
+      "symbol": "MURAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9b7fbed9f6e1cfe44a7f17f84408807ec3298683",
+      "symbol": "ARC PEPE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3da6e7f746db919979dfc245c499648058b82b86",
+      "symbol": "BANKR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd94f6b0bdbad357adb34bb02ef80a733bb5ee45d",
+      "symbol": "WMEOWT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb0ea3487be783fbb2120faaf6908637d923ebeda",
+      "symbol": "LDAWG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x691122e20e7aacfceee356f38296d8d6f4ca585e",
+      "symbol": "BTC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5baa7a629aee326559a7436ae6f25afe732b0fae",
+      "symbol": "BTC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfb7468c9e512818dc4e07158c4e523aea21b7c7a",
+      "symbol": "BTC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xab15dc0dad482435cb95dcb4e2bb7b973b314b29",
+      "symbol": "SNOOPDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0db4c385b30492a2c534844a7223a8d3c61d91f2",
+      "symbol": "BTC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd79952f724d903c7772d717b3c7128d24bed270a",
+      "symbol": "SNOOPDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6360af216be147ee6c4a866b27a9d96ecb671ff3",
+      "symbol": "BALLIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xddd791c7404e4dd1750be013210cf5c63ac3feea",
+      "symbol": "ARC DOLLAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x42da080dec8634f6693907c2698289ba829095e2",
+      "symbol": "OUROBOROS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9def7ec75423b788fe346211b2d50b0b24e5c1c5",
+      "symbol": "AUGUST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xad4a94392bc0b9c3c94e0d2618789fbcd5f2bca9",
+      "symbol": "AUGUST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb45a8be49ff6d51dd98e3f21b38e0f5f8156b42d",
+      "symbol": "NARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa075e5ece6623c1680c81b73b03d4830bad193f3",
+      "symbol": "$SNAIL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x27dc468f1f50144179b599f7e7218e1aafdcdca9",
+      "symbol": "BOBO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbc7edf8695cf9e11d362dae2cde2d1658fa269c7",
+      "symbol": "AIUSD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x34c06fe4da303b7f7480f0b395428c8954509c21",
+      "symbol": "OUST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfe8856f10b5877b1884b0a8f5860db71fe4190d7",
+      "symbol": "FROGLABS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfaea971782dc729c2ec79936ff361e75bf85ea77",
+      "symbol": "CAGUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4a83e8b9e2f160b875a60dd717b36670c5283ec9",
+      "symbol": "FROG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x845019163a52b631879392a124642ffb92d02244",
+      "symbol": "HOLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8096e8f5b99352c2a94fd17cb4c934ba6c8f364d",
+      "symbol": "MOONARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x44f0ef304c25937fed64e8a9438ba203217342ea",
+      "symbol": "ARGUSDOG",
+      "reason": "Below activity/liquidity screen"
+    }
+  ],
+  "duplicateComparisons": [
+    {
+      "symbol": "PEG",
+      "selected": "0xd626630dc244e50272017cc55a361d096c3a9062",
+      "previous": "0x2bfe315f219cc9fdc9ce0266e6c115927f0e4c10",
+      "previousMetrics": {
+        "address": "0x2bfe315f219cc9fdc9ce0266e6c115927f0e4c10",
+        "symbol": "PEG",
+        "marketCap": 109213.82609720675,
+        "volume24h": 180973.37598800025,
+        "liquidityUsd": 32464.664924,
+        "trades": 1157,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "USDUC",
+      "selected": "0xe05ac58d429e3a8f9f272533c19fb7f75d1fdf63",
+      "previous": "0xe816fe58b7e64f2fcde14a74835b65247fc66f7e",
+      "previousMetrics": {
+        "address": "0xe816fe58b7e64f2fcde14a74835b65247fc66f7e",
+        "symbol": "USDUC",
+        "marketCap": 37439.30063003567,
+        "volume24h": 54169.91953100005,
+        "liquidityUsd": 16592.868986,
+        "trades": 258,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "AROS",
+      "selected": "0xcdf59e06dcbc3a6ae662f66b35aaebd8decccb2c",
+      "previous": "0x313c87e367791fe16ae97754554f4871bfe7fcb6",
+      "previousMetrics": {
+        "address": "0x313c87e367791fe16ae97754554f4871bfe7fcb6",
+        "symbol": "AROS",
+        "marketCap": 76490.7286448149,
+        "volume24h": 111767.35042699998,
+        "liquidityUsd": 25613.5244,
+        "trades": 769,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "AI",
+      "selected": "0xa39c8e2ceb2a0f9d6e9d059f5e470edfda691c15",
+      "previous": "0x8d03c69c3e055c81d67f3430b3a4f7f16bf10426",
+      "previousMetrics": {
+        "address": "0x8d03c69c3e055c81d67f3430b3a4f7f16bf10426",
+        "name": "Argus Inu",
+        "symbol": "AI",
+        "quoteAsset": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+        "quoteSymbol": "ARGUS",
+        "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/QmcPQz7a8SFby5jgUQdJ8g8N5EgvzzSAxzn96kwmiYCuTA",
+        "description": "Argus Inu 🐕👁️ — The all-seeing Shiba with purple eyes, cosmic vibes, and a mischievous soul.",
+        "creator": "0x9A34a99EeE39fd7FA3Afa30aA06b1D4514B3cDfD",
+        "launchedAt": "2026-09-14T08:15:47.000Z",
+        "status": "live",
+        "graduatedAt": null,
+        "marketCap": 181840.89357999718,
+        "peakMarketCap": 551601.4993874417,
+        "crossedFloorAt": "2026-09-14T08:16:22.000Z",
+        "price": 0.00018184089357999717,
+        "change24h": 371.6462538070088,
+        "volume24h": 671796.8171298554,
+        "liquidityUsd": 45168.23553382919,
+        "holders": 184,
+        "trades": 1247,
+        "lastTradeAt": "2026-09-16T04:44:47.000Z",
+        "milestoneProgress": 21.7,
+        "taxSplit": {
+          "creator": 75,
+          "burn": 0,
+          "dividends": 25,
+          "liquidity": 0
+        },
+        "tax": {
+          "buy": 1,
+          "sell": 1
+        },
+        "dividendsPaid": 0,
+        "sparkline": [
+          0.00003871299735992844,
+          0.00004315405512266898,
+          0.00004082333355023058,
+          0.00004063771581862123,
+          0.00004487409284396136,
+          0.00027726846946352757,
+          0.00036166058446806545,
+          0.00017994713149598252,
+          0.00019406317979574848,
+          0.00017137101839933555,
+          0.00017543175056232373,
+          0.00018184089357999717,
+          0.00018184089357999717
+        ],
+        "source": "Argus"
+      }
+    },
+    {
+      "symbol": "BIRDIE",
+      "selected": "0x56ec9a8a835e507d057b9c0b3b75f14b4424522b",
+      "previous": "0x8e604ae97dda3deb77d9856606a8dc3135998fc4",
+      "previousMetrics": {
+        "address": "0x8e604ae97dda3deb77d9856606a8dc3135998fc4",
+        "symbol": "BIRDIE",
+        "marketCap": 32666.886873062587,
+        "volume24h": 37097.32427400001,
+        "liquidityUsd": 15488.284328,
+        "trades": 445,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "CRCL",
+      "selected": "0x5c192bd145afb849621c5e0eee3f451d73ff7d16",
+      "previous": "0xd40ed72054bce37d2284bb315ffca122b690dc4b",
+      "previousMetrics": {
+        "address": "0xd40ed72054bce37d2284bb315ffca122b690dc4b",
+        "symbol": "CRCL",
+        "marketCap": 10872.154057577582,
+        "volume24h": 38214.50975299998,
+        "liquidityUsd": 6990.71697,
+        "trades": 233,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "SLJ",
+      "selected": "0xf69285fbfb809328eaa0de92024479258416864c",
+      "previous": "0x127f80844ff3d672410ce4b6f4f9ea1a8d6a7ae6",
+      "previousMetrics": {
+        "address": "0x127f80844ff3d672410ce4b6f4f9ea1a8d6a7ae6",
+        "symbol": "SLJ",
+        "marketCap": 60494.81993622312,
+        "volume24h": 95096.890808,
+        "liquidityUsd": 22210.754014,
+        "trades": 605,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "PEGCOIN",
+      "selected": "0xd3c7678eedf0512d3c9b2cdb62104cac497376af",
+      "previous": "0x33f245ca756c43d793a27e401ad44e56163cf844",
+      "previousMetrics": {
+        "address": "0x33f245ca756c43d793a27e401ad44e56163cf844",
+        "symbol": "PEGCOIN",
+        "marketCap": 7196.931081850813,
+        "volume24h": 4747.881117,
+        "liquidityUsd": 3311.262218,
+        "trades": 66,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "SASHIMI",
+      "selected": "0x49c298e55566c05fc93f857d59e60d7e3a5d1a50",
+      "previous": "0x4021807892cf9ac94b01f3a71176d4aaf5007cd8",
+      "previousMetrics": {
+        "address": "0x4021807892cf9ac94b01f3a71176d4aaf5007cd8",
+        "symbol": "SASHIMI",
+        "marketCap": 30922.31844196035,
+        "volume24h": 12211.216670999998,
+        "liquidityUsd": 14189.761278,
+        "trades": 112,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "CIRCLERS",
+      "selected": "0xc981320cc4c8159c1a22150243190ab31b3504aa",
+      "previous": "0x30aa5a06ca393ffffb7a5739935bcfbee7b31891",
+      "previousMetrics": {
+        "address": "0x30aa5a06ca393ffffb7a5739935bcfbee7b31891",
+        "symbol": "CIRCLERS",
+        "marketCap": 15984.442567266853,
+        "volume24h": 55579.90703100008,
+        "liquidityUsd": 8518.197756,
+        "trades": 617,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "5042",
+      "selected": "0xac97429fee14caf3055dec364c94a31d638bb5a8",
+      "previous": "0x19b94c2037b89a002ff4a445618d26b8ed9ffebc",
+      "previousMetrics": {
+        "address": "0x19b94c2037b89a002ff4a445618d26b8ed9ffebc",
+        "symbol": "5042",
+        "marketCap": 26195.381181248984,
+        "volume24h": 18519.826621,
+        "liquidityUsd": 11756.068004,
+        "trades": 236,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "1USDC",
+      "selected": "0x5cc5cd8d418cd20a642687d6262bf43a6a354379",
+      "previous": "0x3cf48ebdab8851c2fdd0d62e0585f857be45efbd",
+      "previousMetrics": {
+        "address": "0x3cf48ebdab8851c2fdd0d62e0585f857be45efbd",
+        "symbol": "1USDC",
+        "marketCap": 12226.40385031203,
+        "volume24h": 8992.397466999995,
+        "liquidityUsd": 6209.825882,
+        "trades": 150,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "DYSON",
+      "selected": "0xd90b803908e26f3a92c316b8e4dd3598351ace61",
+      "previous": "0xe28a59358702d03408d9f6917f7307da847f25f5",
+      "previousMetrics": {
+        "address": "0xe28a59358702d03408d9f6917f7307da847f25f5",
+        "symbol": "DYSON",
+        "marketCap": 12985.246808655433,
+        "volume24h": 15997.771150999997,
+        "liquidityUsd": 6225.214774,
+        "trades": 227,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    }
+  ],
+  "sources": [
+    "https://argus.world/api/board",
+    "https://www.arcexplorer.org/api/v1/dex/pools"
+  ],
+  "coverage": "120 highest-market-cap board slots and 288 newest board slots; live pagination overlapped, producing 308 unique tokens. 600 explorer pool rows used for duplicate comparisons. Not a complete crawl of all historical launches.",
+  "caveat": "Reported volume does not establish organic activity or guarantee token safety. Market caps are full-supply spot valuations. Existing holdings remain address-accessible when a ticker winner changes.",
+  "added": [
+    {
+      "chainId": 5042,
+      "address": "0xd626630dc244e50272017cc55a361d096c3a9062",
+      "symbol": "PEG",
+      "name": "peg",
+      "decimals": 18,
+      "marketCapUsd": 493392.409989601,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xeb5294495134c29d40b38a51986ab98144ab8a52",
+      "symbol": "ARGEN",
+      "name": "ARGUS EARN",
+      "decimals": 18,
+      "marketCapUsd": 449581.63812984654,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xe05ac58d429e3a8f9f272533c19fb7f75d1fdf63",
+      "symbol": "USDUC",
+      "name": "Unstable Coin",
+      "decimals": 18,
+      "marketCapUsd": 338931.918911486,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xcdf59e06dcbc3a6ae662f66b35aaebd8decccb2c",
+      "symbol": "AROS",
+      "name": "Aros",
+      "decimals": 18,
+      "marketCapUsd": 317406.860013542,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa39c8e2ceb2a0f9d6e9d059f5e470edfda691c15",
+      "symbol": "AI",
+      "name": "Arc Inu",
+      "decimals": 18,
+      "marketCapUsd": 244712.766238291,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x56ec9a8a835e507d057b9c0b3b75f14b4424522b",
+      "symbol": "BIRDIE",
+      "name": "BIRDIE",
+      "decimals": 18,
+      "marketCapUsd": 145801.711987931,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x5c192bd145afb849621c5e0eee3f451d73ff7d16",
+      "symbol": "CRCL",
+      "name": "just a circle",
+      "decimals": 18,
+      "marketCapUsd": 136752.22155281302,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xeaf3a25850b0c2e0f1c648459b60cba7bfa4ae70",
+      "symbol": "FYN",
+      "name": "FYN",
+      "decimals": 18,
+      "marketCapUsd": 129883.77170929199,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xfb05aa6eca43a170ec6737721d1acdd14daea2a8",
+      "symbol": "ARSE",
+      "name": "Arse",
+      "decimals": 18,
+      "marketCapUsd": 126117.67469669001,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x38dccd1fedd12f73737f6c1ee19b2d311e048909",
+      "symbol": "XNAN",
+      "name": "Nanite",
+      "decimals": 18,
+      "marketCapUsd": 115306.610907304,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xf69285fbfb809328eaa0de92024479258416864c",
+      "symbol": "SLJ",
+      "name": "Supreme Leader Jeremy",
+      "decimals": 18,
+      "marketCapUsd": 101888.69602017099,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xb979079eb9efae01aaeffeb010ab0bcffacc510c",
+      "symbol": "MISCHA",
+      "name": "MISCHA",
+      "decimals": 18,
+      "marketCapUsd": 84026.50803968399,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xdf37c130b39f8a44c16741e025bcc217d3c87919",
+      "symbol": "ARGUSIANS",
+      "name": "The Argusians",
+      "decimals": 18,
+      "marketCapUsd": 81761.001417227,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xe91fb303572651971f7cb1404e3af08bcbdd6b07",
+      "symbol": "ARGSTR",
+      "name": "Argus strategy",
+      "decimals": 18,
+      "marketCapUsd": 77744.06277426686,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xd3c7678eedf0512d3c9b2cdb62104cac497376af",
+      "symbol": "PEGCOIN",
+      "name": "Pegcoin",
+      "decimals": 18,
+      "marketCapUsd": 71383.635250693,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x9a5c92e4dc9e19ec1b1c24e9b5efa8575d32be31",
+      "symbol": "CIRCLE",
+      "name": "You looked, buy.",
+      "decimals": 18,
+      "marketCapUsd": 61893.93360173901,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x49c298e55566c05fc93f857d59e60d7e3a5d1a50",
+      "symbol": "SASHIMI",
+      "name": "Sashimi",
+      "decimals": 18,
+      "marketCapUsd": 61495.039715072,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x9ed6eec197acc84eb96aaa8059040b8cc38608ed",
+      "symbol": "VISTA",
+      "name": "Project Vista",
+      "decimals": 18,
+      "marketCapUsd": 60927.302458618,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa4af6e7aaa2807b53cbd084dfe77334117e9ef3c",
+      "symbol": "SIDEQUESTR",
+      "name": "SIDEQUESTOR",
+      "decimals": 18,
+      "marketCapUsd": 46600.674979624,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xc981320cc4c8159c1a22150243190ab31b3504aa",
+      "symbol": "CIRCLERS",
+      "name": "Circlers",
+      "decimals": 18,
+      "marketCapUsd": 46509.501798048,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x93b3a20ef10c54e133501d6e612fcbc0c2dce2cb",
+      "symbol": "BITS",
+      "name": "BITS",
+      "decimals": 18,
+      "marketCapUsd": 46003.454444181,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x700052862222115e5c81f7a3da7c47986b0b8422",
+      "symbol": "C-USD",
+      "name": "Sample Fiat Token",
+      "decimals": 18,
+      "marketCapUsd": 40849.131857673005,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x09aa05a68672a0c524fccd2a56fb95ab61e3aee2",
+      "symbol": "HEDGE",
+      "name": "HEDGE",
+      "decimals": 18,
+      "marketCapUsd": 38229.308379641,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xec79bb70ce2364a6b174e7b62d4fb54ffa668375",
+      "symbol": "MMM",
+      "name": "Machines Muxing Money",
+      "decimals": 18,
+      "marketCapUsd": 34440.773332296005,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x69d1352035a9814d2749d87974da8661d39138b6",
+      "symbol": "PINLINE",
+      "name": "Pinline Chameleon",
+      "decimals": 18,
+      "marketCapUsd": 33660.540888917,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xc281dff1a3ed6943123f53aeccdc571dab1ce099",
+      "symbol": "STABLE",
+      "name": "STABLE COIN",
+      "decimals": 18,
+      "marketCapUsd": 31430.969853223003,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xac97429fee14caf3055dec364c94a31d638bb5a8",
+      "symbol": "5042",
+      "name": "5042",
+      "decimals": 18,
+      "marketCapUsd": 30494.3934251,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x5cc5cd8d418cd20a642687d6262bf43a6a354379",
+      "symbol": "1USDC",
+      "name": "Just buy 1 usdc",
+      "decimals": 18,
+      "marketCapUsd": 29266.546366863,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x538eec8812529bc7d5bcf9634c83caf4e91a645c",
+      "symbol": "CINU",
+      "name": "Circle Inu",
+      "decimals": 18,
+      "marketCapUsd": 28897.764306275,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x60f4d66b464bfce01ffa6b8145a1116dc537de65",
+      "symbol": "RAMBO",
+      "name": "Rambo Cat",
+      "decimals": 18,
+      "marketCapUsd": 27538.668557711,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xea1ab5226753c68a3bd37c82c44affe9185e8ece",
+      "symbol": "ELSA",
+      "name": "Elsa",
+      "decimals": 18,
+      "marketCapUsd": 25908.649941675998,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xbcbb16ff4ea712a9c02ef598b915af86a3267a94",
+      "symbol": "CASHPEPE",
+      "name": "Cash Pepe",
+      "decimals": 18,
+      "marketCapUsd": 25773.102860306,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xdf30da54ec121b8a4f9afb1cca731315a3a8e302",
+      "symbol": "BANKLESS",
+      "name": "Bankless",
+      "decimals": 18,
+      "marketCapUsd": 24071.346746824,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa5314ff551fdf0985fed2e38ff9a9f6e4858b5ec",
+      "symbol": "STABULL",
+      "name": "the stable bull",
+      "decimals": 18,
+      "marketCapUsd": 21828.110879738,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x35586e545ead3b55b6aec86ddec42041b5d7c645",
+      "symbol": "IFM",
+      "name": "Internet Funny Money",
+      "decimals": 18,
+      "marketCapUsd": 20657.489362104,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa17e7fd6e176a09c0313a1a7e8ef629f9b949cc8",
+      "symbol": "JERK",
+      "name": "Circle Jerk",
+      "decimals": 18,
+      "marketCapUsd": 20617.042684966,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xd90b803908e26f3a92c316b8e4dd3598351ace61",
+      "symbol": "DYSON",
+      "name": "Dyson toothbrush",
+      "decimals": 18,
+      "marketCapUsd": 19684.711452508,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x1deb9741535067f20c36b75c987a0ec7de66f2c4",
+      "symbol": "ARCDOG",
+      "name": "Arcdog",
+      "decimals": 18,
+      "marketCapUsd": 19646.467329901,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x2d0edb99be0822f8e19acd0ce9a694639aa2a23e",
+      "symbol": "BESSENT",
+      "name": "USDC Bull",
+      "decimals": 18,
+      "marketCapUsd": 19367.664957616,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x6ea3649ea06068f074fa2807d41a0b3e1294cd16",
+      "symbol": "NINJACAT",
+      "name": "Welcome to the Internet",
+      "decimals": 18,
+      "marketCapUsd": 19327.98079302,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x68c8eeca577f3479c9ebf1a63aa76fb293916ac7",
+      "symbol": "ORO",
+      "name": "Ouroboros",
+      "decimals": 18,
+      "marketCapUsd": 17512.752520680002,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x67137d72cca5cf032be97029be482c02b48cda04",
+      "symbol": "CHAIREMY",
+      "name": "Jeremy A Chair",
+      "decimals": 18,
+      "marketCapUsd": 17392.511702537002,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x2bb16082b8394618db3d092967db135ba342e377",
+      "symbol": "THUG",
+      "name": "Thug Life Cult",
+      "decimals": 18,
+      "marketCapUsd": 16160.179524666002,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x35758140502ac53b630188614ad35c682c9813bf",
+      "symbol": "AFLY",
+      "name": "ARCFLY",
+      "decimals": 18,
+      "marketCapUsd": 15625.778531584,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa8944927956684f737ff13f3d1093d9f8f5056f5",
+      "symbol": "AMC",
+      "name": "Arc Meme Coin",
+      "decimals": 18,
+      "marketCapUsd": 15430.890770278,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x418c9defd8221fe922b5bf69d42cc0636e255a0c",
+      "symbol": "AMD",
+      "name": "ARC MEME DOG",
+      "decimals": 18,
+      "marketCapUsd": 15397.130969773998,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x7c512409288352d03bf5dcf9a3e6ea6334421610",
+      "symbol": "EOS",
+      "name": "Economic OS",
+      "decimals": 18,
+      "marketCapUsd": 15183.283372971,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x435895e6b1d9076720ed6acdf2a7c91d30529258",
+      "symbol": "STABLECOIN",
+      "name": "Stablecoin",
+      "decimals": 18,
+      "marketCapUsd": 14497.382576464,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x42da81fd2ccd8c3c0ce44d5f856f86491654f79c",
+      "symbol": "VIEWS",
+      "name": "All views are my own",
+      "decimals": 18,
+      "marketCapUsd": 14372.593464795002,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x341c1e304be69aeccb67ddd626a9b8372badf236",
+      "symbol": "WORKCHAIN",
+      "name": "WorkChain",
+      "decimals": 18,
+      "marketCapUsd": 12111.518545476,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa4200cb5f146621379a805476cb8f7d46380dd16",
+      "symbol": "OS",
+      "name": "Arc OS",
+      "decimals": 18,
+      "marketCapUsd": 9367.598599891,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x1602579f404dd8b20014c8d225d627bd81663b5d",
+      "symbol": "ATLAS",
+      "name": "ALL THE STABLECOINS",
+      "decimals": 18,
+      "marketCapUsd": 7047.056734699,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x1ddafe8fb49c5071b2cdd78eea6e10a4a5de11b5",
+      "symbol": "ASANDWICH",
+      "name": "Stablecoin sandwich",
+      "decimals": 18,
+      "marketCapUsd": 6601.618181056,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0xb0c71188acdd64b692483a06d058ca9733f7a6f9",
+      "symbol": "5042002",
+      "name": "5042002",
+      "decimals": 18,
+      "marketCapUsd": 3957.3935590240003,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    },
+    {
+      "chainId": 5042,
+      "address": "0x225826ad219868ecb1aa1862fbcf3b6a52276fd8",
+      "symbol": "STABLEDOG",
+      "name": "Stable Coastco Hotdog",
+      "decimals": 18,
+      "marketCapUsd": 3605.226001986,
+      "snapshotAt": "2026-09-16T04:49:32.559Z",
+      "argus": true
+    }
+  ],
+  "replaced": [
+    {
+      "symbol": "PEG",
+      "selected": "0xd626630dc244e50272017cc55a361d096c3a9062",
+      "previous": "0x2bfe315f219cc9fdc9ce0266e6c115927f0e4c10",
+      "previousMetrics": {
+        "address": "0x2bfe315f219cc9fdc9ce0266e6c115927f0e4c10",
+        "symbol": "PEG",
+        "marketCap": 109213.82609720675,
+        "volume24h": 180973.37598800025,
+        "liquidityUsd": 32464.664924,
+        "trades": 1157,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "USDUC",
+      "selected": "0xe05ac58d429e3a8f9f272533c19fb7f75d1fdf63",
+      "previous": "0xe816fe58b7e64f2fcde14a74835b65247fc66f7e",
+      "previousMetrics": {
+        "address": "0xe816fe58b7e64f2fcde14a74835b65247fc66f7e",
+        "symbol": "USDUC",
+        "marketCap": 37439.30063003567,
+        "volume24h": 54169.91953100005,
+        "liquidityUsd": 16592.868986,
+        "trades": 258,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "AROS",
+      "selected": "0xcdf59e06dcbc3a6ae662f66b35aaebd8decccb2c",
+      "previous": "0x313c87e367791fe16ae97754554f4871bfe7fcb6",
+      "previousMetrics": {
+        "address": "0x313c87e367791fe16ae97754554f4871bfe7fcb6",
+        "symbol": "AROS",
+        "marketCap": 76490.7286448149,
+        "volume24h": 111767.35042699998,
+        "liquidityUsd": 25613.5244,
+        "trades": 769,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "AI",
+      "selected": "0xa39c8e2ceb2a0f9d6e9d059f5e470edfda691c15",
+      "previous": "0x8d03c69c3e055c81d67f3430b3a4f7f16bf10426",
+      "previousMetrics": {
+        "address": "0x8d03c69c3e055c81d67f3430b3a4f7f16bf10426",
+        "name": "Argus Inu",
+        "symbol": "AI",
+        "quoteAsset": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+        "quoteSymbol": "ARGUS",
+        "imageUrl": "https://magenta-worthwhile-weasel-473.mypinata.cloud/ipfs/QmcPQz7a8SFby5jgUQdJ8g8N5EgvzzSAxzn96kwmiYCuTA",
+        "description": "Argus Inu 🐕👁️ — The all-seeing Shiba with purple eyes, cosmic vibes, and a mischievous soul.",
+        "creator": "0x9A34a99EeE39fd7FA3Afa30aA06b1D4514B3cDfD",
+        "launchedAt": "2026-09-14T08:15:47.000Z",
+        "status": "live",
+        "graduatedAt": null,
+        "marketCap": 181840.89357999718,
+        "peakMarketCap": 551601.4993874417,
+        "crossedFloorAt": "2026-09-14T08:16:22.000Z",
+        "price": 0.00018184089357999717,
+        "change24h": 371.6462538070088,
+        "volume24h": 671796.8171298554,
+        "liquidityUsd": 45168.23553382919,
+        "holders": 184,
+        "trades": 1247,
+        "lastTradeAt": "2026-09-16T04:44:47.000Z",
+        "milestoneProgress": 21.7,
+        "taxSplit": {
+          "creator": 75,
+          "burn": 0,
+          "dividends": 25,
+          "liquidity": 0
+        },
+        "tax": {
+          "buy": 1,
+          "sell": 1
+        },
+        "dividendsPaid": 0,
+        "sparkline": [
+          0.00003871299735992844,
+          0.00004315405512266898,
+          0.00004082333355023058,
+          0.00004063771581862123,
+          0.00004487409284396136,
+          0.00027726846946352757,
+          0.00036166058446806545,
+          0.00017994713149598252,
+          0.00019406317979574848,
+          0.00017137101839933555,
+          0.00017543175056232373,
+          0.00018184089357999717,
+          0.00018184089357999717
+        ],
+        "source": "Argus"
+      }
+    },
+    {
+      "symbol": "BIRDIE",
+      "selected": "0x56ec9a8a835e507d057b9c0b3b75f14b4424522b",
+      "previous": "0x8e604ae97dda3deb77d9856606a8dc3135998fc4",
+      "previousMetrics": {
+        "address": "0x8e604ae97dda3deb77d9856606a8dc3135998fc4",
+        "symbol": "BIRDIE",
+        "marketCap": 32666.886873062587,
+        "volume24h": 37097.32427400001,
+        "liquidityUsd": 15488.284328,
+        "trades": 445,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "CRCL",
+      "selected": "0x5c192bd145afb849621c5e0eee3f451d73ff7d16",
+      "previous": "0xd40ed72054bce37d2284bb315ffca122b690dc4b",
+      "previousMetrics": {
+        "address": "0xd40ed72054bce37d2284bb315ffca122b690dc4b",
+        "symbol": "CRCL",
+        "marketCap": 10872.154057577582,
+        "volume24h": 38214.50975299998,
+        "liquidityUsd": 6990.71697,
+        "trades": 233,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "SLJ",
+      "selected": "0xf69285fbfb809328eaa0de92024479258416864c",
+      "previous": "0x127f80844ff3d672410ce4b6f4f9ea1a8d6a7ae6",
+      "previousMetrics": {
+        "address": "0x127f80844ff3d672410ce4b6f4f9ea1a8d6a7ae6",
+        "symbol": "SLJ",
+        "marketCap": 60494.81993622312,
+        "volume24h": 95096.890808,
+        "liquidityUsd": 22210.754014,
+        "trades": 605,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "PEGCOIN",
+      "selected": "0xd3c7678eedf0512d3c9b2cdb62104cac497376af",
+      "previous": "0x33f245ca756c43d793a27e401ad44e56163cf844",
+      "previousMetrics": {
+        "address": "0x33f245ca756c43d793a27e401ad44e56163cf844",
+        "symbol": "PEGCOIN",
+        "marketCap": 7196.931081850813,
+        "volume24h": 4747.881117,
+        "liquidityUsd": 3311.262218,
+        "trades": 66,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "SASHIMI",
+      "selected": "0x49c298e55566c05fc93f857d59e60d7e3a5d1a50",
+      "previous": "0x4021807892cf9ac94b01f3a71176d4aaf5007cd8",
+      "previousMetrics": {
+        "address": "0x4021807892cf9ac94b01f3a71176d4aaf5007cd8",
+        "symbol": "SASHIMI",
+        "marketCap": 30922.31844196035,
+        "volume24h": 12211.216670999998,
+        "liquidityUsd": 14189.761278,
+        "trades": 112,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "CIRCLERS",
+      "selected": "0xc981320cc4c8159c1a22150243190ab31b3504aa",
+      "previous": "0x30aa5a06ca393ffffb7a5739935bcfbee7b31891",
+      "previousMetrics": {
+        "address": "0x30aa5a06ca393ffffb7a5739935bcfbee7b31891",
+        "symbol": "CIRCLERS",
+        "marketCap": 15984.442567266853,
+        "volume24h": 55579.90703100008,
+        "liquidityUsd": 8518.197756,
+        "trades": 617,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "5042",
+      "selected": "0xac97429fee14caf3055dec364c94a31d638bb5a8",
+      "previous": "0x19b94c2037b89a002ff4a445618d26b8ed9ffebc",
+      "previousMetrics": {
+        "address": "0x19b94c2037b89a002ff4a445618d26b8ed9ffebc",
+        "symbol": "5042",
+        "marketCap": 26195.381181248984,
+        "volume24h": 18519.826621,
+        "liquidityUsd": 11756.068004,
+        "trades": 236,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "1USDC",
+      "selected": "0x5cc5cd8d418cd20a642687d6262bf43a6a354379",
+      "previous": "0x3cf48ebdab8851c2fdd0d62e0585f857be45efbd",
+      "previousMetrics": {
+        "address": "0x3cf48ebdab8851c2fdd0d62e0585f857be45efbd",
+        "symbol": "1USDC",
+        "marketCap": 12226.40385031203,
+        "volume24h": 8992.397466999995,
+        "liquidityUsd": 6209.825882,
+        "trades": 150,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    },
+    {
+      "symbol": "DYSON",
+      "selected": "0xd90b803908e26f3a92c316b8e4dd3598351ace61",
+      "previous": "0xe28a59358702d03408d9f6917f7307da847f25f5",
+      "previousMetrics": {
+        "address": "0xe28a59358702d03408d9f6917f7307da847f25f5",
+        "symbol": "DYSON",
+        "marketCap": 12985.246808655433,
+        "volume24h": 15997.771150999997,
+        "liquidityUsd": 6225.214774,
+        "trades": 227,
+        "source": "Arc Explorer deepest USD-anchored pool"
+      }
+    }
+  ],
+  "catalogCount": 373,
+  "argusCount": 289
+}
