@@ -43,7 +43,7 @@ export function CreatorFeeClaims({wallet,onComplete}:{wallet:string;onComplete:(
     <header className={styles.header}>
       <h2 id="creator-fees-heading">Creator fees</h2>
       {discoveryError&&<p role="status">Token refresh failed. <button type="button" onClick={()=>setReload(n=>n+1)}>Retry</button></p>}
-      <p>Claim fees from your tokens. Gas is paid in Arc USDC.</p>
+      <p>Creator rewards from your tokens.</p>
     </header>
     <div className={styles.controls}>
       <label className={styles.field}>

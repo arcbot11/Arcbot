@@ -16,7 +16,7 @@ const parameters = [
   ["Developer buy", "Buy some of your token as part of the launch, or enter zero to skip it. Enter a USDC amount, or a dollar value if paired with ARGUS or ARCASH. Hold enough of the chosen asset in your wallet. Network fees are paid separately in Arc USDC.", "USDC pair: 25 USDC · Other pair: $25 worth of ARGUS or ARCASH · No dev buy: 0"],
   ["Supply and initial market", "Each launch creates 1 billion tokens. The starting value of the full supply is set at $2,500, with a $45,000 graduation target. Market value changes as people trade.", "Supply: 1,000,000,000 · Pair: Arc USDC"],
   ["Paired asset", "Your token trades against USDC by default. You can instead choose ARGUS or ARCASH. This is what people spend to buy your token and receive when selling it. Hold this asset if you want an initial buy.", "Pair with ARGUS · Pair with ARCASH"],
-  ["Creator wallet", "The wallet you launch from receives your creator rewards. Check that you are using the right wallet. Claimable rewards can include the paired asset and your own token.", "Use the X account linked to the wallet you want to receive creator rewards."],
+  ["Creator wallet", "The wallet you launch from receives your creator rewards. Check that you are using the right wallet. Rewards can include the paired asset and your own token.", "Use the X account linked to the wallet you want to receive creator rewards."],
 ];
 const allocations = [
   ["All to creator", "Creator 100%"],
@@ -30,9 +30,9 @@ export default function HowToLaunch(){
     <p className="arc-kicker">Launch guide</p><h1>How to Launch</h1>
     <p className="arc-intro">Create your token on Arc. Choose a name, add your logo and decide how to share rewards.</p>
     <div className="arc-actions"><Link className="arc-text-link" href="/tokens">Explore tokens</Link></div>
-    <h2>Launch on X</h2><p>Tag @TheArgosBot with your token name, ticker and logo. Add an optional first buy and choose how to share rewards. Posting a complete command starts the launch from your X-linked wallet, without another confirmation step.</p>
+    <h2>Launch on X</h2><p>Tag @TheArgosBot with your token name, ticker and logo. Add an optional first buy and choose how to share rewards. Posting a complete command starts the launch from your X-linked wallet.</p>
     <p><strong>Example:</strong> @TheArgosBot launch Example Token ticker EXAMPLE. Description: A community token on Arc. Dev buy 25 USDC. Allocation: half creator, half dividends.</p>
-    <p>Have the funds in your wallet before posting. Argos Bot replies with your token link after confirmation.</p>
+    <p>Have some USDC in your wallet ready for gas. Argos Bot replies with your token link after confirmation.</p>
     <div className="arc-command-list">{parameters.map(([name,description,example],i)=><article key={name}><span>{String(i+1).padStart(2,"0")}</span><h2>{name}</h2><div><p>{description}</p><p><strong>Example:</strong> {example}</p></div></article>)}</div>
     <h2>Ways to share rewards</h2>
     <p>Argus Pad takes its share first. You choose how to divide the remaining rewards. This does not add another trading tax. Use percentages or phrases such as “half” and “spread evenly.”</p>
@@ -40,6 +40,6 @@ export default function HowToLaunch(){
     <h2>A complete example</h2>
     <p>Name: Example Token. Ticker: EXAMPLE. Image: your token logo. Description: A community token on Arc. Dev buy: 25 USDC. Allocation: half creator, half dividends.</p>
     <p>You buy 25 USDC of your new token at launch, with network fees paid separately. Buys and sells each have a 1% tax. Your reward share is split equally between you and holders who own at least 100,000 tokens.</p>
-    <h2>After your launch</h2><p>Open your token link to see it on Argus Pad. Your token also appears on our Tokens page. Claim creator rewards from your wallet when available.</p>
+    <h2>After your launch</h2><p>Open your token link to see it on Argus Pad. Your token also appears on our Tokens page.</p>
   </section><SiteFooter/></main>;
 }
