@@ -38,7 +38,7 @@ function policy(request: NextRequest, nonce?: string) {
 }
 
 function isSensitivePage(pathname: string) {
-  return pathname === "/wallet" || pathname === "/otc" || pathname.startsWith("/otc/") || pathname === "/terminal" || pathname === "/votes" || pathname.startsWith("/votes/") || pathname.startsWith("/wallet/") || pathname.startsWith("/launch/");
+  return pathname === "/claim" || pathname === "/wallet" || pathname === "/otc" || pathname.startsWith("/otc/") || pathname === "/terminal" || pathname === "/votes" || pathname.startsWith("/votes/") || pathname.startsWith("/wallet/") || pathname.startsWith("/launch/");
 }
 
 export function middleware(request: NextRequest) {

@@ -244,8 +244,12 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
     }
     if(record.leg==="claim"){
       if(record.chainId!==5042||!record.creatorClaim)throw Error("Invalid creator claim.");
+      if(record.creatorClaim.reward){
+        await (await import("../launches/reward-service")).verifyRewardTransaction(record,BigInt(snapshot.block));
+      }else{
       const launch=await verifyCreatorToken(getAddress(record.wallet),getAddress(record.creatorClaim.token),createArcRpc(arcConfigFromEnv()),BigInt(snapshot.block));
       assertClaimCall(record.wallet,launch.splitter,tx);
+      }
       await recheckUnsignedCall(()=>chainClient(5042).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:0n}));
     }
     if(record.leg==="allowance"){
@@ -278,8 +282,12 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
     }
     if(receipt.status==="success"&&record.leg==="claim"){
       if(!record.creatorClaim||!settlement)throw Error("Claim verification terms missing.");
+      if(record.creatorClaim.reward){
+        (await import("../launches/reward-call")).assertRewardCall(record.creatorClaim.splitter,record.creatorClaim.reward,tx);
+      }else{
       assertClaimCall(record.wallet,record.creatorClaim.splitter,tx);
       settlement.claims=claimedAmounts(record.wallet,record.creatorClaim.splitter,receipt.logs);
+      }
     }
     if(receipt.status === "success" && record.leg === "send"){
       const transfer=tokenTransfer(tx.data,tx.value);

@@ -28,7 +28,7 @@ export function MobileNav() {
       <Link href="/wallet" onClick={() => setOpen(false)}>Wallet</Link>
       <Link href="/wallet#move-funds" onClick={() => setOpen(false)}>Swap</Link>
       <Link href="/guide" onClick={() => setOpen(false)}>Guide</Link>
-      <Link href="/tokens" onClick={() => setOpen(false)}>Tokens</Link>
+      <Link href="/tokens" onClick={() => setOpen(false)}>Tokens</Link><Link href="/claim" onClick={() => setOpen(false)}>Claim</Link>
       <Link href="/how-to-launch" onClick={() => setOpen(false)}>How to Launch</Link>
       <a href={brand.xUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>X</a>
       <a href={brand.telegramUrl} target="_blank" rel="noreferrer" onClick={() => setOpen(false)}>TG</a>
