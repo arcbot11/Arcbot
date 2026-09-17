@@ -12,6 +12,7 @@ import { PORTAL7 } from "./contracts";
 import { FeeClaimError } from "./fees";
 
 const abi = parseAbi([
+  "function treasury() view returns(address)", "function treasuryBps() view returns(uint16)",
   "function token() view returns(address)", "function creator() view returns(address)",
   "function quoteAsset() view returns(address)", "function rewardTracker() view returns(address)",
   "function payoutAsset() view returns(address)", "function symbol() view returns(string)", "function decimals() view returns(uint8)",
@@ -33,8 +34,8 @@ export async function rewardContracts(token: Address, block?: bigint) {
   if(!launch) throw new FeeClaimError("No supported Argus launch found for this contract.");
   const code=(await client.getCode({address:launch.splitter,blockNumber:height}))?.toLowerCase();
   if(!implementations.some(impl=>code===`0x363d3d373d3d3d363d73${impl}5af43d82803e903d91602b57fd5bf3`)) throw new FeeClaimError("This fee contract is not supported yet.");
-  const read = (functionName: "token"|"creator"|"quoteAsset"|"rewardTracker") => client.readContract({address:launch.splitter,abi,functionName,blockNumber:height});
-  const [actual,creator,quote,tracker]=await Promise.all([read("token"),read("creator"),read("quoteAsset"),read("rewardTracker")]);
+  const read = (functionName: "token"|"creator"|"quoteAsset"|"rewardTracker"|"treasury") => client.readContract({address:launch.splitter,abi,functionName,blockNumber:height});
+  const [actual,creator,quote,tracker,treasury]=await Promise.all([read("token"),read("creator"),read("quoteAsset"),read("rewardTracker"),read("treasury")]);
   const poolQuote=same(launch.pool.currency0,token)?launch.pool.currency1:launch.pool.currency0;
   if(!same(actual,token)||same(quote,zeroAddress)||!same(quote,poolQuote))throw new FeeClaimError("Fee contract identity could not be verified.");
   let payout=quote;
@@ -47,7 +48,7 @@ export async function rewardContracts(token: Address, block?: bigint) {
     if(!same(tracked,token)||!same(tokenTracker,tracker)||same(payoutAsset,zeroAddress))throw new FeeClaimError("Holder reward contract could not be verified.");
     payout=payoutAsset;
   }
-  return {...launch,token,creator,quote,tracker,payout,height};
+  return {...launch,token,creator,quote,tracker,payout,treasury,height};
 }
 export async function rewardSnapshot(token: Address) {
   const t=await rewardContracts(token),client=chainClient(5042),blockNumber=t.height;
@@ -68,9 +69,14 @@ export async function rewardSnapshot(token: Address) {
     client.readContract({address:t.tracker,abi,functionName:"totalPaid",blockNumber}),
   ]);
   const creatorUsdc=same(t.portal,PORTAL7)?await client.readContract({address:t.splitter,abi,functionName:"claimableUsdc6",args:[t.creator],blockNumber}):0n;
+  const treasuryBps=await client.readContract({address:t.splitter,abi,functionName:"treasuryBps",blockNumber});
+  const unallocatedQuote=quoteBalance>BigInt(accountedQuote)?quoteBalance-BigInt(accountedQuote):0n;
+  const unallocatedToken=tokenBalance>BigInt(accountedToken)?tokenBalance-BigInt(accountedToken):0n;
+  const burnBudget=(value:bigint)=>(value-value*BigInt(treasuryBps)/10000n)*BigInt(burn)/10000n;
   const f=(n:bigint,d=quote.decimals)=>formatUnits(n,d);
   return {token,symbol:coin.symbol,quoteSymbol:quote.symbol,payoutSymbol:payout.symbol,block:String(blockNumber),
     allocation:{creator:Number(creator),burn:Number(burn),holders:Number(holders),liquidity:Number(liquidity)},
+    burnQuote:f(burnBudget(unallocatedQuote)),burnTokens:f(burnBudget(unallocatedToken),coin.decimals),
     splitterQuote:f(quoteBalance),splitterTokens:f(tokenBalance,coin.decimals),
     unallocatedQuote:f(quoteBalance>BigInt(accountedQuote)?quoteBalance-BigInt(accountedQuote):0n),
     unallocatedTokens:f(tokenBalance>BigInt(accountedToken)?tokenBalance-BigInt(accountedToken):0n,coin.decimals),
