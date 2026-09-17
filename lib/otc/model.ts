@@ -76,7 +76,9 @@ export type Transaction = { kind: "transaction"; id: string; owner: string; wall
   orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance" | "claim" | "launch"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted" | "cancelled";
   recoveryVersion?:1; signingStartedAt?:number;signingRevision?:number;previousSigned?:import("./signed-recovery").SignedAttempt[];nonceConflict?:{hash:string;block:string};
   unsigned: string; raw?: string; hash?: string; blockNumber?: string; note?: string; createdAt: number; updatedAt: number };
-export type RecordValue = Listing | Order | Wallet | Transaction;
+export type HolderCursor = {kind:"holder_cursor";id:string;owner:string;token:string;offset:number;revision:number;activeTx?:string;nextOffset?:number;updatedAt:number};
+export type RewardRequestFence={kind:"reward_request_fence";id:string;owner:string;wallet:string;updatedAt:number};
+export type RecordValue = Listing | Order | Wallet | Transaction | HolderCursor | RewardRequestFence;
 export interface Store {
   get<T extends RecordValue>(id: string): Promise<T | null>;
   put(record: RecordValue): Promise<void>;

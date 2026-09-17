@@ -4688,5 +4688,25 @@
     "marketCapUsd": 493392.409989601,
     "snapshotAt": "2026-09-16T04:49:32.559Z",
     "argus": true
+  },
+  {
+    "chainId": 5042,
+    "address": "0x128cc466b61f542da60c70e3aa11c10e19b84edb",
+    "symbol": "WETH",
+    "name": "Wrapped Ether",
+    "decimals": 18,
+    "marketCapUsd": 0,
+    "snapshotAt": "2026-09-17T02:45:02.334Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x178b01f61cbea1d2a5581fe1621be607835ec349",
+    "symbol": "XAUM",
+    "name": "Matrixdock Gold",
+    "decimals": 18,
+    "marketCapUsd": 0,
+    "snapshotAt": "2026-09-17T02:45:02.335Z",
+    "argus": false
   }
 ]

@@ -1,3 +1,4 @@
+import { rewardResultLines } from "./reward-results";
 import { createHash } from "node:crypto";
 import { formatUnits, getAddress, parseAbi, zeroAddress, type Address } from "viem";
 import { discoverArgusPool } from "../arc/argus-discovery";
@@ -5,7 +6,7 @@ import { arcConfigFromEnv } from "../arc/config";
 import { checkArcRpc, createArcRpc } from "../arc/rpc";
 import { advanceTransaction, chainClient, prepareCall } from "../otc/runtime";
 import { repository } from "../otc/repository";
-import type { Transaction } from "../otc/model";
+import type { Transaction, HolderCursor } from "../otc/model";
 import { assertRewardCall, rewardCall, type RewardAction, type RewardTerms } from "./reward-call";
 import { PORTAL7 } from "./contracts";
 import { FeeClaimError } from "./fees";
@@ -89,38 +90,62 @@ export async function verifyRewardTransaction(tx:Transaction,block:bigint){
 }
 /** Explorer addresses are discovery hints only; the tracker determines every entitlement. */
 async function holderBatch(t:Awaited<ReturnType<typeof rewardContracts>>,offset:number){
-  const response=await fetch(`https://www.arcexplorer.org/api/v1/tokens/${t.token}/holders?limit=100&offset=${offset}`,{cache:"no-store",signal:AbortSignal.timeout(15000)});
+  const response=await fetch(`https://www.arcexplorer.org/api/v1/tokens/${t.token}/holders?limit=50&offset=${offset}`,{cache:"no-store",signal:AbortSignal.timeout(15000)});
   if(!response.ok)throw new FeeClaimError("Holder list could not be loaded. Try again.");
-  const data=await response.json() as {items?:Array<{address?:string}>};
+  const data=await response.json() as {items?:Array<{address?:string}>;nextOffset?:number|null};
   if(!Array.isArray(data.items))throw new FeeClaimError("Holder list could not be loaded.");
   const users=[...new Set(data.items.flatMap(r=>typeof r.address==="string"&&/^0x[\da-f]{40}$/i.test(r.address)?[r.address.toLowerCase()]:[]))];
+  if(data.items.length>50)throw new FeeClaimError("Holder list exceeded the batch limit.");
+  const nextOffset=typeof data.nextOffset==="number"&&Number.isSafeInteger(data.nextOffset)&&data.nextOffset>offset?data.nextOffset:0;
+  if(!users.length)return {recipients:[],nextOffset};
   const client=chainClient(5042);
   const results=await client.multicall({multicallAddress:"0xcA11bde05977b3631167028862bE2a173976CA11",contracts:users.map(user=>({address:t.tracker,abi,functionName:"withdrawableOf",args:[getAddress(user)]} as const)),blockNumber:t.height});
   if(results.some(r=>r.status!=="success"))throw new FeeClaimError("Holder entitlements could not be verified.");
-  return users.filter((_,i)=>results[i].status==="success"&&BigInt(results[i].result as bigint)>0n).slice(0,50);
+  return {recipients:users.filter((_,i)=>results[i].status==="success"&&BigInt(results[i].result as bigint)>0n),nextOffset};
 }
-export async function runRewardAction(owner:string,wallet:Address,requestId:string,token:Address,action:RewardAction,offset:number,allowStart:boolean){
+export async function runRewardAction(owner:string,wallet:Address,requestId:string,token:Address,action:RewardAction,_offset:number,allowStart:boolean){
   const repo=repository(),id="reward:"+createHash("sha256").update(JSON.stringify([owner,wallet.toLowerCase(),requestId])).digest("hex");
-  let tx=await repo.read<Transaction|null>({id});
+  let tx=allowStart?await repo.read<Transaction|null>({id}):await repo.command<Transaction|null>("reward_recover",{id,owner,wallet});
   if(tx&&(tx.owner!==owner||!same(tx.wallet,wallet)||!same(tx.creatorClaim?.token??"",token)||tx.creatorClaim?.reward?.action!==action))throw new FeeClaimError("Request changed. Start a new action.");
   if(!tx){
-    if(!allowStart)return {pending:false,missing:true,message:"No transaction recorded. Retry the same action."};
+    if(!allowStart)return {pending:false,status:"cancelled",message:"No transaction was submitted. Saved request cleared. You can start another action."};
     try {
     const t=await rewardContracts(token);
     if(action==="holders"&&same(t.tracker,zeroAddress))throw new FeeClaimError("This token has no holder rewards.");
-    const recipients=action==="holders"?await holderBatch(t,offset):undefined;
-    if(recipients&&!recipients.length)throw new FeeClaimError("No payable holders on this page. Check the next holder page.");
+    let recipients:string[]|undefined,cursor:HolderCursor|undefined,nextOffset=0;
+    if(action==="holders"){
+      cursor=await repo.command<HolderCursor>("holder_cursor",{token});
+      if(cursor.activeTx)throw new FeeClaimError("Another holder payout is processing for this token. Try again after confirmation.");
+      let wrapped=false;
+      for(let page=0;page<10;page++){
+        const batch=await holderBatch(t,cursor.offset);nextOffset=batch.nextOffset;
+        if(batch.recipients.length){recipients=batch.recipients;break;}
+        cursor=await repo.command<HolderCursor>("holder_skip",{token,revision:cursor.revision,nextOffset});
+        if(nextOffset===0){if(wrapped)break;wrapped=true;}
+      }
+      if(!recipients?.length)throw new FeeClaimError("No payable holders in the checked batches. The queue is saved; try again to continue.");
+    }
     const reward:RewardTerms={action,tracker:t.tracker,...(recipients?{recipients}:{})};
     const p=await prepareCall(5042,{from:wallet,...rewardCall(t.splitter,reward)});
-    tx=await repo.command<Transaction>("prepare",{id,owner,wallet,chainId:5042,leg:"claim",creatorClaim:{token,splitter:t.splitter,reward},unsigned:p.unsigned,reserveWei:p.reserveWei,balanceWei:p.snapshot.balanceWei,block:p.snapshot.block});
+    const transaction={id,owner,wallet,chainId:5042,leg:"claim",creatorClaim:{token,splitter:t.splitter,reward},unsigned:p.unsigned,reserveWei:p.reserveWei,balanceWei:p.snapshot.balanceWei,block:p.snapshot.block};
+    tx=cursor?await repo.command<Transaction>("holder_prepare",{transaction,revision:cursor.revision,nextOffset}):await repo.command<Transaction>("prepare",transaction);
     } catch(error) {
-      if(error instanceof FeeClaimError){
-        const saved=await repo.read<Transaction|null>({id});
-        if(saved)tx=saved;
-        else return {pending:false,status:"rejected",message:error.message};
-      } else throw error;
+      const saved=await repo.command<Transaction|null>("reward_recover",{id,owner,wallet});
+      if(saved)tx=saved;
+      else return {pending:false,status:"rejected",message:error instanceof FeeClaimError?error.message:"Could not prepare the transaction. No transaction was submitted. You can try again."};
     }
   }
   if(!["completed","cancelled","reverted"].includes(tx.status)){try{tx=await advanceTransaction(id);}catch{tx=await repo.read<Transaction>({id});}}
-  return {id,status:tx.status,hash:tx.hash,pending:!["completed","cancelled","reverted"].includes(tx.status),message:tx.status==="completed"?"Transaction confirmed. Balances refreshed.":tx.status==="reverted"?"Transaction reverted. Gas was charged.":tx.status==="cancelled"?"Transaction cancelled before submission.":"Processing. Waiting for confirmation."};
+  let results:string[]|undefined;
+  if(tx.status==="completed"&&tx.hash){try{results=await completedRewardResults(tx);}catch{results=["Transaction confirmed. Result details could not be loaded; view the transaction for details."];}}
+  return {id,status:tx.status,hash:tx.hash,results,pending:!["completed","cancelled","reverted"].includes(tx.status),message:tx.status==="completed"?"Transaction confirmed.":tx.status==="reverted"?"Transaction reverted. Gas was charged.":tx.status==="cancelled"?"Transaction cancelled before submission.":"Processing. Waiting for confirmation."};
+}
+
+async function completedRewardResults(tx:Transaction){
+ const client=chainClient(5042),receipt=await client.getTransactionReceipt({hash:tx.hash as `0x${string}`});
+ if(receipt.status!=="success"||String(receipt.blockNumber)!==tx.blockNumber||(await client.getBlock({blockNumber:receipt.blockNumber})).hash!==receipt.blockHash)throw Error("Receipt mismatch.");
+ const t=await rewardContracts(getAddress(tx.creatorClaim!.token),receipt.blockNumber);
+ const addresses=[...new Set([t.token,t.quote,t.payout,"0x3600000000000000000000000000000000000000"].map(a=>a.toLowerCase()))];
+ const entries=await Promise.all(addresses.map(async address=>{const [symbol,decimals]=await Promise.all([client.readContract({address:getAddress(address),abi,functionName:"symbol",blockNumber:receipt.blockNumber}),client.readContract({address:getAddress(address),abi,functionName:"decimals",blockNumber:receipt.blockNumber})]);return [address,{symbol:symbol.slice(0,32),decimals}] as const;}));
+ return rewardResultLines(receipt.logs,{...t,assets:Object.fromEntries(entries)});
 }

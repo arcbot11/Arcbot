@@ -1,3 +1,5 @@
+import {recoverRewardRequest} from "../lib/launches/reward-recovery";
+import {holderCursor,skipHolderPage,prepareHolderBatch} from "../lib/launches/holder-cursor";
 import { pendingPurchases as filterPendingPurchases, PENDING_PURCHASE_STATUSES } from "../lib/otc/pending-purchases";
 import {retainGasDust,retainArcDust,repriceFunding,requestGasTopup,claimSettlement,authorizeGasRecovery} from "../lib/otc/gas-recovery";
 import {assertNoKeyExport} from "./lib/walletExportGuard";
@@ -221,6 +223,10 @@ export const command = mutation({
         if (!order) throw new Error("Order missing.");
         return finishOrder(store,order,"expired",now);
       }
+      case "reward_recover": return recoverRewardRequest(store,input,now);
+      case "holder_cursor": return holderCursor(store,input.token,now);
+      case "holder_skip": return skipHolderPage(store,input.token,input.revision,input.nextOffset,now);
+      case "holder_prepare": return prepareHolderBatch(store,input.transaction,input.revision,input.nextOffset,now);
       case "prepare": return prepareTransaction(store,input,now);
       case "sign": return signTransactionRecord(store,input.id,input.raw,input.hash,now,input.unsigned);
       case "submitted": {

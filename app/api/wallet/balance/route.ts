@@ -15,6 +15,6 @@ export async function GET(request: NextRequest) {
     const snapshot = chain===8453?await balanceSnapshot(8453,session.walletAddress):await arcWalletBalance(session.walletAddress);
     const wallet = await repository().read<Wallet | null>({ id: walletId(chain, session.walletAddress) });
     const balance = BigInt(snapshot.balanceWei), held = wallet ? locked(wallet) : 0n;
-    return json({ walletAddress: session.walletAddress, availableWei: (balance > held ? balance - held : 0n).toString() });
+    return json({ walletAddress: session.walletAddress, balanceWei: balance.toString(), availableWei: (balance > held ? balance - held : 0n).toString() });
   } catch (error) { return webFailure(error); }
 }

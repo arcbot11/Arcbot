@@ -5,8 +5,10 @@ export const LAUNCH_PAIRS = {
   ARCASH: { address: "0x0bffa97f774824e9da843699aedd2835cb1b8022", decimals: 18 },
   EURC: { address: "0xbef5f6d51cb62b58e6a8f77868681825c6fe21c1", decimals: 6 },
   CIRBTC: { address: "0x171a4217b86a807a64eb94757db6849fb4bdbaa0", decimals: 8 },
+  WETH: { address: "0x128cc466b61f542da60c70e3aa11c10e19b84edb", decimals: 18 },
+  XAUM: { address: "0x178b01f61cbea1d2a5581fe1621be607835ec349", decimals: 18 },
 } as const;
-export const LAUNCH_PAIR_SYMBOLS = ["USDC", "ARGUS", "ARCASH", "EURC", "CIRBTC"] as const;
+export const LAUNCH_PAIR_SYMBOLS = ["USDC", "ARGUS", "ARCASH", "EURC", "CIRBTC", "WETH", "XAUM"] as const;
 export type LaunchPair = keyof typeof LAUNCH_PAIRS;
 export function launchPair(value: string): LaunchPair {
   const symbol = value.trim().replace(/^\$/, "").toUpperCase();
@@ -21,7 +23,7 @@ export function launchPairFromXText(text: string): LaunchPair {
   const matches = [...source.matchAll(/\b(?:pair(?:ed|ing)?(?:\s+(?:it|the\s+token))?(?:\s+(?:with|against|to))?|quote\s+(?:asset|token))\s*(?::|=|is\b)?\s*\$?([A-Za-z0-9_]+)\b|\b(?:with|against)\s+\$?([A-Za-z0-9_]+)\s+(?:as\s+(?:the\s+)?)?pair\b/gi)];
   const pairs = matches.map(m => launchPair(m[1] ?? m[2]));
   if (new Set(pairs).size > 1 || (matches.length && /\b(?:not|never|don't|dont|instead|or)\b/i.test(source)))
-    throw new LaunchError("QUOTE_ASSET", "Specify one paired asset: USDC, ARGUS, ARCASH, EURC, or cirBTC.");
+    throw new LaunchError("QUOTE_ASSET", "Specify one paired asset: USDC, ARGUS, ARCASH, EURC, cirBTC, WETH, or XAUM.");
   if (!matches.length && /\b(?:pair(?:ed|ing)?|quote\s+(?:asset|token))\b/i.test(source))
     throw new LaunchError("QUOTE_ASSET", "Paired asset not supported");
   return pairs[0] ?? "USDC";

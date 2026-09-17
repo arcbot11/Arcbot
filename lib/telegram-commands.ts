@@ -79,7 +79,7 @@ export function telegramWalletCommand(name: string, args: string): WalletCommand
   }
   if (name === "buy") {
     const pair=args.match(new RegExp(`^${number}\\s+${token}\\s+(?:(?:worth\\s+of|of)\\s+)?${token}$`,"i"));
-    if(pair&&Number(pair[1])>0&&Number.isFinite(Number(pair[1]))&&!/^(?:ETH|WETH)$/i.test(pair[2]))return {kind:"buy",amount:pair[1],unit:"pair",pairAsset:pair[2],token:pair[3],slippageBps};
+    if(pair&&Number(pair[1])>0&&Number.isFinite(Number(pair[1]))&&!/^ETH$/i.test(pair[2]))return {kind:"buy",amount:pair[1],unit:"pair",pairAsset:pair[2],token:pair[3],slippageBps};
     match = args.match(new RegExp(`^(?:\\$${number}|${number}\\s+USDC)\\s+(?:of\\s+)?${token}$`, "i"));
     if (!match) return null;
     const amount = match[1] || match[2];

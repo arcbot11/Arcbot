@@ -11,8 +11,8 @@ import type { MutationCtx } from "../convex/_generated/server";
 
 describe("Arc snapshot index selection", () => {
   it("keeps the refreshed unique tickers and Argus launches, with no retired addresses", () => {
-    expect(ARC_TOKEN_CATALOG).toHaveLength(latest.catalogCount);
-    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol.normalize("NFKC").toUpperCase())).size).toBe(latest.catalogCount);
+    expect(ARC_TOKEN_CATALOG).toHaveLength(latest.catalogCount + 2);
+    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol.normalize("NFKC").toUpperCase())).size).toBe(latest.catalogCount + 2);
     expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(latest.argusCount);
     for (const t of ARC_TOKEN_CATALOG) {
       expect(t.chainId).toBe(5042);
@@ -120,7 +120,7 @@ describe("Arc snapshot index selection", () => {
     } } as unknown as MutationCtx;
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
-    expect(tables.tokenRegistry).toHaveLength(latest.catalogCount);
+    expect(tables.tokenRegistry).toHaveLength(latest.catalogCount + 2);
     expect(tables.walletTokenIndex).toEqual([]);
     expect(tables.walletTransactions).toHaveLength(1);
     for (const token of tables.tokenRegistry) expect(token).toMatchObject({ chainId: 5042, active: true, pairCandidate: false, pairApproved: false });
@@ -137,7 +137,7 @@ describe("Arc snapshot index selection", () => {
       cursor = batch.nextOffset; complete = batch.complete;
     }
     expect(complete).toBe(true);
-    expect(tables.tokenRegistry).toHaveLength(latest.catalogCount);
+    expect(tables.tokenRegistry).toHaveLength(latest.catalogCount + 2);
     expect(tables.walletTokenIndex).toEqual([]);
     expect(tables.walletTransactions).toHaveLength(1);
   });

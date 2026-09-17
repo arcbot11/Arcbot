@@ -13,7 +13,7 @@ import { LAUNCH_PAIRS } from "../lib/launches/x-pair";
 import { nativeSpend } from "../lib/otc/native-spend";
 const historicalBlock=vi.fn(async(number=100n)=>({number,hash:toHex(number,{size:32}),timestamp:number*60n}));
 const abi=parseAbi(["function getPool(address,address,uint24) view returns(address)","function slot0() view returns(uint160,int24,uint16,uint16,uint16,uint8,bool)","function liquidity() view returns(uint128)"]);
-it.each(["EURC","CIRBTC"] as const)("converts non-dollar %s prices in the correct pool direction",async pair=>{
+it.each(["EURC","CIRBTC","WETH","XAUM"] as const)("converts non-dollar %s prices in the correct pool direction",async pair=>{
   const rpc={block:historicalBlock,decimals:async()=>LAUNCH_PAIRS[pair].decimals,code:vi.fn(),call:vi.fn(async(tx:{data:Hex})=>{
     const fn=decodeFunctionData({abi,data:tx.data}).functionName;
     if(fn==="getPool")return encodeFunctionResult({abi,functionName:fn,result:"0x1111111111111111111111111111111111111111"});
@@ -39,7 +39,7 @@ it("rejects paired amounts that no longer match their frozen price evidence",()=
   expect(()=>assertLaunchQuote("ARGUS",25_000_000n,{...quote,devBuy:"26000000"})).toThrow("approved settings");
   expect(()=>assertLaunchQuote("ARGUS",25_000_000n,{...quote,priceEvidence:undefined})).toThrow("approved settings");
 });
-it.each(["ARGUS","ARCASH","EURC","CIRBTC"] as const)("converts dollar valuations and developer buy into %s raw units",async pair=>{
+it.each(["ARGUS","ARCASH","EURC","CIRBTC","WETH","XAUM"] as const)("converts dollar valuations and developer buy into %s raw units",async pair=>{
   const rpc={block:historicalBlock,decimals:vi.fn(async()=>LAUNCH_PAIRS[pair].decimals),code:vi.fn(),call:vi.fn(async(tx:{data:Hex})=>{
     const fn=decodeFunctionData({abi,data:tx.data}).functionName;
     if(fn==="getPool")return encodeFunctionResult({abi,functionName:fn,result:"0x1111111111111111111111111111111111111111"});

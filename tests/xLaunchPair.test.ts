@@ -5,7 +5,7 @@ import { launchInputFromXCommand } from "../lib/launches/x-input";
 import { encodeLaunch } from "../lib/launches/prepare";
 import { toHex } from "viem";
 const command={kind:"launch" as const,launchMode:"argus" as const,name:"Example",symbol:"EX"};
-it.each([["pair with EURC","EURC"],["paired with $eurc","EURC"],["pair against cirBTC","CIRBTC"],["quote asset: $CIRBTC","CIRBTC"]])("accepts the new approved pair: %s",(clause,pairToken)=>{
+it.each([["paired with $weth","WETH"],["quote asset XAUM","XAUM"],["pair with EURC","EURC"],["paired with $eurc","EURC"],["pair against cirBTC","CIRBTC"],["quote asset: $CIRBTC","CIRBTC"]])("accepts the new approved pair: %s",(clause,pairToken)=>{
   const input=launchInputFromXCommand(command,`launch Example ticker EX ${clause}`,"https://pbs.twimg.com/media/example.jpg");
   expect(input.pairToken).toBe(pairToken);
   expect(()=>encodeLaunch(input,toHex(1,{size:32}),toHex(2,{size:32}))).toThrow("Prepare the paired asset");
@@ -34,3 +34,6 @@ it("retains the selected asset in the shared draft and never encodes it as USDC"
 });
 
 it.each(['description "Hello world" pair with ARCASH','description Hello world pair with ARCASH','description "pair with ARGUS"; pair with ARCASH'])("retains pair after description: %s",text=>{expect(launchPairFromXText(`launch Example ticker EX ${text}`)).toBe("ARCASH");});
+
+import {telegramWalletCommand} from "../lib/telegram-commands";
+it.each(["WETH","XAUM"])("accepts explicit %s amounts in Telegram paired buys",pairAsset=>{expect(telegramWalletCommand("buy",`0.01 ${pairAsset} of ARGOS`)).toMatchObject({kind:"buy",unit:"pair",pairAsset,amount:"0.01"});});

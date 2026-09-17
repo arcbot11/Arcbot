@@ -26,7 +26,7 @@ it.each(["$20 usdc of it","20 USDC of it","$20 of it"])("recognizes a greeting a
  const intent=await parseXWalletIntent(text,true);
  expect(intent).toMatchObject({kind:"command",command:{kind:"launch",name:"Odysseus",symbol:"ODDY",devBuy:{amount:"20",unit:"usd"}}});
 });
-it.each(["USDC","ARGUS","ARCASH","EURC","CIRBTC"])("routes a complete %s X launch through the shared input",async pair=>{
+it.each(["USDC","ARGUS","ARCASH","EURC","CIRBTC","WETH","XAUM"])("routes a complete %s X launch through the shared input",async pair=>{
  const text=`@TheArgosBot launch Example Token ticker EXAMPLE. Dev buy 25 USDC. Allocation: half creator, half dividends.${pair==="USDC"?"":` Pair with ${pair}.`}`;
  m.llm.mockResolvedValueOnce(JSON.stringify({kind:"command",operation:"launch"})).mockResolvedValueOnce(JSON.stringify({kind:"launch",name:"Example Token",symbol:"EXAMPLE",devBuy:{amount:"25",unit:"usd"},pairToken:pair}));
  expect(requestedOperations(text)).toEqual(["launch"]);
