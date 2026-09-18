@@ -1,0 +1,4543 @@
+{
+  "snapshotAt": "2026-09-18T13:58:53.836Z",
+  "blockNumber": "21508751",
+  "source": "Arc Explorer USD-anchored pools plus on-chain Argus Portal membership; Argus board HTTP 429",
+  "screen": {
+    "minVolume24hUsd": 1000,
+    "minLiquidityUsd": 500,
+    "minTrades": 10,
+    "minVolumeToMarketCap": 0.01
+  },
+  "scannedPools": 1184,
+  "reviewed": 994,
+  "previousCatalogCount": 471,
+  "candidates": [
+    {
+      "address": "0xc3852a204dbc885a452b7f70737392dbe1c662ea",
+      "symbol": "PANCHU",
+      "marketCap": 208038.5933818591,
+      "volume24h": 2139434.816610996,
+      "liquidityUsd": 32529.718828,
+      "trades": 7201,
+      "pool": "0xf19cf312e3160a15abf43dfd3846e95107e4b934"
+    },
+    {
+      "address": "0x82e893ff7e225c5d5f99dea0317f220591c69e89",
+      "symbol": "ARCOOL",
+      "marketCap": 131448.23533560068,
+      "volume24h": 16824.922975999947,
+      "liquidityUsd": 11466.553692,
+      "trades": 458,
+      "pool": "0x0f890874af3206498f73dbbd1d1205a6ffcd269d"
+    },
+    {
+      "address": "0x92395d0cd51bb504a39e53105cb6862948af1b8e",
+      "symbol": "TIDE",
+      "marketCap": 119411.87045813585,
+      "volume24h": 14126.764775999996,
+      "liquidityUsd": 74529.688002,
+      "trades": 25,
+      "pool": "0x8e61d497784779c31936fdfc223b7d53fb2664b7"
+    },
+    {
+      "address": "0xa83a7be150d97b77c4ad96742ea38ab7c8e13782",
+      "symbol": "WPAY",
+      "marketCap": 67802.75558739413,
+      "volume24h": 5267.039694999999,
+      "liquidityUsd": 131783.12031,
+      "trades": 38,
+      "pool": "0xab6ab7323d5fb24ba09472353a505231eb0c6c97"
+    },
+    {
+      "address": "0x2e554c802e6b3a0ea4793f2267e0c4dcb28721e0",
+      "symbol": "CHEESE",
+      "marketCap": 59290.98574922437,
+      "volume24h": 70238.18464400002,
+      "liquidityUsd": 29834.490218,
+      "trades": 767,
+      "pool": "0xe51be59e0c1fed915888a345877b77713f13d32c"
+    },
+    {
+      "address": "0xf3ee8c4544f98967cb815386691d257195d7c3fe",
+      "symbol": "HAPPY",
+      "marketCap": 40686.72632648651,
+      "volume24h": 135813.93872499996,
+      "liquidityUsd": 19070.79475,
+      "trades": 1052,
+      "pool": "0xc48cca6ceaf7ac39f43589caa49c34a3ec371c86"
+    },
+    {
+      "address": "0x37c259d376c282bc0ec3187e8addbad3cfed4219",
+      "symbol": "CHEESEBULL",
+      "marketCap": 34327.70490135675,
+      "volume24h": 7506.882522,
+      "liquidityUsd": 12268.311448,
+      "trades": 73,
+      "pool": "0x793fb5e19e37a1c7ad9f25f601fc1de46c7be66e"
+    },
+    {
+      "address": "0x0a31d07b696c9044f6f628f971ca38a50cf3beaf",
+      "symbol": "COOLONG",
+      "marketCap": 22103.549266195983,
+      "volume24h": 13340.291581000005,
+      "liquidityUsd": 4356.024522,
+      "trades": 766,
+      "pool": "0x7bf9e65013adc0401662dade8985814561af96dd"
+    },
+    {
+      "address": "0x68c8cbf2ed1f1800dfb8c4eefdf176a3265db0a7",
+      "symbol": "ANCHOR",
+      "marketCap": 21293.097277772096,
+      "volume24h": 74610.30473899998,
+      "liquidityUsd": 11489.706526,
+      "trades": 697,
+      "pool": "0xa41898432c272ab28eaef590e76730bc6428024a"
+    },
+    {
+      "address": "0x3440dfcdd539c02b6340fd18d7c2a05648551ba3",
+      "symbol": "CASBERI",
+      "marketCap": 19795.91417695999,
+      "volume24h": 62489.82178499998,
+      "liquidityUsd": 730.62321,
+      "trades": 489,
+      "pool": "0x13c378f229df9bc3a0ac6f92f3297bd4bef71371"
+    },
+    {
+      "address": "0x1ec17fe9c4af049c97a81fc19f383d1cc897b86c",
+      "symbol": "ARCC",
+      "marketCap": 19661.887072127243,
+      "volume24h": 1669.4492469999998,
+      "liquidityUsd": 608.648842,
+      "trades": 16,
+      "pool": "0x8994dd04861a96c9a3fbb951487f44f3aa887a1c"
+    },
+    {
+      "address": "0xe476c399f4536fc75d9172c62d4403769a9baffe",
+      "symbol": "BLACKROCK",
+      "marketCap": 12444.792696925442,
+      "volume24h": 3740.9126210000004,
+      "liquidityUsd": 5720.36698,
+      "trades": 35,
+      "pool": "0x2717cd2c665edebef2f2a0ec959699c9d1050d9b"
+    },
+    {
+      "address": "0xc78b9983f1489852f3aa421fd034ecbc016e2d81",
+      "symbol": "HIYAN",
+      "marketCap": 10887.642603966648,
+      "volume24h": 26875.26457299998,
+      "liquidityUsd": 4402.114322,
+      "trades": 144,
+      "pool": "0x9f55502fae58a721010e19648f83bd11fc39c142"
+    },
+    {
+      "address": "0x9c7c98b0ed687b0489d3223387196293e97c34c7",
+      "symbol": "SYN",
+      "marketCap": 10277.88153245915,
+      "volume24h": 190700.22333499996,
+      "liquidityUsd": 10573.969736,
+      "trades": 1779,
+      "pool": "0xcee68e8e409b182388ef7a24b968c098f9642ad8"
+    },
+    {
+      "address": "0xaa53f4b3c18d2347b02905b93a5c8579816746f4",
+      "symbol": "NIGHT",
+      "marketCap": 9208.986885694692,
+      "volume24h": 11007.584685000009,
+      "liquidityUsd": 7470.327192,
+      "trades": 252,
+      "pool": "0xee765f55b122d7ae01cdc3dab164512245405120"
+    },
+    {
+      "address": "0x10a2c6f02f84b69025f4c6d6c6422dd8756c5e79",
+      "symbol": "ARCJET",
+      "marketCap": 7380.683132257004,
+      "volume24h": 1719.440789,
+      "liquidityUsd": 3929.343982,
+      "trades": 20,
+      "pool": "0xb215b1c5a418b8a346579520d80efa5d1dc40463"
+    },
+    {
+      "address": "0xfa451d12c1d2597e2e713cb818243544315af4e6",
+      "symbol": "SURGED",
+      "marketCap": 7341.583159997327,
+      "volume24h": 13726.562497000004,
+      "liquidityUsd": 8437.466158,
+      "trades": 110,
+      "pool": "0x5fb769b5074c1cd19631b702266db195ac4dedba"
+    },
+    {
+      "address": "0x07979c2379bba76ce42a36a7ad3910669be8db5b",
+      "symbol": "JEREMYCOIN",
+      "marketCap": 7246.537093061859,
+      "volume24h": 2335.377622,
+      "liquidityUsd": 2099.060318,
+      "trades": 33,
+      "pool": "0x4fd6cc938020bbc75e16ef0b61e73662e80682c1"
+    },
+    {
+      "address": "0xa492a5f44c02fe89f7fcfe8b597ea333561df789",
+      "symbol": "LING",
+      "marketCap": 7048.389491615732,
+      "volume24h": 1907.2986410000005,
+      "liquidityUsd": 2034.430108,
+      "trades": 55,
+      "pool": "0x9ff696339ac026c0d16b5f54db9e95d9b07002d1"
+    },
+    {
+      "address": "0xa13123a0f14e58e296b09dd880b661b2a4259084",
+      "symbol": "RIBS",
+      "marketCap": 6976.810633154183,
+      "volume24h": 2247.363025,
+      "liquidityUsd": 1759.422256,
+      "trades": 50,
+      "pool": "0xab44279641179def63338d9784ea4f552e4df02e"
+    },
+    {
+      "address": "0xbeece9d425f3000191aea1dafa4dc1c66d76fec4",
+      "symbol": "UARC",
+      "marketCap": 6472.589927784057,
+      "volume24h": 82146.17073800004,
+      "liquidityUsd": 3202.02846,
+      "trades": 1240,
+      "pool": "0x5f9f0dae63b2bbdba6ff8aa707064e6b51d43d83"
+    },
+    {
+      "address": "0xbd315a60eb4263b3011ad05fb842cf76f642bfa5",
+      "symbol": "TURBO",
+      "marketCap": 6463.452358963047,
+      "volume24h": 4325.364288999999,
+      "liquidityUsd": 1345.59454,
+      "trades": 67,
+      "pool": "0xedb6b055f7afbed6da4379746258dac82a613f1a"
+    },
+    {
+      "address": "0x09cd1ec4f7e083c7dafdd53d25628a322f549e24",
+      "symbol": "REARC",
+      "marketCap": 5128.97731930598,
+      "volume24h": 1863.7941499999997,
+      "liquidityUsd": 1080.225216,
+      "trades": 73,
+      "pool": "0x3f6650ec2e995599ea73beddcb5bf760c5067022"
+    },
+    {
+      "address": "0x648d77ed878feb42a364fee839c51d428b17737f",
+      "symbol": "ARCPEIPEI",
+      "marketCap": 4498.899962055358,
+      "volume24h": 1090.2705369999999,
+      "liquidityUsd": 3540.738926,
+      "trades": 20,
+      "pool": "0x51f301302c9572138604ae7f7652c8b80be99ff2"
+    },
+    {
+      "address": "0x3f463b412d3ac60d9c8628b9623d28e939c14361",
+      "symbol": "BLOCKFI",
+      "marketCap": 4320.14972633113,
+      "volume24h": 2286.2643409999996,
+      "liquidityUsd": 2945.083998,
+      "trades": 27,
+      "pool": "0x3b02c55aef2478ff654164e76bc122bc82182f36"
+    },
+    {
+      "address": "0x683453ff1c441a56451d1a22a1c3218c9dc58cf7",
+      "symbol": "WAGMI",
+      "marketCap": 4082.4647129202335,
+      "volume24h": 1176.432463,
+      "liquidityUsd": 1568.877494,
+      "trades": 20,
+      "pool": "0x6e4e079240bbc87031e21025fe2bbcb92e364846"
+    }
+  ],
+  "verified": [],
+  "skipped": [
+    {
+      "address": "0x748c6ee39d2978ec6fc524b4739d6b1f70675935",
+      "symbol": "ARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x2164bb17a2d38c1b5170e987b2c0416df1efc752",
+      "symbol": "LONG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xcce613125ba7ce51c997c9041c6a2e3a04c1c06d",
+      "symbol": "P69",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfdcf0be4c0194cf16459a2afdaf182bc0b2640eb",
+      "symbol": "ETERNAL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x12dd36a10604a07832c0a4e72949e2cbb24aa8f9",
+      "symbol": "FIAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcaad9713114a3c26131594e7e3a908f41e7d4549",
+      "symbol": "ARCADE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x5825b287c9769701091b74b925841a2b815c9514",
+      "symbol": "FROTH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8b838fd5196bbdf4df482d56ac69f8b2e72f3a6f",
+      "symbol": "ARCADE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0e8b9d887b986ec4c52be601a97b1cab70b65ba3",
+      "symbol": "COOL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x79e4561ede9f21f5cb7d9445e0f8b20b9ad05a31",
+      "symbol": "LONGCAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3af1d499cb46cd5504a5a3cb864dcc105b74470d",
+      "symbol": "AROS",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0xab9130a111d3e2cbdec1eb440e80bcda7df63ff2",
+      "symbol": "CHAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x33402a71caf3ebde88e27c7b94c161941ae0d039",
+      "symbol": "CINU",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xb383a9603f18f6ba5b86ab9aa67c9dd77c4ed329",
+      "symbol": "STILL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xedc98c063d003e907d6e37100b53e97fb65d9ed3",
+      "symbol": "ARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x692b8c6368abeb894dab4adfb8a027bef00be0cb",
+      "symbol": "AICHZ",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x642880c27d237799b7191189ad4b5d8a12bdecc3",
+      "symbol": "BCTEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0fd39dbc5705c8310c95b8e591be780685040e8d",
+      "symbol": "CMON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8642be62837033b27298b2ae39e6276b574cce46",
+      "symbol": "FAB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2e4023784c21b085bacadd6270400748339b5a07",
+      "symbol": "BULL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xd35d6a46959e530b01acd2e817fedbbe6b2d7900",
+      "symbol": "FLAMINGO",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x2bfe315f219cc9fdc9ce0266e6c115927f0e4c10",
+      "symbol": "PEG",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x2395489950e2e548342e95ca38a7abbf0c9028cf",
+      "symbol": "ARCSHIB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcdb0d46055c5b1da1d6dcfeeb71bfd55132f2449",
+      "symbol": "ARCH",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xcb635a6f57aa4b2bf5d1388108e95e68be6ea6ff",
+      "symbol": "ZYORA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x1cf2b61928cc2f30561737437918bcfee6f9c62c",
+      "symbol": "DENISE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd971d85eb2b7896e4b3b85772d6f8ec41ddcdbaf",
+      "symbol": "AOA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xacd3c4ae00ddac5cd857d83424cf4eb85f32ad8f",
+      "symbol": "COOL",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0xb96022bdfe1aa1d12e8925e57111204b2c711b60",
+      "symbol": "USDCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x313c87e367791fe16ae97754554f4871bfe7fcb6",
+      "symbol": "AROS",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0xf9486cb4dac60e25b24f43f83b359baef24bf6df",
+      "symbol": "CREO",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc6d6f1fc29acd081e94909ea60e2307339e551e0",
+      "symbol": "ARCHITECTS",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x0550793dc546cdf75e4253813e9823c94ea5bba3",
+      "symbol": "BULL1",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd271c9826b4a5120d6d2b81147a4aedd10a7cade",
+      "symbol": "ARCADE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc1347b8f2b79af2f150d26f350eb974cd7dab6f3",
+      "symbol": "ARK",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x2a63a78575a7f9f95f5cd7942b3ca83b647d68a5",
+      "symbol": "BIRDIE",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x4021807892cf9ac94b01f3a71176d4aaf5007cd8",
+      "symbol": "SASHIMI",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x7b8000d1cb9fb68ef3dd20021cfa8a0e74908ffb",
+      "symbol": "ARCHITECTS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x24dea727684bc68aeaa65da636ee1432485e2c80",
+      "symbol": "OCARINA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc797b8e7cad23a91dfe6f044ba5d84d5202329cd",
+      "symbol": "OPTIMUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x14d07e82ad0a78d0a7ef7e6ce947e4d951488246",
+      "symbol": "DOGS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb65295e3cee4619290b1722f625a73d523b84b16",
+      "symbol": "AROS",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0xd1cda12a6f5edce69223454ef3f6f0324f1ca823",
+      "symbol": "FOMO",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xb53ba03d07b23c42e608206d4975fc8cab9c84be",
+      "symbol": "富贵人生",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7a575c9acfdc723601db79d30bbba3cb7d76237e",
+      "symbol": "SASHIMI",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0xf3ef8338c7363aa675af0031f4ed8cb4b97dde0b",
+      "symbol": "SLEEP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8e604ae97dda3deb77d9856606a8dc3135998fc4",
+      "symbol": "BIRDIE",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x127f80844ff3d672410ce4b6f4f9ea1a8d6a7ae6",
+      "symbol": "SLJ",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x77783574d7523b77ee9ece8f88d9328f095dc700",
+      "symbol": "272/ARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe816fe58b7e64f2fcde14a74835b65247fc66f7e",
+      "symbol": "USDUC",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x53c7a8cecfc8c77727e4dbb979f3ed080f34cd1e",
+      "symbol": "JOLIE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x90d4634927c48e9eab50c5e8fd3b9525b701fd15",
+      "symbol": "AROS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x49c6d0d76961d3d0a021cd771734f4459c580000",
+      "symbol": "BITS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xf2007bc7146a0723c98b15c3d31d10f03e923fc5",
+      "symbol": "TOLLYCAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x891406ac300c330a58a2adde58d46673f32d3521",
+      "symbol": "TEST",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0xe40c6243a13e49aa3f0a2ab6d3d8e740539d6d8a",
+      "symbol": "BULL",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x7c5c37a803978a2ea04029273cdf5e309a750000",
+      "symbol": "EOS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xd218e4730fdf224d0464b29c6f24cc139240adcb",
+      "symbol": "TROLL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x6520feceeff3474020ebf9b59234575e94655ec2",
+      "symbol": "MISCHA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xe683af4c2269d628f3b8a915b3735603896e5d27",
+      "symbol": "STEVE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x6505506540dc99f7366316b10e9cf1a584cbd42a",
+      "symbol": "NVDA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x786a352a5ad3905fe2ff4c0849fa8da849281991",
+      "symbol": "PEGGED",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xe28a59358702d03408d9f6917f7307da847f25f5",
+      "symbol": "DYSON",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x5ec8a02eaf992acc54ded69e42ea1f961ae6be7d",
+      "symbol": "SASHIMI",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x9ee238b920d712e8a4f720d61fa454d17af3ff44",
+      "symbol": "ZYORACAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x78509bcee65a29d1f9571f07108037c0cd560000",
+      "symbol": "BOA",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x1f548660f465c2fb8bfa8b63db196a293f47ed0e",
+      "symbol": "AGAS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2f3a8912cfaded1ef340da01fad50c2bf20f9381",
+      "symbol": "BULLCHEESE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xda42a01629b9ac59235f0e2fd2d32776c6941111",
+      "symbol": "ARCAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xdadcac08ad16ed27a9cfaac36ffd273a370035a7",
+      "symbol": "ARK",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc57c4ce7164bc964efb2c21333367b8209faff52",
+      "symbol": "LAZY",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3db49a7d8c6632ba04dd83e9e51147bc35c3499f",
+      "symbol": "STEVE",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0xd40ed72054bce37d2284bb315ffca122b690dc4b",
+      "symbol": "CRCL",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x3cf48ebdab8851c2fdd0d62e0585f857be45efbd",
+      "symbol": "1USDC",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x48f0a74b129b8c052072bf62cf4a98b7b7481111",
+      "symbol": "TEST",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x9feac5ebed27005a3d31f1b49bfb9831d5787abf",
+      "symbol": "PI",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x1caa4fffb23e09fab2b6e3db5fd3ead0c3528b20",
+      "symbol": "ARCHITECTS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xf7c87abfffa1eedfe1dde43536a4396378a71395",
+      "symbol": "GIZMO",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x247c25617b49a5e5ea5f3074c3dc918ed86d0000",
+      "symbol": "COOL",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0xad440dcef5f41ee10be3fbe26cae58d64d860000",
+      "symbol": "C",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc2e7d8a989cbbc5a7c9190b30f24c12c24254b63",
+      "symbol": "5042",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x5f72a290a81bc666fa980f51d6b56dd327c47e0e",
+      "symbol": "STEVE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x19b94c2037b89a002ff4a445618d26b8ed9ffebc",
+      "symbol": "5042",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0xe0cda94bed0dde3f8f6ad495970714244d450000",
+      "symbol": "BALDGUY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x41c9c02762fce8459fb9aef7331339b2b7d40000",
+      "symbol": "ARCDOG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3bad685877990b0cae918f7208da28018fbf3a41",
+      "symbol": "BOYS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5c7404118e3f028d202f9fb78da2681bd68482cb",
+      "symbol": "EOS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x001456499c9dd3e733c1c4359850f68263162ba3",
+      "symbol": "TEST",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x8a763fc3ea1fee03dfe431ca236f816ba383ef99",
+      "symbol": "CRCL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x21f37268448abcac49d34f61ed26d124feb55ba3",
+      "symbol": "ARCANINE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xf5095e58c6b68d7bcaff0f40defbe87ccd45fba2",
+      "symbol": "ARCH",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xa6509b0bf07b1ffa03c298271feb969483a80741",
+      "symbol": "ACAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xa290731b7b6247e2b4e397092bdddb03c6f20000",
+      "symbol": "BIRDIE",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x7ec8d544355186164b3184cc7e8a788244391e35",
+      "symbol": "DUNCAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6d2c1d0a1f94d50f11b227fafaf64418c3e6bdb6",
+      "symbol": "STAFF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3133f0e8a3cf06974055c872a8911d5e537cee7d",
+      "symbol": "BIRDIE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x61249ea6b49f76455623ed91f3bde2b6abbc0000",
+      "symbol": "ARCFROG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x07bfb66d61f4d576dadf9dca118cc023abaa0000",
+      "symbol": "ARCDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7bd0e1e916b4780e2cb4b57a9f57f3202d45bd77",
+      "symbol": "CHZLND",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9003836a66f3328321bab337d9aae67cf68e0000",
+      "symbol": "888.532.6733",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1db203a39e86099c64da98f52a1825d0da4dd0b1",
+      "symbol": "WHALE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x699ea129024049cc5b7ae86d2564ef10ec6e50ac",
+      "symbol": "GARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0855d391084c8027d08216469005260fd3c572d9",
+      "symbol": "ZENO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x83cba82229c726e1f994e9412299d696a7f23146",
+      "symbol": "RAMBO",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3d302cd848b30d26c7d4a7158e8b035b737f0000",
+      "symbol": "ARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x79cef31226c7803395b37661810968880d970000",
+      "symbol": "1$",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc8277600e51d4dc351ad9eb1d8fcf788be49af4b",
+      "symbol": "LIGHT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2ff9b4e00affea506f9fc97cc234cc60abc20000",
+      "symbol": "CDOGE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x25b6c04f0915577dd44686e2ae652d5d478b339f",
+      "symbol": "S3XY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbe578abae7178963fa32aff253914c4720140000",
+      "symbol": "DPRK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x314652ef449e4963c4e79dc0dafe359f4d30e8b7",
+      "symbol": "JERK",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x351fb4c77571ab558b8f8508f2255074fca9b641",
+      "symbol": "ELONCOIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe014617aee057005802a065acd40dc3d4e4c0904",
+      "symbol": "SHARP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x37d455710a74cdabeee07ca5804ca081210e0000",
+      "symbol": "PIZZA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x63fb91e0e95b0a45d572f56c8586dd1e6cd50000",
+      "symbol": "DREAM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf0d4cf78e84d22353360b535a2d8a561eace903d",
+      "symbol": "ZCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9295200eb0cd47824bbff07aba74d6615b880000",
+      "symbol": "STEVE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0f1e1ed53a4293d358831b93a999c80fab2e2d18",
+      "symbol": "MISCHA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xd72caf1209b17fed2368ea0903abc1b65b0ba6e7",
+      "symbol": "MINARA",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x01424924bba9fe3960f5876c1258454b94010101",
+      "symbol": "DGENT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd8c80c9aca899e3f642e862d241ac8600394b715",
+      "symbol": "5042",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x09119ab9e1a810a53bc777a1a27195c17f737e9a",
+      "symbol": "MCARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x63a60947c480181632ab0a81d48cb9c714955e65",
+      "symbol": "CRCL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x95fdc61e328defd012ad67305465f8d8f56376dd",
+      "symbol": "1USDC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x569a59d1c0b0556c3b90705a2ca026eaf9ab23b9",
+      "symbol": "CRCL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x75b2d867980d8ecbf5388afa2ebdfc04333587d8",
+      "symbol": "GASDC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1cdffea253e4842343486edd5ff7279daa49bb5b",
+      "symbol": "ARCONFIRE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x02d0e9dcdf0709d10b69d4760c57f0482ebd3dff",
+      "symbol": "DUKE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xf6d398f2c05107199fb729550d5400c8becbc9c8",
+      "symbol": "RADAR",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xdf1d5a28c21b9d447a78eb4bb5711dba67618c63",
+      "symbol": "TOLLY",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3aa37775d9884d42d047c67f6139c4f66c235837",
+      "symbol": "ARCMAN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xed79cd0d5698b56f8316dcb95d47b2765405eacd",
+      "symbol": "CRAB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9303b9442d30e4cdaea7b5b4627929219cabea9f",
+      "symbol": "NCA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe50b3b1de88d13aaf1b5bafac3faf12170c14291",
+      "symbol": "TEAMUSDC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x05622b99a826ca6c357f534375b80b98e80e0668",
+      "symbol": "USDC CAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xec10a6101e140836859638ea2375678e734c86ae",
+      "symbol": "AI",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x525aa6d2ff7b693fe64899e28b5bce0f5ce5935f",
+      "symbol": "RADARDEX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3326225e69f1e2ac75b865539f65e56a33411b0b",
+      "symbol": "ARCPAW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xef869b627ad7fd8eaae9b2ccf21225dc17ff7126",
+      "symbol": "VOLT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc036071a50a488e635513ecec80f9b4f425f1ebe",
+      "symbol": "DGAS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3239061ae8b9de2092a097b3acdd2d7ff1af8946",
+      "symbol": "RUBIE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x21bce8dca9628856961d630b96eae0de654b511d",
+      "symbol": "ARCSHIB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xab57b4999fd55323f11c24a0635951538c0f9e67",
+      "symbol": "BEANCAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0a6d887e4694930e8c1360bfa8748eb415a1c46b",
+      "symbol": "DWA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x30aa5a06ca393ffffb7a5739935bcfbee7b31891",
+      "symbol": "CIRCLERS",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x5a9bb0e452a7aa20ac39af6c6e8327aceeea89fe",
+      "symbol": "MISCHA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x2e21aadac136f4676703a83add6723b0df828599",
+      "symbol": "CRUCIBLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0197632082b0648ea286a6dc4d63a4522c6a8198",
+      "symbol": "RADAR",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xcd652071efed60b5f4ad9fc99bed82faf46514e9",
+      "symbol": "AI",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x55c3509b68ec43e8437c04f595d6a743adbce24a",
+      "symbol": "MORE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd4d221a505ea7ce159b1c816196c4569fdef0a48",
+      "symbol": "STEPHANE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5247f1eb1b570ea606921184d7b9957c81bda998",
+      "symbol": "LILLY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe603f57e9b2ec438137a7927ba130eda5ab6d93d",
+      "symbol": "TOWER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3d245ad02122561bfb213bf94f2ca82b636ffda3",
+      "symbol": "STARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe066751be83a7adce4322c06a76a9548b964c498",
+      "symbol": "DOGFOOD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbd35d29e40b74a5934dfdec307036825a16e77e7",
+      "symbol": "CRA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x70c9bdf3d477777cf8a65c66f5f9375b0eeab267",
+      "symbol": "DUKE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc23c71e5fcfbf69f62e7fc7eb8917fcbe3eb3dbf",
+      "symbol": "BULL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3d24e46bea1c66209dff31652a8148cadeb51f0f",
+      "symbol": "MALARCHITE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x18161b2c462f9464cb5421fa43b429453bde5d07",
+      "symbol": "PERIMETER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe1eb0370383e3f314005e04a08c3f861f861feea",
+      "symbol": "FARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x77f310f0f045ff0cafb16821fd136c01bf366a5a",
+      "symbol": "GIZMO",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0084f37da0f5041318b024d0487af8a5122a7159",
+      "symbol": "USDG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x23a04fc2725dab579180f62e1fdd1f11eade39d1",
+      "symbol": "ARCSHIB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd6733c2aaa2420616aa61a112bc96953184b0982",
+      "symbol": "MONEYFRIEND",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x179dbcbc81fa03e2829bde4c3baf459bcee9a150",
+      "symbol": "LUNCH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1dade69aae616954097747d8e5d218c15c97094c",
+      "symbol": "RADAR",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc5a0c9b1f19810a4352bb802f4a472f6158a1780",
+      "symbol": "USDUC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xa1438cc9f78e5bb6df3bc2dc09a8e498eaf4c9d7",
+      "symbol": "ECOOL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x4ff9844db36c07b19d3177cac6500342c9b94316",
+      "symbol": "RACIST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x32b5491cbfcfee05467a1047a50750d35b9c7894",
+      "symbol": "HYPERBULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfd912a632084d2da46aadbce281e4732898dab8f",
+      "symbol": "ROPE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2864d8d603963ee31d383326032e815983f3cd39",
+      "symbol": "BLOP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc6707b5d212b1fcf24dfdc6322ac487a75a24471",
+      "symbol": "BTC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5512e0e64e5799d98c0d4822dddf58cc9def8843",
+      "symbol": "BALD",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xb3984112d2ff023ffb2845c157ce223add2f57a7",
+      "symbol": "RADAR",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x635bda8e52da875d2c1faa09fed1965613430b1f",
+      "symbol": "ARCN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6959b2dc75d11adc85a1cd23c77e6fb6118a1d18",
+      "symbol": "PRINTER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe08cd95a5527eae93c1cf7bb8bfc0a570be3abe4",
+      "symbol": "ARCDOG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x67bfc03a123092ac2493fbcba41a074704235519",
+      "symbol": "ARCONIC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf21f72c100fb2339c91f910569f654bbece087bf",
+      "symbol": "DOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1f2aae3befcdb877a4b5e5c6dd5fa19b2a8bb3ca",
+      "symbol": "ARCHERS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0982179d8b0780c446ef370d50b677862ffa55d6",
+      "symbol": "ARCHITECTS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3fa48a2234de3e65d81055f72ab00217803780b2",
+      "symbol": "DRIP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x931b614cd9906f09c1712f85d21e0600502b3757",
+      "symbol": "$BITS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa3c8864548d825aba676f60f376fb3634d815d8d",
+      "symbol": "STABLEMAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd821913114fbb506e12e6113b09744664d648a68",
+      "symbol": "NGEK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8d1d3a84a8ddb12eec96777ba4830627c3faa035",
+      "symbol": "SARCASM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcdeefaf3a7f2fefdf89d5a919b76345b0e434b19",
+      "symbol": "APA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x52808cd1f103bd421c7696eb4933e6fcdbf3e323",
+      "symbol": "USDUF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x82dadc2467e9744832f0f1c4bbb4478a5a128fea",
+      "symbol": "USDBEER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1820aeb63dc68f3c784a30e67f9159fa93642576",
+      "symbol": "DUKESCOUT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8613155ff713c13f6c177275af9bf195e69ded34",
+      "symbol": "CPLAY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x023064ceea8b6d91d4b41b964cd06aa075c71f99",
+      "symbol": "SUCCER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x62cba724c54b7105eb18fe3afd1df08dfcede8d1",
+      "symbol": "AFW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x12ff07fc913e6d14b225e70b3e63fd28a6c55b08",
+      "symbol": "JOTCHUA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc29b1ceaec373baaf001925fd3dc505360793f81",
+      "symbol": "JEREME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x08fad02f5a937201234265eff3b1a4f25326d341",
+      "symbol": "VIVIAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf8ef0b4f60230abe7b19d1f7bd0b1cc3ee9a124e",
+      "symbol": "MAXUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x23f8a0a08b6fa01f2b44da41c25811987be43693",
+      "symbol": "RADAR",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x06ee84e02d4906f62440eaaa4c3765453b0768c3",
+      "symbol": "AERUNTHR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x13b5db37117116180b0702b4c4c283c594127f62",
+      "symbol": "ARCROACH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8011aa92552a2a6ea8ab87e89bdd573a8dc1c604",
+      "symbol": "RADARDEX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdf0d7fded5aef66bded9ea9183d6ab0bc18089e3",
+      "symbol": "PUMP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1cc2b2b39620bf721230e80a83b996bdb74f8eed",
+      "symbol": "ARCDOG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x93e050c72074732f93754acd86ccff3c3f7ed432",
+      "symbol": "ETH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x131f6d3da385591c6cc6c2dadba5bdc31df72129",
+      "symbol": "SIDOOR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3b94f6a9ee3a6ea621a417b75203973023d5e00b",
+      "symbol": "CHI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x50db51d9532f24ed58ddb1b859bd4361efa35b3e",
+      "symbol": "ARCEGG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x64f41401354f33d6ba1c362d5e2f076667579580",
+      "symbol": "VAI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5952df292febb806be1605c7727547f6bc1c9f82",
+      "symbol": "CASHKID",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb82c7610d7af1212ab972b89fea5d006dd0b2cc9",
+      "symbol": "DOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf2b3a709e16164997841ff9c62fa70b590591cd6",
+      "symbol": "LAZY",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xf1cdcc46753ca712ce60f15b47838184cd7acea9",
+      "symbol": "SAME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf27c95ba1281dd2b3d31901575af1ac25e201454",
+      "symbol": "DEX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf94f23a12f2ae51c59a3b69079e6ac1409be2076",
+      "symbol": "CRA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xe271fe724812fb6724fd23ebc0e188889ce0cc6d",
+      "symbol": "GANG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc70b78a354b448fe8d08fd66692aeef74daf948b",
+      "symbol": "VT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0e2ad12630199c9b2522cf77b53dcfa0792eaabe",
+      "symbol": "ARROW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8590e10ffb3c2813d4699ac3c5bf241839b0c876",
+      "symbol": "LARRYSTINK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x24b5e785ce1507b7d2eb3f7705375d309aca7688",
+      "symbol": "MSFT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4eb6713c3b3ef2379dd1caf86aedf932d89a89d8",
+      "symbol": "TRILLION",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9354187082ade03f25a56b3cdace8c6c80fee6b6",
+      "symbol": "TEAMUSDC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc645ecc9dbd1055a1d7c824420639a4f70602709",
+      "symbol": "ARCUSDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8ea563274c8d37170136113e7e51064c5d176ad4",
+      "symbol": "RDR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4d673c4d0d3ce02793967a8b63f366347c5d83dd",
+      "symbol": "USDCERA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x41fba6b5aa38948121ed254629abe129ed47f0a6",
+      "symbol": "ARC5042",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x967a9d0f6aa0261a6bb4631322358eb491812e30",
+      "symbol": "STONKSHARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xabf57d8bfe5e03d6907bf030879903073cb4d773",
+      "symbol": "DPRK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x80a36576c83d300c4de1d447a8c9a572357f36e2",
+      "symbol": "NEKO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1dfea6446730bd6f0cac757cb8cc4a862a2b68d0",
+      "symbol": "440",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2a82d390053cb2f6e33c2eb2388d7bfd5c3c46fe",
+      "symbol": "FUMBLE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x37262ccee96696294bd72ebcfdc42329b5efbc24",
+      "symbol": "RADAR",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xab809561a7387a3355c92a4a0b55cb10edb38ee5",
+      "symbol": "MINARA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x97020e0373b4a560da6e9626f602b364a0b2d522",
+      "symbol": "FAZE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x06117a4b73e56427f19dd2af9d9c6459aff46607",
+      "symbol": "FOMO",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x5ed5b518c0c5a37576a2c86720c6b01b5097fe8a",
+      "symbol": "ARCSEA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x95a3ce45be9494ac0b345fdb5592bc20abd2bc57",
+      "symbol": "STABLECORP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8c555a340a74c8e2ad3aad6a384a0fcfea74bf9f",
+      "symbol": "KAIJU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x30e571a0fff62ac786c95f088c0cb968dca7a8cc",
+      "symbol": "RADR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x01a617bddd1065e7c68d65cf4c4e39897306ab64",
+      "symbol": "ROBIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x92542f64d5baedf715bc98f658a13ff46ff313e2",
+      "symbol": "NFA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc4323bf140a4864dc87bee78aea0aec956568d11",
+      "symbol": "BUTTCOIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x68b25b2d4613c3f30034c59226c6131880efd154",
+      "symbol": "COCOA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x8fe6f2f163d3b07431da16a5ec0c19996a1e7610",
+      "symbol": "STARCLINK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbfa78f9d9945da784f05597db068c51d665ff930",
+      "symbol": "CHAINMAIL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc4b4da4983232866deac68cff61601b625074400",
+      "symbol": "MICROGRANTS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4abb7ce67266b60ae82071ff90b5a0e788fdde68",
+      "symbol": "BBE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8c891a69cb60e26c0124c929118b55af58e6544c",
+      "symbol": "THUG LIFE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7ea3384f8c05c7555400c7fbb669472b6308c049",
+      "symbol": "ARCUS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xfa902168a707937c54ce94f175bafbd326c8c467",
+      "symbol": "SWAPPY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcfd2a07dad6970161e15d0010dded0f175601138",
+      "symbol": "CIPE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5df7ef13c0989925b4a9c5b3134f243435d6a3df",
+      "symbol": "COOL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x482c28b98c0982557588c4b7d2ef6ea94d376a84",
+      "symbol": "MARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xecade76b4d831d9e9e9bd4a294cff99ab656c173",
+      "symbol": "BANKAI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x25fcb9793f0c12defa0f7606e0863347d04c2cbd",
+      "symbol": "DBM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0f7c51a44c3925505424c4e6ed40dd50d7309d29",
+      "symbol": "BEANCAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x133bdb081530298befd7a66507094f3936909ba3",
+      "symbol": "BANKARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc838a662078b6e75909483e6abf07113c23d2383",
+      "symbol": "TROLLY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfd94d8bf88bf914b2f8d85b25c22c0a06a6cfebf",
+      "symbol": "PEG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x14a92311bd6a839c828d2b18d9fbaedc0f24d905",
+      "symbol": "FREEDOM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe7142a7e9799c72ef43350938fe2818f621ef11d",
+      "symbol": "OPTIMUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd9fa0f5318fe142d7ece0ef6eecc911c50cbfc50",
+      "symbol": "ARCAPU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdfe219fcd5cf0bdd6e2d1ac47cdbc620d04db046",
+      "symbol": "SIDEQUESTO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd10a2e4ef0952e27ecc7205008afd7b12b58a6f4",
+      "symbol": "SELL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbd78f79c1284e5db9e9f4e62624782cecd896bb5",
+      "symbol": "ARCDOG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3398150ea328aaeb883059a2fe619cc533497ecb",
+      "symbol": "ARCT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x63832e00119f8bc98f503876b86a1eed89434f93",
+      "symbol": "MISCHA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x16cdc83117efd5b4ba40599dfecdfad1ed71c27b",
+      "symbol": "SADGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe435e171d81e19dcbfce797f5e6aeb9f0619d41e",
+      "symbol": "ARCGANG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3c5509c85584cc51dd53dd84ec1e2a12bd42e8d8",
+      "symbol": "USDUC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0468956f3c065eb616fb8810af04e608a66d6ba3",
+      "symbol": "ARCLAUNCH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbe41d96b3e91890bb139812096349c79134cf04a",
+      "symbol": "FEDCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xefa2f43823bbad43587c43e9309772560077686b",
+      "symbol": "ARKCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc26db8772f8e1c2bb88c268ae900d449e2c4a583",
+      "symbol": "GCRX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1e00c2bb54bc212c0b5be610b5472a2516b215dc",
+      "symbol": "TOLLYWOOD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x723fce42a3045e07714665b40c4756818a12741c",
+      "symbol": "ASS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7b2f6b4b09896dccfa885dca19cd159ef56be797",
+      "symbol": "MURA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3e88e4277c57673e326f8c84356a99b500a295df",
+      "symbol": "ARCWAHL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0d5b2a6a8203198aa0bdaaccf9a2f895fb659f79",
+      "symbol": "CHEESEBURGER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x22f5e913c6a5a81da1068e7252f6437c599eaef0",
+      "symbol": "CHAIREMY",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc156e6948adcc3f966f6a33a69ba494169b8d4fd",
+      "symbol": "PROTON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x186dfee7b14a8d9707edc6d74fc9cc2ab1384ba3",
+      "symbol": "BARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xde40dcc73cb326455b28a37b5f46e2bffce4bad2",
+      "symbol": "PBJ",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x88ab35020850863df869daa797495b770bf73048",
+      "symbol": "WOMS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x92d8fe456b4032d3d77992c17ed70083106204cf",
+      "symbol": "FREG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x62ceda59462ec249e893102e4c0c7364235c6c51",
+      "symbol": "CRATIS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5616397171b749a132be836c520a36056eb00000",
+      "symbol": "GRANT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa1ce9d51cc52ac06dff34f46266e71147f3def19",
+      "symbol": "BIGMAC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5f7080e05401beae9916171623e7a38aba3a8d7c",
+      "symbol": "ZCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc17c325c02b65e35827ceed47c2ac581f45c251e",
+      "symbol": "GLOVE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc550b1dfe19bb2ccb99425503503cdb3320f87d2",
+      "symbol": "SECANT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x71d626b43f986520fb28e3f6e370bf283d6b887a",
+      "symbol": "SINE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb0ee59f11793a153c477c16a8d35207796308c33",
+      "symbol": "DYE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1b61fa683e047bcc2b9aa61c2d51e1429e99f016",
+      "symbol": "KIMI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x32a4ff0230b944fdda029f0f087bb5290de3c1c7",
+      "symbol": "QAA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb5b544f2cd31a145ebfd6b951c61d83da73d63a5",
+      "symbol": "AGTREX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x32f40b4a7fbf1d2041d6f19b59446c5a6b9d8fcb",
+      "symbol": "HERA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x83c9e52db874ad62491777e7a1f323ed52e4a11e",
+      "symbol": "DAMN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6c8de487e101c43053bfd02aaa6794e7451e2be4",
+      "symbol": "RUG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6936bb6aef901106a0b378e25567f9043b236079",
+      "symbol": "INDIANDEV",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3ab67d1f68534a104b56e7010d41d0ae07115cb2",
+      "symbol": "TRADING",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4e7b08406456cf3330f3cd66eb96897fa6fae7cf",
+      "symbol": "HAKES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4b1a3b46d7cf9a5098cd9d687d15ac14dbcb3bcd",
+      "symbol": "ARCHANGEL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x21952d3c2b56f634aec4e01198b1183ca976fe94",
+      "symbol": "ARCMAN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xa12c56bf31262ba9f0a99964bfbcf61d3c55cb72",
+      "symbol": "STABLECOIN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xa482c6574bf0a0f188754bb33cae4d84f08bd248",
+      "symbol": "OWFT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0df28a360c19ee887612e7bdd3608945237e804f",
+      "symbol": "SXYZ",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa4949abd99e121af9848301ee59b9a280f0b6943",
+      "symbol": "GME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc843f7c973f44a1d7001868cc2425c7a77186d14",
+      "symbol": "CLAWD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3eddfe9d56470cddfddd826034adbb1c0e7ad69e",
+      "symbol": "ARCADE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x5fe4bac9ab4bdf7f68dfe1f04e66cfafefcc7227",
+      "symbol": "SASHIMI",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x66bee7d214851b51f64362b951a2d8d0ffdd55da",
+      "symbol": "CHARLES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7518dae92bd622964668bcf60b24505e2cff5e81",
+      "symbol": "RETURN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa378e1601eb3ac5d0b15542ee380264d7a77aacf",
+      "symbol": "POET",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x51db1c9644f22d019ad4619ec51f892e7279697c",
+      "symbol": "KEYBOARD CAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x68cf97c57339ead3273d2bc99e4c5d2a866bab7f",
+      "symbol": "TAB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2a3a247ea30f6b2d871d0caebfda465cf4b58773",
+      "symbol": "EMPATH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4b2fd31fde513298c69c18c66964850e20ba2d01",
+      "symbol": "MINARAFUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc658bdf9c311238a97946b244bddcf5ab612250d",
+      "symbol": "LIMITLESS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcbac270d6db9c93d408d3e3f6e729d6f4146373f",
+      "symbol": "TOLLYBULL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7fb94e288f12f1fa685003d1a6a20b047aa24fdb",
+      "symbol": "FLY",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xdd38f314c6918dad2316e87d2347db8c59c511f1",
+      "symbol": "AKT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3998e90639d159cf358f66e03465e1b46c8804bf",
+      "symbol": "PEPE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x307bb0f18d63c4a6af7f38dbe3451c07a4b9766c",
+      "symbol": "BLUES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3ca4014bfa6afeae4696f2cf2d398472745b7d17",
+      "symbol": "NORCSM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2f6e2972f05f4630d4439b24b32fcee2fa1e630c",
+      "symbol": "ARCAI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3a6c9c78e69b936957b65311228cbde4e1834c98",
+      "symbol": "FWOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7996827522b8e2459bbc8f17e48abe0cb65076f8",
+      "symbol": "SYM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0e1890b24f8f33a67b2beae214fd3bc46978da34",
+      "symbol": "ARCHE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa53c20b8d4017aef7f8c2b662676b1a297030d50",
+      "symbol": "5ANDADREAM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x198a96927a82a11416d9149cab8535f94553ae66",
+      "symbol": "ARCSCAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbb3c6d027093b43faba329ff5b2d56deac4c640d",
+      "symbol": "ARCHIT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe3a8d57f3532fc53da4e0736fca41b08940c80ab",
+      "symbol": "PROTON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0de5ce20ca382c95b7054acfcf53afe9fa40066b",
+      "symbol": "ARC CHARITY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x676746965cb95f41116e463ee70c7291844db873",
+      "symbol": "MEOWSHI",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xad48d66623fb34492be106eed585b286aae4c7c1",
+      "symbol": "METATEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7c2a2b3505e1b5e7109b6b85aa097f91d36950ab",
+      "symbol": "ARCHY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xea83f950d92c82a0c81a1bdc447492b7e606cde0",
+      "symbol": "LOBSTER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1a76f647eb70fe0a319b49e9e055c400542460e7",
+      "symbol": "MONEY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8482c6290f07a9a454b50535a96e8a23e9ab5419",
+      "symbol": "ARCO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6a9ecfaefe546a646cb65f8e4bade305072933cd",
+      "symbol": "CREDITCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2a438aa3c84edbf54dff3ec01a52fc32ae73329a",
+      "symbol": "CASHCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8ccf8043a67a341f4277ea91c449c3770ecad7d1",
+      "symbol": "PEPE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x4d319afcb04cf13483dadc3d75d7d0d54d1b7fe3",
+      "symbol": "NITT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb5a3108b4331f35e4b2e77cf633c5465d7079398",
+      "symbol": "WINE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3efad92d3eba5b945da368869bf7372d903a55ec",
+      "symbol": "FAHHHHHH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe2983c75046c91f7c5d7e92503b459c27ca32d42",
+      "symbol": "MUSEGRAM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb549620fab17bc09b90c83d427ccec937aca8919",
+      "symbol": "ARCASHCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x344c497fd885d4b0394f9d1709526ee266bb0794",
+      "symbol": "METATEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x049812527acbc5403d6a287ec6f6bfbc8bdcd0e9",
+      "symbol": "TKONG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb15890ce08d377e40aeeb8b2be926f0ba93bdca9",
+      "symbol": "ALERT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2cc4067a7ed6bd0f02a18ff7125f85151cca510a",
+      "symbol": "ARCHER",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xd8cf720da5bf64d995ddc9c76ae868da4e4455f2",
+      "symbol": "SHARP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe497f1de41d53e2672e2aaee4014dd616a2b3e45",
+      "symbol": "XAI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x85e3dc362722da45a86f330c956b2d6adbfb4d8f",
+      "symbol": "ARCFUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd0f5c656c4dfc89b367d2d89e7367fbdc57a85ae",
+      "symbol": "SURGED",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x397079a69ef4179e99d4a22aa0d6ba72b9ff1f9b",
+      "symbol": "NOAHARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x572f2121036cc436a85092634754986357db40de",
+      "symbol": "KCH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x29b2a1baa34f5916530bf5eaa7b063d0e83e5b32",
+      "symbol": "RESPECT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc3f062fac41f05fd498837ca078d40e78d39d9b9",
+      "symbol": "TCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9ee148aef12b1e09ca4d5bbcb9943cf4f12de1ba",
+      "symbol": "VAULT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x494874062587c93b230d10e9c89a88ca24603795",
+      "symbol": "S1LK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2ff2e0adb69befcc4d0b8c3c888c73f4102a2b9d",
+      "symbol": "LAMA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd4e824565350c6ce04bf91ed793ab34b8db73078",
+      "symbol": "ARCER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x29d6f6fe15c8fc72c6000d3a4479c398151c600d",
+      "symbol": "ARCA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x514213f55ff74662d1796a6be3fefdb7c1ca328c",
+      "symbol": "AWOLF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x116667ad1f52a2bdbd1e305836bd93c20fd5909d",
+      "symbol": "WALLET",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x878ebbed706cf2a25a0d80958f15500bd0008e7f",
+      "symbol": "BIRDIE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x9b041badff70f255ada71af10cb61fee4f42cd2f",
+      "symbol": "1",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x11bc568ca48e5195b305c562e07733dcbaa7c7aa",
+      "symbol": "PEGCOIN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x2690ec24dff609d07234c56067e147e3a9e0ec0f",
+      "symbol": "PARLEY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x33f245ca756c43d793a27e401ad44e56163cf844",
+      "symbol": "PEGCOIN",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x146d7d45c8d59f0f5167cf2ba674277e44e9faba",
+      "symbol": "DEPEG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x346f48deaaea126fa326ca52c2c73283509ce6d0",
+      "symbol": "BULL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x812f44ac73bec6174055358aca555f3107c7b451",
+      "symbol": "ARCEUS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xe0e3a6a636ece8b21c243df9f658391d57f23a34",
+      "symbol": "C",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x777ce03f8aa629154e60b056c0e33ca22e0839fb",
+      "symbol": "ALLARE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd48eaef9847e7ffac161d846ac8a76d687c4edaa",
+      "symbol": "GIZMO",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc4a78a2c388efc6c583833b0f5da08b2ba8720bf",
+      "symbol": "ARCHY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x250015532a0d6c57fd22d263e128ad5e933e6b14",
+      "symbol": "BIFS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc56e4f74e6d5537c57d35367a72b755ee388f900",
+      "symbol": "SCOUT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x39277dee03cc8a10324b9998ccb21e106c9decf8",
+      "symbol": "BRETT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0ec5d3652290cd3c30b157f9cc1f2f6366f0f4bc",
+      "symbol": "TEST",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x9a2265d05ac8950e644288471bfa52f1ebbb1257",
+      "symbol": "HEYYO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf81d489853a47f0ac73279248f0601b75f88f00d",
+      "symbol": "BEAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8f7e94eae6fb5b69b08536dd5737268799fdae9d",
+      "symbol": "STEVE",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x98489bd1dfadf52cfc99cd17a2f04e507e40f490",
+      "symbol": "BARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0a77a5f61ddd2bae7549e805e7e563842034cf5c",
+      "symbol": "ARCDOG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x135d05f7c5aa1a2f1e52512776b7bdfb563e3b4d",
+      "symbol": "CRCL",
+      "reason": "Previously excluded"
+    },
+    {
+      "address": "0x1557a4aa4d3c85f6d861d67199696abac4d1e6bb",
+      "symbol": "ARCHITECT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x58dfc633d9373310e9929c933ff3eda156c76038",
+      "symbol": "USD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2d4c3d6e97aa6343e0552557a36d6f41d94e3241",
+      "symbol": "UBI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4b6b9edc43f1c001ada996415dd4709eb03f0dc8",
+      "symbol": "ARCMAN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x531261d20f8748e724aa285e01cb51832b9256bd",
+      "symbol": "PEGCOIN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x52b9091c6f62a8d76146e7f8157cd2fb21889ef7",
+      "symbol": "PANCHU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x74d29953fb70466067433d5d56f13ce60b9ab28e",
+      "symbol": "ADOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xedca283c24e773ad5aefe43188ed7fcc7d401d2f",
+      "symbol": "ADOG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x67d6750068cbedb0aa9824818f2535589ce08cfb",
+      "symbol": "POS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0404fd27615d8d43d3250250ea586673b124a299",
+      "symbol": "TILCAYO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x12aa70c78deed9be30f22195f00861de42acb600",
+      "symbol": "UNSTABLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf33ccb1a9455448134878e260efc4f12a2e908fb",
+      "symbol": "PINLINE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x119d33b680b40ac8454c99acae24e8f17441b0a7",
+      "symbol": "HRBR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x56ef281bade941bf77988a19df8a97f8ffa442c5",
+      "symbol": "ROUND",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x60318b2be86f71f5a0d4f5c30abd03f7219e4b06",
+      "symbol": "STABLE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xec8b4f866b51242ee17d34962b8e988cb28a5dfb",
+      "symbol": "OMNI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8b2cefcada3daebc5f3bef3fcce320dfc1d9791f",
+      "symbol": "USDCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5f8825957b0795d714914d92244bcfc58abe320a",
+      "symbol": "TARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1d8c4f036b80f705571cb2f05c1a9bdc3f53620a",
+      "symbol": "DARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x705f1158753cc6d1f8cf048f43d6e03cfe6bba03",
+      "symbol": "KOON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf708366b29582b2cb48e1d25d0bab442a9b1b0a7",
+      "symbol": "HRBR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x660f1c1eb18067ee86163bc043698356e35437b6",
+      "symbol": "ROUND",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x82cfd9906e994e51bc0dc3a92e8937103421871b",
+      "symbol": "TENDREN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xfc9816f377a854a25786f1cfdc8834f124995c6f",
+      "symbol": "STABLECAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x356d6137bde83a8454964d91da5df75c3bad57f5",
+      "symbol": "ARCANE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb891838adee3c9fb15f8d588d3d20b062dde1ef1",
+      "symbol": "DIVIDENDS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xb0dadd4d6c9cfc69c5bb4f30141ddeec01fe4d6e",
+      "symbol": "USDC PUMPKIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdba9dd8f68ba07d4929902d4f0e8224ec6e5a7b1",
+      "symbol": "BINU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa58788878eaceec66357e26ae93c8bf06d345abb",
+      "symbol": "MALACHITE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3e9e7fa0aed5eeb78e780b15fb46bf97cce734be",
+      "symbol": "PLANE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x022359eec7e5e2709b5e5bcb84a1e166cfc50ddb",
+      "symbol": "ORIGIN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3c21d1cdd220d142314aee4b77e304a982974e6d",
+      "symbol": "ARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3ebd3e80767a2ce4cae1ad55739931005494305b",
+      "symbol": "LARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcb8a342ddb127297439a4c491368f8492f85711d",
+      "symbol": "MMM",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x1200778d58247793181caefc56d6e51ddc846c00",
+      "symbol": "ARCAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x2a663ac1e1099be0e5b167dda138393af4e71d7a",
+      "symbol": "CHUD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf36509182494055052bf9ba48a4b548e09cc128b",
+      "symbol": "LAARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x99e6f442b82b463585ebb2eafb6a70874e85ae67",
+      "symbol": "CAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8f7931ce25e4987f20843e6858acc24ccfed926f",
+      "symbol": "USDUC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3aabac35f08e38312e39a3090a236af7ce63d38c",
+      "symbol": "ARCLIFE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x735d08568f6ebfb474cd271fe59b404b21985455",
+      "symbol": "ARCHITECTS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xd2be707c9cbf5a3b446a56d16939193faa4d61f1",
+      "symbol": "STABLE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3e2ca297c0fae7d134ca30cb60611c8f0243404f",
+      "symbol": "ATLAS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x1a1f7a18048dd0ae005f3e43c6093fd2a3c6d45b",
+      "symbol": "ARCMONIK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x15deac1d8cd045823e63cc9eeda367f420992c68",
+      "symbol": "GVC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd2a576a512e9f0d8a179e3c2aa7c5a1cd1eb5103",
+      "symbol": "DIC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x1aff4b87cd9f5be152d62a25766f74bcc86fa878",
+      "symbol": "MUSEBOOK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbe12857e55551ed83629b3747ebeba37ac83b39d",
+      "symbol": "APAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9c69a66e814198a4bf60b9e6712f06fa22001600",
+      "symbol": "BUILDOG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xd038f776997876f9d14a2d4593024f696f262dbe",
+      "symbol": "DEGEN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x761f19e72e1aaa4788aaabf81d8838563e465a58",
+      "symbol": "5042.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x52303c846f1285fe48cfc44cbe5cda11e7801b82",
+      "symbol": "FOMO",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x69b1a2a512c0685de61949adc806732ecf2cb013",
+      "symbol": "MERCOIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7b21a62ceb2ee3617bb55d7c9c10f5b8f29aad2f",
+      "symbol": "GATOR",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0ec2e715eafa380aa9f2013182fa635f9f8c1999",
+      "symbol": "REPLYGUY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf06f6926645a1d686edbb56a76f281e2420706f3",
+      "symbol": "MIM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x16fd497f17f6998b928274334f66a3d19da2c9ff",
+      "symbol": "PLAS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3e012919bfdb47fc6a68101bef7467afaddf722f",
+      "symbol": "STABLECOIN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x7ca99101d39a3ff52eb440b2f19c5b5cdb4a0087",
+      "symbol": "SUSHI",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0bd6d200fbada7472e9c27e0a65d2a264ce9c575",
+      "symbol": "SINU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x058041562568b4ac662a25509727cf169bf13c3a",
+      "symbol": "CDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1ef665603156d8f894bad5b5cda2c1146401188c",
+      "symbol": "JEREMY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcd30dcdf3039665fcf3f0c7866acc2dcd7fbbf3e",
+      "symbol": "TEST",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x805e9319891c16091264257120d9938c883e2ce6",
+      "symbol": "ARCLAW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcaf7d1d1fc8334640932cc8af5fb7bc4c1c1a898",
+      "symbol": "ROGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa06a03b785a4ed51ce7c4dfe7cea2ec0180f64f4",
+      "symbol": "BUBBINS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xefec9e08f1f61b93d0e07f3d0775c1470f895ed6",
+      "symbol": "DUCKSTAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x04e8ea12ed7d83b26bcb193acccaffcbef6796cd",
+      "symbol": "DUKE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xfc50c48615cab111665bac8eb439cfb58869090b",
+      "symbol": "💙",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc9db4eb9f2cacefd7ca39753d66ccb7502f20281",
+      "symbol": "JERUMY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xad6eb9dd95d255d82e82534ff78681efb987b500",
+      "symbol": "CCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfe6a24e1d6ca24c2e3d2ec969fd347c8f69ede7f",
+      "symbol": "AI",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xeba37ec42467f4e5108772e1c9fb1747ffdc2df0",
+      "symbol": "AROS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xb11ca2b31d7c0924134946037637e9eff2f29b21",
+      "symbol": "DAYONE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd042ff4df0c3d76267694d06bf654356b885fc89",
+      "symbol": "ARCCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3eadfc08a34050c108a776bdeb496a34527de816",
+      "symbol": "DIGITAL DOLLAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xccdd0f708e47cc13398ac57d0c53d7fe1c000536",
+      "symbol": "ARCHER",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x0b00e48615a8e9726e3d81a6949c4dd4f4ad0f5c",
+      "symbol": "NINJACAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x743bdb829ee0fad2d340af814e50c96f59cb3b43",
+      "symbol": "ARCATT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6de0323c4bf764849df01a82e307c24dda18c6cf",
+      "symbol": "BBASRUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4add7a44a968555f4d1df388964b0efd9314a594",
+      "symbol": "BB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x279ef68c1d33c60cec2172e55ed08e603a558e87",
+      "symbol": "ARCHES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbf3608df939272a79ea313d63f263cf234846aea",
+      "symbol": "ARC DOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb411c83eb14fc7b88dbffe451030f72ec9acee97",
+      "symbol": "⭕️",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x66d4cdb2a90b5b943ff01377e01293e74301a91e",
+      "symbol": "MTK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd8080ca202d5bd83f3b954f60491e90660f95844",
+      "symbol": "BITS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xe37fd579bd2fea3a14d262c9be482e9f424a0f96",
+      "symbol": "ARCRAIDERS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x44797e2a40845e1a3f9f53e12a61e5a7380e4c5f",
+      "symbol": "STONKS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xadb2b630110bdf2d425570e38bb7a76306f7bbbb",
+      "symbol": "BIG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x425e9d7ac60ceef5b78ab3e200004d6ea5d0ea43",
+      "symbol": "JEREMY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3fec4fae7c70ee8edb173ab481219aec6030072f",
+      "symbol": "BLUECHIP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1dcf7edef9c69f9b5279cbb439283e32d6b338ed",
+      "symbol": "MONEY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x682d6909051986cdd702a4ff169a837d447fe74b",
+      "symbol": "AROS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x59a54e8bbbab94df2fd4d98c4f10918f68603937",
+      "symbol": "Π",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x16f73c8b016e8658dc6516d8b406ce3dd8c78a6a",
+      "symbol": "POPCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3ecbc884ff356bd791a790161e0b8cb8f847cb8c",
+      "symbol": "MALACHITE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x040e2177ea11be0a493e3f4b2ca6e28045c362b0",
+      "symbol": "ARCTOBER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc31742820709ffefa53915bdd6e10a2d51cdd89a",
+      "symbol": "ARCMAN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc1873f198588ad790a74799ea351f73a129af052",
+      "symbol": "JOAN",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x307c13431d0a360fecbbf596b890c9b45593607f",
+      "symbol": "REMUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc6c2e4bb4811f86512eb5c21d5b2c3b13ba76c35",
+      "symbol": "ARC人生",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x375f34f0ad62357e073d88c14a775959bde8dc4a",
+      "symbol": "WIF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbec5e368bf8f254ff28c5cb088e16bb11ea18860",
+      "symbol": "FARCCOIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6057e65329d932adb92b6dedca3a74cb31a6b5c2",
+      "symbol": "ASTEROID",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfe2db9fc9e7212899a84b1f4c90b369e687c695f",
+      "symbol": "TRIPLEA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa4000e565d81a5892b9723886165f816b6c393ad",
+      "symbol": "CRCL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xf8bba4d836a5e128c795513638d061822d7774c4",
+      "symbol": "SHREEC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdfcf8be96fc8f26bcd5091ede949416b909ed291",
+      "symbol": "ARCHEEMS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xda2d51c94ee6df4e15c4369721e7aa05fcef10ad",
+      "symbol": "MEME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1d49dc85317027453f48acfee676d580131f1b1f",
+      "symbol": "ARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xdb7c60e6773c321a7f6562273f3ffa79ddf8e465",
+      "symbol": "RWFF",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf6fd57863c5ee3338ad888381117ceac3d1dc59e",
+      "symbol": "FLORK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9a49122457770456d74a5847de466c72bfe52d20",
+      "symbol": "CIRCLECAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x230f7e52ddc0f3b7574bb8c2ce136303c7ec0139",
+      "symbol": "USDCBULL1",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x559c8521a6a53cdfb12bf2f5154f7ed8033a8307",
+      "symbol": "STABLEGUY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xabda588a11c721348df6cd7f63f0880bf5558c26",
+      "symbol": "噜噜",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3f36a5d88ab5b94b62ed0694228ae6ac6f5749c7",
+      "symbol": "TEST",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x7cb963e490e7ccb0792c4b291d49d32609ee694c",
+      "symbol": "CASHTAGS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe9b0675821ee535307585bd3051ff436724c6d99",
+      "symbol": "DYORSWAP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa3c5d7b98938be2d8d0a7d73dc9a8837f263f197",
+      "symbol": "WOJAK",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xb6bea2fdd78819244f8e87350e50a5259eab5789",
+      "symbol": "COOL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xb3f1a0decc3864f19941eadb446cb8684db4edb0",
+      "symbol": "TEOFTI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6c64b9a45bd4e36846dbee75746685ee098a6826",
+      "symbol": "RUBIE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3d9a6618f3a9a8fe9302a01114e16ffa7f9d14a2",
+      "symbol": "MALACAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x564c764d4eeee122a0dd404e3db1fd9a0d2c3e36",
+      "symbol": "SHIB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x458880a2773508c6b9e6e1c777baa563fe30c3b4",
+      "symbol": "CASHDOG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf8767d5e0976782a4cd9410e688f1383abc1cc70",
+      "symbol": "ARCBURN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xde9be783f434bdd66310ac1f660e6edcb6b3037c",
+      "symbol": "DAMNGIRL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x926de4c9bd5de8836d65050a1e1607ef66074d76",
+      "symbol": "1",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xff59e8d10e6ca39847f624cec8e32fc8d7261310",
+      "symbol": "CIRCLEINTERNETGROUP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb5d9ef7268ff8629e76d902c7b47f3591a167e7a",
+      "symbol": "USOP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc6de3b714e3a16d23ce0f8a42bdb847b460110ad",
+      "symbol": "DABCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x41d0848f24beb0b616252756f525741e11dc8dee",
+      "symbol": "CIRBTC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9bb2d242a33ad8a55225353397ddd143e7e1fadd",
+      "symbol": "RECIBO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x23d62d05ca8d66b7e3de7330b43830c6c0025c27",
+      "symbol": "ARCHITECTS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x99030dc414659a00fdb6ebb612d234d6c8dfd47e",
+      "symbol": "ARCHERS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdf5e25323fc2663d09e4d4445893faf0e471db2c",
+      "symbol": "ELON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc4fde8288601012558fe8ba1f0aeb1be69d2c406",
+      "symbol": "ARCDOGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x468763f436493994f0468ec4f765900b4d6de898",
+      "symbol": "CHAMELEON",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xee6305b788f1e6d2458e820c7edb41965717af89",
+      "symbol": "$ARCY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1ede976b2f0d31f7eee0d7f9821bb8d7028cc689",
+      "symbol": "ARCPREDICT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8013ee36746b5363878325dd0565e8985dd8a441",
+      "symbol": "JARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd975556ce93dffc571d59862b0d7290d5dc77e89",
+      "symbol": "ASTEROID",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4db2097f3d60e7774c39f927f64a88a9d5dc703b",
+      "symbol": "鲲",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb0c21d9d4f2b378921595160cd0ea42e7cc2ccf7",
+      "symbol": "奶龙",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xef758f8d3ba1215ab7935fe4827c970b9d7ad5a2",
+      "symbol": "ARCAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x265f6ace42b443fe89f1be696d1053a4a72ea24c",
+      "symbol": "ARCPAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5fd817401b79af004d249630e230c8c6aa5210ad",
+      "symbol": "WWR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x129fe95d369d9b4dec68b5f8d5fee563ce4ba2bf",
+      "symbol": "NARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xec3abb114bd2aaab77dfc25c7ee00f8e69b8a854",
+      "symbol": "ARDOG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xf15bf3cfdcd938fbc8ffd4d8261aa6352c1d2188",
+      "symbol": "BOA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x821bf5608c998f1fa451eab8cc4b5f19ba71f780",
+      "symbol": "ARDOG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xe8c501760a93fed648454d5a3aa108d850b4a6ba",
+      "symbol": "ARCOCK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd0372280ff35ba4172a9e560cc5fbd3353b1cdf0",
+      "symbol": "AROS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x140ec620ecc727f8729a99ed1f52e25acbfa90bd",
+      "symbol": "BUILD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x79930e814cb4671fc4ee93ce22c5bb182487b4e5",
+      "symbol": "GAMESTOP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb3a124b5c11c7a58219c2d205308b5bea75c8d00",
+      "symbol": "TRUMP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x697e1acea113190a034509f3e7787d1c1af39db0",
+      "symbol": "ARCCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x421e10372cff3b5e503c8203cd72ae282b73db1e",
+      "symbol": "FROG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xff5415b471a5c09f5ba834b29d29e445b60210ad",
+      "symbol": "WOFI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3db01c4063e9bc397381487f0d31eb62029e3480",
+      "symbol": "DUOLINGO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9bc1e121295a670def3fdd0ea9fabd3056cf10ad",
+      "symbol": "URANUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x932aecdc1917c6de95ded07f7f9a5ec87ee421ea",
+      "symbol": "BANCOR",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x77bbb77b7c1088f0f5ec7b96f4f6286a442f0a7b",
+      "symbol": "5042",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x6be0ff94ff99d87581c080ea04778fcd65493cce",
+      "symbol": "MAGIC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3904d1ae70b237ffe875b7e46a1c437f7d25b1b9",
+      "symbol": "USELESS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb6e8934c04ccdce0c38235b21b35ba4b218f10ad",
+      "symbol": "OPTIMUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x25f889a423b3bf26a5854335e8587f77d7dd10ad",
+      "symbol": "MOONCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x854bfab07d5e5d4c4149f22bfffafc318d3bd423",
+      "symbol": "XCOIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe528c6f21435db24b2290c1d32e51fa5170310ad",
+      "symbol": "JUGGERNAUT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x3ebec6abe302df5ce2768b424f4d219bb897d4da",
+      "symbol": "GAMES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x61ee9ad07fc6ec42e471d56b15a43cf4808410ad",
+      "symbol": "LINKEDINU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x77f2d90153ee8c52dcf7b9517914f7b0cb6d80e3",
+      "symbol": "ARCMEME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x869e9932326e78f5e9464c49d838dc4f49eba921",
+      "symbol": "BTCB2B",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x70505e34eb56ca0374dc72b1128a8e28d81ea2b5",
+      "symbol": "CRAB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9690a1a4087fa2563307b5f45e8b64658e959565",
+      "symbol": "CHEEMS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xddf682479f4f537d2dcd49404573a524edc2ecba",
+      "symbol": "TEST",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x9e82ebd2b0a9fa1220dfc9c4c412e0c97d7110ad",
+      "symbol": "DAVE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x16c71a1c2b0308536781006c2495dfcc8bbd10ad",
+      "symbol": "JUDGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2ae341df398baf098a0d2dfafcf6589e5fbf0864",
+      "symbol": "CATZILLA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc2f3a9a968a7b657a5ff86e52c5abaac396af789",
+      "symbol": "CASH",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xf96287f9cfe7423338b0cbe35085e5ff4bc6fa2d",
+      "symbol": "MAC622",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xba282171d23ce99a6d5c7aa8201174a0a2561de7",
+      "symbol": "FLOW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd40ca0e42463aedf96ca26c9b48f13f7296623f4",
+      "symbol": "BBUTTER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x95bc48bcf3779400059348c88125d100ba32ab82",
+      "symbol": "CINU",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x61f38f388e734b2048cdca170198ddcc34c7fdc1",
+      "symbol": "KLEOS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa1c89daee9f917ecb730e7e25ff1a296de8a3992",
+      "symbol": "AIRP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6b3cbae6ab910e4dbaeb1cabb7b7327cc32544b4",
+      "symbol": "ARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x412b26e9b4954379e470669a0fde8bb80cc5d72b",
+      "symbol": "STAMFORD",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x1c2b09e598148dbaf847d946e79a3c22dfd0f5ab",
+      "symbol": "ARCCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1f9498016389243b97ab306f4c46c44f42df2df6",
+      "symbol": "MINARA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xf23770433b6aa1b55e32561756b7a7d2f0844fff",
+      "symbol": "SHIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x875241f4c80af4b00ef99b92f41156be9b8c0fff",
+      "symbol": "DEM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7e741bf5be426f110f1ec8cee63415242629290a",
+      "symbol": "ONMI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa89694be8e6dfc95af111f66aeab7a1bd42372f6",
+      "symbol": "ARCANINE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x182ce06fd44c296bf76c842f1a22be260fa2caaf",
+      "symbol": "BTC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x74ec6710222ad6713347148b6e2f8bb5d2ce2fff",
+      "symbol": "INTIME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfa55f777cd72dc9d7d3fb51cafc336d9efaff903",
+      "symbol": "GENIUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc0ec95007cb77e4a580f06dfe2c812c459c3c7cd",
+      "symbol": "ARCGUY",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x05602551aa1ac3ab0ecfdd92bfbc3e1d05d4fc39",
+      "symbol": "LAZY",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xad61e447d64f556baccc72bc73473444be3afa68",
+      "symbol": "CINU",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x19781c02e9e5ac1e27727ff305c056221baad80b",
+      "symbol": "BULL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xad3961c48aa9726986a28b20fdc8b4e1aa36f96d",
+      "symbol": "AAI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2fa19109b72411ac66c949186cdbb6512425f0c4",
+      "symbol": "ACAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x75cd050e44be6b47a520b644b31121783e512abc",
+      "symbol": "CAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x240ffc4b197e2a79e558ad1bafa1b308103e5e16",
+      "symbol": "TRUST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0502ed2340258f379e20fceab0fe49f4a889c722",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x31abe872e0e7e0ac6c3e3e021029b31a1cd7f590",
+      "symbol": "AMD",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x1e3a12a10127ff83b61ffe3e5d5c76e34ab81852",
+      "symbol": "NUTS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0740d1bd8988784d7625033d2bdf968a9401ae7a",
+      "symbol": "TWOSIDES",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2eadcb15435eb44e04038094eeb572e0fdc290dd",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0fb6e81e006cc8a070acac03a0d5772c9fa5f034",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1a2d31424f35f35ec2051b7754edb727ea57f954",
+      "symbol": "META",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x249f3b88c9777b88e92ae641b5c638ecc07f89be",
+      "symbol": "GATSBY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x174a1804ca533bfdd310b98db54c33b7d59058fd",
+      "symbol": "CATS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1b9583d3c2be2da5ffd8308e830c042243442236",
+      "symbol": "TOKENIZATION",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x31a97d54dbdb9e515c35491c62cae4c8f2ab8546",
+      "symbol": "PONSPREE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x129cc2003f2c717987e251883857461827ed50dd",
+      "symbol": "001",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x07446769ae269e7760b4a71493346d90372331e0",
+      "symbol": "XDOGS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x03a21d6fb79233f451f13982ba30b9523da0c460",
+      "symbol": "ANTISUYO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x26cb7d95650fc717c0a2acb45cb14feb9e82b503",
+      "symbol": "FOMOPAID",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0bf368a38114c443add73eaa383a9eabc7370ab3",
+      "symbol": "CATLOSS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x257f4fec1ef254a7dbe3d53f28db14904de0f803",
+      "symbol": "R.U.G.",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0870adad29d4ba9140b0ff4c236fb251bc416348",
+      "symbol": "ZCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1e0ebae8c061ba764c708869276fba56ec8b7b7b",
+      "symbol": "WSOS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x12127887d0a87fb749d6baf237df9b206d8ab9ba",
+      "symbol": "IGNR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x095be31fe8f013dc00562ac05bdf4219f193420a",
+      "symbol": "FOMOX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x18fa10ef20f2902e3bb1f4ab0f2976f2c7b5f8fb",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1abbe3b732b9fdb683a279c7f5ea5d5461167f59",
+      "symbol": "PAIDCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2e4d256f8e5f03c749e1ffb433d92c2351a68737",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x34781edc3a556d58d9b1a6f90f53216e0a832e8c",
+      "symbol": "BACK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x28d4a98df94c5a40df508a4f846c0534061c9855",
+      "symbol": "34%",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x016b0e69de4eed265d4eaccba87e2a322810878e",
+      "symbol": "DIVIDENDS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x2789c93af721df1b4b3fe45045e4c1163f57da5f",
+      "symbol": "INUVATION",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x082232241855335595e160b7339bb22fb3ef8955",
+      "symbol": "UBER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x10945082855ff098945881b9c4ba4d9b88e736c5",
+      "symbol": "EFUEL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x128c42f5142c4b71a60209e2f2aba24750a10bec",
+      "symbol": "SKELLY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x12d2214cd37bc9a6c95366baf7bd04eb02090ea3",
+      "symbol": "MOUSE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0756eb965fb04169cf8d7a53ca6423060309d522",
+      "symbol": "DUKE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x10b50ccca6e86ea56a10cdff3ce404a4b5641eaf",
+      "symbol": "BLUEY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x002eb644b180acb7f082513c648947b990fc4d9e",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x18ed2037a541732d8d3a10a9fa06e2dbe928672d",
+      "symbol": "NINJA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0c9c22094a5f7f298d7c6eb26e9ec02f2fb502a6",
+      "symbol": "EARNT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2ba1dcb50b1f0554ee97ed34835676eeaa1a9394",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x317560db9427d330e11c38a47e834fceb3ded158",
+      "symbol": "SOLANA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x11e9e5d1c76ece69423c6740b3266769e2937c10",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2b26a280d1917bd2c7a3876d5fd6d503f70a1a02",
+      "symbol": "GRIFT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x33ad629cb8a0bb422e8bf3839276b345fe5b996c",
+      "symbol": "$AURA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0162ebf841c9c18cfcad066bc53b36c74909c960",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x30f2fccf4cf41ee15e1ba14a438dcaabec863e73",
+      "symbol": "RINGO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x26a26072ad1585ac4bc9e6e51e65e0889af24cc9",
+      "symbol": "BEAST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2bf0f91b67751def54a80dd9721b4a27dd280065",
+      "symbol": "CHAMELEON",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x24b6b811c897099cef4ecfc034088983e89f3ed1",
+      "symbol": "GGWP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x344eb86e1201caef32262b209540bdec0b48c99d",
+      "symbol": "SOCIAL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1ce834cc1cad1597e382a6205ed06e4024f51013",
+      "symbol": "SEND",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x094e8c6a75b903811799830bafd58795fe1d1c6f",
+      "symbol": "TRADE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x320746ded87297f91b55c4968dc0a409b351ca96",
+      "symbol": "HANDLE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0b32f0085e546d106d55970768f64ba4c329e88d",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1b8c022aa175293f07d14fc8268a4ba9dcf229e9",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2abdb9b3b1d1fc8c7c5b62a15ad43ff9a0c6ac81",
+      "symbol": "SHIT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1385f0d898472c980b0c5c6ac124f35dfdc7a6da",
+      "symbol": "MFEED",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x17e27129a792f0cc40349dca68982e84a9dbd190",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x226e977093cdfb0a35f913daf100d8ab24a2a9bb",
+      "symbol": "FLOW",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1346eeb920e79ab96c62bdc5fdf9ac98b6bc9cfc",
+      "symbol": "CHROME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0703b2b38b8e306c27efccf484bcf68144b1f180",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0c1f03b11f47c00f13224d7cdd93ccfec6b090fd",
+      "symbol": "$PLATYPUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x078e15f3943b823cadffb22adb37e0070c8f56fc",
+      "symbol": "WOFI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x16127e60d9dd4e39ce110b3d119aa11ab5b60c97",
+      "symbol": "TREND",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x14dca234646242c4dd58e7bd667d2dc52ecb94be",
+      "symbol": "MPAID",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2267a18421925e82e65add37c455cdee843323eb",
+      "symbol": "MEMEFIGHTER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0e8f92bcbb75b87ca16834774eaf28022efa7573",
+      "symbol": "DEV",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x12c58a8733045f201fdbe22477090c8c457f194d",
+      "symbol": "BLUEY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x067e47dc637ff731c9717af7e7d545fb7eaae7f2",
+      "symbol": "GIFTS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x18ccbd08553c508cf57660f5bd3820cf793a3578",
+      "symbol": "FLY",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x153a803b6335fb4a76872bb0a33a6c2238294dea",
+      "symbol": "HEY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0665a094ec8d0ac949c7f6e7aac41edec3fdac2c",
+      "symbol": "TRUMP2",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2755da8c3460d72df9049433283aeb17f40b0d35",
+      "symbol": "ROGE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2215e64a9bdc4f2da66b51d3e56abc21ebb84b42",
+      "symbol": "TILCAYO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x198d76750f9948ebdb71c7651703fa0ef858191f",
+      "symbol": "HERMES",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x2f85952d9650ed7d3e42ced203c9fedfb66a989f",
+      "symbol": "MISSED",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1c3d5d1ffb0cb13018c0b810c5d410043e87414e",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x221ef6b795e8645505efa1d07763f7df08b5b69e",
+      "symbol": "LUP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x515b8bf0f93c323dbfb74ff3248dccfd4b734f1f",
+      "symbol": "SENDORS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe8a2de7f78e4fdc862467f60f5abb3a2512d3b2a",
+      "symbol": "SCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x34394359a9419d59bd4687eb54b63a67f5140d04",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1d2e5109843aef2fbabd0e0265a366b846523d16",
+      "symbol": "PC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1eba24e267c8f22438de3bd548f62fc51363224e",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x326b59c7c1503487b22209ffde9303911cedab49",
+      "symbol": "DERP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0962e1d54ba1526ad9486c507200099673c30399",
+      "symbol": "LAB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3781835ca61f4e36e3ede919a71c4aa8170a1420",
+      "symbol": "SHIBA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x231d4375e86302281dced668f447e3f784481f5f",
+      "symbol": "WALLET",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1351d7db52dd26afa8881914ab3deebeefbdd8a0",
+      "symbol": "CANDLEBOY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0926563ac641f7bbf4a71a7e9bad33e5408e3e66",
+      "symbol": "GTA IV",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x01f7d3c232bd736f557dc7017a1a7a24bf11b390",
+      "symbol": "UNC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2f308e8644bba38faa12c43a8ab1c04537ce1a48",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2f26b65ad8bfd46d8151a045712057a9213a8926",
+      "symbol": "APM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1107b9f274fe4da0d31b806d120d96ea9843d1e9",
+      "symbol": "MEME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x081c74318a08f5759e335d08bf4661c2f405d4f6",
+      "symbol": "TRUMMP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2c432aab1887bdbf9ff1454b6a7a9bb18535b4da",
+      "symbol": "ARCLAUNCH.FUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd308c5e0fa5354c52239cefb662a391cc2866fe8",
+      "symbol": "CIRCLEMOON",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xebd2667e2bbebb7d70ee26d091e0603a139936d2",
+      "symbol": "DT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xeb4943b38193011f5d8bc06e1aacd84f9e4a9f9d",
+      "symbol": "ARCS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3d54d9936126a66095398da69a7b726b2a6b0087",
+      "symbol": "KAIKEN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfb60bc7b0b8e5c5ba0f4a1c36426d99abef274c8",
+      "symbol": "ARCHITECTS",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xec33a6c66b63742b5d271e77ec81fb8bc18c0087",
+      "symbol": "CREEPER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8ce2aa412279c7553990b5a6826723b1e8ff0087",
+      "symbol": "JEV",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7b201a456e48650b02f609cb7bad74f908780087",
+      "symbol": "ACAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xfddad03dd6c9bdbb95e418565534cecfa789333c",
+      "symbol": "ARCSHARE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe7279f609cb5115fef0739faf13a31565b3b0087",
+      "symbol": "PIGUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbd6008969bd1216c037e84b083ddb4667fbb0087",
+      "symbol": "SIRIUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x24caedc702ad422080d575891b37ac5f9727b858",
+      "symbol": "AIRP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfb8d564622506d6826dc799990b2fbfbcbda0087",
+      "symbol": "SHRUG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xeed64d44d9d666f5d32b1352e939957984da0087",
+      "symbol": "CRAB",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xab66e5187a005714ddcaa2d782125b9b3a2d0087",
+      "symbol": "RIFT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf94fc7943460e794e285b89c68ca83c905210087",
+      "symbol": "RCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbaf6e41e77db94a9c781593bba10d77789530087",
+      "symbol": "BASURA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7f5c0817503f7bcabf404f68fe21762f441e0087",
+      "symbol": "TILCAYO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3e169604035a89aef300ad0b64ec4efd1b840087",
+      "symbol": "WIFGUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb2ab346ee974b4a1c2b1f04b7011ed7ecf200087",
+      "symbol": "JEV",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x46ec5978f95ec934c4e19d09259bac3f64d70087",
+      "symbol": "TRAILER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb6b4749cd007282adafcb920bbd3e37d0b670087",
+      "symbol": "LIFT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7c535ed1907998a88af1f9463a58657dae4a0087",
+      "symbol": "VERITY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5634f4c5db539ca34a933fd548df24f539b70087",
+      "symbol": "BTCMSTR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xab17c74762d20b609e5b6a2bb27e6bcea30b0087",
+      "symbol": "ITSOKTODIE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3728ce03c58a473f33437e2cec687d297f3b0087",
+      "symbol": "DUKE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xaad30f513c6c84feb36cfdf219b0a912b6f60087",
+      "symbol": "SPEED",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3b1497fdbc21f912ffac1eaff9569b949ae70087",
+      "symbol": "ᅠ",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x873734002cda66b8a942cee98f78eae016ad0087",
+      "symbol": "CLICK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7e3ff2883085c469cd5cd788532e029176030087",
+      "symbol": "PIGUN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc8a1be71d2f7d53b4ea1227881ccf5a638540087",
+      "symbol": "RICHARD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7edcd3cc24e0ab6d8cb982db231570eb830e0087",
+      "symbol": "MINGECOIN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x67ab9cbade5226b44298fbc5036f6b1219d00087",
+      "symbol": "FOMEO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcba5acefc5db8524f909ccdbd1088af905f70087",
+      "symbol": "MEME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8df23b110839446af5240b9f17714c755c790087",
+      "symbol": "TILCAYO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x5dc2dfe14b7d390283879807b04dc56b9c2c0087",
+      "symbol": "TIGRINO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7e6595924417267b544fc43027b57849c54b0087",
+      "symbol": "GUY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x55a711be1211256fd35663c4ba3d827db9f50087",
+      "symbol": "SBR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xed697733716961894d0eb64a67ba9063cdbb0087",
+      "symbol": "SAMSUNG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x55ba5566f79cdc292d78b1162eeee5b1f4200087",
+      "symbol": "PEPE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x898e931aefcbec08e4c73b6f12a4fe7749b30087",
+      "symbol": "OPTIMUS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x41afbf631b86179638644ac9ab86164240180087",
+      "symbol": "子犬",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3842476c3cbf1c3d5c2cb6cee253c123978e0087",
+      "symbol": "LLM",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x51219e0123e569bab4141c96b1f7fb5b56bc0087",
+      "symbol": "GOMOCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcc709f9ff444b7aa92a96116db1cd61db3c60087",
+      "symbol": "PUNCH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x968c69ba7f27cbd4efc18818fc42746093e60087",
+      "symbol": "PARCEL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x77c8a83c125c7c5cf245cee70d396cf791b50087",
+      "symbol": "ALONECAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x545a90eed4e8a2d6785c21afe6fcf052d59d0087",
+      "symbol": "FLYDATA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe424dd0c4b5edd11f35ab0b7badf5b6228890087",
+      "symbol": "ARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xef0223db1ed1333b25a11c20960fe889e37e0087",
+      "symbol": "HYPER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x545df5097de5303f3844d18277c432818a950087",
+      "symbol": "GAIL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xca280eed9eb6846c38121895fb488604d6890087",
+      "symbol": "WINNIE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe3bf80f6583a127f942cefc1a42fe555efd90087",
+      "symbol": "PENIS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x36543d83a911ab47170c5de44471e761d26a0087",
+      "symbol": "ARCSCAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x927b86ebd2499eccb4c26589e2cf1076b0f90087",
+      "symbol": "TYPEPAD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf2dc0a303680fa17827240679be283f465b20087",
+      "symbol": "DANCE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb21c6f8be376a771c4f57010189e456797470087",
+      "symbol": "CATINU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xcec74e9bcb938eae88beb516ae44270b8b4f0087",
+      "symbol": "BUFFETT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xdd309e9444eef6c70f32c05dc3395bbe7da70087",
+      "symbol": "LMRANKHAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa5847b4fc3114045690aad7cc123a5c2a48d0087",
+      "symbol": "JOJO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x42f2307274ae82d08b7dbd5305325e9d5c750087",
+      "symbol": "PUP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x36de46118879807ab42c008d8ee41cee1c1c0087",
+      "symbol": "APE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd765ae318bb31f7c87dae37ced3cf40e7b640087",
+      "symbol": "SOMMA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x45a469653fa54dec1be53ab8435a41802bc80087",
+      "symbol": "BLUE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd4f6caba390062122c4eb72b826338ae53640087",
+      "symbol": "BOIÚNA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x37e0089fba161e6034c77cada9a9d42d770f0087",
+      "symbol": "PUNCH",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x432efb87d3f8a21c4262a9b1250dce017ced0087",
+      "symbol": "AGTG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfcbdede5f02a3339eb63cc5dd2a4cf85c14c0087",
+      "symbol": "WISHLIST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7a17a6953cbb207f382ce57f4ea5ef16a2640087",
+      "symbol": "WAR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd06babd1b0507c6efe0d029d8c946cd91a1b0087",
+      "symbol": "FLORK",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa71bb88f301d3e1cff14fc11bc2ec3e669670087",
+      "symbol": "FISHTOPHER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x99567edc7556ee5d9fa11eae7a3ad2fea87c0087",
+      "symbol": "BΟX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x60c27a10d0fac1671cccd3416defbcbda2cf0087",
+      "symbol": "COLONY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x586661c4f7d512152aff180eff4e39a3d4380087",
+      "symbol": "PAIDWHEEL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8b397f79946ce1a1bab9736072b7613190ef0087",
+      "symbol": "子犬",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8639d2e21b53645693f96e6d2ab812435f870087",
+      "symbol": "UNIABIHS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x61bec9d0a0d437f203153f75f8e55caa7c0f0087",
+      "symbol": "CRAFTGPT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe655e9d0e172ba000cf297613de4eb2bd5850087",
+      "symbol": "GEEG",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb8713576b8842325bae1951fd85ff74394d30087",
+      "symbol": "UNOCAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xb8413221e46c5022c47dd6a16ad140865d5e0087",
+      "symbol": "BELIEVE",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x55a0e7e2df36f470067f3abe768923018d380087",
+      "symbol": "STREAMED",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xf43474edeaf5da6e43da4923325cd571665a0087",
+      "symbol": "4CHAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x80b6ede4a76edb9cbd52e8944f9a6f8a255e0087",
+      "symbol": "WBTC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfc37a39dd352f37d0abaebddd67d5789960d0087",
+      "symbol": "LAUNCHPAD",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xda5d3dda07e62ae22fc97569072f7d730d8c0087",
+      "symbol": "BANANA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x6f73000ee4aaea999dc9acbd720d9cb5a60e0087",
+      "symbol": "TELLER",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xbc2c86ff35a577e59667b547993ba25d17299d24",
+      "symbol": "VAGO",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc5f253be8361ade79ab4e10b2d8b6db233df6f1a",
+      "symbol": "ARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xed7e7925d6d1694085fbb2cea02ae5918960d347",
+      "symbol": "SHARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x37d7d3be2ffaa5a47bb798cb3655ee29213719b6",
+      "symbol": "1USDC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x8c1fb27a4217888f7805172d1c854f5812d459aa",
+      "symbol": "FATCATBATRATWIFHAT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x60865dc822758017cc27a79f7a25e4f64dd9aaae",
+      "symbol": "1USDC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc88554afa4694790fd3156dee86e8deb02b72ecf",
+      "symbol": "BUSDT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe0379101a2db5ce97d6e1c0fd9fed66c765eee3b",
+      "symbol": "1USDC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x7e6521193075756202d632e6855996625551e151",
+      "symbol": "BARC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xe1f39d582d9570cd5384137d0340496be409f300",
+      "symbol": "1USDC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x267b679f590892d37b7c9bbf678c3da32558ef5f",
+      "symbol": "ROU",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x82c9411bbddaff86f0ee8e95275256ae136f8c1f",
+      "symbol": "NUR",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8e0ef9a194811deedf4762cdc8ae0568f931c804",
+      "symbol": "TSPX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x92e366751faadc0c824e7e7ae85df6d8917606f9",
+      "symbol": "RHRSL17",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x15e1c3cf08ef196eabfb9e9abbf90b41ed56a1eb",
+      "symbol": "SUPPD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x8f2c1979b852043f6fe5ae7eb4ec6b896ae7e30b",
+      "symbol": "BCRCL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x362344f0c35a5608e9b17dbd1bd9a703b2fd4809",
+      "symbol": "SYN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x171a4217b86a807a64eb94757db6849fb4bdbaa0",
+      "symbol": "CIRBTC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x413c77bfc24fd9dc7d72042939d4714043ddbfda",
+      "symbol": "MALA",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x79cdf4ca7bca692fb2d5ad16e300f96e2e894a17",
+      "symbol": "L5CAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa692d455bdc3f2db28516624bed838eda31707c9",
+      "symbol": "L5CAN",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x20fbefbe15aa4fc7edc2f37d279b59ab79a7cade",
+      "symbol": "RTEST",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9c0e3165b44aa9b5d3569a8f31ce754fcb98f2b8",
+      "symbol": "DROP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe276589699c2a274317392a68e794f43b8101784",
+      "symbol": "BEANCAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x48dc5fd8703dd112d3ac0692c559f28ba1016762",
+      "symbol": "DUKE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xdb8daf92d0f093a8f72f0db25e3ebe7c09c39650",
+      "symbol": "PEG",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x283a835cab14066a8da08aa8d949584fa530816b",
+      "symbol": "OPENX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x93c9d22e9fbf38e4ae59e2a34fd9bb0f4c7e4b40",
+      "symbol": "ACAT",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xa4decd9ffa9902cd1c4c53e1a118b9570f49fb0a",
+      "symbol": "DUKE",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x25057c850daa20c52495cbde95eb41ec4b65b557",
+      "symbol": "AEGIS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xfc534be5830d0a75abcb3ce02ea66605608017ea",
+      "symbol": "PI",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xc4f0269f71bb16665ee93eb0aa1dce45a87cad0a",
+      "symbol": "AUT918",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2f608aada2167ef2a142cee9192d655e4a7c88b5",
+      "symbol": "POLL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x2ba0f44bdfc17fba30eda9cdbecb908ca45b043b",
+      "symbol": "CRCL",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x8c4252c87081c88c6ad57d6dd97e1cafebf842b7",
+      "symbol": "VIRTUAL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xacf7d234c0e233211130e1b9a3b2a9e70d0b4271",
+      "symbol": "HIFI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x2b1ca431a12a3f2af63e69c809e743ac766096b8",
+      "symbol": "ANTHROPIC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xd02d2b38d9ccf08044f0a493350a2339fe8d708b",
+      "symbol": "WETH",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0x41b386e03928c70d635606c210717c19dcfc984d",
+      "symbol": "GME",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0056ed10ea5a504a2cc9bec93aa5fa8258bba0c7",
+      "symbol": "AMC",
+      "reason": "Existing ticker preserved"
+    },
+    {
+      "address": "0xac7896a01a4efd2a647fb1c94a6f1ffef8901488",
+      "symbol": "AAPL",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x3b26421eb41f42119b021eadfbe3ff687ff7ebd8",
+      "symbol": "HIMS",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x58e3e461d32ef2ea48270bd8d9ac80c3062428f5",
+      "symbol": "SNAP",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1aa89c4ab9884cb65b759a3cc3a1690744d687a6",
+      "symbol": "XTOPAZ",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x9e451f78194ff93e23e0a46668b8e97b568b3d5e",
+      "symbol": "OPENAI",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x4d1efa7f5629f89fbdd7950b5ef73403a350ad59",
+      "symbol": "TSLA",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xe0e0f32b188198dd6bc49f7091fe6b52aef9f20f",
+      "symbol": "SPCX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x0c3282e55885bb1e8341f8c36da7b16e4f559993",
+      "symbol": "SPY",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x1d1bca89b79a2d6a7757e86f8a39ae0f51bb652b",
+      "symbol": "BGLD",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x47db3af882a2111680f6c1efbc198db83a3b02f0",
+      "symbol": "WARCT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x7eb9273eec84de073d10fe1f99fa6753a63489f9",
+      "symbol": "",
+      "reason": "Missing symbol"
+    },
+    {
+      "address": "0x4f84875eceb36e97eff55df9a9f62416576b620a",
+      "symbol": "DARC",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x46713e0a41ae52116c6968caaf0e6bdb0eafdbd0",
+      "symbol": "PXPND",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x626f51e0cff029652738e52c116d7190783c4ccb",
+      "symbol": "MRX",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0x61c8fe24c5971c4c22a5c93edd2316fc2ad9a934",
+      "symbol": "POT",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xa2b9eb8472663c3e881c4f11f256936a4eb7fb4b",
+      "symbol": "CIRCLED",
+      "reason": "Below activity/liquidity screen"
+    },
+    {
+      "address": "0xc3852a204dbc885a452b7f70737392dbe1c662ea",
+      "symbol": "PANCHU",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x82e893ff7e225c5d5f99dea0317f220591c69e89",
+      "symbol": "ARCOOL",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x92395d0cd51bb504a39e53105cb6862948af1b8e",
+      "symbol": "TIDE",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xa83a7be150d97b77c4ad96742ea38ab7c8e13782",
+      "symbol": "WPAY",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x2e554c802e6b3a0ea4793f2267e0c4dcb28721e0",
+      "symbol": "CHEESE",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xf3ee8c4544f98967cb815386691d257195d7c3fe",
+      "symbol": "HAPPY",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x37c259d376c282bc0ec3187e8addbad3cfed4219",
+      "symbol": "CHEESEBULL",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x0a31d07b696c9044f6f628f971ca38a50cf3beaf",
+      "symbol": "COOLONG",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x68c8cbf2ed1f1800dfb8c4eefdf176a3265db0a7",
+      "symbol": "ANCHOR",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x3440dfcdd539c02b6340fd18d7c2a05648551ba3",
+      "symbol": "CASBERI",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x1ec17fe9c4af049c97a81fc19f383d1cc897b86c",
+      "symbol": "ARCC",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xe476c399f4536fc75d9172c62d4403769a9baffe",
+      "symbol": "BLACKROCK",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xc78b9983f1489852f3aa421fd034ecbc016e2d81",
+      "symbol": "HIYAN",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x9c7c98b0ed687b0489d3223387196293e97c34c7",
+      "symbol": "SYN",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xaa53f4b3c18d2347b02905b93a5c8579816746f4",
+      "symbol": "NIGHT",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x10a2c6f02f84b69025f4c6d6c6422dd8756c5e79",
+      "symbol": "ARCJET",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xfa451d12c1d2597e2e713cb818243544315af4e6",
+      "symbol": "SURGED",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x07979c2379bba76ce42a36a7ad3910669be8db5b",
+      "symbol": "JEREMYCOIN",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xa492a5f44c02fe89f7fcfe8b597ea333561df789",
+      "symbol": "LING",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xa13123a0f14e58e296b09dd880b661b2a4259084",
+      "symbol": "RIBS",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xbeece9d425f3000191aea1dafa4dc1c66d76fec4",
+      "symbol": "UARC",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0xbd315a60eb4263b3011ad05fb842cf76f642bfa5",
+      "symbol": "TURBO",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x09cd1ec4f7e083c7dafdd53d25628a322f549e24",
+      "symbol": "REARC",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x648d77ed878feb42a364fee839c51d428b17737f",
+      "symbol": "ARCPEIPEI",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x3f463b412d3ac60d9c8628b9623d28e939c14361",
+      "symbol": "BLOCKFI",
+      "reason": "No verified Argus portal membership"
+    },
+    {
+      "address": "0x683453ff1c441a56451d1a22a1c3218c9dc58cf7",
+      "symbol": "WAGMI",
+      "reason": "No verified Argus portal membership"
+    }
+  ],
+  "added": [],
+  "catalogCount": 471,
+  "argusCount": 289,
+  "status": "blocked",
+  "blocker": "ArgusPad board API returned HTTP 429; Explorer candidates had no verified Argus Portal membership. Existing catalog unchanged."
+}

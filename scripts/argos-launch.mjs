@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {createHash,randomUUID} from 'node:crypto';
+import {assertCrankAllowed} from './lib/personal-crank-exclusions.mjs';
 import {getAddress,encodeFunctionData,decodeFunctionResult,parseAbi,parseEventLogs,parseTransaction,serializeTransaction,formatUnits,parseUnits,toHex} from 'viem';
 
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
@@ -120,6 +121,7 @@ async function preflightFees(){
   return {token,hook:r[4],splitter,wallets:[{name:'Creator',address:account.address,owner:row.owner,units:'0',snapshot}]};
 }
 async function prepareFeeCall(w,splitter,functionName){
+  if(functionName==='distribute')await assertCrankAllowed(splitter,client);
   const abi=bundle.contracts.ArgusV4HookedSplitter6.abi;
   if(!same(await contract(splitter,abi,'creator'),w.address))fail('Creator fee recipient changed.');
   return {...await prepareCall(5042,{from:w.address,to:splitter,value:0n,data:encodeFunctionData({abi,functionName,args:functionName==='claim'?[w.address]:[]})}),leg:functionName==='claim'?'claim':'distribution'};
@@ -257,6 +259,8 @@ async function transact(w,label,prepare,wait=true){
     t={label,address:w.address,unsigned:p.unsigned,reserveWei:p.reserveWei,leg:p.leg,minimum:p.swapOutput?.minimum,outputToken:p.swapOutput?.token,idempotencyKey:randomUUID(),status:'prepared'};
     journal.transactions.push(t);await save();
   }
+  const crankCall=parseTransaction(t.unsigned);
+  if(crankCall.data==='0xe4fc6b6d')await assertCrankAllowed(crankCall.to,client);
   // An ambiguous CDP response must be recovered with the SAME bytes/key before any fresh simulation.
   if(!t.raw){
     if(!t.signingStarted){
