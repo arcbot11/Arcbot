@@ -239,6 +239,41 @@ export function BridgePage() {
     if (!found.candidates.length && !found.uncertain.length)
       throw Error("No token contract found on Arc or Base.");
   }
+  async function reverseDirection() {
+    if (!route) return;
+    invalidate();
+    setAmount("");
+    if (route.state !== "ready" || !route.counterpart)
+      throw Error("Create the official bridge and wrapper before reversing direction.");
+    const current = route;
+    const version = epoch.current;
+    const found = await api(
+      "/api/bridge?token=" + encodeURIComponent(current.counterpart!),
+    );
+    if (version !== epoch.current) return;
+    const reverse = (found.candidates as Route[]).find(
+      (candidate) =>
+        candidate.source === current.destination &&
+        candidate.destination === current.source &&
+        candidate.state === "ready" &&
+        same(candidate.token, current.counterpart!) &&
+        candidate.counterpart &&
+        candidate.manager &&
+        candidate.destinationManager &&
+        current.manager &&
+        current.destinationManager &&
+        same(candidate.counterpart, current.token) &&
+        same(candidate.tokenId, current.tokenId) &&
+        same(candidate.manager, current.destinationManager) &&
+        same(candidate.destinationManager, current.manager),
+    );
+    if (!reverse)
+      throw Error("The reverse bridge could not be verified. The official bridge and wrapper must exist on both chains. Try finding the token again.");
+    setToken(reverse.token);
+    setRoutes([reverse]);
+    setRoute(reverse);
+    setUncertain(false);
+  }
   async function prepare() {
     if (!route || !account || (mode === "connected" && !provider)) return;
     if (mode === "connected" && network !== route.source) {
@@ -604,9 +639,24 @@ export function BridgePage() {
             <>
               <div className={s.route}>
                 <strong>{route.name}</strong>
-                <p>
-                  {chains[route.source].name} → {chains[route.destination].name}
-                </p>
+                <div className={s.direction}>
+                  <span>
+                    {chains[route.source].name} → {chains[route.destination].name}
+                  </span>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => work(reverseDirection)}
+                    aria-label="Reverse bridge direction"
+                  >
+                    ⇄ Reverse
+                  </button>
+                </div>
+                {(route.state !== "ready" || !route.counterpart) && (
+                  <p className={s.note}>
+                    Create the official bridge and wrapper first to reverse direction.
+                  </p>
+                )}
                 <a
                   href={explorer(route.source, "address", route.token)}
                   target="_blank"

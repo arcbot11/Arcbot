@@ -114,6 +114,17 @@
 .route {
   padding: 20px 0;
 }
+.direction {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 12px 0;
+}
+.direction button {
+  margin: 0;
+  padding: 8px 12px;
+}
 .bridge a {
   color: var(--lime);
   text-decoration: underline;
