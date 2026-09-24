@@ -69,7 +69,7 @@ export type Transaction = { kind: "transaction"; id: string; owner: string; wall
   escrowRef?: {listingId:string;orderId?:string;step:string;sourceHold?:string;reserveWei?:string}; sourceRequestId?: string;
   swapOutput?: {token:string;minimum:string;recipient?:string;inputToken?:string;inputAmount?:string};
   launchStep?: import("../launches/execution-types").LaunchStepTerms;
-  creatorClaim?: {token:string;splitter:string;reward?:import("../launches/reward-call").RewardTerms};
+  creatorClaim?: {token:string;splitter:string;portal8?:import("../launches/portal8-claims").Portal8Claim;reward?:import("../launches/reward-call").RewardTerms};
   settlement?: {launch?:import("../launches/execution-types").VerifiedLaunch;gasWei:string;output?:{raw:string;decimals?:number};claims?:Array<{token:string;raw:string}>};
   /** Read-only observation; not a settled transaction or permission to release holds. */
   confirmation?: {status:"success"|"reverted";blockNumber:string};

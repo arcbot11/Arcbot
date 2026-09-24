@@ -67,7 +67,7 @@ async function advanceLaunchAttempt(owner:string,address:string,requestId:string
     if(image.sha256!==run.preview.image?.sha256)throw new LaunchError("IMAGE_CHANGED","Launch image changed. Review a new draft.");
     const identity=launchIdentity(owner,address),config=arcConfigFromEnv();
     const wallet=await repo.read<Wallet|null>({id:walletId(5042,address)});
-    const preview=await prepareLaunch({identity,input:run.input,tokenSalt:run.preview.tokenSalt,config,rpc:createArcRpc(config),image,
+    const preview=await prepareLaunch({identity,input:run.input,tokenSalt:run.preview.tokenSalt,portal:run.preview.portal,config,rpc:createArcRpc(config),image,
       reservedWei:wallet?locked(wallet):0n,activeTransaction:!!wallet?.activeTx,frozenQuote:run.preview.quote,verifiedHook:run.preview});
     if(preview.predictedToken!==run.preview.predictedToken||preview.predictedHook!==run.preview.predictedHook||preview.predictedSplitter!==run.preview.predictedSplitter)throw Error("Launch contract predictions changed.");
     const step=preview.steps[0],terms:LaunchStepTerms={requestId,index,kind:step.kind,input:run.input,preview};
@@ -105,7 +105,7 @@ export async function assertLaunchSigning(tx:Transaction){
   const image=await verifyLaunchImage(run.input.imageURI);
   if(image.sha256!==run.preview.image?.sha256)throw new LaunchError("IMAGE_CHANGED","Launch image changed after review.");
   const config=arcConfigFromEnv(),rpc=createArcRpc(config),w=await repository().read<Wallet>({id:walletId(5042,tx.wallet)});
-  const preview=await prepareLaunch({identity:launchIdentity(tx.owner,tx.wallet),input:run.input,tokenSalt:run.preview.tokenSalt,config,rpc,image,frozenQuote:run.preview.quote,
+  const preview=await prepareLaunch({identity:launchIdentity(tx.owner,tx.wallet),input:run.input,tokenSalt:run.preview.tokenSalt,portal:run.preview.portal,config,rpc,image,frozenQuote:run.preview.quote,
     reservedWei:locked(w)-BigInt(w.holds[tx.holdId]??"0"),activeTransaction:!!w.activeTx&&w.activeTx!==tx.id,verifiedHook:run.preview});
   const expected=preview.steps.find(s=>s.kind===terms.kind),parsed=parseTransaction(tx.unsigned as Hex);
   if(!expected||expected.call.data!==parsed.data||expected.call.to.toLowerCase()!==parsed.to?.toLowerCase()||terms.kind==="launch"&&preview.status!=="simulated")throw Error("Launch prerequisites changed before signing.");

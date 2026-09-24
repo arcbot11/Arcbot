@@ -3654,6 +3654,7 @@ export const executeCommand = internalAction({
     text: v.string(),
     mediaUrl: v.optional(v.string()),
     recipientAddress: v.optional(v.string()),
+    launchFeeDestinationJson: v.optional(v.string()),
     parsedCommandJson: v.optional(v.string()),
     source: v.optional(v.union(v.literal("x"), v.literal("terminal"), v.literal("telegram"))),
     channel: v.optional(
@@ -3869,7 +3870,10 @@ Your wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`,
     }
     if(command.kind==="launch"){
       if(source!=="x")return {ok:false,message:"Use an X launch command or the launch page."};
-      command={...command,launchSource:{text:args.text,imageURI:args.mediaUrl||launchImageFromText(args.text)}};
+      const feeDestination=args.launchFeeDestinationJson?JSON.parse(args.launchFeeDestinationJson):undefined;
+      if(command.feeRecipient && (!feeDestination || feeDestination.recipient!==command.feeRecipient))return {ok:false,message:'Fee recipient could not be resolved.'};
+      if(!command.feeRecipient && feeDestination)return {ok:false,message:'Unexpected fee recipient.'};
+      command={...command,...(feeDestination?{feeDestination}:{}),launchSource:{text:args.text,imageURI:args.mediaUrl||launchImageFromText(args.text)}};
     }
     const requestId =
       args.requestId || `x:${args.sourcePostId}:${command.kind}`;

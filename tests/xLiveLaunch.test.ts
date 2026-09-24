@@ -17,7 +17,7 @@ it("handles the exact ODDY attachment instruction without an initial buy",async(
  const intent=await parseXWalletIntent(text,true);
  expect(intent).toMatchObject({kind:"command",command:{kind:"launch",name:"Odysseus",symbol:"ODDY"}});
  if(intent.kind!=="command"||intent.command.kind!=="launch")throw Error();
- expect(launchInputFromXCommand(intent.command,text,"https://pbs.twimg.com/media/example.jpg")).toMatchObject({name:"Odysseus",symbol:"ODDY",devBuyUSDC:"0",pairToken:"USDC"});
+ expect(launchInputFromXCommand(intent.command,text,"https://pbs.twimg.com/media/example.jpg")).toMatchObject({name:"Odysseus",symbol:"ODDY",devBuyUSDC:"4.5",pairToken:"USDC"});
 });
 it.each(["$20 usdc of it","20 USDC of it","$20 of it"])("recognizes a greeting and the new token's initial buy: %s",async amount=>{
  const text=`Hey @TheArgosBot launch a token called Odysseus with a ticker of $ODDY buy ${amount}`;

@@ -23,6 +23,31 @@ export const discoveryAbi=parseAbi([
 export const quotedLaunchAbi=parseAbi(["function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256,int24,address)"]);
 const oldAbi=parseAbi(["function launches(address) view returns(address,int24,bool,address,address,address,uint16,uint16,uint256)"]);
 const same=(a:string,b:string)=>a.toLowerCase()===b.toLowerCase();
+// New Argus launch family: seven fields, shared registry, dynamic V4 fee flag.
+// Kept separate: its first field is the hook, not the creator used by older Portals.
+export const ARGUS_DYNAMIC_PORTAL = "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93" as const;
+export const ARGUS_DYNAMIC_REGISTRY = "0x58398c03c7a6240d8aa1ced42592933ad857843a" as const;
+export const dynamicLaunchAbi=parseAbi(["function launches(address) view returns(address hook,address splitter,address locker,uint256 positionId,int24 initialTick,int24 targetTick,uint256 flags)"]);
+async function discoverDynamicArgusPool(token:Address,rpc:ArcRpc,block:bigint){
+ const raw=await rpc.call({from:zeroAddress,to:ARGUS_DYNAMIC_PORTAL,data:encodeFunctionData({abi:dynamicLaunchAbi,functionName:'launches',args:[token]}),value:0n},block);
+ if(raw==='0x')return null;
+ if(raw.length!==2+7*64)throw Error('Unexpected dynamic Argus token record length.');
+ const [hook,splitter,locker]=decodeFunctionResult({abi:dynamicLaunchAbi,functionName:'launches',data:raw});
+ if(hook===zeroAddress)return null;
+ const read=async(to:Address,name:typeof discoveryAbi[number]['name'])=>decodeFunctionResult({abi:discoveryAbi,functionName:name,data:await rpc.call({from:zeroAddress,to,data:encodeFunctionData({abi:discoveryAbi,functionName:name} as never),value:0n},block)});
+ if(!same(String(await read(ARGUS_DYNAMIC_PORTAL,'registry')),ARGUS_DYNAMIC_REGISTRY))throw Error('Dynamic Argus registry mismatch.');
+ for(const address of [ARGUS_DYNAMIC_PORTAL,ARGUS_DYNAMIC_REGISTRY,hook,splitter,locker]){
+  if(address===zeroAddress||!(await rpc.code(address,block))?.replace(/^0x$/,''))throw Error('Dynamic Argus contract code missing.');
+ }
+ const [hookToken,hookPortal,hookSplitter,hookManager,quote,spacing,id]=await Promise.all(['token','portal','splitter','poolManager','quoteAsset','tickSpacing','poolId'].map(name=>read(hook,name as Parameters<typeof read>[1])));
+ if(!same(String(hookToken),token)||!same(String(hookPortal),ARGUS_DYNAMIC_PORTAL)||!same(String(hookSplitter),splitter)||!same(String(hookManager),manager))throw Error('Dynamic Argus hook identity mismatch.');
+ if(typeof quote!=='string'||same(quote,token)||spacing!==200)throw Error('Unsupported dynamic Argus pool configuration.');
+ if(quote!==zeroAddress&&!same(quote,ARC_USDC)&&!(await rpc.code(quote as Address,block))?.replace(/^0x$/,''))throw Error('Dynamic Argus quote token code missing.');
+ const [currency0,currency1]=[quote as Address,token].sort((a,b)=>BigInt(a)<BigInt(b)?-1:1);
+ const pool:V4Pool={protocol:'v4',currency0,currency1,fee:0x800000,tickSpacing:200,hooks:hook};
+ if(poolId(pool)!==id)throw Error('Dynamic Argus pool ID mismatch.');
+ return {pool,portal:ARGUS_DYNAMIC_PORTAL,hook,splitter,locker,poolId:id as `0x${string}`,block};
+}
 /** Reads deployed per-token addresses, never the Portal's mutable implementation pointers. */
 export async function discoverArgusPool(token:Address,rpc:ArcRpc,block:bigint){
  const read=async(to:Address,name:typeof discoveryAbi[number]['name'])=>decodeFunctionResult({abi:discoveryAbi,functionName:name,data:await rpc.call({from:zeroAddress,to,data:encodeFunctionData({abi:discoveryAbi,functionName:name} as never),value:0n},block)});
@@ -48,5 +73,5 @@ export async function discoverArgusPool(token:Address,rpc:ArcRpc,block:bigint){
   if(poolId(pool)!==id)throw new Error('Argus pool ID mismatch.');
   return {pool,portal:portal.address,hook,splitter,locker,poolId:id,block};
  }
- return null;
+ return discoverDynamicArgusPool(token,rpc,block);
 }

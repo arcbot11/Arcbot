@@ -8,8 +8,8 @@ it("round-trips an edited form without changing allocation, fixed policy or meta
   expect(input).toMatchObject({ buyTaxBps: 100, sellTaxBps: 100, dividendMinimumTokens: "100000", creatorBps: 0, burnBps: 5000, dividendBps: 5000 });
   expect(allocationSummary(input).reduce((sum, row) => sum + row.bps, 0)).toBe(10000);
 });
-it("normalizes a blank optional buy to zero, but never silently repairs invalid input", () => {
-  expect(formInput({ ...form, devBuyUSDC: " " }).devBuyUSDC).toBe("0");
+it("normalizes a blank optional buy to the minimum, but never silently repairs invalid input", () => {
+  expect(formInput({ ...form, devBuyUSDC: " " }).devBuyUSDC).toBe("4.5");
   expect(() => formInput({ ...form, allocationText: "80% burn 80% holders" })).toThrow();
   expect(() => formInput({ ...form, website: "javascript:alert(1)" })).toThrow();
 });

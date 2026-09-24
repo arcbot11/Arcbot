@@ -1,0 +1,42 @@
+{
+  "mode": "older-portals",
+  "at": "2026-09-23T23:43:07.537Z",
+  "block": "22427053",
+  "portals": [],
+  "enumerated": 0,
+  "added": [],
+  "excluded": 0,
+  "duplicateSymbols": 0,
+  "invalid": 0,
+  "failed": [],
+  "dynamic": [],
+  "scannedPools": 460,
+  "screen": {
+    "minVolume24hUsd": 1000,
+    "minLiquidityUsd": 500,
+    "minTrades": 10,
+    "minVolumeToMarketCap": 0.01
+  },
+  "screenedOut": 258,
+  "unverified": [
+    "0x2164bb17a2d38c1b5170e987b2c0416df1efc752",
+    "0x92395d0cd51bb504a39e53105cb6862948af1b8e",
+    "0xd36687146385f7dc84a18fea3d00319d39d6d1a0",
+    "0x80d35e85c8f189c760590b35e6475e5b1683ce9c",
+    "0xa83a7be150d97b77c4ad96742ea38ab7c8e13782",
+    "0xc1347b8f2b79af2f150d26f350eb974cd7dab6f3",
+    "0x0a31d07b696c9044f6f628f971ca38a50cf3beaf",
+    "0xd218e4730fdf224d0464b29c6f24cc139240adcb",
+    "0x258bbb25fb1bc34c87212f8dab34838854ef2d5d",
+    "0x6505506540dc99f7366316b10e9cf1a584cbd42a",
+    "0x8677389f0e93363a364b2c4d54eba9da9a17c9ae",
+    "0x9c40a0f0c9644e298d52e87c2edc7fe77a5727f3",
+    "0xa12c56bf31262ba9f0a99964bfbcf61d3c55cb72",
+    "0xcc8a7331b6b55b95aa47c8ad80699b27178efd30"
+  ],
+  "verifiedMarkets": [],
+  "catalogCount": 479,
+  "written": true,
+  "marketSource": "Arc Explorer USD-anchored pools",
+  "coverage": "Tokens without explorer market metrics remain unassessed; Argus board endpoints returned HTTP 429."
+}

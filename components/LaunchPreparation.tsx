@@ -151,9 +151,9 @@ function LaunchEditor({ session, preparationEnabled }: { session: WalletSession;
             onChange={e => setForm(previous => ({ ...previous, allocationText: e.target.value }))} /></label>
           <p id="launch-allocation-help" className={styles.hint}>{allocationError || allocationHint}</p>
           <p className={styles.hint}>Example: half creator, rest evenly between burn and holders.</p>
-          <p className={styles.hint}>Dividend minimum: 100,000 tokens.</p>
+          <p className={styles.hint}>Dividends accrue to eligible circulating holders under the portal’s reward rules.</p>
           <label className={styles.field}><span>Pair with</span><select value={form.pairToken??"USDC"} onChange={e=>setForm(previous=>({...previous,pairToken:e.target.value as LaunchPair}))}>{LAUNCH_PAIR_SYMBOLS.map(pair=><option key={pair} value={pair}>{pair==="CIRBTC"?"cirBTC":pair}</option>)}</select></label>
-          {field("devBuyUSDC", form.pairToken&&form.pairToken!=="USDC"?"Initial creator buy (USD value)":"Initial creator buy (USDC)", "0")}
+          {field("devBuyUSDC", form.pairToken&&form.pairToken!=="USDC"?"Initial creator buy (USD value)":"Initial creator buy (USDC, minimum 4.50)", "4.50")}
           {form.pairToken&&form.pairToken!=="USDC"&&<p>Creator buy spends {form.pairToken} held in your wallet. Gas uses Arc USDC. Preparation shows the exact token amount.</p>}
           <button type="submit" className="button">{draft ? "Save changes" : "Save draft"}</button>
         </fieldset>

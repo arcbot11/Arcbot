@@ -146,6 +146,7 @@ export default defineSchema({
     replyDepth: v.optional(v.number()),
     recipientXUserId: v.optional(v.string()),
     recipientAddress: v.optional(v.string()),
+    launchFeeDestinationJson: v.optional(v.string()),
     status: v.union(
       v.literal("received"),
       v.literal("processing"),

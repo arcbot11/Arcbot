@@ -27,7 +27,7 @@ it.each([
   expect(Object.values(result.allocation!)).toEqual(expected);
 });
 it.each(["allocation:", "allocation: 70% creator 70% burn", "allocation: 50% creator 50% creator", "allocation: most to holders",
-  "allocation: half creator; allocation: half burn", "assign fees to @other allocation: all creator", "not half creator half burn",
+  "allocation: half creator; allocation: half burn", "not half creator half burn",
   "allocation: half creator or half burn"])("rejects unsafe or ambiguous allocation: %s", text => {
   expect(()=>normalized(text)).toThrow();
 });

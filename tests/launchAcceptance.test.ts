@@ -1,21 +1,22 @@
+import {PORTAL8 as LAUNCH_PORTAL} from '../lib/launches/portal8';
 import { afterEach, beforeEach, expect, it, vi } from "vitest";
 vi.mock("../convex/launchDrafts",()=>({authorize:async(_ctx:unknown,a:{owner:string;address:string})=>{if(a.owner!=="1")throw Error("Wrong owner");return {owner:a.owner,address:a.address};}}));
 vi.mock("../lib/launches/policy",async original=>({...await original<typeof import("../lib/launches/policy")>(),LAUNCH_EXECUTION_ENABLED:true}));
 import * as execution from "../convex/launchExecution";
-import { LAUNCH_PORTAL, PORTAL6 } from "../lib/launches/contracts";
+import { LAUNCH_PORTAL as LEGACY_PORTAL, PORTAL6 } from "../lib/launches/contracts";
 type Row=Record<string,unknown>;
 const owner="1",address="0x1111111111111111111111111111111111111111",requestId="00000000-0000-4000-8000-000000000001";
 function fixture(){
   const imageURI="https://pbs.twimg.com/media/example.jpg";
   const input={symbol:"EX",name:"Example",imageURI,pairToken:"USDC"};
   const tables:Record<string,Row[]>={launchRuns:[],launchDrafts:[{_id:"draft",owner,address,requestId,status:"prepared",revision:2,expiresAt:Date.now()+60000,fingerprint:"f",inputJson:JSON.stringify(input),
-    previewJson:JSON.stringify({portal:LAUNCH_PORTAL,expiresAt:Date.now()+30000,fingerprint:"f",predictedToken:address,image:{imageURI,sha256:"a".repeat(64)},quote:{symbol:"USDC"}})}],otcRecords:[],verifiedBotLaunches:[],tokenRegistry:[]};
+    previewJson:JSON.stringify({portal:LAUNCH_PORTAL,expiresAt:Date.now()+30000,fingerprint:"f",predictedToken:address,predictedHook:address,predictedSplitter:address,image:{imageURI,sha256:"a".repeat(64)},quote:{symbol:"USDC"}})}],otcRecords:[],verifiedBotLaunches:[],tokenRegistry:[]};
   const ctx={scheduler:{runAfter:vi.fn()},db:{query:(table:string)=>{let rows=tables[table];const q={withIndex:(_i:string,fn:(b:unknown)=>unknown)=>{const b={eq:(k:string,v:unknown)=>{rows=rows.filter(r=>r[k]===v);return b;}};fn(b);return q;},first:async()=>rows[0]??null,unique:async()=>rows[0]??null};return q;},insert:async(table:string,row:Row)=>{tables[table].push({_id:table+tables[table].length,...row});},patch:async(id:string,patch:Row)=>Object.assign(Object.values(tables).flat().find(r=>r._id===id)!,patch)}};
   const call=(fn:unknown,extra:Row={})=>(fn as {_handler:(ctx:unknown,a:unknown)=>Promise<Row>})._handler(ctx,{secret:"secret",owner,address,requestId,revision:2,...extra});
   return {tables,ctx,call};
 }
 beforeEach(()=>vi.stubEnv("ARGUS_LAUNCH_PREPARATION_ENABLED","true"));afterEach(()=>vi.unstubAllEnvs());
-it.each([undefined, null, PORTAL6, 7])("rejects stale or missing Portal evidence before reserving a launch: %s",async portal=>{
+it.each([undefined, null, PORTAL6, LEGACY_PORTAL, 7])("rejects stale or missing Portal evidence before reserving a launch: %s",async portal=>{
   const f=fixture(),draft=f.tables.launchDrafts[0],preview=JSON.parse(String(draft.previewJson));
   preview.portal=portal;draft.previewJson=JSON.stringify(preview);
   await expect(f.call(execution.accept)).rejects.toThrow("Launch settings have changed");
@@ -80,7 +81,7 @@ it("does not index a successful-looking transaction without verified launch evid
 it("publishes a verified launch once and marks its draft completed",async()=>{
   const f=fixture();await f.call(execution.accept);const id=`launch:1:${requestId}:0`;await f.call(execution.step,{index:0,id});
   f.tables.otcRecords.push({key:id,status:"completed",json:JSON.stringify({owner,wallet:address,status:"completed",launchStep:{requestId,kind:"launch"},hash:"0x123",
-    settlement:{launch:{hash:"0x123",token:address,creator:address}}})});
+    settlement:{launch:{hash:"0x123",token:address,creator:address,portal:LAUNCH_PORTAL,hook:address,splitter:address}}})});
   expect((await f.call(execution.reconcile)).status).toBe("completed");await f.call(execution.reconcile);
   expect(f.tables.verifiedBotLaunches).toHaveLength(1);expect(f.tables.tokenRegistry).toHaveLength(1);expect(f.tables.launchDrafts[0].status).toBe("completed");
 });
@@ -88,7 +89,7 @@ it("adds a verified token to the directory without replacing an existing ticker"
   const f=fixture();f.tables.tokenRegistry.push({symbol:"EX",address:"existing",normalizedAddress:"existing"});
   await f.call(execution.accept);const id=`launch:1:${requestId}:0`;await f.call(execution.step,{index:0,id});
   f.tables.otcRecords.push({key:id,status:"completed",json:JSON.stringify({owner,wallet:address,status:"completed",launchStep:{requestId,kind:"launch"},hash:"0x123",
-    settlement:{launch:{hash:"0x123",token:address,creator:address}}})});
+    settlement:{launch:{hash:"0x123",token:address,creator:address,portal:LAUNCH_PORTAL,hook:address,splitter:address}}})});
   await f.call(execution.reconcile);expect(f.tables.verifiedBotLaunches).toHaveLength(1);expect(f.tables.tokenRegistry).toEqual([{symbol:"EX",address:"existing",normalizedAddress:"existing"}]);
 });
 

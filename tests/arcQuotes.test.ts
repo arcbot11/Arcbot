@@ -31,6 +31,22 @@ function mockRpc() {
   };
 }
 describe("Arc quotes", () => {
+  it.each([true,false])('quotes a dynamic-fee hook with the original flag and direction: %s',async buy=>{
+    const rpc=mockRpc(),original=rpc.call.getMockImplementation()!;
+    rpc.call.mockImplementation(async(tx,block)=>{
+      const d=decodeFunctionData({abi:quoteAbi,data:tx.data});
+      if(d.functionName==='quoteExactInputSingle'){
+        expect(d.args[0].poolKey.fee).toBe(0x800000);
+        expect(d.args[0].zeroForOne).toBe(buy);
+        expect(d.args[0].exactAmount).toBe(100n);
+      }
+      return original(tx,block);
+    });
+    const result=await quoteRoutes([{tokenIn:buy?a:b,tokenOut:buy?b:a,pools:[{...v4,fee:0x800000,hooks:c}]}],100n,100,a,rpc as unknown as ArcRpc,config,now);
+    expect(result.rejected).toEqual([]);
+    expect(result.quotes[0].amountOutMinimum).toBe(1089n);
+    expect(result.quotes[0].executionBlocker).toContain('reviewed adapter');
+  });
   it.each([["ARGUS",legacyRuntime,100],["ARCASH",arcashRuntime,300]] as const)("quotes the second hop using %s actually delivered after its V3 buy tax",async(_symbol,runtime,bps)=>{
     const rpc=mockRpc(),original=rpc.call.getMockImplementation()!;
     rpc.code.mockImplementation(async()=>"0x1234");

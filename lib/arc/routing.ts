@@ -21,12 +21,15 @@ export function poolId(pool: ArcPool): string {
 export function validatePool(pool: ArcPool) {
   getAddress(pool.currency0); getAddress(pool.currency1);
   if (BigInt(pool.currency0) >= BigInt(pool.currency1)) throw new Error("Pool currencies must be sorted and distinct");
-  if (!Number.isInteger(pool.fee) || pool.fee < 0 || pool.fee > 1_000_000) throw new Error("Unsupported pool fee");
+  // V4 encodes dynamic fees as a flag, not as a fee in millionths.
+  const dynamic = pool.protocol === "v4" && pool.fee === 0x800000;
+  if (!Number.isInteger(pool.fee) || pool.fee < 0 || (pool.fee > 1_000_000 && !dynamic)) throw new Error("Unsupported pool fee");
   if (pool.protocol === "v3") {
     if (same(pool.currency0, zeroAddress) || same(pool.address, zeroAddress)) throw new Error("V3 requires ERC-20 currencies and a pool address");
     getAddress(pool.address);
   } else {
     getAddress(pool.hooks);
+    if (dynamic && same(pool.hooks, zeroAddress)) throw new Error("Dynamic fees require a hook");
     if (!Number.isInteger(pool.tickSpacing) || pool.tickSpacing < 1 || pool.tickSpacing > 32767) throw new Error("Invalid tick spacing");
   }
 }

@@ -1,6 +1,6 @@
 import {describe,it,expect,vi} from 'vitest';
 import {encodeFunctionResult,decodeFunctionData,zeroAddress,parseAbi,createPublicClient,http} from 'viem';
-import {discoverArgusPool,discoveryAbi,ARGUS_PORTALS,quotedLaunchAbi} from '../lib/arc/argus-discovery';
+import {discoverArgusPool,discoveryAbi,ARGUS_PORTALS,quotedLaunchAbi,ARGUS_DYNAMIC_PORTAL,ARGUS_DYNAMIC_REGISTRY,dynamicLaunchAbi} from '../lib/arc/argus-discovery';
 import {poolId,encodeArcSwap,type V4Pool} from '../lib/arc/routing';
 import {ARC_USDC} from '../lib/arc/config';
 import type {ArcRpc} from '../lib/arc/rpc';
@@ -32,6 +32,40 @@ describe('Argus per-token discovery',()=>{
  it.each([{token:locker},{portal:locker},{splitter:locker},{poolManager:locker},{poolId:'0x'+'0'.repeat(64)},{poolFee:500},{LAUNCH_STRUCT_WORDS:9}])('rejects mismatched deployed configuration %j',async(o)=>{await expect(discoverArgusPool(token,fixture(o),100n)).rejects.toThrow();});
  it('does not accept silently truncated records',async()=>{const rpc=fixture();vi.mocked(rpc.call).mockResolvedValue(('0x'+'0'.repeat(9*64)) as `0x${string}`);await expect(discoverArgusPool(token,rpc,100n)).rejects.toThrow('record length');});
  it('keeps arbitrary hooked routes blocked but encodes the verified pool',()=>{const route={tokenIn:ARC_USDC,tokenOut:token as `0x${string}`,pools:[pool]};expect(()=>encodeArcSwap(route,100n,1n,1000n)).toThrow('adapter');expect(encodeArcSwap(route,100n,1n,1000n,poolId(pool)).value).toBe(0n);expect(()=>encodeArcSwap(route,100n,1n,1000n,'wrong')).toThrow('adapter');});
+});
+describe('dynamic Argus launch family',()=>{
+ const dynamicPool:V4Pool={...pool,fee:0x800000};
+ function dynamicFixture(overrides:Record<string,unknown>={}){
+  const values={registry:ARGUS_DYNAMIC_REGISTRY,token,portal:ARGUS_DYNAMIC_PORTAL,splitter,poolManager:'0x8366a39cc670b4001a1121b8f6a443a643e40951',quoteAsset:ARC_USDC,tickSpacing:200,poolId:poolId(dynamicPool),...overrides};
+  return {code:vi.fn(async()=> '0x6000'),call:vi.fn(async(call:{to:string;data:`0x${string}`},block:bigint)=>{
+   expect(block).toBe(100n);
+   const d=decodeFunctionData({abi:discoveryAbi,data:call.data});
+   if(d.functionName==='launches'){
+    const old=ARGUS_PORTALS.find(p=>p.address===call.to);
+    if(old)return ('0x'+'0'.repeat(old.words*64));
+    expect(call.to).toBe(ARGUS_DYNAMIC_PORTAL);
+    return encodeFunctionResult({abi:dynamicLaunchAbi,functionName:'launches',result:[hook,splitter,locker,123n,200,0,0n]});
+   }
+   return encodeFunctionResult({abi:discoveryAbi,functionName:d.functionName,result:values[d.functionName as keyof typeof values]} as never);
+  })} as unknown as ArcRpc;
+ }
+ it('discovers seven-field records and encodes buys and sells without changing the fee flag',async()=>{
+  const found=await discoverArgusPool(token,dynamicFixture(),100n);expect(found?.pool).toEqual(dynamicPool);
+  for(const [tokenIn,tokenOut]of [[ARC_USDC,token],[token,ARC_USDC]] as const){
+   const route={tokenIn,tokenOut,pools:[dynamicPool]};
+   expect(()=>encodeArcSwap(route,100n,1n,1000n)).toThrow('adapter');
+   expect(encodeArcSwap(route,100n,1n,1000n,found!.poolId).to).toBeTruthy();
+  }
+ });
+ it.each([{registry:locker},{token:locker},{portal:locker},{splitter:locker},{poolManager:locker},{tickSpacing:60},{poolId:poolId(pool)},{quoteAsset:token}])('rejects mismatched dynamic identity %j',async changes=>{
+  await expect(discoverArgusPool(token,dynamicFixture(changes),100n)).rejects.toThrow();
+ });
+ it('rejects missing hook code',async()=>{const rpc=dynamicFixture();vi.mocked(rpc.code).mockImplementation(async a=>a===hook?'0x':'0x6000');await expect(discoverArgusPool(token,rpc,100n)).rejects.toThrow('code missing');});
+ it('does not allow arbitrary high fee bits or dynamic V3 pools',()=>{
+  for(const fee of [0x800001,0x400000,0xffffff])expect(()=>encodeArcSwap({tokenIn:ARC_USDC,tokenOut:token,pools:[{...dynamicPool,fee}]},100n,1n,1000n)).toThrow('fee');
+  expect(()=>encodeArcSwap({tokenIn:ARC_USDC,tokenOut:token,pools:[{...dynamicPool,hooks:zeroAddress}]},100n,1n,1000n)).toThrow('hook');
+  expect(()=>encodeArcSwap({tokenIn:ARC_USDC,tokenOut:token,pools:[{protocol:'v3',address:locker,currency0:ARC_USDC,currency1:token,fee:0x800000}]},100n,1n,1000n)).toThrow('fee');
+ });
 });
 it.runIf(process.env.ARC_DISCOVERY_LIVE==='1')('checks a deployed Argus hook through read RPC',async()=>{
  const client=createPublicClient({transport:http('https://arguspad.io/api/rpc',{batch:false})});const head=await client.getBlockNumber();const rpc={code:(address:`0x${string}`,blockNumber:bigint)=>client.getCode({address,blockNumber}),call:async(c:{from:`0x${string}`;to:`0x${string}`;data:`0x${string}`;value:bigint},blockNumber:bigint)=>(await client.call({account:c.from,to:c.to,data:c.data,value:c.value,blockNumber})).data??'0x'} as ArcRpc;

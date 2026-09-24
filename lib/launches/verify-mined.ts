@@ -1,3 +1,5 @@
+import { PORTAL8 } from './portal8';
+import { verifyPortal8Mined } from './portal8-mined';
 import { createPublicClient, getAddress, parseAbi, parseEventLogs, zeroAddress, type Hex } from "viem";
 import { arcChain, arcConfigFromEnv, ARC_USDC } from "../arc/config";
 import { arcTransport } from "../arc/transport";
@@ -34,10 +36,11 @@ export async function verifyMinedLaunchStep(owner:string,wallet:string,hash:Hex,
     return;
   }
   if(terms.kind==="approval"){
-    const amount=await client.readContract({address:p.quote?.address??ARC_USDC,abi:approvalAbi,functionName:"allowance",args:[account,LAUNCH_PORTAL],blockNumber});
+    const amount=await client.readContract({address:p.quote?.address??ARC_USDC,abi:approvalAbi,functionName:"allowance",args:[account,p.portal],blockNumber});
     if(amount<BigInt(p.quote?.devBuy??"0"))throw Error("Launch approval was not verified.");
     return;
   }
+  if(p.portal.toLowerCase()===PORTAL8.toLowerCase())return verifyPortal8Mined(client as never,wallet,receipt,terms);
   const verified=verifyLaunchReceipt({owner,address:account},input,p,{chainId:await client.getChainId(),hash,from:tx.from,to:tx.to!,input:tx.input,value:tx.value,
     receipt,canonicalBlock:{number:blockNumber,hash:canonicalBlock.hash!}});
   const record=await client.readContract({address:LAUNCH_PORTAL,abi:quotedLaunchAbi,functionName:"launches",args:[verified.token],blockNumber});

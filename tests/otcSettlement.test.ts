@@ -1,3 +1,6 @@
+import { portal8ReadAbi, PORTAL8 } from '../lib/launches/portal8';
+import { verifyCreatorToken, FeeClaimError } from '../lib/launches/fees';
+vi.mock('../lib/launches/fees',async original=>({...await original<typeof import('../lib/launches/fees')>(),verifyCreatorToken:vi.fn()}));
 import { describe,it,expect,vi,beforeEach,afterEach } from "vitest";
 import { privateKeyToAccount } from "viem/accounts";
 import { encodeFunctionData,encodeAbiParameters,encodeEventTopics,keccak256,serializeTransaction,parseTransaction,type Hex,parseAbi } from "viem";
@@ -379,4 +382,29 @@ it.each(['empty','funded','contract','calldata','unavailable'] as const)('requir
  if(mode==='unavailable'){await expect(reconcileTransactionNonce(record.id,minedHash)).rejects.toThrow();expect(mocks.command.mock.calls.filter(([command])=>!['recovery_acquire','recovery_release'].includes(command))).toEqual([]);}
  else{await reconcileTransactionNonce(record.id,minedHash);expect(mocks.command).toHaveBeenCalledWith('reconcile_mined_nonce',expect.objectContaining({unfundedEscrowVerified:mode==='empty'}));}
  expect(mocks.sign).not.toHaveBeenCalled();expect(mocks.client.sendRawTransaction).not.toHaveBeenCalled();
+});
+
+async function setupClaim() {
+ await setupSend(5042,encodeFunctionData({abi:portal8ReadAbi,functionName:'claimCreator'}));
+ record.leg='claim';record.recoveryVersion=1;
+ record.creatorClaim={token:router,splitter:seller,portal8:{portal:PORTAL8,quote:router,payout:router,control:account.address,recipients:[account.address],shares:[10000]}};
+}
+it.each(['changed','lost','rpc'])('handles unsigned claim entitlement %s before signing',async mode=>{
+ await setupClaim();record.status='prepared';delete record.raw;delete record.hash;receipt=null;nonce=0;
+ if(mode==='changed')vi.mocked(verifyCreatorToken).mockResolvedValue({token:router,portal:PORTAL8,splitter:seller,quote:router,portal8:{...record.creatorClaim!.portal8!,recipients:[seller]}});
+ else vi.mocked(verifyCreatorToken).mockRejectedValue(mode==='lost'?new FeeClaimError('Not a beneficiary'):Error('RPC unavailable'));
+ mocks.command.mockImplementation(async command=>{if(command==='abort_changed_request'){record.status='cancelled';delete wallet.activeTx;delete wallet.holds[record.holdId];}return structuredClone(record);});
+ if(mode==='rpc'){await expect(advanceTransaction(record.id)).rejects.toThrow('RPC unavailable');expect(mocks.command).not.toHaveBeenCalledWith('abort_changed_request',expect.anything());}
+ else {expect((await advanceTransaction(record.id)).status).toBe('cancelled');expect(mocks.command).toHaveBeenCalledWith('abort_changed_request',{id:record.id,reason:'claim_entitlement_changed'});}
+ expect(mocks.sign).not.toHaveBeenCalled();
+});
+it.each(['changed','empty','unfinalized','noncanonical'])('reconciles signed claims with %s receipts',async mode=>{
+ await setupClaim();
+ receipt!.logs=mode==='empty'?[]:[{address:seller,topics:encodeEventTopics({abi:portal8ReadAbi,eventName:'CreatorClaimed',args:{to:seller}}),data:encodeAbiParameters([{type:'uint256'},{type:'uint256'},{type:'bool'}],[100n,100n,false])}];
+ if(mode==='unfinalized')finalized=99n;
+ if(mode==='noncanonical')receipt!.blockHash=otherHash;
+ if(mode==='noncanonical')await expect(advanceTransaction(record.id)).rejects.toThrow('not canonical');else await advanceTransaction(record.id);
+ if(mode==='changed'||mode==='empty')expect(mocks.command).toHaveBeenCalledWith('settled',expect.objectContaining({success:true,settlement:expect.objectContaining({claims:[],gasWei:'21000'})}));
+ else expect(mocks.command).not.toHaveBeenCalledWith('settled',expect.anything());
+ expect(verifyCreatorToken).not.toHaveBeenCalled();expect(mocks.sign).not.toHaveBeenCalled();
 });

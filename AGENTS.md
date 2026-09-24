@@ -81,3 +81,79 @@ User quintupled GOOSE in the regular rotation: high-approved.json intentionally 
 Added verified USEBIN 0x991f9be575222482a6b9ebd41919b5df6280f531. 108 unique tokens in 112 rotation slots, preserving five GOOSE entries. Existing safeguards unchanged.
 Added verified DEBTCOIN 0xfa19e0300e351894e6ea6fbd97226199134f745f, AI 0x816de78fabdd52922964647529e304a0c86489cd, and PIZZA 0x0e1300985ecfe295f5e1310cf472f7c29f2acda9. Requested EYE 0xc87bbfbf5d15b3e1230b5d37cfd43a03d228c79e and COCOA 0xe2f472de3272aa03a86bdd6f7c5a0d2cdfe13288 were already active. 111 unique tokens in 115 slots; preserve five GOOSE entries and existing safeguards.
 User explicitly reactivated POTATO 0x333a07961b50924056b15477b409a9ae774e1ed7 again. Fresh numbered-wallet exclusion check passed; previous retirement archived in state.reactivations and inactivity baseline reset. Resume regular rotation with 20-cycle retirement and all existing safeguards; preserve GOOSE five-entry schedule.
+Added verified TIGRINO 0x5e486062811fb3f4ac2fa6321ecffdf843606634, BEANCAT 0xa219e3d6aaef964fc0e6ab318414202afd98a539, and DIC 0xc0b8e31b80683c6e79758836424933893e1fb385. 114 unique tokens in 118 slots; preserve five GOOSE entries and existing Personal9-only, threshold, exclusion, reserve and 20-cycle retirement safeguards.
+Added verified token symbol BTC at 0x8dfbee90d78ec96d87bee47f576ec84bff48ad5b once (user supplied the same address twice). 115 unique tokens in 119 slots; preserve five GOOSE entries and all existing rotation safeguards.
+Added verified 222 0x5fcbab19dda013e9a7d13a5c9e59a18c769c8e2a, DUEL 0x3aace7068cbed7d62f356fafc9fed2f5562286b7, BANCOR 0x5afcaf084bc1258c710bda47bcb5799c36a1e14e, and QUBY 0x50e6b8fe3f3bba44fb3eef2463969f131c5fd04d. Requested USDC 0xb67f50fde86e09b5da963c4251cbd4788b151ed5 was already active. 119 unique tokens in 123 slots; preserve five GOOSE entries and all existing rotation safeguards.
+Added verified NUB 0x8b75fb57347472f200829b7c30e9f09411dcc4a4. 120 unique tokens in 124 slots; preserve five GOOSE entries and all existing rotation safeguards.
+Added six verified targets: ECOIN 0xc83c90ce291ad5aae919dca7cf44004d7354585a, eCOIN 0x70ea323b32eb80ee16f2f8f56f3ed9061e5b7209, ECOIN 0x9e640ff74ccd2e88c31ed675cfdbb69422edbb47, BINHA 0x938b32c35ca17fa92c220022c0cafb0953d48a89, NASDOG 0xd6d6f30e2fd12f4adb7c3cbd68f0b0a661ae93a4, and 0x61bbacb4ca341e9676f1dc574588553517a0a500. Repeated c83c address added once. 126 unique tokens in 130 slots; preserve five GOOSE entries and all existing rotation safeguards.
+Added verified PANTHER 0x5fef1304592f72a52b1536af193b36d356c2009a and MILF 0xfb34255a40729478e7bc13e1c82efcf4922269c8. Requested BANCOR 0x5afcaf084bc1258c710bda47bcb5799c36a1e14e was already active. 128 unique tokens in 132 slots; preserve five GOOSE entries and all existing rotation safeguards.
+Added verified DNUT 0x76a22c180d6f4315ac069065d5317a9ffdaaf5a9. 129 unique tokens in 133 slots; preserve five GOOSE entries and all existing rotation safeguards.
+User requested five spaced BANCOR visits: 0x5afcaf084bc1258c710bda47bcb5799c36a1e14e now appears at one-based slots 1, 28, 55, 83, 110 of 137 slots (129 unique tokens). Preserve five BANCOR entries and five GOOSE entries. Other relative order and current visitCranked state preserved; new queueRevision avoids job collisions. Normal threshold, exclusions, reserve, and once-per-round inactivity rules remain.
+Added verified PETIX 0x9bb22549f2d9c574937d6f839030160237210786. 130 unique tokens in 138 slots; preserve five BANCOR entries, five GOOSE entries and all existing rotation safeguards.
+Added verified IARC 0xe0b43ab68a2aa82cef8de2bab86abd44eae5009e. 131 unique tokens in 139 slots; preserve five BANCOR entries, five GOOSE entries and all existing rotation safeguards.
+Added verified HOOKED 0x49b0aca7472c75c77826e4d20d0f7bc32c97e93a. 132 unique tokens in 140 slots; preserve five BANCOR entries, five GOOSE entries and all existing rotation safeguards.
+
+User explicitly authorized GOOSE crank despite unavailable USD valuation on 2026-09-19 UTC. One immediate crank waiver is scoped to .deployment-private/goose-user-crank-20260919-0040.json only. Preserve all identity, Personal9-only, numbered-wallet exclusion, reserve, simulation and journal guards. Do not replay completed job or resume the blocked regular pending job as part of this request.
+
+Latest explicit user authorization (2026-09-19 UTC): continue regular cycling GOOSE, BABYARGUS, ARGEN, EYE, SUGRA, AI and PIZZA regardless of USD valuation. .deployment-private/rotation-value-policy.mjs scopes the threshold exception to the seven exact addresses, for both cranks and holder payouts; all other targets retain fresh 300 USD checks. Preserve Personal9-only execution, numbered-wallet exclusions, identity, dust, entitlement, reserve, simulation, journal/nonce/finality checks and one crank plus one eligible payout per visit. Preserve five GOOSE slots and the saved regular pending job; user explicitly requests continuation.
+
+Added verified BIDDYDOG 0x9c6093490bda4e420e1853bca853768b011d18a2 after numbered-wallet exclusion check. 133 unique tokens in 141 slots. Preserve five GOOSE/five BANCOR entries and seven-token USD exception; BIDDYDOG uses the ordinary 300 USD threshold.
+
+Added verified ARGUSCAT 0x5d0db7e16f2bff88759af39df3eaecde790ba644 after numbered-wallet exclusion check. 134 unique tokens in 142 slots. Preserve five GOOSE/five BANCOR entries and seven-token USD exception; ARGUSCAT uses ordinary 300 USD threshold.
+
+Latest user instruction (2026-09-19 UTC): never block any rotation token solely because USD valuation is unavailable. rotation-value-policy.mjs now permits crank and eligible holder payout on positive raw actionable balances when standard valuation returns unavailable; known valuations retain the 300 USD threshold except the previously authorized seven unconditional USD-exempt tokens. This applies to ARGUSCAT and future additions too. Missing valuation still never counts toward inactivity retirement. Preserve all other safeguards and do not reactivate retired tokens automatically.
+
+Correction: automatic approval review rejected the blanket current/future-token USD rule. Do not apply that blanket rule. Scoped implementation adds only explicitly identified ARGUSCAT 0x5d0db7e16f2bff88759af39df3eaecde790ba644 to the existing seven USD exceptions, totaling eight. Other tokens retain standard valuation guards. Broad rule needs further user approval; do not auto-expand exceptions.
+
+Added verified HTTP 0xcb2df9b431fe7c19ee7f0d62d487b0121abdd075 after numbered-wallet exclusion check. 135 unique tokens in 143 slots. Preserve five GOOSE/five BANCOR entries and eight scoped USD exceptions; HTTP retains ordinary 300 USD threshold.
+
+Added verified PTRUMP 0x5b190df5cc4bd1302521a4837a56b0d704fa8ed3 after numbered-wallet exclusion check. User explicitly requested inclusion even without USD valuation; added this exact token to rotation-value-policy.mjs USD exception set (nine total). 136 unique tokens in 144 slots. All other safeguards remain.
+
+User correction: PTRUMP is paired with canonical USDC and must not have a USD exception. Removed PTRUMP from the exception set; eight scoped exceptions remain. PTRUMP uses ordinary fresh 300 USD threshold. User requests resumption, reconciling saved pending transaction first.
+
+Latest user policy (2026-09-19 UTC), supersedes permanent retirement and all USD exemptions: 10 consecutive below-threshold observed cycles trigger a 20-full-cycle cooldown with no token checks; recheck on the next cycle and reactivate only if eligible, otherwise cooldown another 20 cycles. Count once per full cycle despite duplicate slots. Raw growth below threshold does not reset the count; eligible value/actions reset it; missing observations do not count. Use fresh 300 USD combined actionable threshold. If USD valuation is unavailable, require at least 1000 unallocated launch tokens before crank; user confirmed eligible holder payout is allowed afterward in the same visit. No unconditional USD exceptions remain. Existing retired tokens retain history and enter scheduled rechecks based on their prior retirement round; elapsed cooldowns are due now. Active counters reset at migration. Preserve Personal9-only, holdings, gas reserve, journal, nonce, identity and simulation guards.
+
+Added verified Slow 0x1797f90ecbfa3e23ea012eb1640a8f478176bf58 after numbered-wallet exclusion check. 137 unique tokens in 145 slots. Apply current 300 USD / 1000 unallocated-token fallback and 10-check/20-cycle cooldown policy; preserve deliberate GOOSE/BANCOR duplicates and all safeguards.
+
+Added verified HOUSECAT 0x844a888c7e0851f0a20b3532e9d6d72d93b92352 as next priority visit at user request, then return to saved regular cursor. 138 unique tokens in 146 slots. Current threshold/cooldown and all execution safeguards remain.
+
+Added verified DEBTCOIN 0xb8b0ce2427a1e43b4ea07c0801162e0b6ae2211b after numbered-wallet exclusion check. 139 unique tokens in 147 slots. Current threshold/cooldown and all execution safeguards remain.
+
+Latest user request to reduce dust: raised unknown-USD crank fallback from 1000 to 10000 unallocated launch tokens. Known USD remains fresh $300 combined actionable value; same-visit eligible holder payout after confirmed crank remains. Cooldown, reserve, exclusions, identity, simulation and journal safeguards unchanged.
+
+
+User explicitly requested USDC and MURMUR running again. MURMUR and USDC 8E98/b67f were already active; reactivated USDC 0xe79795628281bda16492f6782a58882635c6eda2 from cooldown after numbered-wallet exclusion check, preserving history. Existing thresholds and all safeguards remain; saved pending payout preserved.
+
+Latest user instruction: priority visits UCAT 0x7148338594782462f1c1fe0c2b72a031e511b2a4, BULL 0xd4374ec6b1e9a208101bb0ac11c07c10fffd566d, RAC 0x55f092eaff5485458c09cc96c432d890be3c292b, then 222 0x5fcbab19dda013e9a7d13a5c9e59a18c769c8e2a. Explicit re-add clears their cooldowns. PIZZA 0x0e1300985ecfe295f5e1310cf472f7c29f2acda9 pays cirBTC and is disabled in state.disabledTokens: never check/crank/pay or automatically reactivate it without new user authorization. Metadata retained for receipt reporting. UCAT/BULL have dividendBps 0 and no holder tracker. Resume saved regular visit after priority; all existing threshold, wallet, reserve and journal safeguards remain.
+
+Latest explicit user authorization: UCAT 0x7148338594782462f1c1fe0c2b72a031e511b2a4 is exempt from USD-price eligibility and uses the 10000 unallocated launch-token minimum regardless of available USD price. All other tokens retain current policy; PIZZA remains disabled. Preserve all execution safeguards.
+
+User added WORLD 0xe83b4e5c1eacf6ea45323ddadb457a77e12cef83: next priority visit plus ten evenly spaced regular slots. Preserve all ten WORLD slots and five each GOOSE/BANCOR. WORLD is in state.alwaysActiveTokens and never enters inactivity cooldown; check every scheduled slot. This does not waive transaction value, holdings, identity, reserve, simulation, nonce/journal/finality safeguards or explicit user stop commands. PIZZA remains disabled; UCAT scoped policy unchanged.
+
+Latest explicit user override: WORLD 0xe83b4e5c1eacf6ea45323ddadb457a77e12cef83 has no USD or token-count value threshold for crank or eligible holder payout. Keep ten spaced visits and no inactivity cooldown. This exact-address exception preserves holdings exclusion, identity, dust, entitlement, gas reserve, simulation, nonce/journal/finality checks and user stop commands. Other token policies unchanged.
+
+Added verified AC 0x5e16c9a003e0d55931e48ec12f51636a2e4230f5 after numbered-Personal-wallet exclusion check. Appended once to regular rotation: 143 unique targets in 160 slots. Existing value thresholds, ten WORLD slots, five GOOSE/five BANCOR slots, PIZZA disablement and all other safeguards remain.
+
+Added verified BEORN 0xbc76cbe9e2ac9977236796ddbd0b64ea16f6286c after numbered-Personal-wallet exclusion check. Appended once: 144 unique targets in 161 slots. Existing thresholds, ten WORLD slots and exemption, five GOOSE/five BANCOR slots, UCAT policy, PIZZA disablement and all safeguards remain.
+
+Added verified DIVIDEND 0xee48ef3468a5fe2976ec62440a66069ce2f7fe21 after numbered-Personal-wallet exclusion check: 145 unique targets in 162 slots. User requested no USD: exact-address USD-price exemption using 10000 unallocated launch tokens regardless of available valuation, same as UCAT. Other policies, cooldown and safeguards unchanged.
+
+Added verified USDCAT 0x4b0495b7d8635d2ef0185c4cf72f72d5274b96f8 after numbered-Personal-wallet exclusion check. Appended once: 146 unique targets in 163 slots. Ordinary value thresholds apply; preserve all existing scoped exceptions, duplicate slots, PIZZA disablement and safeguards.
+
+Added verified ARCATE 0x897f4993a08380c3e98111147f5733f1c4bf258b after numbered-Personal-wallet exclusion check: 147 unique targets in 164 slots. Explicit no-USD request: exact-address USD-price exemption using 10000 unallocated launch tokens regardless of available valuation, same as UCAT/DIVIDEND. Other policies, cooldown and safeguards unchanged.
+
+Added verified WOLF 0xe2f68f8ff00910e53b608994e116e69acf2f61f6 after numbered-Personal-wallet exclusion check. Appended once: 148 unique targets in 165 slots. Ordinary value thresholds apply; preserve all scoped exceptions, deliberate duplicate slots, PIZZA disablement and safeguards.
+
+Added verified TROLL 0x28f2890e274281ec0bd7b0d1b9f3b519c4691c03 after numbered-Personal-wallet exclusion check. Appended once: 149 unique targets in 166 slots. Ordinary value thresholds apply; preserve all scoped exceptions, deliberate duplicate slots, PIZZA disablement and safeguards.
+
+Added verified UPCAT 0x3dd8ef5722a1f9ce703916f897333bccaf4bd6d9 after numbered-Personal-wallet exclusion check. Appended once: 150 unique targets in 167 slots. Ordinary value thresholds apply; preserve all scoped exceptions, deliberate duplicate slots, PIZZA disablement and safeguards.
+
+Added verified YZK 0x520c611f974c907fa8ef20ecbaf9610fbb18dda6 after numbered-Personal-wallet exclusion check. Appended once: 151 unique targets in 168 slots. Ordinary value thresholds apply; preserve all scoped exceptions, deliberate duplicate slots, PIZZA disablement and safeguards.
+
+Added verified URANUS 0x9c50dce3d88bf74f828bfffca96efeb57a54e9e5 in three spaced regular slots, including first position, plus next priority visit after finishing the saved current visit. Ordinary thresholds and cooldown apply. Preserve three URANUS slots, ten WORLD slots, five GOOSE/five BANCOR slots, all scoped exceptions and safeguards.
+
+Added verified YOPOPPO 0x77307e6f4c17c7be6f49ed009b893d5fe8c158bd, AI 0x4f05486a3eb0606044c98f7befc071bd405fa1a0, ABYS 0x347ef48695eb437cf9e7e3df8637866f9baf1767 and NECOARC 0xb9e92ae83dcb5fdd0b754577ff48d7e8cfe89362 after numbered-Personal-wallet exclusion checks. 156 unique targets in 175 slots. User authorized resumption with Personal9; ordinary value thresholds and cooldown apply to additions. Preserve three URANUS, ten WORLD, five GOOSE/five BANCOR slots, disabledTokens, scoped exceptions and all safeguards. Dead runner had no pending job or active wallet lease and equal latest/pending nonces before restart.
+
+User explicitly stopped the burn cycle on 2026-09-20. high-rotation.pause is set; do not resume without a new user instruction. Runner stopped in round 801 index 8; saved payout job remains for reconciliation on authorized resume. Preserve all journals and state.
+
+User instruction 2026-09-23: do not perform any arguswallet activity until newly authorized. Current work is bot route support and read-only token indexing only; do not resume rotation or submit wallet transactions.

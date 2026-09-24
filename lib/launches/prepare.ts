@@ -1,4 +1,5 @@
 import { launchQuote, assertLaunchQuote, type LaunchQuote } from "./quote";
+import { PORTAL8, preparePortal8 } from './portal8';
 import { launchReadCache } from "./read-cache";
 import { tradeSimulationFailure } from "../arc/trade-errors";
 import { verifyLaunchHookStore } from "./hook-review";
@@ -8,15 +9,16 @@ import { decodeFunctionResult, encodeAbiParameters, encodeFunctionData, encodePa
 import { type ArcConfig } from "../arc/config";
 import { checkArcRpc, type ArcRpc, type ArcCall } from "../arc/rpc";
 import { LaunchError, LAUNCH_PREVIEW_MS, LAUNCH_MAX_GAS, LAUNCH_TOTAL_GAS_WEI } from "./policy";
-import { parseLaunchInput, launchFingerprint, type LaunchIdentity, type LaunchInput } from "./input";
+import { parseLaunchInput, parseStoredLaunchInput, launchFingerprint, type LaunchIdentity, type LaunchInput } from "./input";
 import { approvalAbi, configAbi, LAUNCH_DEFAULTS, LAUNCH_REGISTRY, LAUNCH_REWARD_CONFIG, portalAbi, LAUNCH_PORTAL, LAUNCH_PORTAL_CODE_HASH, reviewedImplementations } from "./contracts";
 
 // Deliberately lacks a broadcast or signing capability.
 export type LaunchReadRpc = Omit<ArcRpc, "broadcast" | "receipt">;
 export type LaunchStep = { kind: "rewards" | "approval" | "launch"; call: ArcCall; estimatedGas?: string; gas: string | null; gasWei: string | null };
 export type LaunchPreview = {
+  portalEconomics?: {start:string;bond:string;minSeedPpm:number};
   quote?: LaunchQuote; image?: LaunchImageEvidence;
-  version: 1; executionEnabled: false; fingerprint: Hex; creator: Address; portal: typeof LAUNCH_PORTAL;
+  version: 1; executionEnabled: false; fingerprint: Hex; creator: Address; portal: Address;
   tokenSalt: Hex; hookSalt: Hex; predictedToken: Address; predictedHook: Address; predictedSplitter: Address;
   hookInitCodeHash: Hex; rewardConfig: Address; block: string; blockHash: Hex; nonce: number;
   createdAt: number; expiresAt: number; status: "simulated" | "needs_setup";
@@ -27,7 +29,8 @@ export type LaunchPreview = {
 const same = (a: string, b: string) => a.toLowerCase() === b.toLowerCase();
 const hash = /^0x[0-9a-fA-F]{64}$/;
 export function encodeLaunch(input: LaunchInput, tokenSalt: Hex, hookSalt: Hex, quote?: LaunchQuote): Hex {
-  const p = parseLaunchInput(input);
+  const p = parseStoredLaunchInput(input);
+  if(p.feeDestination)throw new LaunchError('FEE_RECIPIENT','Legacy launches cannot redirect fees.');
   if (quote) assertLaunchQuote(p.pairToken, parseUnits(p.devBuyUSDC, 6), quote);
   if (p.pairToken !== "USDC" && (!quote || quote.symbol !== p.pairToken)) throw new LaunchError("PAIRED_PREPARATION", "Prepare the paired asset amount first.");
   return encodeFunctionData({ abi: portalAbi, functionName: "launch", args: [{
@@ -60,11 +63,14 @@ export async function mineHook(creator: Address, initCodeHash: Hex, sampleSalt: 
 
 /** Read-only preparation. Missing prerequisites are reported, never submitted. */
 export async function prepareLaunch(options: {
+  portal?: Address;
   identity: LaunchIdentity; input: LaunchInput; tokenSalt: Hex; rpc: LaunchReadRpc; config: ArcConfig;
   reservedWei: bigint; activeTransaction: boolean; now?: number; image?: LaunchImageEvidence; frozenQuote?: LaunchQuote;
-  verifiedHook?: Pick<LaunchPreview, "creator" | "tokenSalt" | "hookSalt" | "hookInitCodeHash" | "predictedHook">;
+  verifiedHook?: Pick<LaunchPreview, "creator" | "tokenSalt" | "hookSalt" | "hookInitCodeHash" | "predictedHook" | "portalEconomics">;
 }): Promise<LaunchPreview> {
-  const { identity, config, tokenSalt } = options, input = parseLaunchInput(options.input);
+  if(!options.portal || options.portal.toLowerCase()===PORTAL8.toLowerCase())return preparePortal8(options);
+  if(options.portal.toLowerCase()!==LAUNCH_PORTAL.toLowerCase())throw new LaunchError('PORTAL_CHANGED','Unknown launch portal.');
+  const { identity, config, tokenSalt } = options, input = parseStoredLaunchInput(options.input);
   const rpc=launchReadCache(options.rpc);
   if (!hash.test(tokenSalt) || options.reservedWei < 0n) throw new LaunchError("INVALID_DRAFT", "Invalid launch draft.");
   if (options.activeTransaction) throw new LaunchError("WALLET_BUSY", "A wallet transaction is pending.");

@@ -7,7 +7,7 @@ import { expect, it, vi } from "vitest";
 import { decodeFunctionData, encodeFunctionResult, encodePacked, getCreate2Address, keccak256, toHex, type Abi, type Address, type Hex } from "viem";
 import { prepareLaunch, type LaunchReadRpc } from "../lib/launches/prepare";
 import { verifyLaunchHookStore } from "../lib/launches/hook-review";
-import { parseLaunchInput } from "../lib/launches/input";
+import { parseStoredLaunchInput as parseLaunchInput } from "../lib/launches/input";
 import { approvalAbi, configAbi, portalAbi, LAUNCH_PORTAL, reviewedImplementations } from "../lib/launches/contracts";
 import type { ArcConfig } from "../lib/arc/config";
 import type { ArcCall } from "../lib/arc/rpc";
@@ -62,7 +62,7 @@ function fixture() {
   };
   const input = parseLaunchInput({ name: "Example", symbol: "EXAMPLE", imageURI: "ipfs://Qm" + "a".repeat(44),
     buyTaxBps: 100, sellTaxBps: 100, creatorBps: 10000, burnBps: 0, dividendBps: 0, liquidityBps: 0 });
-  const options = { identity: { owner: "1", address: creator }, input, tokenSalt: toHex(100n, { size: 32 }), rpc, config,
+  const options = { portal:LAUNCH_PORTAL, identity: { owner: "1", address: creator }, input, tokenSalt: toHex(100n, { size: 32 }), rpc, config,
     reservedWei: 0n, activeTransaction: false, now };
   return { state, options, call };
 }

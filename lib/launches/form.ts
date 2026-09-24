@@ -1,4 +1,5 @@
 import { parseLaunchInput, type LaunchInput } from "./input";
+import { LAUNCH_MIN_DEV_BUY_USDC } from "./policy";
 import type { LaunchPreview } from "./prepare";
 
 export type LaunchDraft = {
@@ -11,10 +12,10 @@ export type LaunchForm = {
   website: string; twitter: string; telegram: string; allocationText: string; devBuyUSDC: string;
 };
 export const emptyLaunchForm: LaunchForm = {
-  name: "", symbol: "", imageURI: "", description: "", website: "", twitter: "", telegram: "", allocationText: "", devBuyUSDC: "0",
+  name: "", symbol: "", imageURI: "", description: "", website: "", twitter: "", telegram: "", allocationText: "", devBuyUSDC: LAUNCH_MIN_DEV_BUY_USDC,
 };
 export function formInput(form: LaunchForm): LaunchInput {
-  return parseLaunchInput({ ...form, imageURI: form.imageURI.trim(), devBuyUSDC: form.devBuyUSDC.trim() || "0" });
+  return parseLaunchInput({ ...form, imageURI: form.imageURI.trim(), devBuyUSDC: form.devBuyUSDC.trim() || LAUNCH_MIN_DEV_BUY_USDC });
 }
 export function allocationSummary(input: LaunchInput) {
   return [

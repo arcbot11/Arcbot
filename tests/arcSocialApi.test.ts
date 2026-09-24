@@ -69,6 +69,11 @@ describe("Arc social execution boundary",()=>{
    expect(await(await POST(request())).json()).toEqual({ok:false,message:expected});
    expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
  });
+ it.each(["Unexpected dynamic Argus token record length.","Dynamic Argus registry mismatch.","Dynamic Argus contract code missing.","Dynamic Argus hook identity mismatch.","Unsupported dynamic Argus pool configuration.","Dynamic Argus quote token code missing.","Dynamic Argus pool ID mismatch."])("rejects dynamic portal validation before creating work: %s",async message=>{
+ command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:100};m.trade.mockRejectedValue(Error(message));
+ expect(await(await POST(request())).json()).toEqual({ok:false,message:"This token's trading contracts could not be verified. No trade was submitted."});
+ expect(m.command).not.toHaveBeenCalled();expect(m.advance).not.toHaveBeenCalled();
+ });
  it("reports an unsupported swap immediately even after a completed approval",async()=>{
    command={kind:"buy",unit:"usd",amount:"10",token:recipient,slippageBps:100};
    m.read.mockResolvedValueOnce({chainId:5042,status:"completed",leg:"allowance",unsigned:serializeTransaction({type:'eip1559',chainId:5042,to:recipient,nonce:1,gas:21000n,maxFeePerGas:1n,maxPriorityFeePerGas:0n,data:encodeFunctionData({abi:parseAbi(['function approve(address,uint256)']),functionName:'approve',args:[wallet,10n]})})}).mockResolvedValue(null);

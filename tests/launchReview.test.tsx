@@ -20,10 +20,10 @@ it("allows only existing draft tracking on the website", async () => {
   await expect(Page({searchParams:Promise.resolve({})})).rejects.toThrow("404");
   await expect(Page({searchParams:Promise.resolve({draft:"existing"})})).resolves.toBeDefined();
 });
-it("escapes metadata and shows the resolved split, fixed threshold and creator wallet", () => {
+it("escapes metadata and shows the resolved split, eligibility and creator wallet", () => {
   const html = render(null);
   expect(html).not.toContain("<script>"); expect(html).toContain("&lt;script&gt;");
-  expect(html).toContain("100,000 EXAMPLE"); expect(html).toContain("50%");
+  expect(html).toContain("Eligible circulating holders"); expect(html).toContain("50%");
   expect(html).toContain("X-linked wallet for @example"); expect(html).toContain("Creator rewards go to this wallet");
   expect(html).not.toContain("<button"); expect(html).toContain("No transaction will be signed or sent");
 });

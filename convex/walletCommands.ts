@@ -1,6 +1,8 @@
+import { githubRecipientFromUrl } from '../lib/launches/github-recipient';
 import { launchPairFromXText } from "../lib/launches/x-pair";
 import {DEFAULT_ARC_SLIPPAGE_BPS} from '../lib/arc/slippage';
 import { launchAllocationFromXText } from "../lib/launches/x-allocation";
+import { launchFeeRecipientFromXText, withoutLaunchFeeAssignment } from "../lib/launches/x-fee-recipient";
 import type { Allocation } from "../lib/launches/allocation";
 import {explicitArcSwap} from "../lib/arc-swap-command";
 import { creationRequest, disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
@@ -45,6 +47,7 @@ export type WalletCommand =
       holderFeeSharing?: boolean;
       allocation?: Allocation;
       launchSource?: { text: string; imageURI: string };
+      feeDestination?: import('../lib/launches/input').LaunchInput['feeDestination'];
       selfBurnBps?: number;
       devBuy?: { amount: string; unit: "eth" | "usd" | "pair" };
     }
@@ -253,10 +256,11 @@ export function launchFeeOptionsFromText(text: string) {
 
 export function normalizeLaunchFeeOptions(command: WalletCommand, text: string): WalletCommand {
   if (command.kind !== "launch") return command;
+  const feeRecipient = launchFeeRecipientFromXText(text);
   // Ignore model-supplied splits and legacy redirection flags. Derive all four
   // shares from the original post; unspecified rewards belong to its creator.
-  const allocation = launchAllocationFromXText(text);
-  return { ...command, allocation, pairToken: launchPairFromXText(text), feeRecipient: undefined, holderFeeSharing: undefined, selfBurnBps: undefined };
+  const allocation = launchAllocationFromXText(withoutLaunchFeeAssignment(text));
+  return { ...command, allocation, pairToken: launchPairFromXText(text), feeRecipient, holderFeeSharing: undefined, selfBurnBps: undefined };
 }
 
 export function normalizeXUrl(value: string) {
@@ -797,11 +801,14 @@ export function validateStructuredWalletCommand(value: unknown): WalletCommand |
         ? Number(String(raw.amount).replace(/,/g, "")) === 0 : false;
       if (!amount && !zeroAmount) return null;
       if (!["eth", "usd", "pair"].includes(String(raw.unit))) return null;
-      if (amount) devBuy = { amount, unit: raw.unit as "eth" | "usd" | "pair" };
+      devBuy = { amount: amount ?? "0", unit: raw.unit as "eth" | "usd" | "pair" };
     }
-    const feeRecipient = typeof item.feeRecipient === "string"
-      && (/^@[a-zA-Z0-9_]{1,15}$/.test(item.feeRecipient) || /^0x[a-fA-F0-9]{40}$/.test(item.feeRecipient))
-      ? item.feeRecipient : undefined;
+    let feeRecipient: string | undefined;
+    if (item.feeRecipient !== undefined) {
+      if (typeof item.feeRecipient !== "string") return null;
+      if (/^@[a-zA-Z0-9_]{1,15}$/.test(item.feeRecipient) || /^0x[a-fA-F0-9]{40}$/.test(item.feeRecipient)) feeRecipient = item.feeRecipient;
+      else { try { feeRecipient = githubRecipientFromUrl(item.feeRecipient).url; } catch { return null; } }
+    }
     const holderFeeSharing = item.holderFeeSharing === true;
     const selfBurnBps = Number.isInteger(item.selfBurnBps) && Number(item.selfBurnBps) >= 0
       && Number(item.selfBurnBps) <= 10000 ? Number(item.selfBurnBps) : undefined;

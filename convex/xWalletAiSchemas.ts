@@ -78,7 +78,7 @@ const operationProperties: Record<string, Record<string, unknown>> = {
     token: nullableString("Token being sold, or null when missing."),
     slippageBps: nullableSlippage("Slippage in integer basis points; normally 250."),
   },
-  claim_fees: { token: nullableString("Specific token ticker or contract, otherwise null to claim all eligible fees.") },
+  claim_fees: { token: nullableString("Specific token ticker or contract. Null requests discovery; when multiple launches exist the user must choose one. One launch per request.") },
   reassign_fees: { token: nullableString("Ticker or contract from the user's tokens."), recipient: nullableString("X handle, wallet address, or the literal word holders following 'to'.") },
   upgrade_fees: { token: nullableString("The ticker without a leading $, or complete contract immediately after Upgrade. The case-insensitive phrase can appear within a longer direct request.") },
   launch: {

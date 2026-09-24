@@ -1,0 +1,19 @@
+{
+  "block": "22434364",
+  "addresses": {
+    "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+    "parts": "0xd969062076f75fbc4fd0195561501dc13ef87c72",
+    "hooks": "0xa7a0f2d2dae22851d77946a42d4010c5ba5aad97",
+    "creatorRegistry": "0x986b478be2f05b44b47c61e26a0bbcbcc07610ed",
+    "registry": "0x58398c03c7a6240d8aa1ced42592933ad857843a",
+    "identity": "0x10634798c7f5c37009026bab3f81773389f4e97d"
+  },
+  "hashes": {
+    "portal": "0x24c322050ec819df84fb3622cdbbd27052e6153ee055de4789db6cfa6084a98d",
+    "parts": "0x034f9bb31a496ffe2e366bf8e2f1903e718ca55f826f0d3ae0bb88a5d9a0c493",
+    "hooks": "0x494dffa5dc2085d7cd34689768e76f0c6f7bb41d421b99727d80849a4d1db7f4",
+    "creatorRegistry": "0xf1934d7e902ed8619cb3655d7e9b004da458aada853edf8594c9b7f2c965f649",
+    "registry": "0x7b8e83b9a2127ce078887a09b6c2309b38c5cce4b997cd2ea99ba2b5cb3c55a0",
+    "identity": "0x745793a8a5cf5079e947c1121ae9d29847c93f520ee2cec0b6626e2eae98ed6f"
+  }
+}

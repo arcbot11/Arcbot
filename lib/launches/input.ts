@@ -2,7 +2,7 @@ import { launchImageURI } from "./image";
 import { LAUNCH_PAIR_SYMBOLS } from "./x-pair";
 import { z } from "zod";
 import { formatUnits, getAddress, keccak256, parseUnits, toHex, type Address } from "viem";
-import { LaunchError, LAUNCH_TAX_BPS, LAUNCH_DIVIDEND_MINIMUM_TOKENS } from "./policy";
+import { LaunchError, LAUNCH_TAX_BPS, LAUNCH_DIVIDEND_MINIMUM_TOKENS, LAUNCH_MIN_DEV_BUY_USDC } from "./policy";
 import { ALLOCATION_KEYS, completeAllocation, parseAllocation, type Allocation } from "./allocation";
 
 const cleanText = (limit: number) => z.string().transform(s => s.trim().normalize("NFC"))
@@ -27,6 +27,18 @@ const schema = z.object({
   buyTaxBps: z.literal(LAUNCH_TAX_BPS).default(LAUNCH_TAX_BPS), sellTaxBps: z.literal(LAUNCH_TAX_BPS).default(LAUNCH_TAX_BPS),
   creatorBps: bps, burnBps: bps, dividendBps: bps, liquidityBps: bps,
   devBuyUSDC: decimal(6).default("0"),
+  feeDestination: z.object({
+    platform: z.enum(['wallet','x','github']),
+    address: z.string().regex(/^0x[0-9a-fA-F]{40}$/).transform((s,ctx) => { try { return getAddress(s); } catch { ctx.addIssue({code:'custom',message:'Invalid fee recipient address.'}); return z.NEVER; } }).refine(s => BigInt(s) !== 0n),
+    userId: z.string().regex(/^[1-9][0-9]{0,76}$/).optional(),
+    recipient: z.string().min(1).max(200),
+  }).strict().superRefine((v,ctx) => {
+    if(v.platform !== 'wallet' && !v.userId)ctx.addIssue({code:'custom',message:'Immutable fee recipient identity is required.'});
+    if(v.userId && /^[1-9][0-9]{0,76}$/.test(v.userId) && BigInt(v.userId)>=2n**256n)ctx.addIssue({code:'custom',message:'Fee recipient ID exceeds the contract limit.'});
+    if(v.platform==='wallet' && (v.userId || v.recipient.toLowerCase()!==v.address.toLowerCase()))ctx.addIssue({code:'custom',message:'Wallet fee recipient differs from the requested address.'});
+    if(v.platform==='x' && !/^@[a-z0-9_]{1,15}$/i.test(v.recipient))ctx.addIssue({code:'custom',message:'Invalid X fee recipient.'});
+    if(v.platform==='github' && !/^https:\/\/github\.com\/[a-z0-9-]+$/i.test(v.recipient))ctx.addIssue({code:'custom',message:'Invalid GitHub fee recipient.'});
+  }).optional(),
   dividendMinimumTokens: z.literal(LAUNCH_DIVIDEND_MINIMUM_TOKENS,
     { errorMap: () => ({ message: "Dividend minimum is fixed at 100,000 tokens." }) }).default(LAUNCH_DIVIDEND_MINIMUM_TOKENS),
 }).strict().superRefine((v, ctx) => {
@@ -38,7 +50,8 @@ const schema = z.object({
 });
 export type LaunchInput = z.infer<typeof schema>;
 export type LaunchIdentity = { owner: string; address: Address };
-export function parseLaunchInput(input: unknown): LaunchInput {
+/** Canonicalize immutable legacy terms without applying new admission policy. */
+export function parseStoredLaunchInput(input: unknown): LaunchInput {
   let resolved = input;
   if (input && typeof input === "object" && !Array.isArray(input)) {
     const source = input as Record<string, unknown>, { allocationText, ...rest } = source;
@@ -63,6 +76,15 @@ export function launchIdentity(owner: string, address: string): LaunchIdentity {
   if (BigInt(normalized) === 0n) throw new LaunchError("IDENTITY", "Wallet ownership could not be verified.");
   return { owner, address: normalized };
 }
+/** New drafts only: omitted amounts default to the minimum; explicit lower amounts fail. */
+export function parseLaunchInput(input: unknown): LaunchInput {
+  const source = input && typeof input === "object" && !Array.isArray(input)
+    ? { ...input, devBuyUSDC: (input as Record<string, unknown>).devBuyUSDC === undefined ? LAUNCH_MIN_DEV_BUY_USDC : (input as Record<string, unknown>).devBuyUSDC } : input;
+  const parsed = parseStoredLaunchInput(source);
+  if (parseUnits(parsed.devBuyUSDC, 6) < parseUnits(LAUNCH_MIN_DEV_BUY_USDC, 6))
+    throw new LaunchError("DEV_BUY", "Dev buy must be at least 4.50 USDC. This is included in your dev buy, not added to it.");
+  return parsed;
+}
 export function launchFingerprint(identity: LaunchIdentity, input: LaunchInput) {
-  return keccak256(toHex(JSON.stringify({ version: 1, owner: identity.owner, creator: identity.address.toLowerCase(), input: parseLaunchInput(input) })));
+  return keccak256(toHex(JSON.stringify({ version: 1, owner: identity.owner, creator: identity.address.toLowerCase(), input: parseStoredLaunchInput(input) })));
 }

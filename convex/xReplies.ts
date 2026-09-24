@@ -1,3 +1,8 @@
+import { resolveGithubFeeRecipient } from '../lib/launches/github-recipient';
+import { PORTAL8_IDENTITY, portal8ReadAbi, read8, verifyPortal8 } from '../lib/launches/portal8';
+import { createArcRpc, checkArcRpc } from '../lib/arc/rpc';
+import { arcConfigFromEnv } from '../lib/arc/config';
+import { toHex, getAddress } from 'viem';
 import {verifyXPostingIdentity} from "../lib/x-posting-identity";
 import { isXBotAuthor, xBotUserId } from "../lib/x-bot-identity";
 import { socialAddressLinks } from "../lib/social-address-links";
@@ -1235,6 +1240,32 @@ export const bindInteractionRecipient = internalMutation({
   },
 });
 
+export const bindLaunchFeeDestination = internalMutation({
+ args:{postId:v.string(),destinationJson:v.string()},handler:async(ctx,args)=>{
+  const row=await ctx.db.query('xReplyInteractions').withIndex('by_post_id',q=>q.eq('postId',args.postId)).unique();
+  if(!row)throw Error('X interaction missing.');
+  if(row.launchFeeDestinationJson)return row.launchFeeDestinationJson;
+  const dest=JSON.parse(args.destinationJson);
+  if(dest.platform==='x'){
+    if(!row.recipientXUserId||row.recipientAddress?.toLowerCase()!==dest.address.toLowerCase())throw Error('Fee wallet binding changed.');
+    dest.userId=row.recipientXUserId;
+  }
+  const json=JSON.stringify(dest);await ctx.db.patch(row._id,{launchFeeDestinationJson:json});return json;
+ }
+});
+async function resolveLaunchDestination(ctx:ActionCtx,postId:string,recipient:string,saved?:string){
+ if(saved)return JSON.parse(saved);
+ let destination;
+ if(recipient.startsWith('https://github.com/')){
+  const github=await resolveGithubFeeRecipient(recipient),config=arcConfigFromEnv(),rpc=createArcRpc(config),head=await checkArcRpc(rpc,config);
+  await verifyPortal8(rpc,head.number);
+  const address=await read8<string>(rpc,head.number,PORTAL8_IDENTITY,portal8ReadAbi,'predict',[toHex('github',{size:32}),BigInt(github.userId)]);
+  destination={platform:'github',userId:github.userId,address:getAddress(address),recipient};
+ }else if(recipient.startsWith('@'))destination={platform:'x',address:await resolveXRecipient(ctx,postId,recipient),recipient};
+ else destination={platform:'wallet',address:getAddress(recipient),recipient};
+ return JSON.parse(await ctx.runMutation(internal.xReplies.bindLaunchFeeDestination,{postId,destinationJson:JSON.stringify(destination)}));
+}
+
 async function resolveXRecipient(
   ctx: ActionCtx,
   postId: string,
@@ -1797,8 +1828,10 @@ export const retryInteraction = internalAction({
             : intent.command.kind === "launch"
               ? intent.command.feeRecipient
               : undefined;
+        const feeDestination = intent.command.kind==='launch' && recipient
+          ? await resolveLaunchDestination(ctx,postId,recipient,current.interaction.launchFeeDestinationJson) : undefined;
         const recipientAddress =
-          recipient && recipient.toLowerCase() !== "holders" && recipient !== "self"
+          intent.command.kind !== "launch" && recipient && recipient.toLowerCase() !== "holders" && recipient !== "self"
             ? current.interaction.recipientAddress ||
               (/^0x[a-fA-F0-9]{40}$/.test(recipient)
                 ? recipient
@@ -1809,6 +1842,7 @@ export const retryInteraction = internalAction({
           xUserId: current.user.xUserId,
           text: workflowText,
           parsedCommandJson: JSON.stringify(intent.command),
+          ...(feeDestination?{launchFeeDestinationJson:JSON.stringify(feeDestination)}:{}),
           ...(preparedMedia.mediaUrl
             ? { mediaUrl: preparedMedia.mediaUrl }
             : {}),

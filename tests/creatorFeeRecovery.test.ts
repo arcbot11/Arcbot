@@ -26,3 +26,8 @@ it("does not create work after social authorization expires",async()=>{
 it("does not reuse a claim for another owner or token",async()=>{
   mock.read.mockResolvedValue(record);await expect(runCreatorClaim("different",wallet,"request",token)).rejects.toThrow("request changed");await expect(runCreatorClaim("123",wallet,"request",wallet)).rejects.toThrow("request changed");expect(mock.advance).not.toHaveBeenCalled();
 });
+
+it('reports changed entitlement as terminal rather than pending',async()=>{
+ mock.read.mockResolvedValue(record);mock.advance.mockResolvedValue({...record,status:'cancelled',failureReason:'claim_entitlement_changed'});
+ expect(await runCreatorClaim('123',wallet,'request',token)).toMatchObject({pending:false,ok:false,message:'Fee claim entitlement changed. Cancelled before signing; submit a new claim.'});
+});

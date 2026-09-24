@@ -1,0 +1,158 @@
+{
+  "at": "2026-09-23T23:05:01.503Z",
+  "block": "22422547",
+  "enumerated": 166188,
+  "catalogCount": 479,
+  "argusCount": 297,
+  "added": [
+    {
+      "chainId": 5042,
+      "address": "0xedf569700fe57704f3a6d4ad3210366cfb33081a",
+      "symbol": "NOFEE",
+      "name": "FeeWhitelist",
+      "decimals": 18,
+      "marketCapUsd": null,
+      "snapshotAt": "2026-09-23T23:05:01.503Z",
+      "argus": true,
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+      "poolId": "0xe00f9310473f26459ba41b3a7da4e117f61c2dafe8053b453ccdba2a04482cd3"
+    },
+    {
+      "chainId": 5042,
+      "address": "0x8c6676dc171e9903776b5593dae5819049a763f4",
+      "symbol": "LANES",
+      "name": "AllLanes",
+      "decimals": 18,
+      "marketCapUsd": null,
+      "snapshotAt": "2026-09-23T23:05:01.503Z",
+      "argus": true,
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+      "poolId": "0x8098f3a34e347eb799924993af5bf80c3cdeb2f6e476e0a8cf5e31b9b84c4729"
+    },
+    {
+      "chainId": 5042,
+      "address": "0x93c9f2e841b6e284627d2cb7829e6df274865663",
+      "symbol": "CIRL",
+      "name": "CirLanes",
+      "decimals": 18,
+      "marketCapUsd": null,
+      "snapshotAt": "2026-09-23T23:05:01.503Z",
+      "argus": true,
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+      "poolId": "0x23b9e130a0ce94a510cfea071e40c5dbbe18ca3234224a4a93eacbb960358b83"
+    },
+    {
+      "chainId": 5042,
+      "address": "0x6d7e66b95883c5bb46f0989365e20366c628ba49",
+      "symbol": "CTX",
+      "name": "CORTEX",
+      "decimals": 18,
+      "marketCapUsd": null,
+      "snapshotAt": "2026-09-23T23:05:01.503Z",
+      "argus": true,
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+      "poolId": "0x9b8347df67238197858637367a10a59091e9d6e48fafd6be7141c5b3124f1cd5"
+    },
+    {
+      "chainId": 5042,
+      "address": "0xe8c90347cbbf3d636e1807789ab7263932f2143c",
+      "symbol": "COOLCAT",
+      "name": "COOLCAT",
+      "decimals": 18,
+      "marketCapUsd": null,
+      "snapshotAt": "2026-09-23T23:05:01.503Z",
+      "argus": true,
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+      "poolId": "0x91b8e317021102ff11a2dd7fd42d31ba5943c1d5c09b0d1a8dd783014d3e4fdf"
+    },
+    {
+      "chainId": 5042,
+      "address": "0x330cbcdd34bd40f53a258fee9b380767bf73ad56",
+      "symbol": "ANSEM",
+      "name": "The Black Bull",
+      "decimals": 18,
+      "marketCapUsd": null,
+      "snapshotAt": "2026-09-23T23:05:01.503Z",
+      "argus": true,
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+      "poolId": "0xcb26f0dffbff24c848a4b5757a28fedc0002a974fafade6daa0a0d3ded620f88"
+    },
+    {
+      "chainId": 5042,
+      "address": "0x6ecceed95255c0434eeda9952205e1d6f84848c8",
+      "symbol": "DEGEN",
+      "name": "degen",
+      "decimals": 18,
+      "marketCapUsd": null,
+      "snapshotAt": "2026-09-23T23:05:01.503Z",
+      "argus": true,
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+      "poolId": "0xe50c2dd8559007d3cde3ff76cf18a7a60701f642a363d0e823eec5b7afaa38c7"
+    },
+    {
+      "chainId": 5042,
+      "address": "0x5b0d0429ddb146ed9d3485b0d47d629f5a1604f2",
+      "symbol": "FIB",
+      "name": "FIB",
+      "decimals": 18,
+      "marketCapUsd": null,
+      "snapshotAt": "2026-09-23T23:05:01.503Z",
+      "argus": true,
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+      "poolId": "0x6b2190b2d8d293e6832efdc358725cde72c9261ad4258f40d26b2d4888f7103c"
+    }
+  ],
+  "dynamic": [
+    {
+      "address": "0x5b0d0429ddb146ed9d3485b0d47d629f5a1604f2",
+      "symbol": "FIB",
+      "indexed": true
+    },
+    {
+      "address": "0x6ecceed95255c0434eeda9952205e1d6f84848c8",
+      "symbol": "DEGEN",
+      "indexed": true
+    },
+    {
+      "address": "0x330cbcdd34bd40f53a258fee9b380767bf73ad56",
+      "symbol": "ANSEM",
+      "indexed": true
+    },
+    {
+      "address": "0xfa1c870109a57c4b227d4fae363a19f68dc989c4",
+      "symbol": "ARGUSCAT",
+      "indexed": false
+    },
+    {
+      "address": "0x66eb3f5207d969ebf4e3eb6c8e904d25362a5632",
+      "symbol": "EYE",
+      "indexed": false
+    },
+    {
+      "address": "0xe8c90347cbbf3d636e1807789ab7263932f2143c",
+      "symbol": "COOLCAT",
+      "indexed": true
+    },
+    {
+      "address": "0x6d7e66b95883c5bb46f0989365e20366c628ba49",
+      "symbol": "CTX",
+      "indexed": true
+    },
+    {
+      "address": "0x93c9f2e841b6e284627d2cb7829e6df274865663",
+      "symbol": "CIRL",
+      "indexed": true
+    },
+    {
+      "address": "0x8c6676dc171e9903776b5593dae5819049a763f4",
+      "symbol": "LANES",
+      "indexed": true
+    },
+    {
+      "address": "0xedf569700fe57704f3a6d4ad3210366cfb33081a",
+      "symbol": "NOFEE",
+      "indexed": true
+    }
+  ],
+  "scope": "Historical enumeration retained as evidence; only verified new-family launches added. Existing curated identities preserved."
+}

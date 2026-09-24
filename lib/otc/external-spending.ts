@@ -1,10 +1,10 @@
 import {type Store,type Transaction,type Listing,type Order,wallet,finishOrder} from './model';
 import {neverSigned,cancelUnsignedTrade} from './unsigned-recovery';
 
-export type WalletChangeReason='balance_changed'|'nonce_changed'|'allowance_changed'|'simulation_changed';
+export type WalletChangeReason='balance_changed'|'nonce_changed'|'allowance_changed'|'simulation_changed'|'claim_entitlement_changed';
 export class WalletChangeError extends Error {
   readonly reason:WalletChangeReason;
-  constructor(reason:WalletChangeReason){super(reason==='nonce_changed'?'Another transaction changed the wallet nonce.':reason==='allowance_changed'?'Token approval or input balance changed.':reason==='simulation_changed'?'The trade no longer simulates successfully. Check the amount, approval and price.':'Wallet balance changed. The amount and gas are no longer covered.');this.reason=reason;}
+  constructor(reason:WalletChangeReason){super(reason==='claim_entitlement_changed'?'Fee claim entitlement changed. Submit a new claim.':reason==='nonce_changed'?'Another transaction changed the wallet nonce.':reason==='allowance_changed'?'Token approval or input balance changed.':reason==='simulation_changed'?'The trade no longer simulates successfully. Check the amount, approval and price.':'Wallet balance changed. The amount and gas are no longer covered.');this.reason=reason;}
 }
 export async function recheckUnsignedCall<T>(call:()=>Promise<T>):Promise<T>{
   try{return await call();}catch(error){

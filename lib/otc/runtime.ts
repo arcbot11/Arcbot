@@ -1,4 +1,5 @@
-import {verifyCreatorToken,assertClaimCall,claimedAmounts} from "../launches/fees";
+import { assertPortal8Claim, portal8ClaimAmounts } from '../launches/portal8-claims';
+import {FeeClaimError,verifyCreatorToken,assertClaimCall,claimedAmounts} from "../launches/fees";
 import {staleUnsigned} from "./unsigned-recovery";
 import {operationDiagnostic} from '../operation-diagnostics';
 import {WalletChangeError,recheckUnsignedCall} from './external-spending';
@@ -112,7 +113,7 @@ export async function prepareCall(chain: Chain, call: Call, allowGasShortfall=fa
   const gas = ((await client.estimateGas({account:call.from,to:call.to,data:call.data,value:simulationValue,blockNumber}))*120n+99n)/100n;
   const fees = await client.estimateFeesPerGas({type:"eip1559",chain:null});
   const config = chain === 5042 ? arcConfigFromEnv() : baseConfigFromEnv();
-  const maxGas = launchTerms?.kind === "launch" && chain === 5042 ? (await import("../launches/policy")).LAUNCH_MAX_GAS : config.maxGas;
+  const maxGas = launchTerms?.kind === "launch" && chain === 5042 ? (await import("../launches/execution-checks")).launchGasLimit(launchTerms) : config.maxGas;
   if (gas <= 0n || gas > maxGas || fees.maxFeePerGas <= 0n || fees.maxFeePerGas > config.maxFeePerGas || fees.maxPriorityFeePerGas < 0n || fees.maxPriorityFeePerGas > fees.maxFeePerGas) throw new Error("Gas exceeds the configured policy.");
   const tx = {chainId:chain,type:"eip1559" as const,to:call.to,data:call.data,value:call.value,nonce:snapshot.nonce,gas,...fees};
   if (launchTerms) {
@@ -247,8 +248,14 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
       if(record.creatorClaim.reward){
         await (await import("../launches/reward-service")).verifyRewardTransaction(record,BigInt(snapshot.block));
       }else{
-      const launch=await verifyCreatorToken(getAddress(record.wallet),getAddress(record.creatorClaim.token),createArcRpc(arcConfigFromEnv()),BigInt(snapshot.block));
-      assertClaimCall(record.wallet,launch.splitter,tx);
+      const launch=await verifyCreatorToken(getAddress(record.wallet),getAddress(record.creatorClaim.token),createArcRpc(arcConfigFromEnv()),BigInt(snapshot.block)).catch(error=>{
+        if(error instanceof FeeClaimError)throw new WalletChangeError('claim_entitlement_changed');
+        throw error; // Provider uncertainty must remain recoverable.
+      });
+      if(record.creatorClaim.portal8){
+        if(JSON.stringify(launch.portal8)!==JSON.stringify(record.creatorClaim.portal8)||launch.splitter.toLowerCase()!==record.creatorClaim.splitter.toLowerCase())throw new WalletChangeError('claim_entitlement_changed');
+        assertPortal8Claim(launch.splitter,tx);
+      }else {if(launch.portal8)throw new WalletChangeError('claim_entitlement_changed');assertClaimCall(record.wallet,launch.splitter,tx);}
       }
       await recheckUnsignedCall(()=>chainClient(5042).call({account:getAddress(record.wallet),to:tx.to,data:tx.data,value:0n}));
     }
@@ -285,8 +292,13 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
       if(record.creatorClaim.reward){
         (await import("../launches/reward-call")).assertRewardCall(record.creatorClaim.splitter,record.creatorClaim.reward,tx);
       }else{
-      assertClaimCall(record.wallet,record.creatorClaim.splitter,tx);
-      settlement.claims=claimedAmounts(record.wallet,record.creatorClaim.splitter,receipt.logs);
+      if(record.creatorClaim.portal8){
+        assertPortal8Claim(record.creatorClaim.splitter,tx);
+        settlement.claims=portal8ClaimAmounts(record.wallet,record.creatorClaim.splitter,record.creatorClaim.portal8,receipt.logs);
+      }else{
+        assertClaimCall(record.wallet,record.creatorClaim.splitter,tx);
+        settlement.claims=claimedAmounts(record.wallet,record.creatorClaim.splitter,receipt.logs);
+      }
       }
     }
     if(receipt.status === "success" && record.leg === "send"){

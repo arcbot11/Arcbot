@@ -1,3 +1,4 @@
+import { verifyPortal8Claim, type Portal8Claim } from './portal8-claims';
 import { decodeFunctionResult, decodeFunctionData, encodeFunctionData, parseAbi, parseEventLogs, zeroAddress, type Address, type Hex } from "viem";
 import type { ArcRpc } from "../arc/rpc";
 import { quotedLaunchAbi } from "../arc/argus-discovery";
@@ -16,7 +17,7 @@ export const feeAbi = parseAbi([
 const implementations = ["0x6c8f50b8895d5a22c97e611b8f9678a09d045b16", "0xd9578dd861b2fe59675c2c4b09b026fcb0df37fc"];
 const same = (a:string,b:string) => a.toLowerCase() === b.toLowerCase();
 export class FeeClaimError extends Error {}
-export type CreatorFeeToken = {token:Address;portal:Address;splitter:Address;quote:Address};
+export type CreatorFeeToken = {token:Address;portal:Address;splitter:Address;quote:Address;portal8?:Portal8Claim};
 /** API metadata is only a discovery hint. Authority comes from the launch record and deployed clone. */
 export async function verifyCreatorToken(wallet:Address, token:Address, rpc:ArcRpc, block:bigint):Promise<CreatorFeeToken> {
   let readFailure:unknown;
@@ -36,6 +37,8 @@ export async function verifyCreatorToken(wallet:Address, token:Address, rpc:ArcR
     if(!same(creator,wallet)||!same(actualToken,token)||!same(quote,record[10]))throw new FeeClaimError("Creator fee contract identity mismatch.");
     return {token,portal,splitter,quote};
   }
+  const current=await verifyPortal8Claim(wallet,token,rpc,block);
+  if(current)return current;
   if(readFailure)throw Error("Creator record could not be read. Retry shortly.");
   throw new FeeClaimError("No supported creator launch found for this token.");
 }

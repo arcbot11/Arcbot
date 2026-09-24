@@ -8,6 +8,7 @@ import type { LaunchRun } from "../lib/launches/execution-types";
 import type { Transaction } from "../lib/otc/model";
 import { canIndexArcToken } from "../lib/arc/token-catalog";
 import { otcWorkerUrl } from "../lib/project-config";
+import { PORTAL8 } from '../lib/launches/portal8';
 const args={secret:v.string(),owner:v.string(),address:v.string(),requestId:v.string()};
 function rejectAcceptance(message:string):never{throw new ConvexError({acceptance:"rejected",message});}
 type Args={secret:string;owner:string;address:string;requestId:string};
@@ -24,6 +25,7 @@ export const accept=mutation({args:{...args,revision:v.number(),sourceRequestId:
   if(!draft||draft.address!==identity.address||draft.status!=="prepared"||draft.revision!==a.revision||(draft.preparingUntil??0)>Date.now()||draft.expiresAt<=Date.now()||!draft.previewJson)rejectAcceptance("Launch review changed. Prepare again.");
   const preview=JSON.parse(draft.previewJson),input=JSON.parse(draft.inputJson);
   try{assertLaunchPortal(preview.portal);}catch{rejectAcceptance("Launch settings have changed. Prepare your token again.");}
+  if(preview.portal.toLowerCase()!==PORTAL8.toLowerCase())rejectAcceptance('Launch settings have changed. Prepare your token again for the current portal.');
   if(preview.expiresAt<=Date.now()||!preview.image?.sha256||preview.image.imageURI!==input.imageURI||!preview.quote||preview.fingerprint!==draft.fingerprint)rejectAcceptance("Launch review expired or lacks verified evidence.");
   if(await ctx.db.query("launchRuns").withIndex("by_address_status",q=>q.eq("address",identity.address).eq("status","running")).first())rejectAcceptance("A launch is already processing for this wallet.");
   let authorizationExpiresAt=Date.now()+LAUNCH_AUTHORIZATION_MS;
@@ -59,10 +61,13 @@ export const reconcile=mutation({args,handler:async(ctx,a)=>{
   if(tx.owner!==run.owner||tx.wallet.toLowerCase()!==run.address.toLowerCase()||tx.launchStep?.requestId!==run.requestId)throw Error("Launch transaction identity mismatch.");
   if(["cancelled","reverted"].includes(tx.status)){run.status="blocked";run.note=tx.status==="reverted"?"Launch step reverted. No further transaction will be sent.":"Launch stopped before signing. Review before starting a new draft.";}
   if(tx.status==="completed"&&tx.launchStep.kind==="launch"){
-    const result=tx.settlement?.launch;if(!result||result.hash!==tx.hash||result.token.toLowerCase()!==run.preview.predictedToken.toLowerCase())throw Error("Verified launch outcome missing.");
+    const result=tx.settlement?.launch;
+    if(!result||result.hash!==tx.hash||result.portal.toLowerCase()!==run.preview.portal.toLowerCase()||result.creator.toLowerCase()!==run.address.toLowerCase()
+      ||result.hook.toLowerCase()!==run.preview.predictedHook.toLowerCase()||result.splitter.toLowerCase()!==run.preview.predictedSplitter.toLowerCase()
+      ||(run.preview.portal.toLowerCase()!==PORTAL8.toLowerCase()&&result.token.toLowerCase()!==run.preview.predictedToken.toLowerCase()))throw Error("Verified launch outcome missing.");
     run.result=result;run.status="completed";delete run.note;
     const address=result.token.toLowerCase(),now=Date.now();
-    const metadata={address,name:run.input.name,symbol:run.input.symbol,image:run.input.imageURI,description:run.input.description,pair:run.input.pairToken,featured:false,launchHash:result.hash};
+    const metadata={address,creator:run.address.toLowerCase(),portal:result.portal,feeDestination:run.input.feeDestination,name:run.input.name,symbol:run.input.symbol,image:run.input.imageURI,description:run.input.description,pair:run.input.pairToken,featured:false,launchHash:result.hash};
     if(!await ctx.db.query("verifiedBotLaunches").withIndex("by_address",q=>q.eq("address",address)).unique())await ctx.db.insert("verifiedBotLaunches",{address,creator:run.address.toLowerCase(),symbol:run.input.symbol,json:JSON.stringify(metadata),createdAt:now});
     const indexed=await ctx.db.query("tokenRegistry").withIndex("by_normalized_address",q=>q.eq("normalizedAddress",address)).unique();
     const duplicate=await ctx.db.query("tokenRegistry").withIndex("by_symbol",q=>q.eq("symbol",run.input.symbol)).first();
@@ -109,7 +114,7 @@ export const releaseRecovery=internalMutation({args:{...recoveryArgs,lease:v.str
 }});
 export const directoryPage=query({args:{paginationOpts:paginationOptsValidator},handler:async(ctx,a)=>{
   const result=await ctx.db.query("verifiedBotLaunches").order("desc").paginate({...a.paginationOpts,numItems:Math.min(a.paginationOpts.numItems,200)});
-  return {...result,page:result.page.map(r=>JSON.parse(r.json))};
+  return {...result,page:result.page.map(r=>({...JSON.parse(r.json),creator:r.creator}))};
 }});
 export const creatorTokensPage=query({args:{address:v.string(),paginationOpts:paginationOptsValidator},handler:async(ctx,a)=>{
   const result=await ctx.db.query("verifiedBotLaunches").withIndex("by_creator",q=>q.eq("creator",a.address.toLowerCase())).paginate({...a.paginationOpts,numItems:Math.min(a.paginationOpts.numItems,200)});

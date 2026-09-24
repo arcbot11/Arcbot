@@ -1,7 +1,7 @@
 import { decodeEventLog, parseAbi, type Hex, type Address } from "viem";
 import { LAUNCH_PORTAL } from "./contracts";
 import { encodeLaunch, type LaunchPreview } from "./prepare";
-import { launchFingerprint, parseLaunchInput, type LaunchIdentity, type LaunchInput } from "./input";
+import { launchFingerprint, parseStoredLaunchInput, type LaunchIdentity, type LaunchInput } from "./input";
 import { LaunchError } from "./policy";
 import { poolId } from "../arc/routing";
 import { ARC_USDC } from "../arc/config";
@@ -19,7 +19,7 @@ export type LaunchEvidence = {
 const same=(a:string,b:string)=>a.toLowerCase()===b.toLowerCase();
 /** Pure evidence validation for the future executor. No signing, broadcasting or indexing. */
 export function verifyLaunchReceipt(identity:LaunchIdentity,input:LaunchInput,preview:LaunchPreview,evidence:LaunchEvidence){
-  const p=parseLaunchInput(input),r=evidence.receipt;
+  const p=parseStoredLaunchInput(input),r=evidence.receipt;
   const fail=():never=>{throw new LaunchError("LAUNCH_VERIFICATION","Launch evidence does not match the approved draft.");};
   if(evidence.chainId!==5042||!same(preview.portal,LAUNCH_PORTAL)||!same(preview.creator,identity.address)||
     !same(preview.fingerprint,launchFingerprint(identity,p))||!same(evidence.from,identity.address)||!same(evidence.to,LAUNCH_PORTAL)||
