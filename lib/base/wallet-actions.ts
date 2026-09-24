@@ -2,9 +2,37 @@ import {WebError} from "../otc/http";
 import {formatUnits,getAddress,encodeFunctionData,parseAbi} from "viem";
 import {BASE_USDC} from "./usdc";
 import {exactAmount} from "../arc/amounts";
-import {ethPrice,prepareCall,baseUsdcBalance} from "../otc/runtime";
+import {ethPrice,prepareCall,baseUsdcBalance,chainClient,balanceSnapshot} from "../otc/runtime";
+import {baseTokenAbi,baseTokenLabel} from "./wallet-tokens";
 import {repository} from "../otc/repository";
 import {locked,lockedBaseUsdc,walletId,type Wallet} from "../otc/model";
+
+/** ERC-20 withdrawals use a direct transfer, never an approval or router call. */
+export async function prepareBaseTokenWithdrawal(from:`0x${string}`,input:{asset:string;recipient:string;amount:string;amountUnit:"tokens"|"usd"}){
+  if(input.amountUnit!=="tokens")throw new WebError("Enter the Base token amount, not a USD amount.");
+  const token=getAddress(input.asset),recipient=getAddress(input.recipient);
+  if(BigInt(token)<=2n||token.toLowerCase()==="0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee")throw new WebError("Choose a Base ERC-20 token contract.");
+  if(token.toLowerCase()===BASE_USDC.toLowerCase())return prepareBaseUsdcWithdrawal(from,input);
+  if(recipient.toLowerCase()===from.toLowerCase()||recipient===token||BigInt(recipient)<=2n)throw new WebError("Use a different, nonzero recipient wallet.");
+  const client=chainClient(8453),snapshot=await balanceSnapshot(8453,from);
+  const decimals=await client.readContract({address:token,abi:baseTokenAbi,functionName:"decimals",blockNumber:BigInt(snapshot.block)});
+  if(!Number.isInteger(decimals)||decimals<0||decimals>255)throw new WebError("Token decimals are unavailable.");
+  const value=exactAmount(input.amount,decimals);
+  if(value<=0n)throw new WebError("Use a positive token amount.");
+  const prepared=await prepareCall(8453,{from,to:token,value:0n,data:encodeFunctionData({abi:parseAbi(["function transfer(address,uint256) returns(bool)"]),functionName:"transfer",args:[recipient,value]})});
+  const blockNumber=BigInt(prepared.snapshot.block);
+  const [wallet,balance,currentDecimals,symbol]=await Promise.all([
+    repository().read<Wallet|null>({id:walletId(8453,from)}),
+    client.readContract({address:token,abi:baseTokenAbi,functionName:"balanceOf",args:[from],blockNumber}),
+    client.readContract({address:token,abi:baseTokenAbi,functionName:"decimals",blockNumber}),
+    client.readContract({address:token,abi:baseTokenAbi,functionName:"symbol",blockNumber}).catch(()=>"tokens"),
+  ]);
+  if(currentDecimals!==decimals)throw new WebError("Token decimals changed. Request a new quote.");
+  if(wallet?.activeTx)throw new WebError("Wallet has a pending transaction.");
+  if(balance<value)throw new WebError("Not enough Base token balance.");
+  if(BigInt(prepared.snapshot.balanceWei)-(wallet?locked(wallet):0n)<BigInt(prepared.reserveWei))throw new WebError("Not enough Base ETH for gas. Fund your wallet with Base ETH.");
+  return {...prepared,amount:formatUnits(value,decimals),recipient,asset:baseTokenLabel(symbol,"tokens"),token,leg:"send" as const};
+}
 
 export async function prepareBaseUsdcWithdrawal(from:`0x${string}`,input:{recipient:string;amount:string}){
   const recipient=getAddress(input.recipient),value=exactAmount(input.amount,6);

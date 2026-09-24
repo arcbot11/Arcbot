@@ -2,10 +2,10 @@ import {beforeEach,afterEach,expect,it,vi} from "vitest";
 import {NextRequest} from "next/server";
 import {decodeFunctionData,parseAbi} from "viem";
 import { BASE_USDC } from "../lib/base/usdc";
-const m=vi.hoisted(()=>({prepare:vi.fn(),read:vi.fn(),convert:vi.fn(),balance:vi.fn(),contract:vi.fn(),price:vi.fn(),baseBalance:vi.fn()}));
+const m=vi.hoisted(()=>({prepare:vi.fn(),read:vi.fn(),convert:vi.fn(),balance:vi.fn(),contract:vi.fn(),price:vi.fn(),baseBalance:vi.fn(),snapshot:vi.fn()}));
 vi.mock("../lib/otc/http",async original=>({...await original<typeof import("../lib/otc/http")>(),websiteSession:async()=>({owner:"owner",walletAddress:"0x1111111111111111111111111111111111111111"})}));
 vi.mock("../lib/otc/repository",()=>({repository:()=>({read:m.read})}));
-vi.mock("../lib/otc/runtime",()=>({walletTransferConfiguration:()=>{},prepareCall:m.prepare,chainClient:()=>({readContract:m.contract}),ethPrice:m.price,baseUsdcBalance:m.baseBalance}));
+vi.mock("../lib/otc/runtime",()=>({walletTransferConfiguration:()=>{},balanceSnapshot:m.snapshot,prepareCall:m.prepare,chainClient:()=>({readContract:m.contract}),ethPrice:m.price,baseUsdcBalance:m.baseBalance}));
 vi.mock("../lib/arc/trading",()=>({arcSellAmountForUsdc:m.convert}));
 vi.mock("../lib/arc/wallet-tokens",()=>({arcSelectedTokenBalance:m.balance}));
 import {POST} from "../app/api/wallet/send/route";
@@ -14,11 +14,12 @@ const body={action:"preview",chainId:5042,recipient,asset:token,amount:"10"};
 const request=(extra:object={})=>new NextRequest("https://www.argosbot.io/api/wallet/send",{method:"POST",body:JSON.stringify({...body,...extra})});
 beforeEach(()=>{
  vi.clearAllMocks();vi.stubEnv("WEB_AUTH_SECRET","test-secret");
+ m.snapshot.mockResolvedValue({balanceWei:(100n*10n**18n).toString(),block:"100",nonce:1,pendingNonce:1});
  m.price.mockResolvedValue({ethUsdMicros:"2000000000",priceAt:Date.now()});m.baseBalance.mockResolvedValue("100000000");
  m.read.mockResolvedValue({holds:{listing:(20n*10n**18n).toString()}});
  m.convert.mockResolvedValue("12.5");m.balance.mockResolvedValue({maxSellRaw:"99000000",decimals:6});
- m.contract.mockImplementation(async({functionName}:{functionName:string})=>functionName==="decimals"?6:100000000n);
- m.prepare.mockImplementation(async(_chain:number,call:{value:bigint})=>({unsigned:"unsigned",gasWei:(10n**15n).toString(),reserveWei:(call.value+10n**15n).toString(),snapshot:{balanceWei:(100n*10n**18n).toString()}}));
+ m.contract.mockImplementation(async({functionName}:{functionName:string})=>functionName==="decimals"?6:functionName==="symbol"?"TEST":100000000n);
+ m.prepare.mockImplementation(async(_chain:number,call:{value:bigint})=>({unsigned:"unsigned",gasWei:(10n**15n).toString(),reserveWei:(call.value+10n**15n).toString(),snapshot:{balanceWei:(100n*10n**18n).toString(),block:"100"}}));
 });
 it("converts a dollar withdrawal to exact Base ETH before quoting",async()=>{
  const response=await POST(request({chainId:8453,asset:"native",amount:"10",amountUnit:"usd"}));
@@ -42,10 +43,10 @@ it("rejects Base USDC reserved for other operations",async()=>{
  m.read.mockResolvedValue({holds:{},usdcHolds:{otc:"95000000"}});
  expect((await POST(request({chainId:8453,asset:BASE_USDC,amount:"10"}))).status).not.toBe(200);
 });
-it("rejects stale ETH prices and unsupported Base tokens",async()=>{
+it("rejects stale ETH prices and USD amounts for arbitrary Base tokens",async()=>{
  m.price.mockResolvedValue({ethUsdMicros:"2000000000",priceAt:Date.now()-120000});
  expect((await POST(request({chainId:8453,asset:"native",amountUnit:"usd"}))).status).not.toBe(200);
- expect((await POST(request({chainId:8453,asset:token}))).status).not.toBe(200);expect(m.prepare).not.toHaveBeenCalled();
+ expect((await POST(request({chainId:8453,asset:token,amountUnit:"usd"}))).status).not.toBe(200);expect(m.prepare).not.toHaveBeenCalled();
 });
 afterEach(()=>vi.unstubAllEnvs());
 it("converts USD token sends on the server before encoding the transfer",async()=>{
@@ -89,4 +90,26 @@ it("rejects stale USD conversion before preparing a Base withdrawal",async()=>{
  m.price.mockResolvedValue({ethUsdMicros:"2000000000",priceAt:Date.now()-120000});
  const result=await POST(request({chainId:8453,asset:"native",amount:"10",amountUnit:"usd"}));
  expect(result.status).toBe(400);expect(m.prepare).not.toHaveBeenCalled();
+});
+
+it("prepares a direct Base ERC-20 transfer with fresh onchain decimals",async()=>{
+ const response=await POST(request({chainId:8453,asset:token,amount:"10.000001"}));
+ expect(response.status).toBe(200);expect(await response.json()).toMatchObject({asset:"TEST",token,amount:"10.000001"});
+ const [chain,call]=m.prepare.mock.calls[0];expect(chain).toBe(8453);expect(call.to).toBe(token);expect(call.value).toBe(0n);
+ expect(decodeFunctionData({abi:parseAbi(["function transfer(address,uint256)"]),data:call.data}).args).toEqual([recipient,10000001n]);
+ expect(m.contract).toHaveBeenCalledWith(expect.objectContaining({address:token,functionName:"balanceOf",blockNumber:100n}));
+});
+it("rejects an ERC-20 withdrawal above the fresh Base balance",async()=>{
+ expect((await POST(request({chainId:8453,asset:token,amount:"101"}))).status).toBe(400);
+});
+it("requires unreserved ETH and an idle wallet for Base token withdrawals",async()=>{
+ m.read.mockResolvedValue({holds:{all:(100n*10n**18n).toString()}});
+ expect((await POST(request({chainId:8453,asset:token}))).status).toBe(400);
+ m.read.mockResolvedValue({holds:{},activeTx:"another"});
+ expect((await POST(request({chainId:8453,asset:token}))).status).toBe(400);
+});
+it("rejects excess token precision and sending to the token contract",async()=>{
+ expect((await POST(request({chainId:8453,asset:token,amount:"0.0000001"}))).status).toBe(400);
+ expect((await POST(request({chainId:8453,asset:token,recipient:token}))).status).toBe(400);
+ expect(m.prepare).not.toHaveBeenCalled();
 });

@@ -69,11 +69,12 @@ export type Transaction = { kind: "transaction"; id: string; owner: string; wall
   escrowRef?: {listingId:string;orderId?:string;step:string;sourceHold?:string;reserveWei?:string}; sourceRequestId?: string;
   swapOutput?: {token:string;minimum:string;recipient?:string;inputToken?:string;inputAmount?:string};
   launchStep?: import("../launches/execution-types").LaunchStepTerms;
+  bridgeStep?: import("../bridge/contracts").Prepared;
   creatorClaim?: {token:string;splitter:string;portal8?:import("../launches/portal8-claims").Portal8Claim;reward?:import("../launches/reward-call").RewardTerms};
   settlement?: {launch?:import("../launches/execution-types").VerifiedLaunch;gasWei:string;output?:{raw:string;decimals?:number};claims?:Array<{token:string;raw:string}>};
   /** Read-only observation; not a settled transaction or permission to release holds. */
   confirmation?: {status:"success"|"reverted";blockNumber:string};
-  orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance" | "claim" | "launch"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted" | "cancelled";
+  orderId?: string; leg: "approval" | "payment" | "payout" | "send" | "swap" | "allowance" | "claim" | "launch" | "bridge"; holdId: string; status: "prepared" | "signed" | "submitted" | "completed" | "reverted" | "cancelled";
   recoveryVersion?:1; signingStartedAt?:number;signingRevision?:number;previousSigned?:import("./signed-recovery").SignedAttempt[];nonceConflict?:{hash:string;block:string};
   unsigned: string; raw?: string; hash?: string; blockNumber?: string; note?: string; createdAt: number; updatedAt: number };
 export type HolderCursor = {kind:"holder_cursor";id:string;owner:string;token:string;offset:number;revision:number;activeTx?:string;nextOffset?:number;updatedAt:number};

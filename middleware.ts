@@ -7,6 +7,15 @@ function compact(parts: string[]) {
 
 function policy(request: NextRequest, nonce?: string) {
   const development = process.env.NODE_ENV !== "production";
+  // Also required on pages that navigate to /bridge through Next client routing:
+  // the current document's CSP remains in force after that navigation.
+  const bridgeConnections = [
+    "wss://relay.walletconnect.org", "wss://relay.walletconnect.com",
+    "https://relay.walletconnect.org", "https://relay.walletconnect.com",
+    "https://verify.walletconnect.org", "https://verify.walletconnect.com",
+    "https://pulse.walletconnect.org", "https://rpc.walletconnect.org",
+    "https://api.web3modal.org", "https://rpc.mainnet.arc.io", "https://mainnet.base.org",
+  ].join(" ");
   let convexConnections="";
   try {
     const endpoint=new URL(process.env.NEXT_PUBLIC_CONVEX_URL??"");
@@ -24,12 +33,12 @@ function policy(request: NextRequest, nonce?: string) {
     // Retain inline styles for the small first-paint stylesheet in RootLayout.
     // Script execution is nonce protected on wallet-sensitive routes.
     "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob:",
+    "img-src 'self' data: blob: https://api.web3modal.org",
     "font-src 'self' data:",
-    `connect-src 'self'${convexConnections}${development ? " http: https: ws: wss:" : ""}`,
+    `connect-src 'self' ${bridgeConnections}${convexConnections}${development ? " http: https: ws: wss:" : ""}`,
     "media-src 'self' blob:",
     "worker-src 'self' blob:",
-    "frame-src 'self' https://www.geckoterminal.com",
+    "frame-src 'self' https://www.geckoterminal.com https://verify.walletconnect.org https://verify.walletconnect.com",
     "form-action 'self'",
     "manifest-src 'self'",
     "upgrade-insecure-requests",

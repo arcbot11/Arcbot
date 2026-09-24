@@ -1,4 +1,4 @@
-import {prepareBaseWithdrawal,prepareBaseUsdcWithdrawal} from "@/lib/base/wallet-actions";
+import {prepareBaseWithdrawal,prepareBaseUsdcWithdrawal,prepareBaseTokenWithdrawal} from "@/lib/base/wallet-actions";
 import {prepareArcSend} from "@/lib/arc/wallet-actions";
 import { createHmac, randomUUID } from "node:crypto";
 import { NextRequest } from "next/server";
@@ -32,12 +32,11 @@ export async function POST(request:NextRequest){
         const payload=Buffer.from(JSON.stringify(quote)).toString("base64url");
         return json({quote:`${payload}.${signature(payload)}`,amount:prepared.amount,recipient:prepared.recipient,asset:prepared.asset,gasWei:prepared.gasWei,expiresAt:quote.expiresAt});
       }
-      if(input.asset!=="native"&&input.asset.toLowerCase()!==BASE_USDC.toLowerCase())throw new WebError("Base withdrawals support ETH and USDC only.");
       if(input.percentage!==undefined)throw new WebError("Enter an amount for Base withdrawals.");
-      const prepared=await (input.asset==="native"?prepareBaseWithdrawal(from,input):prepareBaseUsdcWithdrawal(from,input));
+      const prepared=await (input.asset==="native"?prepareBaseWithdrawal(from,input):input.asset.toLowerCase()===BASE_USDC.toLowerCase()?prepareBaseUsdcWithdrawal(from,input):prepareBaseTokenWithdrawal(from,input));
       const quote={id:`send:${randomUUID()}`,owner:session.owner,wallet:from,chainId:input.chainId,unsigned:prepared.unsigned,reserveWei:prepared.reserveWei,expiresAt:Date.now()+30_000};
       const payload=Buffer.from(JSON.stringify(quote)).toString("base64url");
-      return json({quote:`${payload}.${signature(payload)}`,amount:prepared.amount,recipient,asset:prepared.asset,gasWei:prepared.gasWei,expiresAt:quote.expiresAt});
+      return json({quote:`${payload}.${signature(payload)}`,amount:prepared.amount,recipient,asset:prepared.asset,...(input.asset!=="native"?{token:getAddress(input.asset)}:{}),gasWei:prepared.gasWei,expiresAt:quote.expiresAt});
     }
     const [payload,mac,extra]=input.quote.split(".");
     if(!payload||!mac||extra||!sameSecret(mac,signature(payload)))throw new WebError("Invalid send quote.");
@@ -49,8 +48,9 @@ export async function POST(request:NextRequest){
     walletTransferConfiguration(quote.chainId);
     const snapshot=await balanceSnapshot(quote.chainId,quote.wallet),tx=parseTransaction(quote.unsigned);
     if(quote.chainId===8453&&tx.data&&tx.data!=="0x"){
-      if(tx.to?.toLowerCase()!==BASE_USDC.toLowerCase()||(tx.value??0n)!==0n)throw new WebError("Invalid Base withdrawal.");
-      decodeFunctionData({abi:parseAbi(["function transfer(address,uint256) returns (bool)"]),data:tx.data});
+      if(!tx.to||BigInt(tx.to)<=2n||(tx.value??0n)!==0n)throw new WebError("Invalid Base withdrawal.");
+      const transfer=decodeFunctionData({abi:parseAbi(["function transfer(address,uint256) returns (bool)"]),data:tx.data});
+      if(transfer.args[1]<=0n||BigInt(transfer.args[0])<=2n||transfer.args[0].toLowerCase()===quote.wallet.toLowerCase()||transfer.args[0].toLowerCase()===tx.to.toLowerCase())throw new WebError("Invalid Base withdrawal recipient or amount.");
     }
     if(snapshot.nonce!==tx.nonce||snapshot.pendingNonce!==snapshot.nonce)throw new WebError("Wallet nonce changed. Request a new quote.");
     const usdc=quote.chainId===8453&&tx.to?.toLowerCase()===BASE_USDC.toLowerCase()?await baseUsdcBalance(quote.wallet,snapshot.block):undefined;

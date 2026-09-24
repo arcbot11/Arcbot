@@ -14,10 +14,10 @@ const render = () => renderToStaticMarkup(<WalletDashboard address={address}/>);
 it.each([null, { authenticated: false }, { authenticated: true, walletAddress: "0x2222222222222222222222222222222222222222" }])("shows public balances without private controls for %j", session => {
   state.session = session;
   const html = render();
-  expect(html).toContain("PUBLIC_BALANCES"); expect(html).not.toContain("OWNER_TRADE_CONTROLS"); expect(html).not.toContain("Your OTC positions");
+  expect(html).toContain("PUBLIC_BALANCES"); expect(html).not.toContain("OWNER_TRADE_CONTROLS"); expect(html).not.toContain("Your OTC listings");
 });
 it("unlocks the interface only for the owning session", () => {
   state.session = { authenticated: true, walletAddress: address };
   const html = render();
-  expect(html).toContain("OWNER_TRADE_CONTROLS"); expect(html).toContain("Your OTC positions"); expect(html).not.toContain("PUBLIC_BALANCES");
+  expect(html).toContain("OWNER_TRADE_CONTROLS"); expect(html).toContain("Your OTC listings"); expect(html).toContain("Your Base Tokens"); expect(html.indexOf("BASE / ETH")).toBeLessThan(html.indexOf("Your Base Tokens")); expect(html.indexOf("Your Base Tokens")).toBeLessThan(html.indexOf("Move funds")); expect(html).not.toContain("PUBLIC_BALANCES");
 });

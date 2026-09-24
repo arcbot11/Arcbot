@@ -157,3 +157,5 @@ Added verified YOPOPPO 0x77307e6f4c17c7be6f49ed009b893d5fe8c158bd, AI 0x4f05486a
 User explicitly stopped the burn cycle on 2026-09-20. high-rotation.pause is set; do not resume without a new user instruction. Runner stopped in round 801 index 8; saved payout job remains for reconciliation on authorized resume. Preserve all journals and state.
 
 User instruction 2026-09-23: do not perform any arguswallet activity until newly authorized. Current work is bot route support and read-only token indexing only; do not resume rotation or submit wallet transactions.
+
+Latest user instruction after the explicitly requested ARGUS sale: leave arguswallet untouched. All further bridge simulations must use Odysseus (0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC) as the initiating wallet. Bridge work remains research and read-only simulation only; no signing, approvals, registration, deployment, or other wallet transactions without new explicit authorization.

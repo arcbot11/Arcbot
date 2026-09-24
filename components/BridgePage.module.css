@@ -1,0 +1,177 @@
+.bridge {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 64px 24px 100px;
+  color: var(--ink);
+}
+.intro {
+  max-width: 660px;
+  margin-bottom: 36px;
+}
+.eyebrow {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--lime);
+}
+.intro h1 {
+  font-size: clamp(42px, 6vw, 72px);
+  line-height: 1.05;
+  letter-spacing: -0.045em;
+  margin: 18px 0;
+}
+.intro p {
+  font-size: 18px;
+  line-height: 1.65;
+  color: var(--muted);
+}
+.grid {
+  display: grid;
+  grid-template-columns: 1.5fr 1fr;
+  gap: 24px;
+}
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 28px;
+  margin-bottom: 24px;
+  box-shadow: 0 6px 30px #173a2510;
+}
+.card h2 {
+  font-size: 22px;
+  margin: 0 0 20px;
+}
+.card h3 {
+  margin-top: 0;
+}
+.card p {
+  line-height: 1.65;
+}
+.heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.badge {
+  background: var(--soft);
+  color: var(--lime);
+  border-radius: 20px;
+  padding: 6px 10px;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.bridge label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  margin: 18px 0;
+}
+.bridge input,
+.bridge select {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  margin-top: 8px;
+  background: var(--paper);
+  color: var(--ink);
+  box-sizing: border-box;
+}
+.bridge button {
+  border: 0;
+  border-radius: 9px;
+  padding: 12px 18px;
+  margin: 8px 8px 4px 0;
+  background: var(--lime);
+  color: var(--paper);
+  font-weight: 600;
+  cursor: pointer;
+}
+.bridge button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.bridge button:focus-visible,
+.bridge input:focus-visible,
+.bridge select:focus-visible {
+  outline: 3px solid #e9b956;
+  outline-offset: 3px;
+}
+.bridge .choice {
+  display: block;
+  background: var(--soft);
+  color: var(--ink);
+  width: 100%;
+  text-align: left;
+  border: 1px solid var(--line);
+}
+.bridge .choice[aria-pressed="true"] {
+  border: 2px solid var(--lime);
+}
+.route {
+  padding: 20px 0;
+}
+.bridge a {
+  color: var(--lime);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.note {
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--soft);
+  border-radius: 10px;
+  padding: 14px;
+}
+.error {
+  color: #ffb4a5;
+  background: #382329;
+  padding: 14px;
+  border-radius: 8px;
+}
+.address {
+  font-family: monospace;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+.activity {
+  padding: 18px 0;
+  border-top: 1px solid var(--line);
+}
+.activity strong {
+  text-transform: capitalize;
+}
+.activity p {
+  margin: 8px 0;
+}
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .bridge {
+    padding: 36px 16px;
+  }
+  .card {
+    padding: 20px;
+  }
+  .heading {
+    flex-wrap: wrap;
+  }
+}
+
+.walletModes {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+.walletModes button {
+  flex: 1;
+}
+.walletModes button[aria-pressed="true"] {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}

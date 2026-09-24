@@ -25,7 +25,7 @@ import {updateListingTotals} from './lib/listingTotals';
 import {parseTransaction,type Hex} from 'viem';
 import {tokenTransfer} from '../lib/otc/token-delivery';
 import { createListing, createQuote, acceptQuote, cancelListing, finishOrder, type Store, type RecordValue, type Order, type Listing } from "../lib/otc/model";
-import { prepareTransaction, signTransactionRecord, submitted, settled, retryPayout } from "../lib/otc/transactions";
+import { prepareTransaction, rejectBridge, signTransactionRecord, submitted, settled, retryPayout } from "../lib/otc/transactions";
 
 function authorize(secret: string) {
   if (!process.env.OTC_SERVICE_SECRET || secret !== process.env.OTC_SERVICE_SECRET) throw new Error("OTC service authorization failed.");
@@ -228,6 +228,7 @@ export const command = mutation({
       case "holder_skip": return skipHolderPage(store,input.token,input.revision,input.nextOffset,now);
       case "holder_prepare": return prepareHolderBatch(store,input.transaction,input.revision,input.nextOffset,now);
       case "prepare": return prepareTransaction(store,input,now);
+      case "bridge_reject": return rejectBridge(store,input,now);
       case "sign": return signTransactionRecord(store,input.id,input.raw,input.hash,now,input.unsigned);
       case "submitted": {
         if(input.lease){

@@ -7,13 +7,14 @@ export function expiredSwap(record:Transaction,now=Date.now()){
   try{const tx=parseTransaction(record.unsigned as Hex);const {args}=decodeFunctionData({abi:routerAbi,data:tx.data!});return args[2]<=BigInt(Math.floor(now/1000));}catch{return false;}
 }
 export function staleUnsigned(record:Transaction,now=Date.now()){
-  return expiredSwap(record,now)||(["send","allowance","claim","launch"].includes(record.leg)&&now-record.createdAt>=15*60_000);
+  return (record.leg==="bridge"&&!!record.bridgeStep&&now>=record.bridgeStep.expiresAt)||expiredSwap(record,now)||(["send","allowance","claim","launch"].includes(record.leg)&&now-record.createdAt>=15*60_000);
 }
 export function neverSigned(tx:Transaction){return tx.recoveryVersion===1&&tx.status==="prepared"&&tx.signingStartedAt===undefined&&!tx.raw&&!tx.hash&&!tx.previousSigned?.length;}
 /** Atomic with cancellation. Once entered, even a timed-out CDP call remains locked. */
 export async function beginSigning(store:Store,id:string,now:number){
   const tx=await store.get<Transaction>(id);
   if(!tx||tx.status!=="prepared")throw Error("Transaction is no longer awaiting a signature.");
+  if(tx.leg==="bridge"&&tx.signingStartedAt===undefined&&staleUnsigned(tx,now))return cancelUnsignedTrade(store,id,now,tx.owner);
   const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);
   if(w.activeTx!==id)throw Error("Wallet transaction lease mismatch.");
   tx.signingStartedAt??=now;await store.put(tx);return tx;

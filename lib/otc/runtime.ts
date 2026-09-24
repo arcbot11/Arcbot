@@ -204,6 +204,11 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
     record=await repo.command<Transaction>("sign",{id,raw:signature,hash,unsigned:record.unsigned});
   }
   if (!record.raw) {
+    if(record.leg==="bridge"){
+      if(!record.bridgeStep)throw Error("Bridge review missing.");
+      (await import("../bridge/bot-call")).assertBotBridge(record.wallet,record.chainId,record.unsigned,record.bridgeStep);
+      await (await import("../bridge/prepare")).revalidate(record.bridgeStep);
+    }
     if(record.leg==="launch") await (await import("../launches/service")).assertLaunchSigning(record);
     const snapshot=await balanceSnapshot(record.chainId,record.wallet);
     if (!await escrowDepositReadyForPayout(record)) return record;
