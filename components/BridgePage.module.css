@@ -125,6 +125,18 @@
   margin: 0;
   padding: 8px 12px;
 }
+.bridge .acknowledgement {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.bridge .acknowledgement input {
+  width: auto;
+  margin: 4px 0 0;
+  flex-shrink: 0;
+}
 .bridge a {
   color: var(--lime);
   text-decoration: underline;

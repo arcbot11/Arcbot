@@ -25,6 +25,7 @@ export const intentSchema = z
     account: addressSchema,
     action: z.enum(["register", "deploy", "transfer"]),
     amount: z.string().max(90),
+    riskAcknowledged: z.boolean().optional(),
   })
   .strict();
 export const routeSchema = z
@@ -86,6 +87,7 @@ export const entrySchema = z
       "complete",
       "failed",
       "rejected",
+      "unsupported",
     ]),
     message: z.string().max(5000),
     destinationHash: hashSchema.optional(),
@@ -93,7 +95,7 @@ export const entrySchema = z
   })
   .refine(
     (e) =>
-      !["pending", "forwarding", "complete", "failed"].includes(e.state) ||
+      !["pending", "forwarding", "complete", "failed", "unsupported"].includes(e.state) ||
       !!e.hash,
     "Confirmed or pending history must retain its source hash",
   )
@@ -108,12 +110,12 @@ export function compactHistory(next: BridgeEntry[]): BridgeEntry[] {
   if (new Set(valid.map((e) => e.id)).size !== valid.length)
     throw Error("Duplicate bridge operation IDs.");
   const unresolved = valid.filter(
-    (e) => !["complete", "failed", "rejected"].includes(e.state),
+    (e) => !["complete", "failed", "rejected", "unsupported"].includes(e.state),
   );
   if (unresolved.length > 200)
     throw Error("Resolve existing bridge operations before importing more.");
   const terminal = valid.filter((e) =>
-    ["complete", "failed", "rejected"].includes(e.state),
+    ["complete", "failed", "rejected", "unsupported"].includes(e.state),
   );
   const slots = 200 - unresolved.length;
   const keep = new Set(

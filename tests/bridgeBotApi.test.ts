@@ -152,3 +152,43 @@ it("fences failed simulations and returns a recoverable cancellation", async () 
   expect(result.status).toBe("cancelled");
   expect(m.advance).not.toHaveBeenCalled();
 });
+
+it("cancels a confirmation that arrives after expiry", async () => {
+  const p=approval(); p.expiresAt=Date.now()-1;
+  m.revalidate.mockRejectedValue(Error("Review expired"));
+  const response=await POST(request({operation:"confirm",prepared:p}));
+  expect(response.status).toBe(200);
+  expect((await response.json()).status).toBe("cancelled");
+  expect(m.command).toHaveBeenCalledWith("bridge_reject",expect.objectContaining({bridgeStep:p}));
+  expect(m.advance).not.toHaveBeenCalled();
+});
+it("returns an existing terminal request after the review expires", async () => {
+  const p=approval(),unsigned=botBridgeUnsigned(p);
+  p.expiresAt=Date.now()-1;
+  m.read.mockResolvedValue({id:"existing",leg:"bridge",owner:"user",wallet:p.intent.account,bridgeStep:p,unsigned,status:"cancelled"});
+  const response=await POST(request({operation:"confirm",prepared:p}));
+  expect(response.status).toBe(200);
+  expect((await response.json()).status).toBe("cancelled");
+  expect(m.command).not.toHaveBeenCalled();
+  expect(m.advance).not.toHaveBeenCalled();
+});
+
+it("reconciles a stored legacy request without granting a new signing authorization", async () => {
+  const p=approval(), unsigned=botBridgeUnsigned(p);
+  delete p.intent.riskAcknowledged; p.expiresAt=Date.now()-1;
+  m.read.mockResolvedValue({id:"existing",leg:"bridge",owner:"user",wallet:p.intent.account,bridgeStep:p,unsigned,status:"cancelled"});
+  const response=await POST(request({operation:"confirm",prepared:p}));
+  expect(response.status).toBe(200);
+  expect((await response.json()).status).toBe("cancelled");
+  expect(m.command).not.toHaveBeenCalled();
+  expect(m.advance).not.toHaveBeenCalled();
+});
+it("fences an unadmitted legacy request when fresh validation rejects its missing acknowledgement", async () => {
+  const p=approval(); delete p.intent.riskAcknowledged;
+  m.revalidate.mockRejectedValue(Error("Acknowledge token transfer and redemption risks before bridging."));
+  const response=await POST(request({operation:"confirm",prepared:p}));
+  expect(response.status).toBe(200);
+  expect((await response.json()).status).toBe("cancelled");
+  expect(m.command).toHaveBeenCalledWith("bridge_reject",expect.objectContaining({bridgeStep:p}));
+  expect(m.advance).not.toHaveBeenCalled();
+});

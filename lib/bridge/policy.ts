@@ -74,31 +74,17 @@ export function assertOwnerless(
   )
     throw Error("This connection is not in the reviewed ownerless state.");
 }
-// Address + runtime code hash admission, not symbol-based. Additional original
-// tokens require review of BOTH deposits and withdrawals (tax/rebase/proxy risks).
-export const reviewedOriginals = [
-  {
-    chain: 5042,
-    token: "0xece5ca8bf9220718e5727754026757512212cb3c",
-    hash: "0x1c441713f28003aa577016c49c68cc192304045425b39614894f36e328425c0b",
-  },
-];
-export function compatibleOriginal(
-  chain: BridgeChain,
-  token: string,
-  hash: string,
-  extra: string | undefined,
-) {
-  const rows = extra ? JSON.parse(extra) : [];
-  if (!Array.isArray(rows) || rows.length > 200)
-    throw Error("Invalid bridge compatibility configuration.");
-  return [...reviewedOriginals, ...rows].some(
-    (r) =>
-      r &&
-      r.chain === chain &&
-      typeof r.token === "string" &&
-      typeof r.hash === "string" &&
-      same(r.token, token) &&
-      same(r.hash, hash),
-  );
+// Deny entries are scoped to the original chain/address, so both directions
+// remain blocked even if the original is upgraded. This is not a safety certification.
+export function originalAllowed(chain: BridgeChain, token: string, blocked: string | undefined) {
+  const rows: unknown = blocked ? JSON.parse(blocked) : [];
+  if (!Array.isArray(rows) || rows.length > 200 || rows.some((r) =>
+    !r || ![5042, 8453].includes(r.chain) ||
+    typeof r.token !== "string" || !/^0x[0-9a-fA-F]{40}$/.test(r.token)))
+    throw Error("Invalid bridge blocked-token configuration.");
+  return !rows.some((r) => r.chain === chain && same(r.token, token));
+}
+export function assertRiskAcknowledged(intent: { action: string; riskAcknowledged?: boolean }) {
+  if (intent.action === "transfer" && intent.riskAcknowledged !== true)
+    throw Error("Acknowledge token transfer and redemption risks before bridging.");
 }

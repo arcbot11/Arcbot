@@ -1,5 +1,5 @@
 import { expect, it, vi } from "vitest";
-import { mergeRecovery, type RecoveryResult } from "../lib/bridge/recovery";
+import { recoverEntry, mergeRecovery, type RecoveryResult } from "../lib/bridge/recovery";
 import { compactHistory, type BridgeEntry } from "../lib/bridge/validation";
 import { BridgeReads } from "../lib/bridge/read";
 import { SERVICE, type Prepared, type Route } from "../lib/bridge/contracts";
@@ -27,6 +27,7 @@ const prepared: Prepared = {
     token: account,
     account,
     action: "transfer",
+      riskAcknowledged: true,
     amount: "1",
   },
   route,
@@ -221,4 +222,26 @@ it("checks the wrapper's separate denylist and fails closed on RPC errors", asyn
     fn === "denylistProvider" ? SERVICE : false,
   );
   await expect(reads.recipientAllowed(route, account)).resolves.toBeUndefined();
+});
+
+it("recovers a lost hash using finalized evidence for the saved request", () => {
+  const unknown={...saved,hash:undefined,state:"unknown" as const};
+  expect(recoverEntry([unknown],saved.id,newHash,result)[0]).toMatchObject({hash:newHash,state:"complete"});
+});
+it("contextual recovery rejects unrelated hashes and unfinalized receipts", () => {
+  for(const change of [{nonce:99},{from:SERVICE},{finalized:false}])
+    expect(()=>recoverEntry([saved],saved.id,newHash,{...result,binding:{...result.binding!,...change}})).toThrow();
+  expect(()=>recoverEntry([{...saved,state:"complete"}],saved.id,newHash,result)).toThrow();
+});
+it("contextual cancellation resolves the original without resubmitting it", () => {
+  const entries=recoverEntry([saved],saved.id,newHash,{...result,state:"failed",binding:{...result.binding!,to:account,data:"0x",value:"0"}});
+  expect(entries[0]).toMatchObject({id:saved.id,state:"failed",supersededBy:newHash});
+});
+
+it("resolves an unsupported replacement without claiming destination delivery", () => {
+  const entries=recoverEntry([saved],saved.id,newHash,{state:"unsupported",message:"Destination delivery is not verified here",binding:{...result.binding!,data:"0x5678"}});
+  expect(entries[0]).toMatchObject({state:"failed",supersededBy:newHash});
+  expect(entries[1]).toMatchObject({state:"unsupported",hash:newHash});
+  expect(compactHistory(entries)[1].state).toBe("unsupported");
+  expect(entries.some(e=>!["complete","failed","rejected","unsupported"].includes(e.state))).toBe(false);
 });

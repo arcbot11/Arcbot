@@ -143,3 +143,24 @@ it("retains the durable bot request ID through browser recovery", () => {
   expect(e.botId).toBe(input.id);
   expect(e.prepared?.seal).toBe(p.seal);
 });
+
+it("records an expired cancellation without permitting new signing", async () => {
+  const {store,input,p}=setup();
+  p.expiresAt=Date.now()-1;
+  expect(()=>botBridgeUnsigned(p)).toThrow("expired");
+  expect(()=>assertBotBridge(input.wallet,5042,input.unsigned,p)).toThrow("expired");
+  expect((await rejectBridge(store,input,Date.now())).status).toBe("cancelled");
+  expect((await prepareTransaction(store,input,Date.now())).status).toBe("cancelled");
+  expect(()=>botBridgeUnsigned({...p,to:input.wallet},true)).toThrow("approval");
+});
+
+it("cancels legacy reviews without treating missing acknowledgement as signing authorization", async () => {
+  const {store,input,p}=setup();
+  delete p.intent.riskAcknowledged;
+  p.expiresAt=Date.now()-1;
+  expect(()=>botBridgeUnsigned(p)).toThrow("Acknowledge");
+  expect(()=>assertBotBridge(input.wallet,5042,input.unsigned,p)).toThrow("Acknowledge");
+  expect(botBridgeUnsigned(p,true)).toBe(input.unsigned);
+  expect((await rejectBridge(store,input,Date.now())).status).toBe("cancelled");
+  expect(()=>botBridgeUnsigned({...p,data:"0x1234"},true)).toThrow();
+});

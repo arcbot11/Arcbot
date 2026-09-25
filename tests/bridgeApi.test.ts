@@ -74,6 +74,7 @@ it("accepts a scoped, valid preparation request", async () => {
     token: address,
     account: address,
     action: "transfer",
+      riskAcknowledged: true,
     amount: "1",
   };
   const r = await POST(

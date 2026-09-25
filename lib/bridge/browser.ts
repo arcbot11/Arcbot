@@ -1,3 +1,4 @@
+import { assertRiskAcknowledged } from "./policy";
 import {
   decodeFunctionData,
   parseUnits,
@@ -58,6 +59,12 @@ export async function switchChain(provider: Provider, id: BridgeChain) {
   }
 }
 export function validateCall(p: Prepared) {
+  assertRiskAcknowledged(p.intent);
+  if (Date.now() >= p.expiresAt) throw Error("Bridge review expired or invalid.");
+  validateHistoricalCall(p);
+}
+/** Envelope identity only: never use this to authorize a new signature. */
+export function validateHistoricalCall(p: Prepared) {
   const { route: r, intent: i } = p;
   if (
     ![5042, 8453].includes(i.chain) ||
@@ -119,7 +126,6 @@ export function validateCall(p: Prepared) {
       throw Error("Invalid bridge transfer.");
   }
   if (
-    Date.now() >= p.expiresAt ||
     BigInt(p.maxPriorityFeePerGas) > BigInt(p.maxFeePerGas) ||
     p.value !== p.circleFee
   )

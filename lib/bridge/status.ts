@@ -6,6 +6,7 @@ import {
 } from "viem";
 import {
   abi,
+  chains,
   domains,
   otherChain,
   same,
@@ -150,6 +151,17 @@ export async function status(chain: BridgeChain, hash: Hex) {
       message: "Registration finalized. Look up the token to continue setup.",
     };
   }
+  const targetDomain = decoded.functionName === "crossChainTransfer"
+    ? decoded.args[2]
+    : decoded.functionName === "deployRemoteOwnerlessToken"
+      ? decoded.args[1]
+      : undefined;
+  if (targetDomain !== domains[otherChain(chain)])
+    return {
+      state: "unsupported",
+      binding,
+      message: `Source transaction finalized for Circle domain ${targetDomain}. This destination is outside the Arc/Base bridge. Destination delivery is not verified here; track it separately using the source hash. Do not resend.`,
+    };
   const sent = events(receipt.logs, TRANSMITTER, "MessageSent");
   if (sent.length !== 1)
     throw Error("Cannot bind this transaction to one Circle message.");
@@ -226,7 +238,9 @@ export async function status(chain: BridgeChain, hash: Hex) {
       return {
         state: "forwarding",
         binding,
-        message: "Destination transaction pending.",
+        destination,
+        destinationHash: destHash,
+        message: `Circle submitted the destination transaction on ${chains[destination].name}. Waiting for confirmation.`,
       };
     throw e;
   }
@@ -248,6 +262,8 @@ export async function status(chain: BridgeChain, hash: Hex) {
     return {
       state: "forwarding",
       binding,
+      destination,
+      destinationHash: destHash,
       message:
         "Forwarding needs reconciliation. Source funds must not be sent again.",
     };
@@ -287,7 +303,9 @@ export async function status(chain: BridgeChain, hash: Hex) {
     return {
       state: "forwarding",
       binding,
-      message: "Destination execution confirmed; waiting for finality.",
+      destination,
+      destinationHash: destHash,
+      message: `Destination execution observed; waiting for canonical ${chains[destination].name} finality.${destination === 8453 ? " Base finality typically takes around 20 minutes after the destination transaction. Tokens may appear sooner." : ""} Do not resend.`,
     };
   return {
     state: "complete",

@@ -1,3 +1,4 @@
+import { assertRiskAcknowledged } from "./policy";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   decodeFunctionResult,
@@ -129,6 +130,7 @@ export function verifySeal(p: Prepared, allowExpired = false) {
     throw Error("Review expired. Refresh the quote.");
 }
 export async function prepare(intent: Intent): Promise<Prepared> {
+  assertRiskAcknowledged(intent);
   secret(); // Fail before requesting RPC work or a forwarding quote.
   const reads = new BridgeReads(),
     route = await reads.route(intent.chain, intent.token);
@@ -302,6 +304,7 @@ export async function prepare(intent: Intent): Promise<Prepared> {
 }
 export async function revalidate(p: Prepared) {
   verifySeal(p);
+  assertRiskAcknowledged(p.intent);
   const reads = new BridgeReads(),
     route = await reads.route(p.intent.chain, p.intent.token);
   if (

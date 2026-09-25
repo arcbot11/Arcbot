@@ -16,6 +16,20 @@ export type RecoveryResult = {
     finalized: boolean;
   };
 };
+/** A contextual recovery must prove it resolves this exact saved nonce. */
+export function recoverEntry(entries: BridgeEntry[], id: string, hash: Hex, result: RecoveryResult) {
+  const entry = entries.find((e) => e.id === id);
+  const binding = result.binding;
+  if (!entry || entry.supersededBy || ["complete", "failed", "rejected", "unsupported"].includes(entry.state))
+    throw Error("This request has already changed. Refresh its status.");
+  if (!binding?.finalized)
+    throw Error("Wait for a finalized source receipt before recovering a wallet request.");
+  if (entry.prepared
+    ? !same(binding.from, entry.prepared.intent.account) || binding.nonce !== entry.prepared.nonce
+    : !entry.hash || !same(entry.hash, hash))
+    throw Error("Recovered receipt does not match this request's sender and nonce.");
+  return mergeRecovery(entries, entry.chain, hash, result, id);
+}
 export function mergeRecovery(
   entries: BridgeEntry[],
   chain: BridgeChain,

@@ -20,7 +20,7 @@ export const orderHash = (id: string) => keccak256(stringToHex(`arc-bot-otc-v1:$
 export async function rejectBridge(store: Store, input: {id:string;owner:string;wallet:string;chainId:Chain;bridgeStep:NonNullable<Transaction["bridgeStep"]>;unsigned:string}, now:number) {
   const previous=await store.get<Transaction>(input.id);
   if(previous){if(previous.owner!==input.owner||previous.wallet!==input.wallet||previous.leg!=="bridge")throw Error("Bridge identity mismatch.");return previous;}
-  assertBotBridge(input.wallet,input.chainId,input.unsigned,input.bridgeStep);
+  assertBotBridge(input.wallet,input.chainId,input.unsigned,input.bridgeStep,true);
   const tx:Transaction={...input,kind:"transaction",leg:"bridge",holdId:input.id,status:"cancelled",recoveryVersion:1,createdAt:now,updatedAt:now,note:"Bridge review could not be confirmed. Request a fresh review."};
   await store.put(tx);return tx;
 }

@@ -311,3 +311,24 @@ it("rejects a forged service event", async () => {
   r.logs[1].address = zeroAddress;
   await expect(status(5042, hash)).rejects.toThrow("could not be verified");
 });
+
+it.each(["crossChainTransfer", "deployRemoteOwnerlessToken"] as const)(
+  "reports an unsupported destination before forwarding lookups for %s", async (functionName) => {
+    const tx=await mocks.source.getTransaction();
+    tx.input=functionName === "crossChainTransfer"
+      ? encodeFunctionData({abi,functionName,args:[id,10n,0,account,zeroHash,2000,{signedQuote:"0x12",refundAddress:account},false,"0x"]})
+      : encodeFunctionData({abi,functionName,args:[token,0,{signedQuote:"0x12",refundAddress:account}]});
+    const result=await status(5042,hash);
+    expect(result).toMatchObject({state:"unsupported",binding:{finalized:true}});
+    expect(result.message).toContain("delivery is not verified");
+    expect(fetcher).not.toHaveBeenCalled();
+    expect(mocks.destination.getTransactionReceipt).not.toHaveBeenCalled();
+  }
+);
+it("does not resolve unsupported destinations before source finality", async () => {
+  const tx=await mocks.source.getTransaction();
+  tx.input=encodeFunctionData({abi,functionName:"deployRemoteOwnerlessToken",args:[token,0,{signedQuote:"0x12",refundAddress:account}]});
+  mocks.source.getBlock.mockResolvedValue({hash,number:80n});
+  expect((await status(5042,hash)).state).toBe("pending");
+  expect(fetcher).not.toHaveBeenCalled();
+});

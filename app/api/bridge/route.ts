@@ -5,22 +5,14 @@ import { prepare, revalidate } from "@/lib/bridge/prepare";
 import { status } from "@/lib/bridge/status";
 import type { Intent, Prepared, BridgeChain } from "@/lib/bridge/contracts";
 import type { Address, Hex } from "viem";
-import { preparedSchema } from "@/lib/bridge/validation";
+import { intentSchema, preparedSchema } from "@/lib/bridge/validation";
 import { boundedJson, RequestBodyError } from "@/lib/bounded-json";
 export const runtime = "nodejs";
 export const maxDuration = 120;
 export const dynamic = "force-dynamic";
 const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/),
   chain = z.union([z.literal(5042), z.literal(8453)]);
-const intent = z
-  .object({
-    chain,
-    token: address,
-    account: address,
-    action: z.enum(["register", "deploy", "transfer"]),
-    amount: z.string().max(90),
-  })
-  .strict();
+const intent = intentSchema;
 const buckets = new Map<string, { time: number; count: number }>();
 function limit(req: NextRequest) {
   const key = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown",

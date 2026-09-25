@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
         !same(tx.wallet, session.walletAddress) ||
         tx.leg !== "bridge" ||
         tx.bridgeStep?.seal !== p.seal ||
-        tx.unsigned !== botBridgeUnsigned(p))
+        tx.unsigned !== botBridgeUnsigned(p, true))
     )
       throw new WebError("Bridge request mismatch.", 403);
     if (!tx) {
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
         wallet: session.walletAddress,
         chainId: p.intent.chain,
         bridgeStep: p,
-        unsigned: botBridgeUnsigned(p),
+        unsigned: botBridgeUnsigned(p, true),
       };
       try {
         walletTransferConfiguration(p.intent.chain);

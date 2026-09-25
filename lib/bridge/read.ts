@@ -27,7 +27,7 @@ import {
 } from "./contracts";
 import {
   assertOwnerless,
-  compatibleOriginal,
+  originalAllowed,
   MANAGER_PROXY_HASH,
   pins,
   WRAPPER_PROXY_HASH,
@@ -310,7 +310,7 @@ export class BridgeReads {
       origin = destination;
       original = remote.token;
     }
-    const [local, remote, decimals, name, symbol, originalCode] =
+    const [local, remote, decimals, name, symbol] =
       await Promise.all([
         this.manager(chain, id),
         this.manager(destination, id),
@@ -340,11 +340,10 @@ export class BridgeReads {
     )
       throw Error("Destination token binding mismatch.");
     if (!local && remote) throw Error("Inconsistent Circle registration.");
-    const compatible = compatibleOriginal(
+    const compatible = originalAllowed(
       origin,
       original,
-      keccak256(originalCode),
-      process.env.BRIDGE_REVIEWED_ORIGINALS,
+      process.env.BRIDGE_BLOCKED_ORIGINALS,
     );
     const clean = (s: string) =>
       s
@@ -368,18 +367,22 @@ export class BridgeReads {
       ...(!compatible
         ? {
             reason:
-              "This original token needs a transfer-behavior compatibility review before bridging or setup is enabled.",
+              "This token is blocked because of known bridge incompatibility. Registration, wrapper creation and bridging are unavailable.",
           }
         : {}),
     };
   }
 }
 export async function lookup(token: Address) {
-  const reads = new BridgeReads();
   const results = await Promise.allSettled(
-    ([5042, 8453] as const).map((chain) => reads.route(chain, token)),
+    ([5042, 8453] as const).map(async (chain) => {
+      // Keep each candidate's complete snapshot checks independent.
+      const reads = new BridgeReads();
+      const route = await reads.route(chain, token);
+      await reads.canonical();
+      return route;
+    }),
   );
-  await reads.canonical();
   return {
     candidates: results.flatMap((r) =>
       r.status === "fulfilled" && r.value ? [r.value] : [],

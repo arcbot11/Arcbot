@@ -135,6 +135,7 @@ export type Intent = {
   account: Address;
   action: "register" | "deploy" | "transfer";
   amount: string;
+  riskAcknowledged?: boolean;
 };
 export type Prepared = {
   intent: Intent;

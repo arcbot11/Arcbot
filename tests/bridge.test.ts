@@ -9,17 +9,19 @@ import {
 } from "../lib/bridge/contracts";
 import {
   assertOwnerless,
-  compatibleOriginal,
-  reviewedOriginals,
+  originalAllowed,
+  assertRiskAcknowledged,
+
 } from "../lib/bridge/policy";
 import {
   exactBridgeAmount,
   quoteExpiry,
   verifySeal,
+  prepare,
 } from "../lib/bridge/prepare";
 import { validateCall, sendReviewed } from "../lib/bridge/browser";
 import { contractAbsent, notRegistered } from "../lib/bridge/read";
-const original = reviewedOriginals[0].token as Address,
+const original = "0xece5ca8bf9220718e5727754026757512212cb3c" as Address,
   account = "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
   manager = "0x0AF07dDfd8F1ea073f780981895f5970705CF42f";
 function approval(): Prepared {
@@ -29,6 +31,7 @@ function approval(): Prepared {
       token: original,
       account,
       action: "transfer",
+      riskAcknowledged: true,
       amount: "10",
     },
     route: {
@@ -138,14 +141,27 @@ describe("external bridge safety", () => {
     expect(() => assertOwnerless(zeroAddress, zeroAddress, SERVICE)).toThrow();
     expect(() => assertOwnerless(OWNERLESS, account, SERVICE)).toThrow();
   });
-  it("requires matching address, chain and reviewed code", () => {
-    expect(
-      compatibleOriginal(5042, original, reviewedOriginals[0].hash, undefined),
-    ).toBe(true);
-    expect(
-      compatibleOriginal(8453, original, reviewedOriginals[0].hash, undefined),
-    ).toBe(false);
-    expect(compatibleOriginal(5042, original, "0x00", undefined)).toBe(false);
+  it("allows arbitrary originals but blocks configured originals on their origin chain", () => {
+    expect(originalAllowed(5042, account, undefined)).toBe(true);
+    const blocked = JSON.stringify([{ chain: 5042, token: original }]);
+    expect(originalAllowed(5042, original, blocked)).toBe(false);
+    expect(originalAllowed(8453, original, blocked)).toBe(true);
+    expect(() => originalAllowed(5042, original, '[{}]')).toThrow();
+    expect(() => originalAllowed(5042, original, 'bad json')).toThrow();
+  });
+  it("requires acknowledgement for transfers and approvals but leaves setup open", () => {
+    const p = approval();
+    delete p.intent.riskAcknowledged;
+    expect(() => validateCall(p)).toThrow("Acknowledge");
+    expect(() => assertRiskAcknowledged({ action: "register" })).not.toThrow();
+    expect(() => assertRiskAcknowledged({ action: "deploy" })).not.toThrow();
+    expect(() => assertRiskAcknowledged({ action: "transfer", riskAcknowledged: false })).toThrow();
+    expect(() => assertRiskAcknowledged({ action: "transfer", riskAcknowledged: true })).not.toThrow();
+  });
+  it("rejects a missing acknowledgement on the server before RPC or quote work", async () => {
+    const intent = approval().intent;
+    delete intent.riskAcknowledged;
+    await expect(prepare(intent)).rejects.toThrow("Acknowledge");
   });
   it.each(["0", "-1", "1e18", "0.0000001", "1.0000001", "01", "Infinity"])(
     "rejects invalid or rounded amounts %s",

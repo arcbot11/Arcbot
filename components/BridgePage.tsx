@@ -6,7 +6,6 @@ import {
   chains,
   explorer,
   same,
-  type BridgeChain,
   type Prepared,
   type Route,
 } from "@/lib/bridge/contracts";
@@ -25,7 +24,7 @@ import {
   HISTORY_KEY as KEY,
   type BridgeEntry as Entry,
 } from "@/lib/bridge/validation";
-import { mergeRecovery } from "@/lib/bridge/recovery";
+import { mergeRecovery, recoverEntry } from "@/lib/bridge/recovery";
 async function api(url: string, body?: unknown, csrf?: string) {
   const r = await fetch(url, {
     method: body ? "POST" : "GET",
@@ -88,12 +87,17 @@ export function BridgePage() {
     [uncertain, setUncertain] = useState(false),
     [amount, setAmount] = useState(""),
     [review, setReview] = useState<Prepared>();
+  const [riskAcknowledged, setRiskAcknowledged] = useState(false);
+  const [recoveryHash, setRecoveryHash] = useState("");
+  useEffect(() => {
+    setRiskAcknowledged(false);
+  }, [token, route?.source, account, mode]);
   const [busy, setBusy] = useState(false),
+    [busyMessage, setBusyMessage] = useState("Verifying…"),
+    [statusNotice, setStatusNotice] = useState(""),
     [error, setError] = useState(""),
     [entries, setEntries] = useState<Entry[]>([]),
-    [loaded, setLoaded] = useState(false),
-    [recover, setRecover] = useState(""),
-    [recoverChain, setRecoverChain] = useState<BridgeChain>(5042);
+    [loaded, setLoaded] = useState(false);
   const epoch = useRef(0),
     locked = useRef(false);
   function invalidate() {
@@ -186,6 +190,7 @@ export function BridgePage() {
     if (locked.current) return;
     locked.current = true;
     setBusy(true);
+    setBusyMessage("Verifying…");
     setError("");
     try {
       await fn();
@@ -292,6 +297,7 @@ export function BridgePage() {
           token: route.token,
           ...(mode === "connected" ? { account } : {}),
           amount,
+          ...(route.state === "ready" ? { riskAcknowledged } : {}),
           action: route.state === "ready" ? "transfer" : route.state,
         },
       },
@@ -318,7 +324,7 @@ export function BridgePage() {
         const saved = readEntries();
         if (
           saved.some(
-            (e) => !["complete", "failed", "rejected"].includes(e.state),
+            (e) => !["complete", "failed", "rejected", "unsupported"].includes(e.state),
           )
         )
           throw Error("Resolve the outstanding bridge transaction first.");
@@ -341,6 +347,7 @@ export function BridgePage() {
           };
           persist([...saved, entry]);
           setReview(undefined);
+          setBusyMessage("Processing your confirmed Argos Bot Wallet transaction…");
           const result = await api(
             "/api/wallet/bridge",
             { operation: "confirm", prepared: p },
@@ -371,6 +378,7 @@ export function BridgePage() {
             persist([...readEntries(), entry]);
             requested = true;
             setReview(undefined);
+            setBusyMessage("Waiting for confirmation in your connected wallet…");
           });
         } catch (e) {
           if (requested && (e as { code?: number }).code === 4001)
@@ -433,21 +441,6 @@ export function BridgePage() {
           : "Argos Bot Wallet request is processing. Check status before submitting anything else.",
     };
   }
-  async function retryBot(entry: Entry) {
-    if (!entry.botId || !entry.prepared) return;
-    const result = await api(
-      "/api/wallet/bridge",
-      { operation: "confirm", prepared: entry.prepared },
-      session?.csrfToken,
-    );
-    await updateHistory(() =>
-      persist(
-        readEntries().map((e) =>
-          e.id === entry.id ? botResult(e, result) : e,
-        ),
-      ),
-    );
-  }
   async function refresh(entry: Entry) {
     if (entry.botId && !entry.hash) {
       const result = await api(
@@ -500,6 +493,67 @@ export function BridgePage() {
       ),
     );
   }
+  async function recoverCurrent(entry: Entry) {
+    if (!/^0x[0-9a-fA-F]{64}$/.test(recoveryHash))
+      throw Error("Enter the source transaction hash, including a speed-up or cancellation hash.");
+    const hash = recoveryHash as Hex;
+    const result = await api(`/api/bridge?chain=${entry.chain}&hash=${hash}`);
+    await updateHistory(() => persist(recoverEntry(readEntries(), entry.id, hash, result)));
+    setRecoveryHash("");
+  }
+  async function retryBot(entry: Entry) {
+    if (!entry.botId || !entry.prepared) return;
+    const result = await api(
+      "/api/wallet/bridge",
+      { operation: "confirm", prepared: entry.prepared },
+      session?.csrfToken,
+    );
+    await updateHistory(() => persist(readEntries().map((e) =>
+      e.id === entry.id ? botResult(e, result) : e,
+    )));
+  }
+  // Poll reads only. Never retry a signature or transaction automatically.
+  const pollStatus = useRef<() => Promise<void>>(async () => {});
+  pollStatus.current = async () => {
+    if (locked.current || document.visibilityState === "hidden") return;
+    const pending = entries.filter(
+      (e) =>
+        !e.supersededBy &&
+        !["complete", "failed", "rejected", "unsupported"].includes(e.state) &&
+        (e.hash ||
+          (e.botId &&
+            session?.authenticated &&
+            !session.needsReauth &&
+            same(session.walletAddress || "", e.prepared?.intent.account || ""))),
+    );
+    if (!pending.length) return;
+    locked.current = true;
+    setBusy(true);
+    setBusyMessage("Checking bridge progress…");
+    let failed = false;
+    try {
+      for (const entry of pending) {
+        try {
+          await refresh(entry);
+        } catch {
+          failed = true;
+        }
+      }
+      setStatusNotice(
+        failed
+          ? "Some status checks could not complete. The last verified status is shown; checking again automatically. Do not resend."
+          : "Status checked at " + new Date().toLocaleTimeString() + ".",
+      );
+    } finally {
+      locked.current = false;
+      setBusy(false);
+    }
+  };
+  useEffect(() => {
+    if (!loaded) return;
+    const timer = setInterval(() => void pollStatus.current(), 15000);
+    return () => clearInterval(timer);
+  }, [loaded]);
   async function continueEntry(entry: Entry) {
     if (!entry.prepared || entry.state !== "complete") return;
     invalidate();
@@ -522,28 +576,10 @@ export function BridgePage() {
       );
     setRoute(next);
   }
-  async function importHash() {
-    if (!/^0x[0-9a-fA-F]{64}$/.test(recover))
-      throw Error("Enter the source transaction hash.");
-    const result = await api(
-      `/api/bridge?chain=${recoverChain}&hash=${recover}`,
-    );
-    await updateHistory(() =>
-      persist(
-        mergeRecovery(
-          readEntries(),
-          recoverChain,
-          recover as Hex,
-          result,
-          crypto.randomUUID(),
-        ),
-      ),
-    );
-    setRecover("");
-  }
   const outstanding = entries.some(
-    (e) => !["complete", "failed", "rejected"].includes(e.state),
+    (e) => !["complete", "failed", "rejected", "unsupported"].includes(e.state),
   );
+  const currentEntry = entries.find((e) => !["complete", "failed", "rejected", "unsupported"].includes(e.state)) ?? entries.at(-1);
   return (
     <div className={s.bridge}>
       <div className={s.intro}>
@@ -554,7 +590,7 @@ export function BridgePage() {
           Across chains.
         </h1>
         <p>
-          Bridge supported tokens through Circle’s contracts using your own
+          Bridge tokens through Circle’s contracts using your own
           connected wallet or Argos Bot Wallet. Find an existing ownerless
           wrapper or set up a new route.
         </p>
@@ -564,7 +600,7 @@ export function BridgePage() {
           <div className={s.heading}>
             <h2>Bridge tokens</h2>
             <span className={s.badge}>
-              {mode === "bot" ? "Argos Bot Wallet" : "Connected Wallet"}
+              {mode === "bot" ? "Argos Bot Wallet" : "External Wallet"}
             </span>
           </div>
           <div
@@ -580,7 +616,7 @@ export function BridgePage() {
                 setMode("connected");
               }}
             >
-              Connected Wallet
+              External Wallet
             </button>
             <button
               disabled={busy}
@@ -597,6 +633,7 @@ export function BridgePage() {
             Arc → Base transfers are marked complete after Base finality, which
             typically takes around 20 minutes after the destination transaction.
             Tokens may appear in your wallet sooner. Timing can vary.
+            {" "}You will need Base ETH for gas to unwrap tokens back to Arc.
           </p>
           <label>
             Token contract address
@@ -662,7 +699,7 @@ export function BridgePage() {
                   target="_blank"
                   rel="noreferrer"
                 >
-                  Source token ↗
+                  Source token ({chains[route.source].name}) ↗
                 </a>
                 {route.counterpart && (
                   <>
@@ -677,7 +714,8 @@ export function BridgePage() {
                       target="_blank"
                       rel="noreferrer"
                     >
-                      Wrapped/original token ↗
+                      {route.destination === route.origin ? "Original" : "Wrapped"}{" "}
+                      token ({chains[route.destination].name}) ↗
                     </a>
                   </>
                 )}
@@ -716,12 +754,32 @@ export function BridgePage() {
                   verified Circle token manager.
                 </p>
               )}
+              {route.compatible && route.state === "ready" && (
+                <label className={s.acknowledgement}>
+                  <input
+                    type="checkbox"
+                    checked={riskAcknowledged}
+                    disabled={busy}
+                    onChange={(e) => {
+                      invalidate();
+                      setRiskAcknowledged(e.target.checked);
+                    }}
+                  />
+                  <span>
+                    I understand that transfer taxes, rebasing, blacklists or token
+                    upgrades may affect delivery or prevent redemption. A successful
+                    simulation or Circle wrapper does not guarantee token safety
+                    or that I can bridge back.
+                  </span>
+                </label>
+              )}
               <button
                 disabled={
                   busy ||
                   !loaded ||
                   !account ||
                   !route.compatible ||
+                  (route.state === "ready" && !riskAcknowledged) ||
                   outstanding
                 }
                 onClick={() => work(prepare)}
@@ -742,7 +800,61 @@ export function BridgePage() {
               {error}
             </p>
           )}
-          {busy && <p role="status">Verifying…</p>}
+          {busy && <p role="status">{busyMessage}</p>}
+          {currentEntry && (
+            <div className={s.note}>
+              <p role="status">{currentEntry.message}</p>
+              {statusNotice && <p role="status">{statusNotice}</p>}
+              {!["complete", "failed", "rejected", "unsupported"].includes(currentEntry.state) && (
+                <>
+                  <button disabled={busy || (!currentEntry.hash && !currentEntry.botId)} onClick={() => work(() => refresh(currentEntry))}>
+                    Check status
+                  </button>
+                  {currentEntry.botId && !currentEntry.hash && (
+                    <>
+                      <button
+                        disabled={busy || !session?.authenticated || session.needsReauth || !same(session.walletAddress || "", currentEntry.prepared?.intent.account || "")}
+                        onClick={() => work(() => retryBot(currentEntry))}
+                      >
+                        Recover same bot request
+                      </button>
+                      <Link href="/wallet">Open wallet recovery</Link>
+                    </>
+                  )}
+                  <details>
+                    <summary>Missing hash or replaced transaction?</summary>
+                    <p>
+                      Enter the original, speed-up or cancellation transaction hash on {chains[currentEntry.chain].name}.
+                      Recovery verifies the sender, nonce and finalized receipt. Do not send the tokens again.
+                      If no transaction was broadcast and your wallet did not confirm rejection, contact support before clearing browser data.
+                    </p>
+                    <label>
+                      Source transaction hash
+                      <input value={recoveryHash} onChange={(e) => setRecoveryHash(e.target.value)} placeholder="0x…" spellCheck={false} />
+                    </label>
+                    <button disabled={busy || !recoveryHash} onClick={() => work(() => recoverCurrent(currentEntry))}>
+                      Recover this transaction
+                    </button>
+                  </details>
+                </>
+              )}
+              {currentEntry.hash && (
+                <a href={explorer(currentEntry.chain, "tx", currentEntry.hash)} target="_blank" rel="noreferrer">
+                  Source transaction ↗
+                </a>
+              )}
+              {currentEntry.destinationHash && currentEntry.destination && (
+                <p><a href={explorer(currentEntry.destination, "tx", currentEntry.destinationHash)} target="_blank" rel="noreferrer">
+                  Destination transaction ↗
+                </a></p>
+              )}
+              {currentEntry.state === "complete" && currentEntry.prepared && currentEntry.prepared.step !== "transfer" && (
+                <button disabled={busy || outstanding} onClick={() => work(() => continueEntry(currentEntry))}>
+                  Continue with this token
+                </button>
+              )}
+            </div>
+          )}
         </section>
         <aside>
           <section className={s.card}>
@@ -895,104 +1007,6 @@ export function BridgePage() {
           </button>
         </section>
       )}
-      <section className={s.card}>
-        <h2>Activity & recovery</h2>
-        <p>
-          History stays in this browser. Keep your source transaction hash.
-          Delayed forwarding never requires another source transfer.
-        </p>
-        {entries.map((e) => (
-          <div className={s.activity} key={e.id}>
-            <strong>{e.state}</strong>
-            <p>{e.message}</p>
-            {e.botId && !e.hash && e.state === "unknown" && (
-              <>
-                <button disabled={busy} onClick={() => work(() => refresh(e))}>
-                  Check status
-                </button>
-                <button
-                  disabled={
-                    busy ||
-                    !session?.authenticated ||
-                    session.needsReauth ||
-                    !same(
-                      session.walletAddress || "",
-                      e.prepared?.intent.account || "",
-                    )
-                  }
-                  onClick={() => work(() => retryBot(e))}
-                >
-                  Retry same confirmed request
-                </button>
-                <Link href="/wallet">Open wallet recovery</Link>
-              </>
-            )}
-            {e.hash && (
-              <>
-                <a
-                  href={explorer(e.chain, "tx", e.hash)}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  Source transaction ↗
-                </a>
-                <button
-                  disabled={busy || !!e.supersededBy}
-                  onClick={() => work(() => refresh(e))}
-                >
-                  Check status
-                </button>
-              </>
-            )}
-            {e.state === "complete" &&
-              e.prepared &&
-              e.prepared.step !== "transfer" && (
-                <button
-                  disabled={busy || outstanding}
-                  onClick={() => work(() => continueEntry(e))}
-                >
-                  Continue with this token
-                </button>
-              )}
-            {e.destinationHash && e.destination && (
-              <a
-                href={explorer(e.destination, "tx", e.destinationHash)}
-                target="_blank"
-                rel="noreferrer"
-              >
-                Destination transaction ↗
-              </a>
-            )}
-          </div>
-        ))}
-        <p>
-          History keeps the latest completed entries and every unresolved
-          request, up to 200 entries. Save transaction hashes for older records.
-        </p>
-        <label>
-          Recover a source transaction (including a speed-up or cancellation)
-          <select
-            value={recoverChain}
-            onChange={(e) =>
-              setRecoverChain(Number(e.target.value) as BridgeChain)
-            }
-          >
-            <option value={5042}>Arc</option>
-            <option value={8453}>Base</option>
-          </select>
-          <input
-            value={recover}
-            onChange={(e) => setRecover(e.target.value)}
-            placeholder="0x… transaction hash"
-          />
-        </label>
-        <button
-          disabled={busy || !loaded || !recover}
-          onClick={() => work(importHash)}
-        >
-          Recover / import
-        </button>
-      </section>
     </div>
   );
 }
