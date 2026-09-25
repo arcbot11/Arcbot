@@ -1,6 +1,21 @@
 import { same, type Prepared, type Route } from "./contracts";
 import type { BridgeEntry } from "./validation";
 
+// A known hash is reconciled by the normal fresh nonce checks. Destination
+// forwarding/finality never reserves the source wallet. Preserve uncertain
+// signing attempts without a hash so refresh cannot accidentally replay them.
+export function blocksNewBridge(entry: BridgeEntry, account?: string, chain?: number) {
+  if (entry.supersededBy || entry.hash || ["complete", "failed", "rejected", "unsupported"].includes(entry.state)) return false;
+  return !entry.prepared || (entry.chain === chain && same(entry.prepared.intent.account, account || ""));
+}
+
+export function bridgeProgressLabel(entry: BridgeEntry | undefined) {
+  if (entry?.state === "delivered") return `Tokens received on ${entry.destination === 8453 ? "Base" : "Arc"} · Finality pending`;
+  if (entry?.state === "forwarding") return "Source confirmed · Waiting for destination delivery";
+  if (entry?.state === "unknown") return "Confirming wallet request…";
+  return "Waiting for source confirmation…";
+}
+
 export function canAdvanceBridge(entry: BridgeEntry | undefined, form: {
   route?: Route; account?: string; amount: string; mode: "connected" | "bot";
   network?: number; riskAcknowledged: boolean;

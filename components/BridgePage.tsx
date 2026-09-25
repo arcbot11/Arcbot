@@ -24,7 +24,7 @@ import {
   HISTORY_KEY as KEY,
   type BridgeEntry as Entry,
 } from "@/lib/bridge/validation";
-import { bridgeStepCopy, canAdvanceBridge } from "@/lib/bridge/flow";
+import { blocksNewBridge, bridgeProgressLabel, bridgeStepCopy, canAdvanceBridge } from "@/lib/bridge/flow";
 import { mergeRecovery, recoverEntry } from "@/lib/bridge/recovery";
 async function api(url: string, body?: unknown, csrf?: string) {
   const r = await fetch(url, {
@@ -89,7 +89,7 @@ export function BridgePage() {
     [amount, setAmount] = useState(""),
     [review, setReview] = useState<Prepared>();
   const [riskAcknowledged, setRiskAcknowledged] = useState(false);
-  const [recoveryHash, setRecoveryHash] = useState("");
+  const [recoveryHashes, setRecoveryHashes] = useState<Record<string, string>>({});
   useEffect(() => {
     setRiskAcknowledged(false);
   }, [token, route?.source, account, mode]);
@@ -334,10 +334,10 @@ export function BridgePage() {
         const saved = readEntries();
         if (
           saved.some(
-            (e) => !["complete", "failed", "rejected", "unsupported"].includes(e.state),
+            (e) => blocksNewBridge(e, p.intent.account, p.intent.chain),
           )
         )
-          throw Error("Resolve the outstanding bridge transaction first.");
+          throw Error("Recover the previous wallet request without a transaction hash before submitting from this wallet and chain.");
         if (mode === "bot") {
           if (
             !botId ||
@@ -504,12 +504,13 @@ export function BridgePage() {
     );
   }
   async function recoverCurrent(entry: Entry) {
+    const recoveryHash = recoveryHashes[entry.id] || "";
     if (!/^0x[0-9a-fA-F]{64}$/.test(recoveryHash))
       throw Error("Enter the source transaction hash, including a speed-up or cancellation hash.");
     const hash = recoveryHash as Hex;
     const result = await api(`/api/bridge?chain=${entry.chain}&hash=${hash}`);
     await updateHistory(() => persist(recoverEntry(readEntries(), entry.id, hash, result)));
-    setRecoveryHash("");
+    setRecoveryHashes((old) => ({ ...old, [entry.id]: "" }));
   }
   async function retryBot(entry: Entry) {
     if (!entry.botId || !entry.prepared) return;
@@ -564,10 +565,8 @@ export function BridgePage() {
     const timer = setInterval(() => void pollStatus.current(), 15000);
     return () => clearInterval(timer);
   }, [loaded]);
-  const outstanding = entries.some(
-    (e) => !["complete", "failed", "rejected", "unsupported"].includes(e.state),
-  );
-  const currentEntry = entries.find((e) => !["complete", "failed", "rejected", "unsupported"].includes(e.state)) ?? entries.at(-1);
+  const outstanding = entries.some((e) => blocksNewBridge(e, account, route?.source));
+  const currentEntry = entries.at(-1);
   const advancedEntry = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (busy || outstanding || review || !currentEntry || advancedEntry.current === currentEntry.id ||
@@ -782,7 +781,7 @@ export function BridgePage() {
                 </label>
               )}
               {review && (
-                <section className={s.note} aria-label="Transaction review">
+                <section className={`${s.note} ${s.review}`} aria-label="Transaction review">
                   <h3>{bridgeStepCopy(review.step, review.route.symbol, chains[review.route.destination].name).title}</h3>
                   <p>{bridgeStepCopy(review.step, review.route.symbol, chains[review.route.destination].name).description}</p>
                   <p>
@@ -826,6 +825,7 @@ export function BridgePage() {
                 </section>
               )}
               <button
+                className={s.primaryAction}
                 disabled={
                   busy ||
                   !loaded ||
@@ -836,7 +836,7 @@ export function BridgePage() {
                 }
                 onClick={() => work(review ? submit : prepare)}
               >
-                {busy ? busyMessage : outstanding ? "Waiting for transaction confirmation…" : review
+                {outstanding ? "Recover previous wallet request below" : busy ? busyMessage : review
                   ? bridgeStepCopy(review.step, review.route.symbol, chains[review.route.destination].name).button
                   : mode === "connected" && network !== route.source
                   ? "Switch to " + chains[route.source].name
@@ -855,55 +855,7 @@ export function BridgePage() {
             </p>
           )}
           {busy && <p role="status">{busyMessage}</p>}
-          {currentEntry && (
-            <div className={s.note}>
-              <p role="status">{currentEntry.message}</p>
-              {statusNotice && <p role="status">{statusNotice}</p>}
-              {!["complete", "failed", "rejected", "unsupported"].includes(currentEntry.state) && (
-                <>
-                  <button disabled={busy || (!currentEntry.hash && !currentEntry.botId)} onClick={() => work(() => refresh(currentEntry))}>
-                    Check status
-                  </button>
-                  {currentEntry.botId && !currentEntry.hash && (
-                    <>
-                      <button
-                        disabled={busy || !session?.authenticated || session.needsReauth || !same(session.walletAddress || "", currentEntry.prepared?.intent.account || "")}
-                        onClick={() => work(() => retryBot(currentEntry))}
-                      >
-                        Recover same bot request
-                      </button>
-                      <Link href="/wallet">Open wallet recovery</Link>
-                    </>
-                  )}
-                  <details>
-                    <summary>Missing hash or replaced transaction?</summary>
-                    <p>
-                      Enter the original, speed-up or cancellation transaction hash on {chains[currentEntry.chain].name}.
-                      Recovery verifies the sender, nonce and finalized receipt. Do not send the tokens again.
-                      If no transaction was broadcast and your wallet did not confirm rejection, contact support before clearing browser data.
-                    </p>
-                    <label>
-                      Source transaction hash
-                      <input value={recoveryHash} onChange={(e) => setRecoveryHash(e.target.value)} placeholder="0x…" spellCheck={false} />
-                    </label>
-                    <button disabled={busy || !recoveryHash} onClick={() => work(() => recoverCurrent(currentEntry))}>
-                      Recover this transaction
-                    </button>
-                  </details>
-                </>
-              )}
-              {currentEntry.hash && (
-                <a href={explorer(currentEntry.chain, "tx", currentEntry.hash)} target="_blank" rel="noreferrer">
-                  Source transaction ↗
-                </a>
-              )}
-              {currentEntry.destinationHash && currentEntry.destination && (
-                <p><a href={explorer(currentEntry.destination, "tx", currentEntry.destinationHash)} target="_blank" rel="noreferrer">
-                  Destination transaction ↗
-                </a></p>
-              )}
-            </div>
-          )}
+
         </section>
         <aside>
           <section className={s.card}>
@@ -1008,6 +960,62 @@ export function BridgePage() {
           </section>
         </aside>
       </div>
+      <section className={s.card} aria-label="Bridge transactions">
+        <h2>Bridge transactions</h2>
+        <p>Previous and pending transactions saved in this browser. Destination delivery and finality continue here while you start another bridge.</p>
+        {statusNotice && <p role="status">{statusNotice}</p>}
+        {!entries.length && <p>No bridge transactions yet.</p>}
+          {[...entries].reverse().map((entry) => (
+            <div className={s.note} key={entry.id}>
+              <h3>{entry.prepared ? `${entry.prepared.route.symbol} · ${entry.prepared.step.replace("-", " ")}` : "Bridge transaction"}</h3>
+              <p>{chains[entry.chain].name}{entry.destination ? ` → ${chains[entry.destination].name}` : ""} · {entry.state === "complete" ? "Complete" : entry.state === "failed" || entry.state === "rejected" || entry.state === "unsupported" ? entry.state : bridgeProgressLabel(entry)}</p>
+              <p role="status">{entry.message}</p>
+              {!["complete", "failed", "rejected", "unsupported"].includes(entry.state) && (
+                <>
+                  <button disabled={busy || (!entry.hash && !entry.botId)} onClick={() => work(() => refresh(entry))}>
+                    Check status
+                  </button>
+                  {entry.botId && !entry.hash && (
+                    <>
+                      <button
+                        disabled={busy || !session?.authenticated || session.needsReauth || !same(session.walletAddress || "", entry.prepared?.intent.account || "")}
+                        onClick={() => work(() => retryBot(entry))}
+                      >
+                        Recover same bot request
+                      </button>
+                      <Link href="/wallet">Open wallet recovery</Link>
+                    </>
+                  )}
+                  <details>
+                    <summary>Missing hash or replaced transaction?</summary>
+                    <p>
+                      Enter the original, speed-up or cancellation transaction hash on {chains[entry.chain].name}.
+                      Recovery verifies the sender, nonce and finalized receipt. Do not send the tokens again.
+                      If no transaction was broadcast and your wallet did not confirm rejection, contact support before clearing browser data.
+                    </p>
+                    <label>
+                      Source transaction hash
+                      <input value={recoveryHashes[entry.id] || ""} onChange={(e) => setRecoveryHashes((old) => ({ ...old, [entry.id]: e.target.value }))} placeholder="0x…" spellCheck={false} />
+                    </label>
+                    <button disabled={busy || !recoveryHashes[entry.id]} onClick={() => work(() => recoverCurrent(entry))}>
+                      Recover this transaction
+                    </button>
+                  </details>
+                </>
+              )}
+              {entry.hash && (
+                <a href={explorer(entry.chain, "tx", entry.hash)} target="_blank" rel="noreferrer">
+                  Source transaction ↗
+                </a>
+              )}
+              {entry.destinationHash && entry.destination && (
+                <p><a href={explorer(entry.destination, "tx", entry.destinationHash)} target="_blank" rel="noreferrer">
+                  Destination transaction ↗
+                </a></p>
+              )}
+            </div>
+          ))}
+      </section>
     </div>
   );
 }

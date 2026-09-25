@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { parseHistory } from "../lib/bridge/validation";
+import { compactHistory, parseHistory } from "../lib/bridge/validation";
 const entry = {
   id: "test",
   chain: 5042,
@@ -7,6 +7,14 @@ const entry = {
   state: "complete",
   message: "Confirmed",
 };
+it("retains delivered but unfinalized transfers as unresolved history", () => {
+  const delivered = { ...entry, state: "delivered", destination: 8453, destinationHash: entry.hash };
+  const parsed = parseHistory(JSON.stringify([delivered]));
+  const full = compactHistory([...parsed, ...Array.from({ length: 200 }, (_, i) => ({ ...parsed[0], id: `done-${i}`, state: "complete" as const }))]);
+  expect(full).toHaveLength(200);
+  expect(full[0].state).toBe("delivered");
+  expect(() => parseHistory(JSON.stringify([{ ...delivered, destinationHash: undefined }]))).toThrow();
+});
 it("reads a confirmed record while stripping untrusted extra fields", () => {
   expect(
     parseHistory(JSON.stringify([{ ...entry, injected: "ignore" }])),

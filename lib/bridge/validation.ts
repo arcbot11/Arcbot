@@ -84,6 +84,7 @@ export const entrySchema = z
       "unknown",
       "pending",
       "forwarding",
+      "delivered",
       "complete",
       "failed",
       "rejected",
@@ -95,9 +96,13 @@ export const entrySchema = z
   })
   .refine(
     (e) =>
-      !["pending", "forwarding", "complete", "failed", "unsupported"].includes(e.state) ||
+      !["pending", "forwarding", "delivered", "complete", "failed", "unsupported"].includes(e.state) ||
       !!e.hash,
     "Confirmed or pending history must retain its source hash",
+  )
+  .refine(
+    (e) => e.state !== "delivered" || (!!e.destination && !!e.destinationHash),
+    "Observed delivery must retain its destination transaction",
   )
   .refine(
     (e) => e.state !== "unknown" || !!e.prepared,

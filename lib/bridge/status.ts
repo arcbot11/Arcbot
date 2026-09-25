@@ -297,23 +297,30 @@ export async function status(chain: BridgeChain, hash: Hex) {
       delivered.tokenId !== ownerlessId(chain, decoded.args[0]))
   )
     throw Error("Deployment does not match the source request.");
-  const finalized = await dc.getBlock({ blockTag: "finalized" });
-  if (
-    finalized.number! < dr.blockNumber ||
-    (await dc.getBlock({ blockNumber: dr.blockNumber })).hash !== dr.blockHash
-  )
+  if ((await dc.getBlock({ blockNumber: dr.blockNumber })).hash !== dr.blockHash)
     return {
       state: "forwarding",
       binding,
       destination,
       destinationHash: destHash,
-      message: `Destination execution observed; waiting for canonical ${chains[destination].name} finality.${destination === 8453 ? " Base finality typically takes around 20 minutes after the destination transaction. Tokens may appear sooner." : ""} Do not resend.`,
+      message: "Destination chain reorganized. Rechecking delivery; do not resend.",
+    };
+  const finalized = await dc.getBlock({ blockTag: "finalized" });
+  if (finalized.number! < dr.blockNumber)
+    return {
+      state: decoded.functionName === "crossChainTransfer" ? "delivered" : "forwarding",
+      binding,
+      destination,
+      destinationHash: destHash,
+      message: decoded.functionName === "crossChainTransfer"
+        ? `Tokens received on ${chains[destination].name}. Delivery is confirmed in the current chain; finality is still pending.${destination === 8453 ? " Base finality typically takes around 20 minutes after arrival." : ""} No further action is needed. We’ll keep checking automatically; do not bridge again.`
+        : `Wrapper creation observed on ${chains[destination].name}; waiting for finality. No further action is needed.`,
     };
   return {
     state: "complete",
     binding,
     destination,
     destinationHash: destHash,
-    message: "Circle delivery verified on the destination chain.",
+    message: `Circle delivery verified and finalized on ${chains[destination].name}.`,
   };
 }

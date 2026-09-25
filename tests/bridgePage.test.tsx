@@ -11,6 +11,8 @@ it("renders external-wallet discovery without requiring a bot session", () => {
   expect(html).toContain('aria-label="Wallet source"');
   expect(html).not.toContain("Recover / import");
   expect(html).not.toContain("Activity &amp; recovery");
+  expect(html).toContain('aria-label="Bridge transactions"');
+  expect(html).toContain("No bridge transactions yet.");
   expect(html).toContain("Token contract address");
   expect(html).toContain("Base ETH for gas to unwrap tokens back to Arc");
   expect(html).not.toContain("Confirm in wallet");

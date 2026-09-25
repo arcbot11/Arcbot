@@ -304,7 +304,17 @@ it("waits for source finality even on a reverted receipt", async () => {
 });
 it("waits for destination finality", async () => {
   mocks.destination.getBlock.mockResolvedValue({ hash, number: 80n });
-  expect((await status(5042, hash)).state).toBe("forwarding");
+  const result = await status(5042, hash);
+  expect(result.state).toBe("delivered");
+  expect(result.message).toContain("Tokens received on Base");
+  expect(result.message).toContain("20 minutes");
+  expect(result.destinationHash).toBe(hash);
+});
+it("does not report delivery from a reorganized destination receipt", async () => {
+  mocks.destination.getBlock.mockResolvedValue({ hash: zeroHash, number: 80n });
+  const result = await status(5042, hash);
+  expect(result.state).toBe("forwarding");
+  expect(result.message).toContain("reorganized");
 });
 it("rejects a forged service event", async () => {
   const r = await mocks.destination.getTransactionReceipt();
