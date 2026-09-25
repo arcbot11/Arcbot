@@ -14,17 +14,19 @@ const address = z.string().regex(/^0x[0-9a-fA-F]{40}$/),
   chain = z.union([z.literal(5042), z.literal(8453)]);
 const intent = intentSchema;
 const buckets = new Map<string, { time: number; count: number }>();
-function limit(req: NextRequest) {
+const statusBuckets = new Map<string, { time: number; count: number }>();
+function limit(req: NextRequest, statusOnly = false) {
+  const pool = statusOnly ? statusBuckets : buckets;
   const key = req.headers.get("x-forwarded-for")?.split(",")[0] || "unknown",
     now = Date.now();
-  for (const [k, v] of buckets) if (now - v.time > 60000) buckets.delete(k);
-  const b = buckets.get(key) || { time: now, count: 0 };
-  if (++b.count > 40 || buckets.size > 10000)
+  for (const [k, v] of pool) if (now - v.time > 60000) pool.delete(k);
+  const b = pool.get(key) || { time: now, count: 0 };
+  if (++b.count > (statusOnly ? 120 : 40) || pool.size > 10000)
     throw new RequestBodyError(
       "Too many bridge requests. Try again in a minute.",
       429,
     );
-  buckets.set(key, b);
+  pool.set(key, b);
 }
 const json = (body: unknown, code = 200) =>
   NextResponse.json(body, {
@@ -42,8 +44,8 @@ function failure(e: unknown) {
 }
 export async function GET(req: NextRequest) {
   try {
-    limit(req);
     const q = req.nextUrl.searchParams;
+    limit(req, q.has("hash"));
     if (q.has("hash"))
       return json(
         await status(

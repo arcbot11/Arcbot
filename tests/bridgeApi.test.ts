@@ -107,3 +107,17 @@ it("returns HTTP 429 for excessive requests", async () => {
   expect(r!.status).toBe(429);
   expect(mocks.lookup).toHaveBeenCalledTimes(40);
 });
+it("isolates the status allowance from lookup and preparation", async () => {
+  const headers = { "x-forwarded-for": "isolated-status" };
+  mocks.status.mockResolvedValue({ state: "pending" });
+  let response;
+  for (let i = 0; i < 121; i++) response = await GET(new NextRequest(
+    "http://localhost:3000/api/bridge?chain=5042&hash=0x" + "22".repeat(32), { headers },
+  ));
+  expect(response!.status).toBe(429);
+  expect(mocks.status).toHaveBeenCalledTimes(120);
+  expect((await GET(new NextRequest("http://localhost:3000/api/bridge?token=" + address, { headers }))).status).toBe(200);
+  expect((await POST(request(JSON.stringify({ operation: "prepare", intent: {
+    chain: 5042, token: address, account: address, action: "transfer", amount: "1", riskAcknowledged: true,
+  } }), undefined, headers))).status).toBe(200);
+});

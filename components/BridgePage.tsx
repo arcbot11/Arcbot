@@ -25,6 +25,7 @@ import {
   type BridgeEntry as Entry,
 } from "@/lib/bridge/validation";
 import { blocksNewBridge, bridgeProgressLabel, bridgeStepCopy, canAdvanceBridge } from "@/lib/bridge/flow";
+import { POLL_KEY, POLL_INTERVAL, pollBatch, readPollState } from "@/lib/bridge/polling";
 import { mergeRecovery, recoverEntry } from "@/lib/bridge/recovery";
 async function api(url: string, body?: unknown, csrf?: string) {
   const r = await fetch(url, {
@@ -37,9 +38,10 @@ async function api(url: string, body?: unknown, csrf?: string) {
       : undefined,
     body: body ? JSON.stringify(body) : undefined,
     cache: "no-store",
+    signal: !body && (url.includes("hash=") || url.startsWith("/api/wallet/transaction")) ? AbortSignal.timeout(45_000) : undefined,
   });
   const data = await r.json();
-  if (!r.ok) throw Error(data.error || "Bridge service unavailable.");
+  if (!r.ok) throw Object.assign(Error(data.error || "Bridge service unavailable."), { status: r.status });
   return data;
 }
 function readEntries(): Entry[] {
@@ -144,10 +146,10 @@ export function BridgePage() {
     };
     window.addEventListener("eip6963:announceProvider", announce);
     window.dispatchEvent(new Event("eip6963:requestProvider"));
-    const sync = () => {
+    const sync = (event: StorageEvent) => {
+      if (event.key !== KEY && event.key !== null) return;
       try {
         setEntries(readEntries());
-        invalidate();
       } catch (e) {
         setError(String(e));
         setLoaded(false);
@@ -452,6 +454,7 @@ export function BridgePage() {
     };
   }
   async function refresh(entry: Entry) {
+    const unchanged = (e: Entry) => e.id === entry.id && e.state === entry.state && e.hash === entry.hash && e.message === entry.message && !e.supersededBy;
     if (entry.botId && !entry.hash) {
       const result = await api(
         "/api/wallet/transaction?id=" + encodeURIComponent(entry.botId),
@@ -459,7 +462,7 @@ export function BridgePage() {
       await updateHistory(() =>
         persist(
           readEntries().map((e) =>
-            e.id === entry.id ? botResult(e, result) : e,
+            unchanged(e) ? botResult(e, result) : e,
           ),
         ),
       );
@@ -472,13 +475,13 @@ export function BridgePage() {
     if (result.binding?.finalized) {
       await updateHistory(() =>
         persist(
-          mergeRecovery(
+          readEntries().some(unchanged) ? mergeRecovery(
             readEntries(),
             entry.chain,
             entry.hash!,
             result,
             entry.id,
-          ),
+          ) : readEntries(),
         ),
       );
       return;
@@ -498,7 +501,7 @@ export function BridgePage() {
     await updateHistory(() =>
       persist(
         readEntries().map((e) =>
-          e.id === entry.id && !e.supersededBy ? { ...e, ...result } : e,
+          unchanged(e) ? { ...e, ...result } : e,
         ),
       ),
     );
@@ -538,31 +541,23 @@ export function BridgePage() {
             same(session.walletAddress || "", e.prepared?.intent.account || ""))),
     );
     if (!pending.length) return;
-    locked.current = true;
-    setBusy(true);
-    setBusyMessage("Checking bridge progress…");
-    let failed = false;
-    try {
-      for (const entry of pending) {
-        try {
-          await refresh(entry);
-        } catch {
-          failed = true;
-        }
+    if (!navigator.locks) return;
+    await navigator.locks.request("argos-bridge-status-poll", { ifAvailable: true }, async (lock) => {
+      if (!lock) return;
+      try {
+        const result = await pollBatch(pending, readPollState(localStorage.getItem(POLL_KEY)),
+          (state) => localStorage.setItem(POLL_KEY, JSON.stringify(state)), refresh);
+        if (result) setStatusNotice(result.failed
+          ? "Some status checks could not complete. Retrying in the background; you can continue using the bridge."
+          : "Status checked at " + new Date().toLocaleTimeString() + ".");
+      } catch {
+        setStatusNotice("Automatic status checks are unavailable. Use Check status on a transaction below.");
       }
-      setStatusNotice(
-        failed
-          ? "Some status checks could not complete. The last verified status is shown; checking again automatically. Do not resend."
-          : "Status checked at " + new Date().toLocaleTimeString() + ".",
-      );
-    } finally {
-      locked.current = false;
-      setBusy(false);
-    }
+    });
   };
   useEffect(() => {
     if (!loaded) return;
-    const timer = setInterval(() => void pollStatus.current(), 15000);
+    const timer = setInterval(() => void pollStatus.current(), POLL_INTERVAL);
     return () => clearInterval(timer);
   }, [loaded]);
   const outstanding = entries.some((e) => blocksNewBridge(e, account, route?.source));
