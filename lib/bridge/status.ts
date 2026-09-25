@@ -115,7 +115,9 @@ export async function status(chain: BridgeChain, hash: Hex) {
     return {
       state: "complete",
       binding,
-      message: "Approval finalized. Review the next step.",
+      message: amount === 0n
+        ? "Approval reset confirmed. Your tokens have not moved. Approve the new amount before bridging."
+        : "Token approval confirmed. Your tokens have not moved yet. Confirm Bridge to send them to the other chain.",
     };
   }
   if (

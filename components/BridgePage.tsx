@@ -24,6 +24,7 @@ import {
   HISTORY_KEY as KEY,
   type BridgeEntry as Entry,
 } from "@/lib/bridge/validation";
+import { bridgeStepCopy, canAdvanceBridge } from "@/lib/bridge/flow";
 import { mergeRecovery, recoverEntry } from "@/lib/bridge/recovery";
 async function api(url: string, body?: unknown, csrf?: string) {
   const r = await fetch(url, {
@@ -288,6 +289,15 @@ export function BridgePage() {
       return;
     }
     const version = epoch.current;
+    setBusyMessage("Checking the next transaction and fees…");
+    const found = await api("/api/bridge?token=" + encodeURIComponent(route.token));
+    if (version !== epoch.current) throw Error("Wallet or form changed. Review again.");
+    const fresh = (found.candidates as Route[]).find((r) => r.source === route.source && same(r.token, route.token));
+    if (!fresh) throw Error("The token route could not be verified. Try again.");
+    setRoute(fresh);
+    setRoutes(found.candidates);
+    setUncertain(found.uncertain.length > 0);
+    if (fresh.state === "ready" && route.state !== "ready") return;
     const p = await api(
       mode === "bot" ? "/api/wallet/bridge" : "/api/bridge",
       {
@@ -297,8 +307,8 @@ export function BridgePage() {
           token: route.token,
           ...(mode === "connected" ? { account } : {}),
           amount,
-          ...(route.state === "ready" ? { riskAcknowledged } : {}),
-          action: route.state === "ready" ? "transfer" : route.state,
+          ...(fresh.state === "ready" ? { riskAcknowledged } : {}),
+          action: fresh.state === "ready" ? "transfer" : fresh.state,
         },
       },
       mode === "bot" ? session?.csrfToken : undefined,
@@ -554,32 +564,17 @@ export function BridgePage() {
     const timer = setInterval(() => void pollStatus.current(), 15000);
     return () => clearInterval(timer);
   }, [loaded]);
-  async function continueEntry(entry: Entry) {
-    if (!entry.prepared || entry.state !== "complete") return;
-    invalidate();
-    const version = epoch.current,
-      p = entry.prepared;
-    setToken(p.intent.token);
-    setAmount(p.intent.amount);
-    setRoute(undefined);
-    setRoutes([]);
-    const found = await api(
-      "/api/bridge?token=" + encodeURIComponent(p.intent.token),
-    );
-    if (version !== epoch.current) return;
-    const next = found.candidates.find((r: Route) => r.source === entry.chain);
-    setRoutes(found.candidates);
-    setUncertain(found.uncertain.length > 0);
-    if (!next)
-      throw Error(
-        "The previous token route could not be verified. Try again later.",
-      );
-    setRoute(next);
-  }
   const outstanding = entries.some(
     (e) => !["complete", "failed", "rejected", "unsupported"].includes(e.state),
   );
   const currentEntry = entries.find((e) => !["complete", "failed", "rejected", "unsupported"].includes(e.state)) ?? entries.at(-1);
+  const advancedEntry = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (busy || outstanding || review || !currentEntry || advancedEntry.current === currentEntry.id ||
+      !canAdvanceBridge(currentEntry, { route, account, amount, mode, network, riskAcknowledged })) return;
+    advancedEntry.current = currentEntry.id;
+    void work(prepare);
+  }, [busy, outstanding, review, currentEntry, route, account, amount, mode, network, riskAcknowledged]);
   return (
     <div className={s.bridge}>
       <div className={s.intro}>
@@ -694,17 +689,18 @@ export function BridgePage() {
                     Create the official bridge and wrapper first to reverse direction.
                   </p>
                 )}
+                <p>
                 <a
                   href={explorer(route.source, "address", route.token)}
                   target="_blank"
                   rel="noreferrer"
                 >
                   Source token ({chains[route.source].name}) ↗
+                  <span className={s.address} style={{ display: "block" }}>{route.token}</span>
                 </a>
-                {route.counterpart && (
-                  <>
-                    {" "}
-                    ·{" "}
+                </p>
+                {route.counterpart ? (
+                  <p>
                     <a
                       href={explorer(
                         route.destination,
@@ -716,8 +712,13 @@ export function BridgePage() {
                     >
                       {route.destination === route.origin ? "Original" : "Wrapped"}{" "}
                       token ({chains[route.destination].name}) ↗
+                      <span className={s.address} style={{ display: "block" }}>{route.counterpart}</span>
                     </a>
-                  </>
+                  </p>
+                ) : (
+                  <p className={s.note}>
+                    Token contract ({chains[route.destination].name}): available after wrapper creation is confirmed.
+                  </p>
                 )}
               </div>
               {!route.compatible ? (
@@ -755,6 +756,13 @@ export function BridgePage() {
                 </p>
               )}
               {route.compatible && route.state === "ready" && (
+                <p className={s.note}>
+                  First review the amount and fees. If approval is needed, approve
+                  the tokens, then use the same button to bridge them. Each transaction
+                  requires your confirmation; approval alone does not send tokens.
+                </p>
+              )}
+              {route.compatible && route.state === "ready" && (
                 <label className={s.acknowledgement}>
                   <input
                     type="checkbox"
@@ -773,6 +781,50 @@ export function BridgePage() {
                   </span>
                 </label>
               )}
+              {review && (
+                <section className={s.note} aria-label="Transaction review">
+                  <h3>{bridgeStepCopy(review.step, review.route.symbol, chains[review.route.destination].name).title}</h3>
+                  <p>{bridgeStepCopy(review.step, review.route.symbol, chains[review.route.destination].name).description}</p>
+                  <p>
+                    {review.intent.amount && review.intent.action === "transfer"
+                      ? `${review.intent.amount} ${review.route.symbol}`
+                      : review.route.name}{" "}
+                    · {chains[review.intent.chain].name}
+                  </p>
+                  <p>
+                    Recipient / refund:{" "}
+                    <span className={s.address}>{review.intent.account}</span>
+                  </p>
+                  <p>
+                    Circle forwarding: {formatUnits(BigInt(review.circleFee), 18)}{" "}
+                    {chains[review.intent.chain].nativeCurrency.symbol}
+                    {review.step.includes("approval") || review.step === "approve"
+                      ? " (quoted separately after approval)"
+                      : ""}
+                  </p>
+                  <p>
+                    Network reserve: {formatUnits(BigInt(review.gasBudget), 18)}{" "}
+                    {chains[review.intent.chain].nativeCurrency.symbol} · unused reserve
+                    stays in your wallet.
+                  </p>
+                  <a
+                    href={explorer(review.intent.chain, "address", review.to)}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Contract receiving this call ↗
+                  </a>
+                  <p>
+                    Review expires at {new Date(review.expiresAt).toLocaleTimeString()}.
+                    {mode === "bot"
+                      ? "Use the button below to authorize this transaction from your Argos Bot Wallet."
+                      : "Your connected wallet shows the final transaction."}
+                  </p>
+                  <button disabled={busy} onClick={() => setReview(undefined)}>
+                    Cancel
+                  </button>
+                </section>
+              )}
               <button
                 disabled={
                   busy ||
@@ -782,9 +834,11 @@ export function BridgePage() {
                   (route.state === "ready" && !riskAcknowledged) ||
                   outstanding
                 }
-                onClick={() => work(prepare)}
+                onClick={() => work(review ? submit : prepare)}
               >
-                {mode === "connected" && network !== route.source
+                {busy ? busyMessage : outstanding ? "Waiting for transaction confirmation…" : review
+                  ? bridgeStepCopy(review.step, review.route.symbol, chains[review.route.destination].name).button
+                  : mode === "connected" && network !== route.source
                   ? "Switch to " + chains[route.source].name
                   : "Review " +
                     (route.state === "ready"
@@ -847,11 +901,6 @@ export function BridgePage() {
                 <p><a href={explorer(currentEntry.destination, "tx", currentEntry.destinationHash)} target="_blank" rel="noreferrer">
                   Destination transaction ↗
                 </a></p>
-              )}
-              {currentEntry.state === "complete" && currentEntry.prepared && currentEntry.prepared.step !== "transfer" && (
-                <button disabled={busy || outstanding} onClick={() => work(() => continueEntry(currentEntry))}>
-                  Continue with this token
-                </button>
               )}
             </div>
           )}
@@ -959,54 +1008,6 @@ export function BridgePage() {
           </section>
         </aside>
       </div>
-      {review && (
-        <section className={s.card} aria-label="Transaction review">
-          <h2>Review: {review.step.replace("-", " ")}</h2>
-          <p>
-            {review.intent.amount && review.intent.action === "transfer"
-              ? `${review.intent.amount} ${review.route.symbol}`
-              : review.route.name}{" "}
-            · {chains[review.intent.chain].name}
-          </p>
-          <p>
-            Recipient / refund:{" "}
-            <span className={s.address}>{review.intent.account}</span>
-          </p>
-          <p>
-            Circle forwarding: {formatUnits(BigInt(review.circleFee), 18)}{" "}
-            {chains[review.intent.chain].nativeCurrency.symbol}
-            {review.step.includes("approval") || review.step === "approve"
-              ? " (quoted separately after approval)"
-              : ""}
-          </p>
-          <p>
-            Network reserve: {formatUnits(BigInt(review.gasBudget), 18)}{" "}
-            {chains[review.intent.chain].nativeCurrency.symbol} · unused reserve
-            stays in your wallet.
-          </p>
-          <a
-            href={explorer(review.intent.chain, "address", review.to)}
-            target="_blank"
-            rel="noreferrer"
-          >
-            Contract receiving this call ↗
-          </a>
-          <p>
-            Review expires at {new Date(review.expiresAt).toLocaleTimeString()}.
-            {mode === "bot"
-              ? "Confirm below to authorize this exact transaction from your Argos Bot Wallet."
-              : "Your connected wallet shows the final transaction."}
-          </p>
-          <button disabled={busy || outstanding} onClick={() => work(submit)}>
-            {mode === "bot"
-              ? "Confirm with Argos Bot Wallet"
-              : "Confirm in wallet"}
-          </button>
-          <button disabled={busy} onClick={() => setReview(undefined)}>
-            Cancel
-          </button>
-        </section>
-      )}
     </div>
   );
 }
