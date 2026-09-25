@@ -5,4 +5,5 @@ export const brand = {
   launchpad: "Argus",
   xUrl: ARC_BOT_X_URL,
   telegramUrl: ARC_BOT_TELEGRAM_URL,
+  telegramCommunityUrl: "https://t.me/argosbotcommunity",
 };
