@@ -54,14 +54,11 @@ attempts retain their prepared result for operator investigation.
 
 ## Configuration
 
+Public settings are versioned in `lib/bridge-api/config.ts`: enabled, Circle Gateway, $0.005 USDC, https://www.argosbot.io, revenue recipient 0x60E4834783dA4D4D7ad1C81fc48221840192152C. Legacy public environment overrides are ignored. Only private authentication, the existing shared application backend and optional RPC overrides use environment configuration.
+
 Set on the website runtime:
 
 ```dotenv
-BRIDGE_API_PAYMENTS_ENABLED=false
-BRIDGE_API_PAYMENT_RAIL=gateway
-BRIDGE_API_PAY_TO=0x60E4834783dA4D4D7ad1C81fc48221840192152C
-BRIDGE_API_PRICE_USDC=0.005
-BRIDGE_API_PUBLIC_ORIGIN=https://YOUR-CANONICAL-DOMAIN
 BRIDGE_API_SERVICE_SECRET=<dedicated random secret>
 NEXT_PUBLIC_CONVEX_URL=<existing deployment>
 BRIDGE_ARC_RPC_URL=<HTTPS Arc mainnet RPC>
