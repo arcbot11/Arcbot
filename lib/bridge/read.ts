@@ -71,7 +71,9 @@ export function notRegistered(error: unknown) {
   );
 }
 export class BridgeReads {
-  constructor(private finalized = false) {}
+  // Inspection can report a paused connection. Execution always uses the default.
+  constructor(private finalized = false, private inspectionOnly = false) {}
+  readonly operationalIssues = new Set<string>();
   clients = { 5042: bridgeClient(5042), 8453: bridgeClient(8453) };
   private heads = new Map<
     BridgeChain,
@@ -183,12 +185,12 @@ export class BridgeReads {
           if (
             !storage ||
             !same("0x" + storage.slice(-40), manifest.implementation.address) ||
-            paused ||
-            system ||
-            !trusted ||
+            (!this.inspectionOnly && (paused || system || !trusted)) ||
             !same(transmitter, TRANSMITTER)
           )
             throw Error("Circle route is paused, changed, or unavailable.");
+          if (paused || system) this.operationalIssues.add(`${chain}:service_paused`);
+          if (!trusted) this.operationalIssues.add(`${chain}:domain_disabled`);
           await Promise.all(
             Object.entries(manifest).map(async ([name, pin]) => {
               if (
@@ -260,10 +262,11 @@ export class BridgeReads {
     if (
       !same(service, SERVICE) ||
       !same(implementation, MANAGER_IMPL) ||
-      paused ||
+      (paused && !this.inspectionOnly) ||
       ![0, 2].includes(type)
     )
       throw Error("Unsupported or paused Circle manager.");
+    if (paused) this.operationalIssues.add(`${chain}:manager_paused`);
     if (type === 0) {
       if (keccak256(await this.code(chain, token)) !== WRAPPER_PROXY_HASH)
         throw Error("Unrecognized Circle wrapper.");
@@ -280,7 +283,7 @@ export class BridgeReads {
     }
     return { address, token, type };
   }
-  async route(chain: BridgeChain, token: Address): Promise<Route | null> {
+  async route(chain: BridgeChain, token: Address, known?: Route): Promise<Route | null> {
     const code = await this.code(chain, token);
     if (code === "0x") return null;
     const destination = otherChain(chain);
@@ -288,7 +291,11 @@ export class BridgeReads {
     // Only a verified Circle wrapper may contribute a non-origin token ID.
     let wrapperId: Hex | undefined;
     try {
-      wrapperId = await this.read<Hex>(chain, token, "tokenId");
+      // A stored mapping is only a discovery hint; both managers, ownership,
+      // implementation pins and bindings below are still checked on chain.
+      if (known && same(known.token, token) && known.source === chain)
+        wrapperId = known.origin !== chain ? known.tokenId : undefined;
+      else wrapperId = await this.read<Hex>(chain, token, "tokenId");
     } catch (e) {
       if (!contractAbsent(e)) throw e;
     }

@@ -52,6 +52,7 @@
     "arc:cancel-unsigned": "node --use-system-ca --experimental-strip-types --import=./scripts/register-typescript.mjs --env-file-if-exists=.env.local scripts/arc-manage.ts cancel-unsigned"
   },
   "dependencies": {
+    "@circle-fin/x402-batching": "3.4.0",
     "@coinbase/cdp-sdk": "^1.54.0",
     "@walletconnect/ethereum-provider": "2.25.0",
     "@x402/core": "2.19.0",

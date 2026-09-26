@@ -2,6 +2,7 @@ import { cronJobs, makeFunctionReference } from "convex/server";
 import { internal } from "./_generated/api";
 
 const crons = cronJobs();
+crons.interval("clean up bridge API snapshots", { minutes: 5 }, makeFunctionReference<"mutation">("bridgeApi:cleanup"));
 crons.interval("recover unfinished launches", { seconds: 30 }, makeFunctionReference<"mutation">("launchExecution:sweep"));
 crons.interval("maintain export ownership indexes", { minutes: 1 }, makeFunctionReference<"mutation">("walletExportMaintenance:migrate"));
 crons.interval("clean up expired key export verification", { minutes: 1 }, makeFunctionReference<"mutation">("walletExportMaintenance:cleanup"));

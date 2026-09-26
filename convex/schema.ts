@@ -2,6 +2,7 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 import { xReplyQueueTables } from "./lib/xReplyQueueSchema";
+import { bridgeApiTables } from "./lib/bridgeApiSchema";
 
 const intakeFilterGuardState = v.object({
   recentPosts: v.array(v.object({ id: v.string(), at: v.number() })),
@@ -12,6 +13,7 @@ const intakeFilterGuardState = v.object({
 });
 
 export default defineSchema({
+  ...bridgeApiTables,
   rpcCapacity: defineTable({key:v.string(),nextAt:v.number()}).index('by_key',['key']),
   // Execution stays gated in code; accepted terms and recovery are durable.
   launchRuns: defineTable({requestId:v.string(),owner:v.string(),address:v.string(),status:v.string(),json:v.string(),updatedAt:v.number(),recoveryUntil:v.optional(v.number()),recoveryLease:v.optional(v.string())})
