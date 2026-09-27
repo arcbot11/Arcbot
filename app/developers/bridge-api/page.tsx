@@ -32,6 +32,18 @@ export default function Page() {
         <section>
           <h2>Choose how to pay</h2>
           <p>
+            Base: pay USDC directly from your Base wallet through Coinbase CDP’s
+            x402 facilitator. The standard lookup costs {config.price} USDC; the
+            direct endpoint costs {direct.price} USDC. No Circle Gateway deposit
+            is needed for Base payments.
+          </p>
+          <p>
+            Your payment chain is separate from the token you research: pay on
+            Base to look up Arc or Base tokens. Select eip155:8453 from the
+            payment challenge; the chain query parameter selects the token’s
+            chain.
+          </p>
+          <p>
             Gateway: {config.price} USDC per lookup from a funded Circle Gateway
             balance on Arc.
           </p>

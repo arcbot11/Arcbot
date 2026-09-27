@@ -88,6 +88,50 @@ function fixture() {
     deps: { store, gateway, config, reconcile: vi.fn(async () => null) },
   };
 }
+it("advertises a POST job body instead of the shared GET lookup schema", async () => {
+  const f = fixture();
+  const execute = vi.fn();
+  const response = await paid(
+    new Request("https://bridge-api.example/v1/jobs", { method: "POST" }),
+    {},
+    "/v1/jobs",
+    execute,
+    f.deps,
+  );
+  expect(response.status).toBe(402);
+  const challenge = JSON.parse(
+    Buffer.from(response.headers.get("payment-required")!, "base64").toString(),
+  );
+  expect(challenge.resource.serviceName).toBe("Argos Bot CTS Bridge API");
+  expect(challenge.extensions.bazaar.info.input.method).toBe("POST");
+  expect(challenge.extensions.bazaar.info.input.body.intent.mode).toBe("setup");
+  expect(JSON.stringify(challenge.extensions)).not.toContain("#/components/");
+  expect(execute).not.toHaveBeenCalled();
+  expect(f.gateway.settle).not.toHaveBeenCalled();
+});
+it("rejects Base proofs in the separate Gateway-only service before execution", async () => {
+  const f = fixture();
+  const execute = vi.fn();
+  const response = await paid(
+    new Request("https://bridge-api.example/v1/jobs", {
+      method: "POST",
+      headers: {
+        "Payment-Signature": encode({
+          ...proof,
+          accepted: { ...proof.accepted, network: "eip155:8453" },
+        }),
+      },
+    }),
+    {},
+    "/v1/jobs",
+    execute,
+    f.deps,
+  );
+  expect(response.status).toBe(400);
+  expect(execute).not.toHaveBeenCalled();
+  expect(f.gateway.verify).not.toHaveBeenCalled();
+  expect(f.gateway.settle).not.toHaveBeenCalled();
+});
 it("charges once, recovers identical job result, and rejects proof reuse for another endpoint or intent", async () => {
   const f = fixture(),
     execute = vi.fn(async () => ({

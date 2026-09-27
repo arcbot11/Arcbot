@@ -1,4 +1,9 @@
 import {
+  basePaymentsConfigured,
+  BASE_NETWORK,
+  BASE_USDC,
+} from "./base-payments";
+import {
   LOOKUP_CATEGORY,
   LOOKUP_TAGS,
   LOOKUP_PARAMETERS,
@@ -26,6 +31,20 @@ export function discovery() {
     documentation: "/developers/bridge-api",
     openapi: "/api/v1/bridge/openapi",
     paymentOptions: [
+      ...(
+        [
+          [c, LOOKUP_PATH],
+          [direct, DIRECT_LOOKUP_PATH],
+        ] as const
+      ).map(([option, path]) => ({
+        rail: "base",
+        network: BASE_NETWORK,
+        asset: BASE_USDC,
+        priceUSDC: option.price,
+        enabled: option.enabled && basePaymentsConfigured(),
+        path,
+        note: "Direct Base USDC via Coinbase CDP; payment chain is independent of token lookup chain",
+      })),
       {
         rail: "gateway",
         priceUSDC: c.price,
@@ -54,6 +73,10 @@ export function discovery() {
               category: LOOKUP_CATEGORY,
               tags: LOOKUP_TAGS,
               parameters: LOOKUP_PARAMETERS,
+              paymentNetworks: [
+                "eip155:5042",
+                ...(basePaymentsConfigured() ? [BASE_NETWORK] : []),
+              ],
               example: { query: LOOKUP_EXAMPLE },
               priceUsd: option.price,
               rail: option.rail,
@@ -88,7 +111,11 @@ function railOpenapi(rail: "gateway" | "direct") {
           tags: [LOOKUP_CATEGORY],
           "x-keywords": LOOKUP_TAGS,
           "x-payment-option": { rail, priceUSDC: c.price, enabled: c.enabled },
-          description: `${rail === "direct" ? "Direct Arc USDC via CRA's facilitator; no Gateway deposit. Registration and available quota required. " : "Circle Gateway USDC on Arc. "}${c.enabled ? "" : "New purchases are disabled. "}Read-only. Latest snapshots may be cached for up to 30 seconds. Verification does not certify transfer behavior. Retry an interrupted paid call with the identical Payment-Signature, endpoint and query to recover its result for 24 hours. Never switch payment rails or create a new payment after uncertain settlement.`,
+          "x-payment-networks": [
+            "eip155:5042",
+            ...(basePaymentsConfigured() ? [BASE_NETWORK] : []),
+          ],
+          description: `${rail === "direct" ? "Direct Arc USDC via CRA's facilitator; no Gateway deposit. Registration and available quota required. " : "Circle Gateway USDC on Arc. "}${c.enabled ? "" : "New purchases are disabled. "}Base USDC via Coinbase CDP is also supported when configured, at the same endpoint price. Choose the Base requirement from accepts; chain selects the token lookup chain, not the payment network. Read-only. Latest snapshots may be cached for up to 30 seconds. Verification does not certify transfer behavior. Retry an interrupted paid call with the identical Payment-Signature, endpoint and query to recover its result for 24 hours. Never switch payment rails or create a new payment after uncertain settlement.`,
           parameters: [
             ...LOOKUP_PARAMETERS,
             {

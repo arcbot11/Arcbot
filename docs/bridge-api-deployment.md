@@ -121,3 +121,42 @@ replacing the old ARGUS-example URLs needs CRA maintainer cleanup to avoid dupli
 listings. Do not submit duplicate canonical listings silently and call it a replacement.
 User is handling Vercel publishing; no additional deployment or wallet action was
 performed for this update. After deployment, verify both bare 402s before listing them.
+
+
+## Base USDC payments
+
+Both existing lookup endpoints also accept exact x402 USDC payments on Base
+(eip155:8453), using Coinbase CDP's authenticated facilitator. Standard lookup
+costs 0.005 USDC on either network; /direct costs 0.007 USDC on either network.
+Base payments use native USDC 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913,
+EIP-712 domain USD Coin/version 2, and the existing revenue recipient
+0x60E4834783dA4D4D7ad1C81fc48221840192152C. No Gateway deposit is needed on Base.
+CDP_API_KEY_ID and CDP_API_KEY_SECRET are server-only credentials already present
+in Vercel. No new public settings or Convex schema changes are required.
+
+Clients select eip155:8453 from accepts. The chain query parameter still refers
+only to the token being researched; either payment network can buy either lookup.
+Payment nonce identities include network; existing Arc recovery keys are unchanged.
+A signed Base request initializes only its Base facilitator, never CRA or Gateway.
+An uncertain Base settlement is preserved and not automatically retried or switched
+to another network. Completed requests recover with the original proof.
+
+Mocked verification: 52 tests passed across Base payments, Arc payments, service
+lifecycle, recovery and persistence; typechecking passed. Production deployment
+and live challenge results are recorded separately after release. Odysseus had
+zero Base USDC at preflight, so no paid Base test was performed at this stage.
+
+References:
+- https://github.com/giupy997/arcagentx402/blob/main/packages/api/src/paid.ts
+- https://docs.cdp.coinbase.com/api-reference/v2/rest-api/x402-facilitator/verify-payment
+- https://github.com/coinbase/cdp-sdk/blob/main/typescript/packages/cdp-sdk/src/x402/facilitator.ts
+
+Base release outcome, 2026-09-27: production deployment
+https://arcbot-qhcuzxx43-clawhammer.vercel.app is live. Both canonical endpoints
+returned 402 with Arc and Base requirements: 5000 and 7000 atomic USDC respectively,
+correct assets, domains and revenue address. Both existing CRA listings were
+refreshed and independently verified online with networks [eip155:5042,eip155:8453].
+No wallet transactions or secret changes were made. The production CDP secret is
+sensitive and cannot be read back; live Base requirements verified its usable
+facilitator authentication. Paid Base settlement/replay remains untested until
+Odysseus is funded with Base USDC. Mocked settlement/replay tests pass.

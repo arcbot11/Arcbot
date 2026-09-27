@@ -73,6 +73,19 @@ describe("bridge lookup roles and persistence",()=>{
   });
 });
 describe("paid service lifecycle",()=>{
+  it("recovers a Base purchase without a second settlement and keeps uncertainty blocked",async()=>{
+    const p=proof();p.accepted.network="eip155:8453";
+    const db=store(),g=gateway();vi.mocked(g.verify).mockResolvedValue(p.accepted as PaymentRequirements);
+    vi.mocked(g.settle).mockResolvedValue({success:true,network:"eip155:8453",transaction:"base-receipt"});
+    const first=await handleLookup(req(p),{config,store:db,gateway:g,lookup:async()=>report});expect(first.status).toBe(200);
+    const second=await handleLookup(req(p),{config:{...config,enabled:false},store:db,gateway:g});
+    expect((await second.json()).recovered).toBe(true);expect(g.settle).toHaveBeenCalledTimes(1);
+    const uncertain=proof("3");uncertain.accepted.network="eip155:8453";
+    vi.mocked(g.settle).mockRejectedValue(Error("timeout"));
+    await handleLookup(req(uncertain),{config,store:db,gateway:g,lookup:async()=>report});
+    const retry=await handleLookup(req(uncertain),{config,store:db,gateway:g});
+    expect(retry.status).toBe(409);expect(g.settle).toHaveBeenCalledTimes(2);
+  });
   it.each(["/api/v1/bridge/lookup", "/api/v1/bridge/lookup/direct"])("offers catalogue metadata without selecting a token at %s", async path => {
     const db=store(),g=gateway(),lookup=vi.fn();
     const response=await handleLookup(new Request("https://www.argosbot.io"+path),{config,store:db,gateway:g,lookup});

@@ -1,3 +1,4 @@
+import { operationMetadata } from "./discovery";
 import { config as apiConfig, DESCRIPTION } from "./config";
 import { ApiError } from "./model";
 
@@ -127,15 +128,37 @@ export async function paid(
     const config = deps.config || apiConfig();
     if (!config.enabled)
       return json({ error: "Paid bridge operation is not enabled yet." }, 503);
-    const gateway = deps.gateway || (await paymentGateway(config, DESCRIPTION));
-    const resourceUrl = `${config.origin}${resourcePath}`;
+    // This isolated deployment accepts Gateway only; no CDP/operator credentials are needed.
+    if (payment && payment.payload.accepted.network !== "eip155:5042")
+      return json(
+        { error: "This service currently accepts Arc Gateway payments only." },
+        400,
+      );
+    const gateway =
+      deps.gateway ||
+      (await paymentGateway(config, DESCRIPTION, "eip155:5042"));
+    const metadata = operationMetadata(resourcePath);
+    const describe = async () => {
+      const challenge = await gateway.challenge(
+        `${config.origin}${resourcePath}`,
+      );
+      return {
+        ...challenge,
+        resource: {
+          ...challenge.resource!,
+          serviceName: metadata.serviceName,
+          tags: metadata.tags,
+        },
+        extensions: metadata.extensions,
+      };
+    };
     if (!payment) {
-      const challenge = await gateway.challenge(resourceUrl);
+      const challenge = await describe();
       return json(challenge, 402, { "PAYMENT-REQUIRED": encode(challenge) });
     }
     const requirements = await gateway.verify(payment.payload);
     if (!requirements) {
-      const challenge = await gateway.challenge(resourceUrl);
+      const challenge = await describe();
       return json(challenge, 402, { "PAYMENT-REQUIRED": encode(challenge) });
     }
     const claim = await store.claim({

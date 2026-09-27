@@ -182,7 +182,13 @@ export async function handleLookup(
     const config = currentConfig();
     if (!config.enabled)
       return json({ error: "Paid bridge lookup is not enabled yet." }, 503);
-    const gateway = deps.gateway || (await paymentGateway(config));
+    const gateway =
+      deps.gateway ||
+      (await paymentGateway(
+        config,
+        undefined,
+        payment?.payload.accepted.network,
+      ));
     const resourceUrl = `${config.origin}${direct ? DIRECT_LOOKUP_PATH : LOOKUP_PATH}?${url.searchParams.toString()}`;
     if (!payment) {
       const challenge = await gateway.challenge(resourceUrl);

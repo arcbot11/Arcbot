@@ -1,4 +1,9 @@
-import { lookupExtensions } from "./metadata";
+import {
+  basePaymentGateway,
+  basePaymentsConfigured,
+  BASE_NETWORK,
+} from "./base-payments";
+import { lookupExtensions, LOOKUP_TAGS } from "./metadata";
 import { createHash } from "node:crypto";
 import {
   x402ResourceServer,
@@ -17,7 +22,7 @@ import type {
   SettleResponse,
 } from "@x402/core/types";
 import { z } from "zod";
-import { apiConfig, DESCRIPTION } from "./config";
+import { apiConfig, DESCRIPTION, SERVICE_NAME } from "./config";
 import { directAvailability } from "./direct";
 export const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 export const encode = (value: unknown) =>
@@ -54,7 +59,10 @@ export function parsePayment(header: string) {
   )
     throw Error("Invalid x402 payment");
   const auth = authorizationSchema.parse(raw.payload.authorization);
-  if (raw.accepted.network !== "eip155:5042" || raw.accepted.scheme !== "exact")
+  if (
+    !["eip155:5042", BASE_NETWORK].includes(raw.accepted.network) ||
+    raw.accepted.scheme !== "exact"
+  )
     throw Error("Unsupported payment");
   // Key on the authorization nonce, not a JSON or signature encoding. Never persist the signature.
   const paymentKey = hash(
@@ -88,7 +96,11 @@ export async function reconcileGateway(
   payload: PaymentPayload,
   fetcher: typeof fetch = fetch,
 ): Promise<SettleResponse | null> {
-  if (payload.accepted.extra?.name !== "GatewayWalletBatched") return null;
+  if (
+    payload.accepted.network !== "eip155:5042" ||
+    payload.accepted.extra?.name !== "GatewayWalletBatched"
+  )
+    return null;
   const auth = authorizationSchema.parse(payload.payload.authorization);
   const url = new URL("https://gateway-api.circle.com/v1/x402/transfers");
   for (const [k, v] of Object.entries({
@@ -147,7 +159,7 @@ export async function reconcileGateway(
     },
   };
 }
-export async function paymentGateway(
+async function arcPaymentGateway(
   config = apiConfig(),
   description = DESCRIPTION,
 ): Promise<PaymentGateway> {
@@ -195,12 +207,15 @@ export async function paymentGateway(
           url,
           description,
           mimeType: "application/json",
+          serviceName: SERVICE_NAME,
+          tags: LOOKUP_TAGS,
         },
         undefined,
         lookupExtensions(),
       ),
     verify: async (payload) => {
-      // Never send a Gateway authorization to the direct facilitator, or vice versa.
+      // Never send a proof to a facilitator for another network or payment method.
+      if (payload.accepted.network !== "eip155:5042") return null;
       if (
         config.rail === "gateway"
           ? payload.accepted.extra?.name !== "GatewayWalletBatched"
@@ -219,5 +234,56 @@ export async function paymentGateway(
       server
         .createPaymentCancellationDispatcher(payload, requirements)
         .cancel({ reason: "handler_failed", responseStatus: 503 }),
+  };
+}
+
+/** Build independent payment choices; a signed request selects exactly one network. */
+export async function paymentGateway(
+  config = apiConfig(),
+  description = DESCRIPTION,
+  selectedNetwork?: string,
+): Promise<PaymentGateway> {
+  if (selectedNetwork === "eip155:5042")
+    return arcPaymentGateway(config, description);
+  if (selectedNetwork === BASE_NETWORK)
+    return basePaymentGateway(config, description);
+  if (selectedNetwork) throw Error("Unsupported payment network");
+  const candidates = await Promise.allSettled([
+    arcPaymentGateway(config, description),
+    ...(basePaymentsConfigured()
+      ? [basePaymentGateway(config, description)]
+      : []),
+  ]);
+  const gateways = candidates.flatMap((result, i) =>
+    result.status === "fulfilled"
+      ? [
+          {
+            network: i === 0 ? "eip155:5042" : BASE_NETWORK,
+            gateway: result.value,
+          },
+        ]
+      : [],
+  );
+  if (!gateways.length) throw Error("Payment facilitators unavailable");
+  const select = (network: string) => {
+    const match = gateways.find((g) => g.network === network);
+    if (!match) throw Error("Selected payment network unavailable");
+    return match.gateway;
+  };
+  return {
+    challenge: async (url) => {
+      const choices = await Promise.all(
+        gateways.map((g) => g.gateway.challenge(url)),
+      );
+      return { ...choices[0], accepts: choices.flatMap((c) => c.accepts) };
+    },
+    verify: (payload) => select(payload.accepted.network).verify(payload),
+    settle: (payload, requirement) => {
+      if (payload.accepted.network !== requirement.network)
+        throw Error("Settlement network mismatch");
+      return select(requirement.network).settle(payload, requirement);
+    },
+    cancel: (payload, requirement) =>
+      select(requirement.network).cancel(payload, requirement),
   };
 }

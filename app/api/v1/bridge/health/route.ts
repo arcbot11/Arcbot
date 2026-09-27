@@ -1,3 +1,4 @@
+import { basePaymentsConfigured } from "@/lib/bridge-api/base-payments";
 import { apiConfig } from "@/lib/bridge-api/config";
 export const dynamic = "force-dynamic";
 export async function GET() {
@@ -9,6 +10,10 @@ export async function GET() {
         enabled: c.enabled,
         configured: c.configured,
         payments: {
+          base: {
+            enabled: c.enabled && basePaymentsConfigured(),
+            pricesUSDC: { lookup: c.price, direct: apiConfig("direct").price },
+          },
           gateway: { enabled: c.enabled, priceUSDC: c.price },
           direct: {
             enabled: apiConfig("direct").enabled,

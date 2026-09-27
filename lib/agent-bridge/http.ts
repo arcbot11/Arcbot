@@ -1,3 +1,4 @@
+import { discovery } from "./discovery";
 import { z } from "zod";
 import { inputSchema } from "../bridge-api/model";
 import { lookupReport } from "../bridge-api/lookup";
@@ -42,27 +43,7 @@ export async function handle(req: Request): Promise<Response> {
         config().configured ? 200 : 503,
       );
     if (req.method === "GET" && path === "/.well-known/x402")
-      return json({
-        name: NAME,
-        description: DESCRIPTION,
-        openapi: "/openapi.json",
-        documentation: "/llms.txt",
-        status: config().enabled ? "enabled" : "not_enabled",
-        routes: config().enabled
-          ? [
-              {
-                method: "GET",
-                path: "/v1/lookup",
-                priceUSDC: config("lookup").price,
-              },
-              {
-                method: "POST",
-                path: "/v1/jobs",
-                priceUSDC: config("job").price,
-              },
-            ]
-          : [],
-      });
+      return json(discovery());
     if (req.method === "GET" && path === "/v1/lookup") {
       if (
         [...url.searchParams.keys()].some(
@@ -70,6 +51,16 @@ export async function handle(req: Request): Promise<Response> {
         )
       )
         throw new ApiError("invalid_input", "Duplicate query parameter", 400);
+      if (!url.searchParams.size && !req.headers.has("payment-signature"))
+        return paid(
+          req,
+          {},
+          path,
+          async () => {
+            throw Error("Token query is required");
+          },
+          { config: config("lookup") },
+        );
       const input = inputSchema.parse(Object.fromEntries(url.searchParams));
       return paid(
         req,
