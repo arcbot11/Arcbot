@@ -3,6 +3,7 @@ import {
   BASE_NETWORK,
   BASE_USDC,
 } from "./base-payments";
+import { SERVICE_ICON_URL } from "../service-brand";
 import {
   LOOKUP_CATEGORY,
   LOOKUP_TAGS,
@@ -23,6 +24,8 @@ export function discovery() {
   const direct = apiConfig("direct");
   return {
     name: SERVICE_NAME,
+    image: SERVICE_ICON_URL,
+    icon: SERVICE_ICON_URL,
     description: DESCRIPTION,
     category: LOOKUP_CATEGORY,
     tags: LOOKUP_TAGS,
@@ -92,7 +95,8 @@ function railOpenapi(rail: "gateway" | "direct") {
   const c = apiConfig(rail);
   return {
     openapi: "3.1.0",
-    info: { title: SERVICE_NAME, version: "1.0.0", description: DESCRIPTION },
+    info: { title: SERVICE_NAME, version: "1.0.0", description: DESCRIPTION,
+      "x-logo": { url: SERVICE_ICON_URL, altText: "Argos Bot" } },
     ...(c.origin ? { servers: [{ url: c.origin }] } : {}),
     externalDocs: {
       description:

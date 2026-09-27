@@ -5,6 +5,7 @@ export const ARCUS_PATHS = [
   "/health",
   "/openapi.json",
   "/llms.txt",
+  "/mcp",
   "/.well-known/x402",
   "/.well-known/agent-registration.json",
   "/v1/lookup",

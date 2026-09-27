@@ -1,4 +1,5 @@
 import { declareDiscoveryExtension } from "@x402/extensions/bazaar";
+import { SERVICE_ICON_URL } from "../service-brand";
 import {
   LOOKUP_EXAMPLE,
   LOOKUP_INPUT_SCHEMA,
@@ -60,6 +61,8 @@ export function operationMetadata(resourcePath: string) {
 export function discovery() {
   return {
     name: NAME,
+    image: SERVICE_ICON_URL,
+    icon: SERVICE_ICON_URL,
     description: DESCRIPTION,
     category: "Infrastructure",
     tags: TAGS,

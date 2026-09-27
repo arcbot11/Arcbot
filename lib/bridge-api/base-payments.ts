@@ -1,3 +1,4 @@
+import { SERVICE_ICON_URL } from "../service-brand";
 import { createCdpFacilitatorClient } from "@coinbase/cdp-sdk/x402";
 import { x402ResourceServer } from "@x402/core/server";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
@@ -41,6 +42,7 @@ export async function basePaymentGateway(
           description,
           mimeType: "application/json",
           serviceName: SERVICE_NAME,
+          iconUrl: SERVICE_ICON_URL,
           tags: LOOKUP_TAGS,
         },
         undefined,

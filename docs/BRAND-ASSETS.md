@@ -5,6 +5,7 @@ The approved full-body silver outline dog is the Argos Bot logo. The helmeted Od
 | Asset | Project path |
 | --- | --- |
 | Dog profile | public/brand/argos-dog-logo.png |
+| Circle-safe social profile (x402 / ERC-8004 / service icons) | public/brand/argos-dog-social-profile.png |
 | Transparent dog | public/brand/argos-dog-transparent.png |
 | Full-resolution banner | public/brand/argos-banner.png |
 | Social preview, 1500 x 500 | public/brand/argos-social-banner.jpg |
@@ -15,3 +16,8 @@ Header and footer use the circular dog; the home hero uses the clean transparent
 Run node scripts/generate-brand-icons.mjs to resize and package favicons, app icons, and compatibility image URLs. Artwork used built-in image generation. Original art remains in the parent folder; older artwork in docs/brand is archival.
 
 Account handles are identities, not display names. Keep verified working handles until accounts are renamed. X account ID, wallet mappings, contact email and service-fee recipient remain unchanged.
+
+Service metadata uses `SERVICE_ICON_URL` from `lib/service-brand.ts`. Its artwork
+is the unchanged `Argos Bot - Social Profile.png` master from the parent workspace,
+with the dog smaller to fit circular marketplace avatars. Use this version for
+x402 discovery, OpenAPI logos and ERC-8004 registration images.

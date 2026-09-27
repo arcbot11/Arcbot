@@ -1,4 +1,5 @@
 import { operationMetadata } from "./discovery";
+import { SERVICE_ICON_URL } from "../service-brand";
 import { config as apiConfig, DESCRIPTION } from "./config";
 import { ApiError } from "./model";
 import { reconcileDirectPayment } from "./payment-recovery";
@@ -158,6 +159,7 @@ export async function paid(
         resource: {
           ...challenge.resource!,
           serviceName: metadata.serviceName,
+          iconUrl: SERVICE_ICON_URL,
           tags: metadata.tags,
         },
         extensions: metadata.extensions,

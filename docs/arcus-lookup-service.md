@@ -1,7 +1,7 @@
 # Argos Bot CTS Bridge Lookup on Arcus
 
 Separate lookup-only service live at `https://arcus-api.argosbot.io` as of 2026-09-27.
-Production deployment: `https://arcbot-ev98fsnp6-clawhammer.vercel.app`.
+Initial production deployment: `https://arcbot-ev98fsnp6-clawhammer.vercel.app`.
 Hostname ownership and DNS verified. Public OpenAPI/discovery returned 200,
 browser preflight 204, unpaid lookup 402 with 7000 atomic Arc USDC, and jobs 404.
 No payment was signed or settled during these release checks.
@@ -52,8 +52,8 @@ health. Internal adapter routes are blocked on the main website and preview host
 Cross-origin GET/OPTIONS and x402 headers support the Arcus merchant playground.
 Health reports configuration only, not facilitator, settlement or RPC readiness.
 
-The listing must be created separately at the Arcus merchant dashboard. That
-requires a wallet-signed message; it has not been submitted by this implementation.
+The existing Arcus merchant listing is separate from this deployment. Editing it
+can require a wallet-signed message. Metadata updates here do not edit that listing.
 Arcus listings are self-serve, not certification or endorsement.
 
 ## Payments and recovery
@@ -90,3 +90,61 @@ at registration time; the registry remains upgradeable by its administrator.
 
 Arcus merchant badge linking is separate from registration. Its current self-service
 merchant editor exposes no identity-link field; Arcus must confirm/link the ID.
+
+## MCP and metadata improvements
+
+`POST https://arcus-api.argosbot.io/mcp` provides stateless Streamable HTTP MCP
+(2025-06-18; also accepts 2025-03-26). Send `Content-Type: application/json`,
+`Accept: application/json, text/event-stream`, and the negotiated
+`MCP-Protocol-Version` on subsequent calls. No session ID or SSE stream is needed.
+GET returns 405. Browser origins are restricted to the API and Argos website;
+server clients without an Origin header are supported.
+
+Initialize, ping, tools/list, resources/list and resources/read are free.
+Tool `lookup_ownerless_bridge` accepts the same strict token/chain/finality inputs
+as REST. No default token is installed. Lookups cost 0.007 Arc USDC, including a
+valid result that no bridge exists. No A2A service is implemented or advertised.
+
+Example unpaid request (replace the placeholder token):
+
+```json
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"lookup_ownerless_bridge","arguments":{"token":"0x...","chain":"base"}}}
+```
+
+An x402-capable MCP client receives the payment challenge in the tool result's
+`structuredContent` and JSON text content, with `isError: true`. The client then
+repeats the request with its payment object in `params._meta["x402/payment"]`.
+The response carries settlement evidence in `result._meta["x402/payment-response"]`.
+Do not put an MCP payment in an HTTP Payment-Signature header. Tool errors retain
+the underlying HTTP status in `result._meta["argos/http-status"]`.
+
+The adapter invokes the canonical REST handler and the same `arcus-lookup-v1`
+purchase scope, durable journal, input binding and uncertain-settlement rules.
+Retry identical arguments with the SAME payment after interruption; do not sign a
+fresh payment while an earlier one is uncertain. Generic MCP clients can discover
+the service but need x402 support to purchase results.
+
+The registration now advertises MCP and OASF v0.8.0 data quality/transformation
+skills with smart-contract and DeFi domains. `supportedTrust` remains empty:
+there is no claimed validator, reputation guarantee or safety certification.
+The existing logo, registry ID and payment wallet are retained. Browser visitors
+get a readable landing page; `/llms.txt` stays plain text for agents.
+
+After deployment, check free initialize/tools/list/resources calls and an unpaid
+challenge. Request an 8004scan metadata refresh and endpoint health check using
+its current UI/authentication requirements. A hosted update does not guarantee
+immediate reindexing; confirm the public agent record has the new MCP service and
+registration entry before calling it refreshed. Scores and badges are controlled
+by the indexer. No new on-chain registration is required.
+
+On 2026-09-27, the public UI's `POST /api/v1/agents/5042/304/health-check`
+returned 401 (`Authentication required`) without an authenticated session.
+Complete that check through the signed-in 8004scan UI; do not interpret a hosted
+metadata update as a completed indexer health check.
+
+MCP/metadata release deployed on 2026-09-27 to
+`https://arcbot-hxv765z3v-clawhammer.vercel.app` and the existing production domains.
+Validation: 12 targeted tests, TypeScript and production build passed; 13 public
+unpaid checks passed. No wallet actions or paid calls were performed. The public
+8004scan record still showed only Web and an empty cached registrations list
+after release, while the hosted metadata correctly exposed MCP/OASF and agent 304.

@@ -3,6 +3,7 @@ import {
   basePaymentsConfigured,
   BASE_NETWORK,
 } from "./base-payments";
+import { SERVICE_ICON_URL } from "../service-brand";
 import { lookupExtensions, LOOKUP_TAGS } from "./metadata";
 import { createHash } from "node:crypto";
 import {
@@ -208,6 +209,7 @@ async function arcPaymentGateway(
           description,
           mimeType: "application/json",
           serviceName: SERVICE_NAME,
+          iconUrl: SERVICE_ICON_URL,
           tags: LOOKUP_TAGS,
         },
         undefined,

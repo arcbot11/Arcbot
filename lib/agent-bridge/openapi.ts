@@ -1,4 +1,5 @@
 import { ORIGIN, NAME, DESCRIPTION, config } from "./config";
+import { SERVICE_ICON_URL } from "../service-brand";
 import { openapi as lookupOpenapi } from "../bridge-api/discovery";
 export const guidance = `Argos Bot CTS Bridge API
 Independent external-wallet API for ownerless Arc (5042) and Base (8453) token connections through Circle CTS, CrossChainTokenService and CCTP.
@@ -134,6 +135,7 @@ export function openapi() {
     openapi: "3.1.0",
     info: {
       title: NAME,
+      "x-logo": { url: SERVICE_ICON_URL, altText: "Argos Bot" },
       version: "1.0.0",
       description: DESCRIPTION,
       "x-guidance": guidance,

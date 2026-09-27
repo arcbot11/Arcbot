@@ -1,4 +1,5 @@
 import { HTTPFacilitatorClient, x402ResourceServer } from "@x402/core/server";
+import { SERVICE_ICON_URL } from "../service-brand";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import type { PaymentGateway } from "../bridge-api/payments";
 import { DESCRIPTION, SERVICE_NAME } from "../bridge-api/config";
@@ -31,6 +32,7 @@ export async function arcusGateway(): Promise<PaymentGateway> {
           description: DESCRIPTION,
           mimeType: "application/json",
           serviceName: SERVICE_NAME,
+          iconUrl: SERVICE_ICON_URL,
           tags: LOOKUP_TAGS,
         },
         undefined,
