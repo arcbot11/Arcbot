@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { encodeFunctionData, zeroAddress, type Address } from "viem";
+import { encodeFunctionData, zeroAddress, RpcRequestError, type Address } from "viem";
 import {
   abi,
   ownerlessId,
@@ -18,12 +18,25 @@ import {
   quoteExpiry,
   verifySeal,
   prepare,
+  retryPreparation,
 } from "../lib/bridge/prepare";
 import { validateCall, sendReviewed } from "../lib/bridge/browser";
 import { contractAbsent, notRegistered } from "../lib/bridge/read";
 const original = "0xece5ca8bf9220718e5727754026757512212cb3c" as Address,
   account = "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
   manager = "0x0AF07dDfd8F1ea073f780981895f5970705CF42f";
+it("retries transient RPC preparation at most three times without retrying policy failures", async () => {
+  const rpc = new RpcRequestError({ body: { method: "eth_estimateGas" }, error: { code: -32000, message: "temporary backend failure" }, url: "https://example.invalid" });
+  const transient = vi.fn().mockRejectedValueOnce(rpc).mockResolvedValue("fresh quote");
+  expect(await retryPreparation(transient)).toBe("fresh quote");
+  expect(transient).toHaveBeenCalledTimes(2);
+  const persistent = vi.fn().mockRejectedValue(rpc);
+  await expect(retryPreparation(persistent)).rejects.toBe(rpc);
+  expect(persistent).toHaveBeenCalledTimes(3);
+  const blocked = vi.fn().mockRejectedValue(Error("Not enough token balance."));
+  await expect(retryPreparation(blocked)).rejects.toThrow("token balance");
+  expect(blocked).toHaveBeenCalledOnce();
+});
 function approval(): Prepared {
   return {
     intent: {

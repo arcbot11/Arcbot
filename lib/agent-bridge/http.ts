@@ -185,11 +185,29 @@ export async function handle(req: Request): Promise<Response> {
       );
     if (e instanceof ApiError)
       return json({ error: { code: e.code, message: e.message } }, e.status);
+    const safeMessages = new Set([
+      "Not enough token balance.",
+      "Approval simulation failed.",
+      "Bridge gas estimate is unavailable or exceeds policy.",
+      "Quote expired during verification. Review again.",
+      "This wallet has a pending transaction. Wait before bridging.",
+      "Not enough Base ETH for forwarding and network fees, or gas exceeds policy.",
+      "Not enough Arc USDC for forwarding and network fees, or gas exceeds policy.",
+      "Bridge quote verification is not configured.",
+    ]);
+    if (e instanceof Error && safeMessages.has(e.message))
+      return json({ error: { code: "preparation_failed", message: e.message } }, 503);
+    const category = e instanceof Error && /^[A-Za-z]{1,60}$/.test(e.name) ? e.name : "UnknownError";
+    console.warn("CTS API operation failed", {
+      operation: path.split("/").at(-1),
+      category: e instanceof Error && /^[A-Za-z]{1,60}$/.test(e.name) ? e.name : "UnknownError",
+    });
     // Avoid returning RPC URLs, credentials or raw error payloads from dependencies.
     return json(
       {
         error: {
           code: "operation_unavailable",
+          category,
           message:
             "Operation could not be verified. Preserve the job and transaction hashes; retry status before submitting anything again.",
         },

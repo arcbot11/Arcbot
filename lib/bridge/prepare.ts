@@ -6,6 +6,7 @@ import {
   parseUnits,
   zeroAddress,
   zeroHash,
+  RpcRequestError,
   type Address,
   type Hex,
 } from "viem";
@@ -129,7 +130,21 @@ export function verifySeal(p: Prepared, allowExpired = false) {
   if (!allowExpired && Date.now() >= p.expiresAt)
     throw Error("Review expired. Refresh the quote.");
 }
-export async function prepare(intent: Intent): Promise<Prepared> {
+// Retry only read-only preparation, with fresh clients and heads on each attempt.
+// Every simulation and safety check must pass again; no transaction is submitted.
+export async function retryPreparation<T>(read: () => Promise<T>): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      return await read();
+    } catch (error) {
+      if (!(error instanceof RpcRequestError) || attempt >= 2) throw error;
+    }
+  }
+}
+export function prepare(intent: Intent): Promise<Prepared> {
+  return retryPreparation(() => prepareOnce(intent));
+}
+async function prepareOnce(intent: Intent): Promise<Prepared> {
   assertRiskAcknowledged(intent);
   secret(); // Fail before requesting RPC work or a forwarding quote.
   const reads = new BridgeReads(),
