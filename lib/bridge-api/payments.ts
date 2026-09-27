@@ -1,3 +1,4 @@
+import { lookupExtensions } from "./metadata";
 import { createHash } from "node:crypto";
 import {
   x402ResourceServer,
@@ -192,7 +193,7 @@ export async function paymentGateway(
         url,
         description,
         mimeType: "application/json",
-      }),
+      }, undefined, lookupExtensions()),
     verify: async (payload) => {
       // Never send a Gateway authorization to the direct facilitator, or vice versa.
       if (

@@ -73,6 +73,20 @@ describe("bridge lookup roles and persistence",()=>{
   });
 });
 describe("paid service lifecycle",()=>{
+  it.each(["/api/v1/bridge/lookup", "/api/v1/bridge/lookup/direct"])("offers catalogue metadata without selecting a token at %s", async path => {
+    const db=store(),g=gateway(),lookup=vi.fn();
+    const response=await handleLookup(new Request("https://www.argosbot.io"+path),{config,store:db,gateway:g,lookup});
+    expect(response.status).toBe(402);
+    const body=await response.json();
+    expect(body.parameters.find((p:{name:string})=>p.name==="token").required).toBe(true);
+    expect(JSON.parse(Buffer.from(response.headers.get("payment-required")!,"base64").toString())).toEqual(body);
+    expect(g.challenge).toHaveBeenCalledWith(expect.stringMatching(new RegExp(path+"$")));
+    expect(lookup).not.toHaveBeenCalled();expect(g.verify).not.toHaveBeenCalled();expect(g.settle).not.toHaveBeenCalled();
+    const paid=await handleLookup(new Request("https://www.argosbot.io"+path,{headers:{"Payment-Signature":encode(proof())}}),{config,store:db,gateway:g,lookup});
+    expect(paid.status).toBe(400);expect(g.verify).not.toHaveBeenCalled();expect(db.claim).not.toHaveBeenCalled();
+    expect((await handleLookup(new Request("https://www.argosbot.io"+path+"?chain=arc"),{config,store:db,gateway:g})).status).toBe(400);
+    expect((await handleLookup(new Request("https://www.argosbot.io"+path),{config:{...config,enabled:false},store:db,gateway:g})).status).toBe(503);
+  });
   it("returns a client-readable fresh challenge when verification rejects payment",async()=>{
     const db=store(),g=gateway();vi.mocked(g.verify).mockResolvedValue(null);
     const r=await handleLookup(req(),{config,store:db,gateway:g});

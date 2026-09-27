@@ -40,7 +40,7 @@ Arc transaction `0x8cc1f46d10b0093d4d9b03e24e661dc58e882488caa2fc3269034bc490590
 contains exactly one matching 7000-atomic-USDC transfer and authorization-used
 event. Odysseus's balance decreased by exactly 0.007 USDC across both requests;
 the facilitator paid gas. No arguswallet action was performed. Signed evidence
-is retained privately. Marketplace submission remains outstanding.
+is retained privately. CRA marketplace submission completed on 2026-09-27; both payment routes are listed and searchable.
 
 Read-only checks on 2026-09-26 found:
 - CRA facilitator available on Arc, paying settlement gas.
@@ -54,7 +54,7 @@ Read-only checks on 2026-09-26 found:
   No separate fee schedule was found. Actual seller charges/SLA need confirmation
   before relying on subsidies at scale.
 
-Release checklist (1–3 complete; marketplace submission remains):
+Release checklist (all steps complete):
 1. With explicit authorization, sign CRA's registration message using the
    existing CDP revenue account `argos-bridge-api-revenue` (not arguswallet or
    Odysseus). It is a personal-message signature, not a transfer or approval.
@@ -73,7 +73,7 @@ Release checklist (1–3 complete; marketplace submission remains):
 4. Submit the concrete Gateway lookup URL to CRA Market, and the direct URL once
    validated. CRA reads listing details from the live 402/discovery responses.
    Verify visibility with `https://api.cra-agent.tech/v1/market/search?q=argos`.
-   No Argos listing was found during the read-only check.
+   Both Argos listings were verified online and returned by the `argos` search on 2026-09-27 at 01:07 UTC.
 
 Registration message, with a fresh ISO timestamp:
 
@@ -89,3 +89,5 @@ Issued: <fresh ISO timestamp>
 References: https://cra-agent.tech/register,
 https://api.cra-agent.tech/v1/facilitator,
 https://cra-agent.tech/market.
+
+Marketplace validation: CRA accepted both concrete lookup URLs, with name Argos Bot CTS Bridge Lookup, the expected revenue recipient, Gateway price 0.005 USDC and direct price 0.007 USDC. Both listings report online: true and advertise both priced routes. CRA currently truncates the description and returns an empty params array for these listings; the complete input schema remains available in our OpenAPI and developer documentation. Submission required no wallet signatures or payments. Evidence is stored privately in cra-market-submission.json and cra-market-verification.json.

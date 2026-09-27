@@ -1,3 +1,4 @@
+import { LOOKUP_CATEGORY, LOOKUP_TAGS, LOOKUP_PARAMETERS, LOOKUP_INPUT_SCHEMA, LOOKUP_EXAMPLE } from "./metadata";
 import {
   apiConfig,
   SERVICE_NAME,
@@ -12,6 +13,8 @@ export function discovery() {
   return {
     name: SERVICE_NAME,
     description: DESCRIPTION,
+    category: LOOKUP_CATEGORY,
+    tags: LOOKUP_TAGS,
     status: c.enabled ? "enabled" : "not_enabled",
     references: OFFICIAL_REFERENCES,
     documentation: "/developers/bridge-api",
@@ -40,23 +43,16 @@ export function discovery() {
         ? [
             {
               pattern: `GET ${path}`,
+              method: "GET",
+              url: `${c.origin}${path}`,
+              category: LOOKUP_CATEGORY,
+              tags: LOOKUP_TAGS,
+              parameters: LOOKUP_PARAMETERS,
+              example: { query: LOOKUP_EXAMPLE },
               priceUsd: option.price,
               rail: option.rail,
               description: DESCRIPTION,
-              inputSchema: {
-                type: "object",
-                required: ["token"],
-                additionalProperties: false,
-                properties: {
-                  token: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" },
-                  chain: { type: "string", enum: ["arc", "base"] },
-                  finality: {
-                    type: "string",
-                    enum: ["latest", "finalized"],
-                    default: "latest",
-                  },
-                },
-              },
+              inputSchema: LOOKUP_INPUT_SCHEMA,
             },
           ]
         : [];
@@ -82,35 +78,13 @@ function railOpenapi(rail: "gateway" | "direct") {
             rail === "direct"
               ? "lookupOwnerlessBridgeDirect"
               : "lookupOwnerlessBridge",
-          summary: DESCRIPTION,
+          summary: "Look up any Arc or Base token’s ownerless CTS bridge",
+          tags: [LOOKUP_CATEGORY],
+          "x-keywords": LOOKUP_TAGS,
           "x-payment-option": { rail, priceUSDC: c.price, enabled: c.enabled },
           description: `${rail === "direct" ? "Direct Arc USDC via CRA's facilitator; no Gateway deposit. Registration and available quota required. " : "Circle Gateway USDC on Arc. "}${c.enabled ? "" : "New purchases are disabled. "}Read-only. Latest snapshots may be cached for up to 30 seconds. Verification does not certify transfer behavior. Retry an interrupted paid call with the identical Payment-Signature, endpoint and query to recover its result for 24 hours. Never switch payment rails or create a new payment after uncertain settlement.`,
           parameters: [
-            {
-              name: "token",
-              in: "query",
-              required: true,
-              description:
-                "Original or wrapped ERC-20 contract address; replace the example with the token being researched.",
-              schema: { type: "string", pattern: "^0x[0-9a-fA-F]{40}$" },
-              example: "0xece5ca8bf9220718e5727754026757512212cb3c",
-            },
-            {
-              name: "chain",
-              in: "query",
-              description:
-                "Chain containing the input address. Omit to inspect both; multiple candidates require explicit chain selection.",
-              schema: { type: "string", enum: ["arc", "base"] },
-            },
-            {
-              name: "finality",
-              in: "query",
-              schema: {
-                type: "string",
-                enum: ["latest", "finalized"],
-                default: "latest",
-              },
-            },
+            ...LOOKUP_PARAMETERS,
             {
               name: "Payment-Signature",
               in: "header",

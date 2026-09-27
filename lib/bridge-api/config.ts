@@ -1,7 +1,7 @@
 import { isAddress, parseUnits, zeroAddress } from "viem";
 export const SERVICE_NAME = "Argos Bot CTS Bridge Lookup";
 export const DESCRIPTION =
-  "Look up ownerless Arc and Base token connections through Circle's Crosschain Token Standard (CTS) and CrossChainTokenService, using Cross-Chain Transfer Protocol (CCTP) infrastructure. Get original and wrapped token addresses, outstanding wrapped supply, token-manager addresses, contract verification and setup status. Set token to a contract address and chain to arc or base; omit chain to inspect both.";
+  "Look up any Arc or Base token’s ownerless bridge using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, wrapped supply, contracts and verification status.";
 export const LOOKUP_PATH = "/api/v1/bridge/lookup";
 export const DIRECT_LOOKUP_PATH = "/api/v1/bridge/lookup/direct";
 export const DIRECT_PRICE = "0.007";
