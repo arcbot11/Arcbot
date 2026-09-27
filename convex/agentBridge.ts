@@ -1,6 +1,13 @@
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 import type { Job } from "../lib/agent-bridge/model";
+// Convex serializes object keys in canonical order. JSON text order must not
+// change an otherwise identical flat JobInput after a query round trip.
+function intentIdentity(intent: Job["intent"]) {
+  return JSON.stringify(
+    Object.entries(intent).sort(([a], [b]) => a.localeCompare(b)),
+  );
+}
 function authorize(secret: string) {
   if (
     !process.env.BRIDGE_AGENT_SERVICE_SECRET ||
@@ -26,7 +33,7 @@ export const create = mutation({
       .unique();
     if (old) {
       const prior = JSON.parse(old.json) as Job;
-      if (JSON.stringify(prior.intent) !== JSON.stringify(j.intent))
+      if (intentIdentity(prior.intent) !== intentIdentity(j.intent))
         throw Error("Client request ID belongs to another intent");
       if (old.paymentId === j.paymentId) return prior;
       const payment = await ctx.db
@@ -110,7 +117,7 @@ export const save = mutation({
       throw Error("Job changed; read and retry");
     const old = JSON.parse(row.json) as Job;
     if (
-      JSON.stringify(old.intent) !== JSON.stringify(j.intent) ||
+      intentIdentity(old.intent) !== intentIdentity(j.intent) ||
       old.paymentId !== j.paymentId ||
       j.revision !== a.expected + 1
     )

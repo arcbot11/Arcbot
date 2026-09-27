@@ -85,7 +85,13 @@ function fixture() {
     store,
     gateway,
     request,
-    deps: { store, gateway, config, reconcile: vi.fn(async () => null) },
+    deps: {
+      store,
+      gateway,
+      config,
+      reconcile: vi.fn(async () => null),
+      reconcileDirect: vi.fn(async () => null),
+    },
   };
 }
 it("advertises a POST job body instead of the shared GET lookup schema", async () => {
@@ -109,9 +115,70 @@ it("advertises a POST job body instead of the shared GET lookup schema", async (
   expect(execute).not.toHaveBeenCalled();
   expect(f.gateway.settle).not.toHaveBeenCalled();
 });
-it("rejects Base proofs in the separate Gateway-only service before execution", async () => {
+it("recovers uncertain direct settlement without executing or settling again", async () => {
+  const f = fixture(),
+    execute = vi.fn(async () => ({ job: { id: "saved" } }));
+  vi.mocked(f.gateway.settle).mockRejectedValue(Error("timeout"));
+  await paid(f.request(), {}, "/v1/jobs", execute, f.deps);
+  const receipt = {
+    success: true,
+    network: "eip155:5042" as const,
+    transaction: `0x${"12".repeat(32)}`,
+  };
+  const reconcileDirect = vi.fn(async () => receipt);
+  const request = f.request();
+  request.headers.set("Payment-Transaction", receipt.transaction);
+  expect(
+    (
+      await paid(request, { changed: true }, "/v1/jobs", execute, {
+        ...f.deps,
+        reconcileDirect,
+      })
+    ).status,
+  ).toBe(409);
+  expect(reconcileDirect).not.toHaveBeenCalled();
+  const recovered = await paid(request, {}, "/v1/jobs", execute, {
+    ...f.deps,
+    reconcileDirect,
+  });
+  expect(recovered.status).toBe(200);
+  expect((await recovered.json()).recovered).toBe(true);
+  expect(reconcileDirect).toHaveBeenCalledWith(proof, receipt.transaction);
+  expect(f.gateway.settle).toHaveBeenCalledOnce();
+  expect(execute).toHaveBeenCalledOnce();
+});
+it("preserves uncertain payments when receipt lookup fails", async () => {
+  const f = fixture(),
+    execute = vi.fn(async () => ({ ok: true }));
+  vi.mocked(f.gateway.settle).mockRejectedValue(Error("timeout"));
+  await paid(f.request(), {}, "/v1/jobs", execute, f.deps);
+  const reconcileDirect = vi.fn(async () => {
+    throw Error("RPC unavailable");
+  });
+  expect(
+    (
+      await paid(f.request(), {}, "/v1/jobs", execute, {
+        ...f.deps,
+        reconcileDirect,
+      })
+    ).status,
+  ).toBe(409);
+  expect([...f.rows.values()][0].state).toBe("uncertain");
+  expect(f.gateway.settle).toHaveBeenCalledOnce();
+  expect(execute).toHaveBeenCalledOnce();
+});
+it("accepts a Base proof through its selected payment verifier", async () => {
   const f = fixture();
-  const execute = vi.fn();
+  const execute = vi.fn(async () => ({ ok: true }));
+  vi.mocked(f.gateway.verify).mockResolvedValue({
+    ...proof.accepted,
+    network: "eip155:8453",
+  });
+  vi.mocked(f.gateway.settle).mockResolvedValue({
+    success: true,
+    network: "eip155:8453",
+    transaction: "receipt",
+  });
   const response = await paid(
     new Request("https://bridge-api.example/v1/jobs", {
       method: "POST",
@@ -127,10 +194,10 @@ it("rejects Base proofs in the separate Gateway-only service before execution", 
     execute,
     f.deps,
   );
-  expect(response.status).toBe(400);
-  expect(execute).not.toHaveBeenCalled();
-  expect(f.gateway.verify).not.toHaveBeenCalled();
-  expect(f.gateway.settle).not.toHaveBeenCalled();
+  expect(response.status).toBe(200);
+  expect(execute).toHaveBeenCalledOnce();
+  expect(f.gateway.verify).toHaveBeenCalledOnce();
+  expect(f.gateway.settle).toHaveBeenCalledOnce();
 });
 it("charges once, recovers identical job result, and rejects proof reuse for another endpoint or intent", async () => {
   const f = fixture(),
@@ -156,6 +223,7 @@ it("charges once, recovers identical job result, and rejects proof reuse for ano
   expect((await retry.json()).recovered).toBe(true);
   for (const [path, input] of [
     ["/v1/lookup", { amount: "1" }],
+    ["/v1/jobs/direct", { amount: "1" }],
     ["/v1/jobs", { amount: "2" }],
   ] as const)
     expect((await paid(f.request(), input, path, execute, f.deps)).status).toBe(

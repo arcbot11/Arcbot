@@ -12,7 +12,7 @@ import {
   jobToken,
   verifyAuthorization,
 } from "./auth";
-import { config, DESCRIPTION, NAME } from "./config";
+import { config, NAME } from "./config";
 import { BridgeEngine, publicJob } from "./engine";
 import { ApiError, createInput, jobInput } from "./model";
 import { json, paid } from "./paid";
@@ -44,7 +44,14 @@ export async function handle(req: Request): Promise<Response> {
       );
     if (req.method === "GET" && path === "/.well-known/x402")
       return json(discovery());
-    if (req.method === "GET" && path === "/v1/lookup") {
+    if (
+      req.method === "GET" &&
+      ["/v1/lookup", "/v1/lookup/direct"].includes(path)
+    ) {
+      const lookupConfig = config(
+        "lookup",
+        path.endsWith("/direct") ? "direct" : "gateway",
+      );
       if (
         [...url.searchParams.keys()].some(
           (k) => url.searchParams.getAll(k).length !== 1,
@@ -59,7 +66,7 @@ export async function handle(req: Request): Promise<Response> {
           async () => {
             throw Error("Token query is required");
           },
-          { config: config("lookup") },
+          { config: lookupConfig },
         );
       const input = inputSchema.parse(Object.fromEntries(url.searchParams));
       return paid(
@@ -71,7 +78,7 @@ export async function handle(req: Request): Promise<Response> {
           if (r.status === "unavailable") throw Error("Lookup unavailable");
           return r;
         },
-        { config: config("lookup") },
+        { config: lookupConfig },
       );
     }
     // Shared database limits apply across replicas. Paid routes enforce their own limit.
@@ -104,9 +111,13 @@ export async function handle(req: Request): Promise<Response> {
         purpose:
           "Authorize only this API job; this signature cannot move tokens. Sign each blockchain transaction separately.",
         apiFeeUSDC: config("job").price,
+        directApiFeeUSDC: config("job", "direct").price,
       });
     }
-    if (req.method === "POST" && path === "/v1/jobs") {
+    if (
+      req.method === "POST" &&
+      ["/v1/jobs", "/v1/jobs/direct"].includes(path)
+    ) {
       const input = createInput.parse(await boundedJson(req, 14000));
       return paid(req, input, path, async (requestId) => {
         await verifyAuthorization(input);

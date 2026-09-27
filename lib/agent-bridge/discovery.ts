@@ -41,7 +41,9 @@ export function createJobSchema() {
   };
 }
 export function operationMetadata(resourcePath: string) {
-  const job = resourcePath.split("?")[0] === "/v1/jobs";
+  const job = ["/v1/jobs", "/v1/jobs/direct"].includes(
+    resourcePath.split("?")[0],
+  );
   const extensions = job
     ? declareDiscoveryExtension({
         bodyType: "json",
@@ -89,7 +91,19 @@ export function discovery() {
             inputSchema: createJobSchema(),
             example: { body: JOB_EXAMPLE },
           },
-        ]
+        ].flatMap((route) => [
+          route,
+          {
+            ...route,
+            pattern: route.pattern + "/direct",
+            path: route.path + "/direct",
+            url: route.url + "/direct",
+            priceUsd: config(
+              route.method === "GET" ? "lookup" : "job",
+              "direct",
+            ).price,
+          },
+        ])
       : [],
   };
 }

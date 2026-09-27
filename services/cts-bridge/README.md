@@ -8,12 +8,12 @@ does not install them. No Circle marketplace approval is implied.
 
 ## What it does
 
-| Operation | Result | API charge |
-| --- | --- | --- |
-| Lookup | Arc/Base original and wrapped addresses, ownerless verification, outstanding wrapper supply, contracts and block evidence | 0.005 USDC |
-| Setup job | Register an original token's ownerless connection and request its wrapper on the other chain | 0.01 USDC |
-| Transfer job | Optional missing setup, exact token approval, then lock/mint or burn/unlock | 0.01 USDC |
-| Continue/recover job | Prepare, revalidate, record transactions, reconcile replacements, track source and destination finality | Included |
+| Operation            | Result                                                                                                                    | API charge |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Lookup               | Arc/Base original and wrapped addresses, ownerless verification, outstanding wrapper supply, contracts and block evidence | 0.005 USDC |
+| Setup job            | Register an original token's ownerless connection and request its wrapper on the other chain                              | 0.01 USDC  |
+| Transfer job         | Optional missing setup, exact token approval, then lock/mint or burn/unlock                                               | 0.01 USDC  |
+| Continue/recover job | Prepare, revalidate, record transactions, reconcile replacements, track source and destination finality                   | Included   |
 
 The new job price is an initial implementation setting, not a claim that long-term
 RPC/storage costs have been measured. Public prices, payout address and canonical
@@ -153,16 +153,16 @@ CAS/reservation state. Duplicate read-only polling is safe.
 
 Provision only:
 
-| Setting | Where / purpose |
-| --- | --- |
-| NEXT_PUBLIC_CONVEX_URL | Service: existing Convex deployment URL |
-| BRIDGE_API_SERVICE_SECRET | Service + Convex: existing lookup/payment store secret |
-| BRIDGE_AGENT_SERVICE_SECRET | Service + Convex: new random secret, at least 32 characters; job store/capabilities |
-| BRIDGE_QUOTE_SECRET | Service only: independent random secret, at least 32 characters; transaction plan integrity |
-| BRIDGE_ARC_RPC_URL / BRIDGE_BASE_RPC_URL | Optional dedicated HTTPS RPC endpoints, recommended for production |
-| PORT | Optional hosting port |
+| Setting                                  | Where / purpose                                                                             |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------- |
+| NEXT_PUBLIC_CONVEX_URL                   | Service: existing Convex deployment URL                                                     |
+| BRIDGE_API_SERVICE_SECRET                | Service + Convex: existing lookup/payment store secret                                      |
+| BRIDGE_AGENT_SERVICE_SECRET              | Service + Convex: new random secret, at least 32 characters; job store/capabilities         |
+| BRIDGE_QUOTE_SECRET                      | Service only: independent random secret, at least 32 characters; transaction plan integrity |
+| BRIDGE_ARC_RPC_URL / BRIDGE_BASE_RPC_URL | Optional dedicated HTTPS RPC endpoints, recommended for production                          |
+| PORT                                     | Optional hosting port                                                                       |
 
-Do not copy `.env.local`, CDP keys, operator wallet manifests, wallet journals,
+Base direct payments require CDP facilitator API credentials (CDP_API_KEY_ID and CDP_API_KEY_SECRET). Use dedicated credentials where possible; no wallet signing secret is required. Do not copy `.env.local`, operator wallet manifests, wallet journals,
 WEB_AUTH_SECRET or bot credentials into this service. No wallet signing keys are
 required. Public commercial settings are constants; secrets stay out of source.
 
@@ -212,7 +212,19 @@ job 0.01 USDC. Gas and forwarding charges are separate.
 **Payout address:** `0x60E4834783dA4D4D7ad1C81fc48221840192152C`
 
 Official references:
+
 - https://developers.circle.com/agent-stack/agent-marketplace/get-listed
 - https://developers.circle.com/agent-stack/agent-marketplace/become-a-seller
 - https://docs.arc.io/arc/references/contract-addresses
 - https://developers.circle.com/gateway
+
+## Direct-payment recovery
+
+If direct settlement times out, retain the original request and `Payment-Signature`.
+If the facilitator provides its USDC settlement hash, retry the same endpoint/body
+with `Payment-Transaction: 0x...`. This is the payment hash, not a bridge hash.
+The API verifies the canonical USDC call, authorization nonce, exact transfer,
+successful receipt, block hash and finality. It never re-submits settlement.
+Unknown hashes and unsupported batched calls remain unresolved. Do not purchase
+again while the original payment is uncertain. Gateway uses its existing search
+reconciliation without this header.

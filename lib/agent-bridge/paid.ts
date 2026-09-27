@@ -1,6 +1,7 @@
 import { operationMetadata } from "./discovery";
 import { config as apiConfig, DESCRIPTION } from "./config";
 import { ApiError } from "./model";
+import { reconcileDirectPayment } from "./payment-recovery";
 
 import {
   apiStore,
@@ -64,13 +65,20 @@ export async function paid(
     store?: ApiStore;
     gateway?: PaymentGateway;
     reconcile?: typeof reconcileGateway;
+    reconcileDirect?: typeof reconcileDirectPayment;
   } = {},
 ) {
   try {
+    const selectedConfig =
+      deps.config ||
+      apiConfig(
+        "job",
+        resourcePath.split("?")[0].endsWith("/direct") ? "direct" : "gateway",
+      );
     const header = req.headers.get("payment-signature");
     // Purchase configuration must not gate recovery of an existing payment.
     // Unpaid requests can still fail fast without requiring persistence.
-    if (!header && !(deps.config || apiConfig()).enabled)
+    if (!header && !selectedConfig.enabled)
       return json({ error: "Paid bridge operation is not enabled yet." }, 503);
     const store = deps.store || apiStore();
     // Hosting proxy must overwrite this header; absent headers share a conservative bucket.
@@ -105,8 +113,13 @@ export async function paid(
             409,
           );
         if (["settling", "uncertain"].includes(previous.state)) {
-          const receipt = await (deps.reconcile || reconcileGateway)(
-            payment.payload,
+          const receipt = await (
+            payment.payload.accepted.extra?.name === "GatewayWalletBatched"
+              ? (deps.reconcile || reconcileGateway)(payment.payload)
+              : (deps.reconcileDirect || reconcileDirectPayment)(
+                  payment.payload,
+                  req.headers.get("payment-transaction"),
+                )
           ).catch(() => null);
           if (receipt) {
             await store.update(
@@ -125,18 +138,16 @@ export async function paid(
         return recovered(previous);
       }
     }
-    const config = deps.config || apiConfig();
+    const config = selectedConfig;
     if (!config.enabled)
       return json({ error: "Paid bridge operation is not enabled yet." }, 503);
-    // This isolated deployment accepts Gateway only; no CDP/operator credentials are needed.
-    if (payment && payment.payload.accepted.network !== "eip155:5042")
-      return json(
-        { error: "This service currently accepts Arc Gateway payments only." },
-        400,
-      );
     const gateway =
       deps.gateway ||
-      (await paymentGateway(config, DESCRIPTION, "eip155:5042"));
+      (await paymentGateway(
+        config,
+        DESCRIPTION,
+        payment?.payload.accepted.network,
+      ));
     const metadata = operationMetadata(resourcePath);
     const describe = async () => {
       const challenge = await gateway.challenge(

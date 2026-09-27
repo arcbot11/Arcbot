@@ -4,16 +4,17 @@ export const guidance = `Argos Bot CTS Bridge API
 Independent external-wallet API for ownerless Arc (5042) and Base (8453) token connections through Circle CTS, CrossChainTokenService and CCTP.
 1. GET /v1/lookup?token=0x...&chain=arc|base. Missing registration is a valid paid result. A token address alone cannot prove its chain.
 2. POST /v1/authorization with a JobIntent. Sign its typedData with the external EOA that holds the tokens. Preserve the intent and expiresAt exactly.
-3. POST /v1/jobs with intent, expiresAt, signature. Handle x402 Payment-Required using Circle Gateway USDC on Arc. Retry the identical body with the same Payment-Signature. Preserve returned job.id and accessToken. Never replace an uncertain payment.
+3. POST /v1/jobs with intent, expiresAt, signature. The standard endpoint accepts Circle Gateway USDC on Arc or direct USDC on Base. Alternatively use POST /v1/jobs/direct for direct USDC on Arc or Base. Pay only an option offered by the current challenge; never switch endpoints or rails while a payment is unresolved. Retry the identical body with the same Payment-Signature. Preserve returned job.id and accessToken. Never replace an uncertain payment.
 4. Use Authorization: Bearer accessToken for all job endpoints. POST /v1/jobs/{id}/next returns a quote. Check route, step, fees and chain. POST /arm with stepId immediately before signing. Only arm returns the signable transaction and its deadline.
 5. Sign and broadcast that exact transaction with your own wallet. Do not sign expired plans. Persist the signed transaction/hash locally before broadcast. POST /transactions with stepId and hash. On timeout, recover the same wallet transaction; do not create another transfer.
 6. POST /resume refreshes receipts; GET the job to read saved progress. After registration, approval or deployment is complete, call /next again. Repeat until job.state is complete. Delivered means observed on destination but not yet finalized. Waiting for finality can take roughly 20 minutes on Base and is not a failure.
 7. To return tokens, create a NEW job using the wrapped address and its current source chain. Destination is always the same EOA on the other chain. Setup requires allowSetup=true; mode=setup creates a connection without transferring tokens. Existing approved setup is reused.
-Lookup costs 0.005 USDC. A job costs 0.01 USDC and includes its subsequent preparation, status and recovery requests. Network gas and Circle forwarding fees are separate and use source native units (18 decimals: Arc USDC or Base ETH). Fee caps are per transaction. Source tokens use their own decimals. Base ETH is needed for transactions originating on Base, including return/unwrap.
+Standard lookup costs 0.005 USDC and a job costs 0.01 USDC. The /direct alternatives cost 0.007 and 0.012 USDC respectively. A job includes subsequent preparation, status and recovery requests. The payment network is independent of the token source chain. Network gas and Circle forwarding fees are separate and use source native units (18 decimals: Arc USDC or Base ETH). Fee caps are per transaction. Source tokens use their own decimals. Base ETH is needed for transactions originating on Base, including return/unwrap.
 Only Arc/Base external EOAs are supported. Known incompatible tokens, wrong contract identities, pauses, failed simulations and insufficient gas are blocked. Wrapper creation does not certify transfer behavior or guarantee liquidity. This API never receives private keys, signs transactions or exposes operator wallets.
 Armed or submitted steps are never automatically discarded. If a wallet request was interrupted, provide its hash. A finalized same-nonce replacement can terminate the job. Preserve recovery data; never assume a missing receipt means no transaction occurred.
 If an armed quote expires before broadcast, POST /renew with stepId to obtain a fresh quote at the SAME nonce. First reconcile any transaction your wallet already broadcast. A quoted, unarmed step can be refreshed using /next. Neither endpoint broadcasts anything.
 OpenAPI: ${ORIGIN}/openapi.json
+For an uncertain direct USDC payment, retry the identical paid request with its original Payment-Signature and a Payment-Transaction header containing the settlement transaction hash from the facilitator. Recovery requires finalized canonical USDC receipt and exact authorization evidence. It never submits payment again. Missing evidence, unsupported batched calls or an unknown hash leave the payment unresolved; do not pay again. Gateway reconciliation does not need this header.
 This service is independent of Circle. Marketplace listing requires separate review; this document is not an endorsement.
 `;
 export function openapi() {
@@ -34,15 +35,30 @@ export function openapi() {
     description,
     content: content(schema),
   });
-  const payment = (kind: "lookup" | "job") => ({
-    price: { mode: "fixed", currency: "USDC", amount: config(kind).price },
+  const payment = (
+    kind: "lookup" | "job",
+    rail: "gateway" | "direct" = "gateway",
+  ) => ({
+    price: {
+      mode: "fixed",
+      currency: "USDC",
+      amount: config(kind, rail).price,
+    },
     protocols: [
       {
         x402: {
           networks: ["eip155:5042"],
           scheme: "exact",
           asset: "0x3600000000000000000000000000000000000000",
-          rail: "circle-gateway",
+          rail: rail === "gateway" ? "circle-gateway" : "direct",
+        },
+      },
+      {
+        x402: {
+          networks: ["eip155:8453"],
+          scheme: "exact",
+          asset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913",
+          rail: "direct",
         },
       },
     ],
@@ -61,6 +77,13 @@ export function openapi() {
     ),
   };
   const paidHeaders = [
+    {
+      name: "Payment-Transaction",
+      in: "header",
+      description:
+        "Optional direct-payment settlement hash for read-only reconciliation of an uncertain payment. Requires the original Payment-Signature and identical request; never a bridge transaction hash.",
+      schema: { type: "string", pattern: "^0x[0-9a-fA-F]{64}$" },
+    },
     {
       name: "Payment-Signature",
       in: "header",
@@ -107,7 +130,7 @@ export function openapi() {
       },
     },
   };
-  return {
+  const spec = {
     openapi: "3.1.0",
     info: {
       title: NAME,
@@ -158,7 +181,7 @@ export function openapi() {
               ref("PaidLookup"),
             ),
             "402": response(
-              "Circle Gateway payment required",
+              "x402 USDC payment required",
               ref("PaymentRequired"),
             ),
             ...errors,
@@ -221,7 +244,7 @@ export function openapi() {
               },
             }),
             "402": response(
-              "Circle Gateway payment required; retain identical body during retry",
+              "x402 USDC payment required; retain identical body during retry",
               ref("PaymentRequired"),
             ),
             ...errors,
@@ -586,6 +609,26 @@ export function openapi() {
           type: "object",
           description:
             "Error details, possibly with a payment requestId requiring reconciliation",
+        },
+      },
+    },
+  };
+  return {
+    ...spec,
+    paths: {
+      ...spec.paths,
+      "/v1/lookup/direct": {
+        get: {
+          ...spec.paths["/v1/lookup"].get,
+          operationId: "lookupOwnerlessBridgeDirect",
+          "x-payment-info": payment("lookup", "direct"),
+        },
+      },
+      "/v1/jobs/direct": {
+        post: {
+          ...spec.paths["/v1/jobs"].post,
+          operationId: "createBridgeJobDirect",
+          "x-payment-info": payment("job", "direct"),
         },
       },
     },

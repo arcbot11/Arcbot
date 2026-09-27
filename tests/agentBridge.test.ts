@@ -277,6 +277,20 @@ describe("external wallet lifecycle", () => {
     expect((await f.engine.next(j.id)).state).toBe("complete");
     expect(f.reads.prepare).not.toHaveBeenCalled();
   });
+  it("refreshes the last unarmed quote at the step limit but cannot add a seventeenth step", async () => {
+    const f = fixture(),
+      j = await f.engine.create(input(), "pay");
+    const q = await f.engine.next(j.id);
+    const saved = f.rows.get(j.id)!;
+    saved.steps = Array.from({ length: 16 }, (_, index) => ({
+      ...q.steps[0],
+      id: String(index),
+      state: index === 15 ? "quoted" : "complete",
+    }));
+    expect((await f.engine.next(j.id)).steps).toHaveLength(16);
+    f.rows.get(j.id)!.steps[15].state = "complete";
+    await expect(f.engine.next(j.id)).rejects.toThrow("step limit");
+  });
   it("blocks missing-bridge setup without explicit consent and incompatible tokens", async () => {
     const f = fixture();
     vi.mocked(f.reads.route).mockResolvedValue(route("register"));

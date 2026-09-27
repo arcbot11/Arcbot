@@ -40,7 +40,7 @@ Paid operations:
 - `POST /v1/jobs`: 0.01 USDC; requires the fixed intent and external-wallet
   authorization obtained through `/v1/authorization`. Subsequent job calls are included.
 
-Payment rail: Circle Gateway, USDC on Arc. Bridging supports Arc and Base; these
+Payment choices: standard endpoints accept Arc Gateway or Base direct USDC; `/direct` endpoints accept Arc or Base direct USDC at 0.007 per lookup and 0.012 per job. Bridging supports Arc and Base; these
 are distinct from the payment network. Network gas and forwarding fees are separate.
 
 Payout: `0x60E4834783dA4D4D7ad1C81fc48221840192152C`

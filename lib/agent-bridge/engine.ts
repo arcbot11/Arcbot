@@ -154,7 +154,7 @@ export class BridgeEngine {
         "setup_required",
         "Bridge setup is required and was not authorized.",
       );
-    if (j.steps.length >= 16)
+    if (j.steps.length >= 16 && step?.state !== "quoted")
       throw new ApiError(
         "step_limit",
         "Job step limit reached; reconcile its history before continuing.",

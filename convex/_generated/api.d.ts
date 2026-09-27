@@ -9,6 +9,7 @@
  */
 
 import type * as agentBridge from "../agentBridge.js";
+import type * as agentBridgeWorker from "../agentBridgeWorker.js";
 import type * as arcPermits from "../arcPermits.js";
 import type * as arcRpcDiagnostics from "../arcRpcDiagnostics.js";
 import type * as arcTokenCatalog from "../arcTokenCatalog.js";
@@ -79,6 +80,7 @@ import type {
 
 declare const fullApi: ApiFromModules<{
   agentBridge: typeof agentBridge;
+  agentBridgeWorker: typeof agentBridgeWorker;
   arcPermits: typeof arcPermits;
   arcRpcDiagnostics: typeof arcRpcDiagnostics;
   arcTokenCatalog: typeof arcTokenCatalog;

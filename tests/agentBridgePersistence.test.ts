@@ -54,6 +54,35 @@ const job = (letter = "a", paymentId = "payment") => ({
 beforeEach(() => vi.stubEnv("BRIDGE_AGENT_SERVICE_SECRET", "test-secret"));
 afterEach(() => vi.unstubAllEnvs());
 
+it("preserves intent identity across Convex key reordering while rejecting changed values", async () => {
+  const ctx = fixture(),
+    j = job();
+  await run(create, ctx, { json: JSON.stringify(j) });
+  const reordered = {
+    ...j,
+    intent: Object.fromEntries(Object.entries(j.intent).reverse()),
+  };
+  expect((await run(create, ctx, { json: JSON.stringify(reordered) })).id).toBe(
+    j.id,
+  );
+  await run(save, ctx, {
+    json: JSON.stringify({ ...reordered, revision: 1 }),
+    expected: 0,
+    reservation: "keep",
+  });
+  await expect(
+    run(save, ctx, {
+      json: JSON.stringify({
+        ...reordered,
+        revision: 2,
+        intent: { ...reordered.intent, amount: "999" },
+      }),
+      expected: 1,
+      reservation: "keep",
+    }),
+  ).rejects.toThrow("identity changed");
+});
+
 it("requires settled payment and retains access after paid response expiry", async () => {
   const ctx = fixture(),
     j = job();
