@@ -1,7 +1,11 @@
-import { apiConfig, LOOKUP_PATH, DIRECT_LOOKUP_PATH } from "./config";
-import { inputSchema, type LookupInput, type Report } from "./model";
-import { lookupReport } from "./lookup";
-import { apiStore, type ApiStore, type RequestRecord } from "./store";
+import { config as apiConfig, DESCRIPTION } from "./config";
+import { ApiError } from "./model";
+
+import {
+  apiStore,
+  type ApiStore,
+  type RequestRecord,
+} from "../bridge-api/store";
 import {
   encode,
   hash,
@@ -9,7 +13,7 @@ import {
   paymentGateway,
   reconcileGateway,
   type PaymentGateway,
-} from "./payments";
+} from "../bridge-api/payments";
 export function json(
   body: unknown,
   status = 200,
@@ -49,51 +53,24 @@ function recovered(row: RequestRecord) {
     409,
   );
 }
-export async function handleLookup(
+export async function paid(
   req: Request,
+  input: unknown,
+  resourcePath: string,
+  execute: (requestId: string) => Promise<unknown>,
   deps: {
     config?: ReturnType<typeof apiConfig>;
     store?: ApiStore;
     gateway?: PaymentGateway;
-    lookup?: (input: LookupInput, store: ApiStore) => Promise<Report>;
     reconcile?: typeof reconcileGateway;
   } = {},
 ) {
-  let input: LookupInput;
-  const url = new URL(req.url);
-  const direct = url.pathname === DIRECT_LOOKUP_PATH;
-  const currentConfig = () =>
-    deps.config || apiConfig(direct ? "direct" : "gateway");
-  try {
-    if (
-      [...url.searchParams.keys()].some(
-        (k) => url.searchParams.getAll(k).length !== 1,
-      )
-    )
-      return json({ error: "Duplicate parameters" }, 400);
-    input = inputSchema.parse(Object.fromEntries(url.searchParams));
-  } catch {
-    return json(
-      {
-        error:
-          "Use token=0x… and optional chain=arc|base, finality=latest|finalized.",
-      },
-      400,
-    );
-  }
   try {
     const header = req.headers.get("payment-signature");
     // Purchase configuration must not gate recovery of an existing payment.
     // Unpaid requests can still fail fast without requiring persistence.
-    if (!header && !currentConfig().enabled)
-      return json(
-        {
-          error: direct
-            ? "Direct payment is not enabled yet. Gateway lookup remains available."
-            : "Paid bridge lookup is not enabled yet.",
-        },
-        503,
-      );
+    if (!header && !(deps.config || apiConfig()).enabled)
+      return json({ error: "Paid bridge operation is not enabled yet." }, 503);
     const store = deps.store || apiStore();
     // Hosting proxy must overwrite this header; absent headers share a conservative bucket.
     const ip =
@@ -103,9 +80,8 @@ export async function handleLookup(
       return json({ error: "Rate limit reached" }, 429, {
         "Retry-After": "60",
       });
-    // Keep legacy Gateway recovery keys unchanged; direct proofs have a separate resource scope.
     const inputKey = hash(
-      JSON.stringify(direct ? ["direct-lookup-v1", input] : input),
+      JSON.stringify(["agent-bridge-v1", resourcePath, input]),
     );
     let payment: ReturnType<typeof parsePayment> | undefined;
     if (header) {
@@ -123,7 +99,10 @@ export async function handleLookup(
       );
       if (previous) {
         if (previous.inputKey !== inputKey)
-          return json({ error: "Payment is bound to a different lookup" }, 409);
+          return json(
+            { error: "Payment is bound to a different operation" },
+            409,
+          );
         if (["settling", "uncertain"].includes(previous.state)) {
           const receipt = await (deps.reconcile || reconcileGateway)(
             payment.payload,
@@ -145,11 +124,11 @@ export async function handleLookup(
         return recovered(previous);
       }
     }
-    const config = currentConfig();
+    const config = deps.config || apiConfig();
     if (!config.enabled)
-      return json({ error: "Paid bridge lookup is not enabled yet." }, 503);
-    const gateway = deps.gateway || (await paymentGateway(config));
-    const resourceUrl = `${config.origin}${direct ? DIRECT_LOOKUP_PATH : LOOKUP_PATH}?${url.searchParams.toString()}`;
+      return json({ error: "Paid bridge operation is not enabled yet." }, 503);
+    const gateway = deps.gateway || (await paymentGateway(config, DESCRIPTION));
+    const resourceUrl = `${config.origin}${resourcePath}`;
     if (!payment) {
       const challenge = await gateway.challenge(resourceUrl);
       return json(challenge, 402, { "PAYMENT-REQUIRED": encode(challenge) });
@@ -175,21 +154,23 @@ export async function handleLookup(
             },
             409,
           );
-    let result: Report;
+    let result: unknown;
     try {
-      result = await (deps.lookup || lookupReport)(input, store);
-      if (result.status === "unavailable") throw Error("Unavailable lookup");
+      result = await execute(payment.requestId);
       await store.update(payment.requestId, "prepared", JSON.stringify(result));
-    } catch {
+    } catch (error) {
       await store.update(payment.requestId, "not_charged");
       await gateway.cancel(payment.payload, requirements);
       return json(
         {
           requestId: payment.requestId,
           error:
-            "Lookup unavailable; payment was not submitted for settlement.",
+            error instanceof ApiError
+              ? { code: error.code, message: error.message }
+              : "Operation unavailable; payment was not submitted for settlement.",
+          charged: false,
         },
-        503,
+        error instanceof ApiError ? error.status : 503,
       );
     }
     // Persist intent before the irreversible boundary. Never automatically resubmit uncertain settlements.

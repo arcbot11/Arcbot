@@ -49,7 +49,9 @@
     "arc:preflight": "node --use-system-ca --experimental-strip-types --import=./scripts/register-typescript.mjs --env-file-if-exists=.env.local scripts/arc-preflight.ts",
     "arc:send": "node --use-system-ca --experimental-strip-types --import=./scripts/register-typescript.mjs --env-file-if-exists=.env.local scripts/arc-send.ts",
     "arc:status": "node --use-system-ca --experimental-strip-types --import=./scripts/register-typescript.mjs --env-file-if-exists=.env.local scripts/arc-manage.ts status",
-    "arc:cancel-unsigned": "node --use-system-ca --experimental-strip-types --import=./scripts/register-typescript.mjs --env-file-if-exists=.env.local scripts/arc-manage.ts cancel-unsigned"
+    "arc:cancel-unsigned": "node --use-system-ca --experimental-strip-types --import=./scripts/register-typescript.mjs --env-file-if-exists=.env.local scripts/arc-manage.ts cancel-unsigned",
+    "agent-bridge:build": "node scripts/build-agent-bridge.mjs",
+    "agent-bridge:start": "node --use-system-ca .agent-bridge/server.mjs"
   },
   "dependencies": {
     "@circle-fin/x402-batching": "3.4.0",

@@ -1,0 +1,13 @@
+**
+!package.json
+!package-lock.json
+!tsconfig.json
+!lib/
+!lib/**
+!services/
+!services/cts-bridge/
+!services/cts-bridge/server.ts
+!services/cts-bridge/Dockerfile
+!services/cts-bridge/Dockerfile.dockerignore
+!scripts/
+!scripts/build-agent-bridge.mjs

@@ -1,5 +1,14 @@
 # Public copy preview — Argos Bot CTS Bridge Lookup
 
+Update 2026-09-26: the earlier exact-copy snapshot below describes the live
+Gateway-only release. Local source now also documents a **disabled, proposed
+0.007 USDC direct option** at `/api/v1/bridge/lookup/direct`; Gateway stays
+0.005 USDC. Discovery now includes paymentOptions with explicit enabled flags,
+and only enabled routes are advertised for purchase. OpenAPI documents both
+paths and their configuration status. The direct option requires CRA seller
+registration and a validated direct-payment test before release. See
+`bridge-api-deployment.md` for the exact remaining steps.
+
 This is a review artifact, not a deployment or marketplace submission. Website/API wording is extracted from current source. CRA fields below are proposed submission material; CRA display and accepted fields have not been confirmed. The production origin is https://www.argosbot.io. Preview assumes payments enabled at 0.005 USDC; it does not enable payments.
 
 ## Proposed CRA listing and registration material

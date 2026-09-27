@@ -16,6 +16,7 @@ import {
   type BridgeChain,
 } from "./contracts";
 import { bridgeClient, BridgeReads } from "./read";
+import type { RecoveryResult } from "./recovery";
 export function events(
   logs: readonly { address: string; data: Hex; topics: readonly Hex[] }[],
   address: string,
@@ -36,7 +37,7 @@ export function events(
       }
     });
 }
-export async function status(chain: BridgeChain, hash: Hex) {
+export async function status(chain: BridgeChain, hash: Hex): Promise<RecoveryResult> {
   const client = bridgeClient(chain);
   if ((await client.getChainId()) !== chain)
     throw Error("Source RPC returned the wrong chain.");

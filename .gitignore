@@ -39,3 +39,5 @@ wallet-exports/
 .envrc
 /.next-preview/
 /lib/key-export/browser-bundle.ts
+
+.agent-bridge/
