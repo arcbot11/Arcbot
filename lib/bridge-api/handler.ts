@@ -58,11 +58,16 @@ export async function handleLookup(
     gateway?: PaymentGateway;
     lookup?: (input: LookupInput, store: ApiStore) => Promise<Report>;
     reconcile?: typeof reconcileGateway;
+    resourcePath?: string;
+    inputScope?: string;
+    gatewayFactory?: () => Promise<PaymentGateway>;
   } = {},
 ) {
   let input: LookupInput;
   const url = new URL(req.url);
   const direct = url.pathname === DIRECT_LOOKUP_PATH;
+  const resourcePath =
+    deps.resourcePath || (direct ? DIRECT_LOOKUP_PATH : LOOKUP_PATH);
   const currentConfig = () =>
     deps.config || apiConfig(direct ? "direct" : "gateway");
   // Bare unpaid GET is a catalogue probe, never a default-token lookup.
@@ -80,9 +85,13 @@ export async function handleLookup(
         return json({ error: "Rate limit reached" }, 429, {
           "Retry-After": "60",
         });
-      const gateway = deps.gateway || (await paymentGateway(config));
+      const gateway =
+        deps.gateway ||
+        (await (deps.gatewayFactory
+          ? deps.gatewayFactory()
+          : paymentGateway(config)));
       const challenge = await gateway.challenge(
-        `${config.origin}${direct ? DIRECT_LOOKUP_PATH : LOOKUP_PATH}`,
+        `${config.origin}${resourcePath}`,
       );
       const body = {
         ...challenge,
@@ -139,7 +148,13 @@ export async function handleLookup(
       });
     // Keep legacy Gateway recovery keys unchanged; direct proofs have a separate resource scope.
     const inputKey = hash(
-      JSON.stringify(direct ? ["direct-lookup-v1", input] : input),
+      JSON.stringify(
+        deps.inputScope
+          ? [deps.inputScope, input]
+          : direct
+            ? ["direct-lookup-v1", input]
+            : input,
+      ),
     );
     let payment: ReturnType<typeof parsePayment> | undefined;
     if (header) {
@@ -184,12 +199,14 @@ export async function handleLookup(
       return json({ error: "Paid bridge lookup is not enabled yet." }, 503);
     const gateway =
       deps.gateway ||
-      (await paymentGateway(
-        config,
-        undefined,
-        payment?.payload.accepted.network,
-      ));
-    const resourceUrl = `${config.origin}${direct ? DIRECT_LOOKUP_PATH : LOOKUP_PATH}?${url.searchParams.toString()}`;
+      (await (deps.gatewayFactory
+        ? deps.gatewayFactory()
+        : paymentGateway(
+            config,
+            undefined,
+            payment?.payload.accepted.network,
+          )));
+    const resourceUrl = `${config.origin}${resourcePath}?${url.searchParams.toString()}`;
     if (!payment) {
       const challenge = await gateway.challenge(resourceUrl);
       return json(challenge, 402, { "PAYMENT-REQUIRED": encode(challenge) });

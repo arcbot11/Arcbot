@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {exportOrigin} from "./lib/key-export/policy";
 import { AGENT_HOST, AGENT_PREFIX, agentPathAllowed } from "./lib/agent-bridge/hosting";
+import { ARCUS_HOST, ARCUS_PREFIX, ARCUS_PATHS } from "./lib/arcus-lookup/hosting";
 
 function compact(parts: string[]) {
   return parts.join("; ");
@@ -58,6 +59,13 @@ export function middleware(request: NextRequest) {
   const onKeyHost=!!keyOrigin&&request.nextUrl.origin===keyOrigin;
   const keyPath=/^\/api\/key-export(?:\/(?:view|script|callback))?$/.test(request.nextUrl.pathname);
   const notFound=()=>new NextResponse("Not found",{status:404,headers:{"cache-control":"no-store"}});
+  if (request.nextUrl.hostname === ARCUS_HOST) {
+    if (!ARCUS_PATHS.includes(request.nextUrl.pathname)) return notFound();
+    const target = request.nextUrl.clone();
+    target.pathname = ARCUS_PREFIX + (target.pathname === "/" ? "" : target.pathname);
+    return NextResponse.rewrite(target);
+  }
+  if (request.nextUrl.pathname === ARCUS_PREFIX || request.nextUrl.pathname.startsWith(ARCUS_PREFIX + "/")) return notFound();
   if (request.nextUrl.hostname === AGENT_HOST) {
     if (!agentPathAllowed(request.nextUrl.pathname)) return notFound();
     const target = request.nextUrl.clone();

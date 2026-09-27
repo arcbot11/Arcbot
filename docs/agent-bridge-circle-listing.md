@@ -1,7 +1,7 @@
 # Standalone CTS Bridge API: Circle launch handoff
 
-Status: domain attached to Vercel; hostname adapter and Convex poller prepared locally.
-Redeploy Convex and Vercel before running public readiness checks.
+Status: deployed to production; submission prepared for user review on 2026-09-27.
+No further testing requested. No Circle intake submission has been sent.
 This is a separate service from the CRA lookup API on www.argosbot.io.
 
 ## What Circle reviews
@@ -28,7 +28,7 @@ missing ownerless connections and coordinate transfers in either direction.
 External wallets sign every blockchain transaction. Resumable jobs track approvals,
 confirmation, delivery and finality.
 
-Proposed OpenAPI: `https://bridge-api.argosbot.io/openapi.json`
+OpenAPI: `https://bridge-api.argosbot.io/openapi.json`
 
 Documentation: `https://bridge-api.argosbot.io/llms.txt`
 
@@ -51,28 +51,33 @@ Examples are schema illustrations, not executable authorizations. Agents must
 obtain fresh typed data and sign using their own wallet. No operator wallet keys
 are required by this service.
 
-## Remaining launch work
+## Submission handoff
 
-1. Deploy the prepared Vercel hostname adapter and Convex scheduled poller. This
-   uses the existing Vercel project with a dedicated API hostname; it does not
-   run the standalone interval worker inside a serverless route.
-2. Provision the dedicated secrets and Convex functions described in
-   `services/cts-bridge/README.md`. Preserve existing website and CRA configuration.
-3. Configure HTTPS and the proposed subdomain; test public OpenAPI, discovery,
-   unpaid 402 responses and configuration health. Health alone does not prove RPC
-   or settlement readiness.
-4. Run explicitly authorized paid and external-wallet integration tests. Include
-   missing connection, existing connection, both directions, and recovery after
-   interrupted payment or transaction responses. Mocked tests do not replace these.
-5. Run Circle's readiness score against the public OpenAPI URL. Address its actual
-   findings, then submit the intake form with the seller's real contact details.
+Service URL: `https://bridge-api.argosbot.io`
 
-No marketplace submission or paid/on-chain test has been performed in this work.
+Payable lookup endpoint: `https://bridge-api.argosbot.io/v1/lookup`
 
-After deployment, run the read-only public check:
+Website: `https://www.argosbot.io`
 
-```powershell
-node --use-system-ca scripts/check-agent-bridge-public.mjs https://bridge-api.argosbot.io
-```
+Use clean endpoint URLs. Token addresses belong in query inputs, not the service
+identity; the service is not ARGUS-only. Use the OpenAPI document to describe all
+four priced operations and their inputs.
 
-This checks metadata, configuration and the unpaid challenge. It never pays or signs.
+The official intake form could not be inspected without Google sign-in in this
+environment. Exact additional form fields and seller contact details still need
+to be supplied in the signed-in form. Do not invent contact information.
+
+Circle documents manual review, payout-wallet sanctions screening, catalog and
+Discovery API inclusion after approval, and ongoing endpoint health checks. No
+review turnaround or certification is promised here.
+
+## Existing validation record (not a request for further tests)
+
+Production public metadata and unpaid payment challenges were checked previously.
+Four Arc direct-payment lookups and one paid setup-only job settled successfully
+(0.040 USDC total); scenarios included original and wrapped ARGUS and absent
+connections. Existing-connection setup completed without a bridge transaction.
+Base-to-Arc approval preparation passed five consecutive live calls after the RPC
+retry and batching fix. No bridge transactions were submitted in those API tests.
+Base payment settlement and a complete transfer through this new API were not
+tested. Do not describe those as validated in a submission.
