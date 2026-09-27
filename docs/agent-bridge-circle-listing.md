@@ -1,6 +1,7 @@
 # Standalone CTS Bridge API: Circle launch handoff
 
-Status: locally built and tested; proposed domain is not deployed by this work.
+Status: domain attached to Vercel; hostname adapter and Convex poller prepared locally.
+Redeploy Convex and Vercel before running public readiness checks.
 This is a separate service from the CRA lookup API on www.argosbot.io.
 
 ## What Circle reviews
@@ -52,9 +53,9 @@ are required by this service.
 
 ## Remaining launch work
 
-1. Select a long-running Node/container host, or adapt the service and polling
-   worker for a separate Vercel/Convex deployment. The existing interval worker
-   cannot simply be copied into a serverless route.
+1. Deploy the prepared Vercel hostname adapter and Convex scheduled poller. This
+   uses the existing Vercel project with a dedicated API hostname; it does not
+   run the standalone interval worker inside a serverless route.
 2. Provision the dedicated secrets and Convex functions described in
    `services/cts-bridge/README.md`. Preserve existing website and CRA configuration.
 3. Configure HTTPS and the proposed subdomain; test public OpenAPI, discovery,

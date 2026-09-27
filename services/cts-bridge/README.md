@@ -1,9 +1,10 @@
 # Argos Bot CTS Bridge API
 
-Standalone agent-facing service for external wallets, separate from the existing
-CRA lookup endpoint and Argos Bot wallet worker. Proposed production origin:
-`https://bridge-api.argosbot.io`. This origin has not been deployed or listed by
-this change.
+Agent-facing service for external wallets, separate from the existing CRA lookup
+endpoint and Argos Bot wallet worker. Production origin: `https://bridge-api.argosbot.io`.
+The domain is attached to the existing Vercel project. The Vercel adapter and
+Convex poller must be deployed before the API is available; domain attachment alone
+does not install them. No Circle marketplace approval is implied.
 
 ## What it does
 
@@ -114,6 +115,29 @@ a wrapper is not certification of arbitrary token behavior or liquidity.
 
 ## Build and hosting
 
+### Vercel with Convex polling (current deployment)
+
+The dedicated hostname is rewritten by middleware to `/api/cts-agent/[[...path]]`.
+Other website routes are not served on this hostname, and the internal adapter
+is inaccessible through the ordinary website hostname. The service remains a
+separate API but shares the website's Vercel project and Convex deployment.
+
+Deploy Convex including `agentBridgeWorker:tick` and the new cron. Every minute
+it finds due jobs and calls the authenticated `/internal/poll` endpoint. The
+endpoint only reconciles existing submitted transactions; it never signs or
+broadcasts. Empty queues make no outbound HTTP requests. Failed polls rotate the
+queue without clearing transaction or wallet reservations.
+
+Configure `BRIDGE_AGENT_SERVICE_SECRET` identically in Vercel production and
+Convex, plus `BRIDGE_QUOTE_SECRET` in Vercel. Reuse the existing lookup secret and
+Convex URL. Never rotate these secrets casually while jobs are active.
+
+Deployment order: Convex first, then push/deploy the website with the new adapter.
+Run `node --use-system-ca scripts/check-agent-bridge-public.mjs` afterward. A
+configuration health response does not verify settlement or an end-to-end bridge.
+
+### Alternative standalone container
+
 ```powershell
 npm ci
 npm run typecheck
@@ -122,8 +146,8 @@ node scripts/smoke-agent-bridge.mjs
 npm run agent-bridge:start
 ```
 
-Build produces `.agent-bridge/server.mjs`; default port is 3102. Run on a dedicated
-long-lived Node process/container with HTTPS in front, not as a Next.js route.
+Build produces `.agent-bridge/server.mjs`; default port is 3102. This alternative
+runs on a dedicated long-lived Node process/container with HTTPS in front.
 The polling worker lives in that process. Multiple replicas use shared Convex
 CAS/reservation state. Duplicate read-only polling is safe.
 
