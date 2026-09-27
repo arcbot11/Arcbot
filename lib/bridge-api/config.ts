@@ -5,8 +5,8 @@ export const DESCRIPTION =
 export const LOOKUP_PATH = "/api/v1/bridge/lookup";
 export const DIRECT_LOOKUP_PATH = "/api/v1/bridge/lookup/direct";
 export const DIRECT_PRICE = "0.007";
-// Enable only after revenue-wallet registration and a reviewed direct-payment test.
-export const DIRECT_LOOKUP_ENABLED = false;
+// CRA revenue-wallet registration verified; availability is checked per purchase.
+export const DIRECT_LOOKUP_ENABLED = true;
 export const PROPOSED_PRICE = "0.005";
 // Public commercial settings are versioned with the service, not deployment env.
 export const LOOKUP_PAYMENTS_ENABLED = true;

@@ -18,6 +18,15 @@ EIP-3009 facilitator. Public settings stay in source. `DIRECT_LOOKUP_ENABLED`
 is intentionally false pending registration and release validation. Do not
 replace the Gateway route or change its recovery keys.
 
+Registration completed with explicit user authorization at **2026-09-27
+00:55:50 UTC**: CRA independently reported the existing revenue wallet as
+`registered: true`, and submission returned `active: true`. Allowance was 200/day
+with 0 used. Only the CRA ownership message was signed; no blockchain transaction,
+transfer or approval was submitted. The signature and evidence are retained in
+the private registration journal. Step 1 below is complete; do not sign again
+unless fresh status shows registration is missing. Direct purchases remain
+disabled pending the deployment and paid-test steps.
+
 Read-only checks on 2026-09-26 found:
 - CRA facilitator available on Arc, paying settlement gas.
 - Allowance: 200 settlements per seller/day, 400 shared/day; gas-reserve limits

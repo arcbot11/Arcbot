@@ -52,17 +52,17 @@ it("supports browser x402 preflight and exposes payment headers even when disabl
   );
   expect(response.headers.has("Access-Control-Allow-Credentials")).toBe(false);
 });
-it("keeps Gateway enabled and direct discovery explicitly unavailable until registration is approved", () => {
+it("advertises both configured rails with separate prices", () => {
   vi.stubEnv("BRIDGE_API_SERVICE_SECRET", "test");
   vi.stubEnv("NEXT_PUBLIC_CONVEX_URL", "https://example.convex.cloud");
   expect(apiConfig().enabled).toBe(true);
   expect(apiConfig().price).toBe("0.005");
-  expect(apiConfig("direct").enabled).toBe(false);
+  expect(apiConfig("direct").enabled).toBe(true);
   expect(apiConfig("direct").price).toBe("0.007");
-  expect(discovery().routes.some((r) => r.rail === "direct")).toBe(false);
+  expect(discovery().routes.some((r) => r.rail === "direct")).toBe(true);
   expect(
     openapi().paths[DIRECT_LOOKUP_PATH].get["x-payment-option"].enabled,
-  ).toBe(false);
+  ).toBe(true);
 });
 it("fails closed on unregistered sellers, shared/seller quota exhaustion, asset changes and failed reads", async () => {
   for (const [s, i] of [
