@@ -3,6 +3,7 @@ import { arcusConfig } from "./config";
 import { arcusGateway } from "./payments";
 import { discovery, guidance, openapi } from "./metadata";
 import { ARCUS_HOST, ARCUS_PATHS, ARCUS_PREFIX } from "./hosting";
+import { agentRegistration } from "./identity";
 
 export async function handleArcus(req: Request) {
   const url = new URL(req.url);
@@ -34,6 +35,7 @@ export async function handleArcus(req: Request) {
     });
   else if (path === "/openapi.json") response = json(openapi());
   else if (path === "/.well-known/x402") response = json(discovery());
+  else if (path === "/.well-known/agent-registration.json") response = json(agentRegistration());
   else if (path === "/health")
     response = json({
       configured: arcusConfig().configured,

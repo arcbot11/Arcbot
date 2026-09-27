@@ -6,5 +6,6 @@ export const ARCUS_PATHS = [
   "/openapi.json",
   "/llms.txt",
   "/.well-known/x402",
+  "/.well-known/agent-registration.json",
   "/v1/lookup",
 ];

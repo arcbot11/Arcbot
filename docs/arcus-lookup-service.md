@@ -72,3 +72,21 @@ the proof and request ID for operator reconciliation. Automated direct receipt
 reconciliation is not included in this lookup service.
 
 No paid end-to-end Arcus validation or wallet activity was performed during the build.
+# ERC-8004 identity
+
+The lookup service is registered as agent **304** on Arc mainnet (chain 5042),
+registry `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`.
+The identity owner is the CDP revenue wallet
+`0x60E4834783dA4D4D7ad1C81fc48221840192152C`.
+Registration transaction:
+`0xf36676aa290c57496fed34f223f0b94f2796ab3807080a635b43841a4ababd44`.
+
+Public metadata and domain verification:
+`https://arcus-api.argosbot.io/.well-known/agent-registration.json`.
+The registry tokenURI points to this document. It advertises the lookup API,
+documentation, Argos logo and x402 support, without claiming independent certification.
+The Arc registry implementation matched the canonical Base registry implementation
+at registration time; the registry remains upgradeable by its administrator.
+
+Arcus merchant badge linking is separate from registration. Its current self-service
+merchant editor exposes no identity-link field; Arcus must confirm/link the ID.

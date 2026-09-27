@@ -11,6 +11,18 @@ import { inputSchema } from "../lib/bridge-api/model";
 import { DESCRIPTION, SERVICE_NAME } from "../lib/bridge-api/config";
 import type { ApiStore } from "../lib/bridge-api/store";
 const token = "0x" + "11".repeat(20);
+it("serves public agent metadata without payment and preserves host isolation", async () => {
+  const path = "/.well-known/agent-registration.json";
+  expect(middleware(new NextRequest(ORIGIN + path)).headers.get("x-middleware-rewrite"))
+    .toBe(ORIGIN + "/api/arcus-lookup" + path);
+  const response = await handleArcus(new Request(ORIGIN + path));
+  expect(response.status).toBe(200);
+  const metadata = await response.json();
+  expect(metadata).toMatchObject({ name: SERVICE_NAME, x402Support: true, active: true });
+  expect(metadata.services.find((s: {name: string}) => s.name === "x402").endpoint)
+    .toBe(ORIGIN + "/v1/lookup");
+  expect((await handleArcus(new Request("https://www.argosbot.io" + path))).status).toBe(404);
+});
 afterEach(() => {
   vi.unstubAllGlobals();
   vi.unstubAllEnvs();
