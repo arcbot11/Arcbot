@@ -1,3 +1,4 @@
+import { validateDiscoveryExtension } from "@x402/extensions/bazaar";
 import { afterEach, expect, it, vi } from "vitest";
 import { apiConfig, DIRECT_LOOKUP_PATH } from "../lib/bridge-api/config";
 import {
@@ -55,6 +56,14 @@ it("supports browser x402 preflight and exposes payment headers even when disabl
 it("advertises both configured rails with separate prices", () => {
   vi.stubEnv("BRIDGE_API_SERVICE_SECRET", "test");
   vi.stubEnv("NEXT_PUBLIC_CONVEX_URL", "https://example.convex.cloud");
+  for (const route of discovery().routes) {
+    expect(new URL(route.url).search).toBe("");
+    expect(route.method).toBe("GET");
+    expect(route.category).toBe("Blockchain data");
+    expect(route.parameters.find((p) => p.name === "token")?.required).toBe(
+      true,
+    );
+  }
   expect(apiConfig().enabled).toBe(true);
   expect(apiConfig().price).toBe("0.005");
   expect(apiConfig("direct").enabled).toBe(true);
@@ -123,6 +132,14 @@ it("uses CRA's live USDC signing domain and rejects a Gateway proof before facil
     amount: "7000",
     extra: { name: "USDC", version: "2" },
   });
+  expect(
+    validateDiscoveryExtension(challenge.extensions!.bazaar as any).valid,
+  ).toBe(true);
+  expect((challenge.extensions!.bazaar as any).info.input.method).toBe("GET");
+  expect(
+    (challenge.extensions!.bazaar as any).schema.properties.input.properties
+      .queryParams.required,
+  ).toEqual(["token"]);
   const proof = {
     x402Version: 2,
     accepted: {

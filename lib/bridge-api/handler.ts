@@ -70,16 +70,32 @@ export async function handleLookup(
   if (!url.searchParams.size && !req.headers.has("payment-signature")) {
     try {
       const config = currentConfig();
-      if (!config.enabled) return json({ error: "Paid bridge lookup is not enabled yet." }, 503);
+      if (!config.enabled)
+        return json({ error: "Paid bridge lookup is not enabled yet." }, 503);
       const store = deps.store || apiStore();
-      const ip = req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-      if (!(await store.limit(hash(ip)))) return json({ error: "Rate limit reached" }, 429, { "Retry-After": "60" });
-      const gateway = deps.gateway || await paymentGateway(config);
-      const challenge = await gateway.challenge(`${config.origin}${direct ? DIRECT_LOOKUP_PATH : LOOKUP_PATH}`);
-      const body = { ...challenge, error: "Supply the required token query parameter before paying. This URL describes the service; it does not select an example token.", parameters: LOOKUP_PARAMETERS };
+      const ip =
+        req.headers.get("x-vercel-forwarded-for")?.split(",")[0]?.trim() ||
+        "unknown";
+      if (!(await store.limit(hash(ip))))
+        return json({ error: "Rate limit reached" }, 429, {
+          "Retry-After": "60",
+        });
+      const gateway = deps.gateway || (await paymentGateway(config));
+      const challenge = await gateway.challenge(
+        `${config.origin}${direct ? DIRECT_LOOKUP_PATH : LOOKUP_PATH}`,
+      );
+      const body = {
+        ...challenge,
+        error:
+          "Supply the required token query parameter before paying. This URL describes the service; it does not select an example token.",
+        parameters: LOOKUP_PARAMETERS,
+      };
       return json(body, 402, { "PAYMENT-REQUIRED": encode(body) });
     } catch {
-      return json({ error: "Payment discovery is temporarily unavailable." }, 503);
+      return json(
+        { error: "Payment discovery is temporarily unavailable." },
+        503,
+      );
     }
   }
   try {

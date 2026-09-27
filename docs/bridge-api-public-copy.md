@@ -16,7 +16,7 @@ This is a review artifact, not a deployment or marketplace submission. Website/A
 ```json
 {
   "name": "Argos Bot CTS Bridge Lookup",
-  "description": "Find ownerless Arc–Base bridges using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, outstanding wrapped supply, key contracts and verification status.",
+  "description": "Look up any Arc or Base token’s ownerless bridge using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, wrapped supply, contracts and verification status.",
   "price": "0.005 USDC per completed lookup",
   "method": "GET",
   "exampleUrl": "https://www.argosbot.io/api/v1/bridge/lookup?token=0xece5ca8bf9220718e5727754026757512212cb3c&chain=arc",
@@ -35,7 +35,7 @@ Path: /developers/bridge-api
 
 Browser/page metadata title: Argos Bot CTS Bridge Lookup
 
-Metadata description: Find ownerless Arc–Base bridges using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, outstanding wrapped supply, key contracts and verification status.
+Metadata description: Look up any Arc or Base token’s ownerless bridge using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, wrapped supply, contracts and verification status.
 
 ### Argos Bot CTS Bridge Lookup
 
@@ -98,7 +98,7 @@ Path: /.well-known/x402
 ```json
 {
   "name": "Argos Bot CTS Bridge Lookup",
-  "description": "Find ownerless Arc–Base bridges using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, outstanding wrapped supply, key contracts and verification status.",
+  "description": "Look up any Arc or Base token’s ownerless bridge using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, wrapped supply, contracts and verification status.",
   "status": "enabled",
   "references": [
     {
@@ -120,7 +120,7 @@ Path: /.well-known/x402
     {
       "pattern": "GET /api/v1/bridge/lookup",
       "priceUsd": "0.005",
-      "description": "Find ownerless Arc–Base bridges using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, outstanding wrapped supply, key contracts and verification status.",
+      "description": "Look up any Arc or Base token’s ownerless bridge using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, wrapped supply, contracts and verification status.",
       "inputSchema": {
         "type": "object",
         "required": [
@@ -164,7 +164,7 @@ Path: /api/v1/bridge/openapi
   "info": {
     "title": "Argos Bot CTS Bridge Lookup",
     "version": "1.0.0",
-    "description": "Find ownerless Arc–Base bridges using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, outstanding wrapped supply, key contracts and verification status."
+    "description": "Look up any Arc or Base token’s ownerless bridge using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, wrapped supply, contracts and verification status."
   },
   "servers": [
     {
@@ -193,7 +193,7 @@ Path: /api/v1/bridge/openapi
     "/api/v1/bridge/lookup": {
       "get": {
         "operationId": "lookupOwnerlessBridge",
-        "summary": "Find ownerless Arc–Base bridges using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, outstanding wrapped supply, key contracts and verification status.",
+        "summary": "Look up any Arc or Base token’s ownerless bridge using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, wrapped supply, contracts and verification status.",
         "description": "Read-only. Latest snapshots may be cached for up to 30 seconds. Verification does not certify transfer behavior. Retry an interrupted paid call with the identical Payment-Signature and query to recover its result for 24 hours. Never automatically create a new payment after an uncertain settlement.",
         "parameters": [
           {
@@ -482,7 +482,7 @@ Path: /api/v1/bridge/openapi
 
 ## Payment challenge
 
-Resource description: Find ownerless Arc–Base bridges using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, outstanding wrapped supply, key contracts and verification status.
+Resource description: Look up any Arc or Base token’s ownerless bridge using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, wrapped supply, contracts and verification status.
 
 Resource URL is the actual lookup URL, including its query. MIME type: application/json. Network: eip155:5042. Amount: 5000 atomic USDC units. Pay-to: 0x60E4834783dA4D4D7ad1C81fc48221840192152C. The facilitator supplies runtime requirements (including Gateway validity/domain fields); these are not a fixed marketing paragraph.
 

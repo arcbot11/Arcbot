@@ -189,11 +189,16 @@ export async function paymentGateway(
   });
   return {
     challenge: (url) =>
-      server.createPaymentRequiredResponse(requirements, {
-        url,
-        description,
-        mimeType: "application/json",
-      }, undefined, lookupExtensions()),
+      server.createPaymentRequiredResponse(
+        requirements,
+        {
+          url,
+          description,
+          mimeType: "application/json",
+        },
+        undefined,
+        lookupExtensions(),
+      ),
     verify: async (payload) => {
       // Never send a Gateway authorization to the direct facilitator, or vice versa.
       if (

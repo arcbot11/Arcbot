@@ -91,3 +91,33 @@ https://api.cra-agent.tech/v1/facilitator,
 https://cra-agent.tech/market.
 
 Marketplace validation: CRA accepted both concrete lookup URLs, with name Argos Bot CTS Bridge Lookup, the expected revenue recipient, Gateway price 0.005 USDC and direct price 0.007 USDC. Both listings report online: true and advertise both priced routes. CRA currently truncates the description and returns an empty params array for these listings; the complete input schema remains available in our OpenAPI and developer documentation. Submission required no wallet signatures or payments. Evidence is stored privately in cra-market-submission.json and cra-market-verification.json.
+
+## Parameterized CRA listing update (ready for deployment)
+
+Publish the current website changes before refreshing CRA. Canonical listing URLs:
+- GET https://www.argosbot.io/api/v1/bridge/lookup
+- GET https://www.argosbot.io/api/v1/bridge/lookup/direct
+
+Bare unpaid GET requests return a rate-limited 402 discovery challenge with required
+`token` and optional `chain`/`finality` query parameters. They never default to ARGUS.
+Signed requests missing token, malformed values and partial queries still return 400
+before payment verification or settlement. Existing paid recovery keys are unchanged.
+The standard x402 Bazaar extension carries the input schema and a separate example.
+OpenAPI and /.well-known/x402 publish the same inputs, canonical URLs and examples.
+Category: Blockchain data. Keywords: blockchain, bridge, cross-chain, tokens, arc,
+base, circle, cts. These describe lookup data, not paid bridge execution.
+
+CRA integration limitation confirmed from its public source on 2026-09-27:
+https://github.com/giupy997/arcagentx402/blob/main/packages/api/src/market.ts
+`listedItems` hardcodes `params: []`, `category: null` and `label: null` for Market
+submissions. `probe` only preserves name, description, payment information and route
+pattern/price/description; it ignores inputSchema, OpenAPI, Bazaar extensions and tags.
+The POST accepts only a URL, so sending extra tag/input fields cannot fix the UI.
+The badges for GET, CRA Market, payment method and payment chain are automatic.
+CRA must add metadata ingestion (or ingest this service via another catalogue) to
+show our input controls and category. No claim is made that adding metadata locally
+changes CRA's tags. No public delete/edit route exists in the inspected source;
+replacing the old ARGUS-example URLs needs CRA maintainer cleanup to avoid duplicate
+listings. Do not submit duplicate canonical listings silently and call it a replacement.
+User is handling Vercel publishing; no additional deployment or wallet action was
+performed for this update. After deployment, verify both bare 402s before listing them.
