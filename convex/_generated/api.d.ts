@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as agentBridge from "../agentBridge.js";
 import type * as arcPermits from "../arcPermits.js";
 import type * as arcRpcDiagnostics from "../arcRpcDiagnostics.js";
 import type * as arcTokenCatalog from "../arcTokenCatalog.js";
@@ -28,6 +29,7 @@ import type * as launchDrafts from "../launchDrafts.js";
 import type * as launchExecution from "../launchExecution.js";
 import type * as legacyClaims from "../legacyClaims.js";
 import type * as legacyLaunch from "../legacyLaunch.js";
+import type * as lib_agentBridgeSchema from "../lib/agentBridgeSchema.js";
 import type * as lib_bridgeApiSchema from "../lib/bridgeApiSchema.js";
 import type * as lib_listingTotals from "../lib/listingTotals.js";
 import type * as lib_telegramUnlink from "../lib/telegramUnlink.js";
@@ -76,6 +78,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  agentBridge: typeof agentBridge;
   arcPermits: typeof arcPermits;
   arcRpcDiagnostics: typeof arcRpcDiagnostics;
   arcTokenCatalog: typeof arcTokenCatalog;
@@ -96,6 +99,7 @@ declare const fullApi: ApiFromModules<{
   launchExecution: typeof launchExecution;
   legacyClaims: typeof legacyClaims;
   legacyLaunch: typeof legacyLaunch;
+  "lib/agentBridgeSchema": typeof lib_agentBridgeSchema;
   "lib/bridgeApiSchema": typeof lib_bridgeApiSchema;
   "lib/listingTotals": typeof lib_listingTotals;
   "lib/telegramUnlink": typeof lib_telegramUnlink;

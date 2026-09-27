@@ -10,12 +10,12 @@ Check health (configured/enabled), discovery, OpenAPI, and unpaid lookup (402 wi
 
 To disable new purchases, change LOOKUP_PAYMENTS_ENABLED to false and redeploy. Keep the secret and persistence for existing paid recovery. Never rerun revenue wallet creation or old operator jobs during deployment.
 
-## Direct-payment option (prepared locally; disabled)
+## Direct-payment option (live and tested)
 
 Gateway remains the default at 0.005 USDC. The new route
 `/api/v1/bridge/lookup/direct` is priced at 0.007 USDC and uses CRA's direct
 EIP-3009 facilitator. Public settings stay in source. `DIRECT_LOOKUP_ENABLED`
-is intentionally false pending registration and release validation. Do not
+is true following registration and release validation. Do not
 replace the Gateway route or change its recovery keys.
 
 Registration completed with explicit user authorization at **2026-09-27
@@ -24,8 +24,23 @@ Registration completed with explicit user authorization at **2026-09-27
 with 0 used. Only the CRA ownership message was signed; no blockchain transaction,
 transfer or approval was submitted. The signature and evidence are retained in
 the private registration journal. Step 1 below is complete; do not sign again
-unless fresh status shows registration is missing. Direct purchases remain
-disabled pending the deployment and paid-test steps.
+unless fresh status shows registration is missing.
+
+Step 2 completed on 2026-09-27: production commit `50a8b101067b3b0f1ea12dac7ba188e1a2afc865`
+is live through the GitHub/Vercel integration. An additional isolated production
+build succeeded but was not promoted because the identical commit was already
+live. No Convex deployment or secret changes were needed. All 60 targeted tests
+and typechecking passed. Live challenges advertise 0.005 USDC Gateway and 0.007
+USDC direct with the expected Arc USDC domain and recipient.
+
+One authorized direct lookup from Odysseus returned HTTP 200 with the verified
+ARGUS Arc-to-Base pair. Replaying the same signed proof returned HTTP 200,
+`recovered: true`, the same request ID and the same settlement receipt. Finalized
+Arc transaction `0x8cc1f46d10b0093d4d9b03e24e661dc58e882488caa2fc3269034bc490590e8a`
+contains exactly one matching 7000-atomic-USDC transfer and authorization-used
+event. Odysseus's balance decreased by exactly 0.007 USDC across both requests;
+the facilitator paid gas. No arguswallet action was performed. Signed evidence
+is retained privately. Marketplace submission remains outstanding.
 
 Read-only checks on 2026-09-26 found:
 - CRA facilitator available on Arc, paying settlement gas.
@@ -39,7 +54,7 @@ Read-only checks on 2026-09-26 found:
   No separate fee schedule was found. Actual seller charges/SLA need confirmation
   before relying on subsidies at scale.
 
-Remaining release steps:
+Release checklist (1–3 complete; marketplace submission remains):
 1. With explicit authorization, sign CRA's registration message using the
    existing CDP revenue account `argos-bridge-api-revenue` (not arguswallet or
    Odysseus). It is a personal-message signature, not a transfer or approval.
