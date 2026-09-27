@@ -1,6 +1,10 @@
 # Argos Bot CTS Bridge Lookup on Arcus
 
-Separate lookup-only service prepared for `https://arcus-api.argosbot.io`.
+Separate lookup-only service live at `https://arcus-api.argosbot.io` as of 2026-09-27.
+Production deployment: `https://arcbot-ev98fsnp6-clawhammer.vercel.app`.
+Hostname ownership and DNS verified. Public OpenAPI/discovery returned 200,
+browser preflight 204, unpaid lookup 402 with 7000 atomic Arc USDC, and jobs 404.
+No payment was signed or settled during these release checks.
 It reuses the CRA lookup engine, response schema and verified-pair cache.
 No registration, wrapper creation, bridge jobs or operator wallets are exposed.
 
