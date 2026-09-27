@@ -1,5 +1,11 @@
 import { describe, it, expect, vi } from "vitest";
-import { encodeFunctionData, zeroAddress, RpcRequestError, type Address } from "viem";
+import {
+  encodeFunctionData,
+  zeroAddress,
+  RpcRequestError,
+  BaseError,
+  type Address,
+} from "viem";
 import {
   abi,
   ownerlessId,
@@ -11,7 +17,6 @@ import {
   assertOwnerless,
   originalAllowed,
   assertRiskAcknowledged,
-
 } from "../lib/bridge/policy";
 import {
   exactBridgeAmount,
@@ -26,17 +31,33 @@ const original = "0xece5ca8bf9220718e5727754026757512212cb3c" as Address,
   account = "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
   manager = "0x0AF07dDfd8F1ea073f780981895f5970705CF42f";
 it("retries transient RPC preparation at most three times without retrying policy failures", async () => {
-  const rpc = new RpcRequestError({ body: { method: "eth_estimateGas" }, error: { code: -32000, message: "temporary backend failure" }, url: "https://example.invalid" });
-  const transient = vi.fn().mockRejectedValueOnce(rpc).mockResolvedValue("fresh quote");
+  const rpc = new RpcRequestError({
+    body: { method: "eth_estimateGas" },
+    error: { code: -32000, message: "temporary backend failure" },
+    url: "https://example.invalid",
+  });
+  const transient = vi
+    .fn()
+    .mockRejectedValueOnce(rpc)
+    .mockResolvedValue("fresh quote");
   expect(await retryPreparation(transient)).toBe("fresh quote");
   expect(transient).toHaveBeenCalledTimes(2);
+  const wrapped = vi
+    .fn()
+    .mockRejectedValueOnce(
+      new BaseError("Contract read failed", { cause: rpc }),
+    )
+    .mockRejectedValueOnce(rpc)
+    .mockResolvedValue("fallback quote");
+  expect(await retryPreparation(wrapped)).toBe("fallback quote");
+  expect(wrapped.mock.calls.map((c) => c[0])).toEqual([0, 1, 2]);
   const persistent = vi.fn().mockRejectedValue(rpc);
   await expect(retryPreparation(persistent)).rejects.toBe(rpc);
   expect(persistent).toHaveBeenCalledTimes(3);
   const blocked = vi.fn().mockRejectedValue(Error("Not enough token balance."));
   await expect(retryPreparation(blocked)).rejects.toThrow("token balance");
   expect(blocked).toHaveBeenCalledOnce();
-});
+}, 15000);
 function approval(): Prepared {
   return {
     intent: {
@@ -159,8 +180,8 @@ describe("external bridge safety", () => {
     const blocked = JSON.stringify([{ chain: 5042, token: original }]);
     expect(originalAllowed(5042, original, blocked)).toBe(false);
     expect(originalAllowed(8453, original, blocked)).toBe(true);
-    expect(() => originalAllowed(5042, original, '[{}]')).toThrow();
-    expect(() => originalAllowed(5042, original, 'bad json')).toThrow();
+    expect(() => originalAllowed(5042, original, "[{}]")).toThrow();
+    expect(() => originalAllowed(5042, original, "bad json")).toThrow();
   });
   it("requires acknowledgement for transfers and approvals but leaves setup open", () => {
     const p = approval();
@@ -168,8 +189,12 @@ describe("external bridge safety", () => {
     expect(() => validateCall(p)).toThrow("Acknowledge");
     expect(() => assertRiskAcknowledged({ action: "register" })).not.toThrow();
     expect(() => assertRiskAcknowledged({ action: "deploy" })).not.toThrow();
-    expect(() => assertRiskAcknowledged({ action: "transfer", riskAcknowledged: false })).toThrow();
-    expect(() => assertRiskAcknowledged({ action: "transfer", riskAcknowledged: true })).not.toThrow();
+    expect(() =>
+      assertRiskAcknowledged({ action: "transfer", riskAcknowledged: false }),
+    ).toThrow();
+    expect(() =>
+      assertRiskAcknowledged({ action: "transfer", riskAcknowledged: true }),
+    ).not.toThrow();
   });
   it("rejects a missing acknowledgement on the server before RPC or quote work", async () => {
     const intent = approval().intent;

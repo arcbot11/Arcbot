@@ -7,6 +7,8 @@ import {
   zeroAddress,
   zeroHash,
   RpcRequestError,
+  BaseError,
+  ContractFunctionRevertedError,
   type Address,
   type Hex,
 } from "viem";
@@ -19,7 +21,7 @@ import {
   type Prepared,
   type Route,
 } from "./contracts";
-import { BridgeReads } from "./read";
+import { BridgeReads, bridgeClient } from "./read";
 export function exactBridgeAmount(value: string, decimals: number) {
   if (
     !/^(0|[1-9][0-9]*)(\.[0-9]+)?$/.test(value) ||
@@ -113,7 +115,16 @@ function secret() {
   return s;
 }
 function canonicalJson(value: unknown) {
-  const canonical = (v: unknown): unknown => Array.isArray(v) ? v.map(canonical) : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).sort(([a],[b])=>a.localeCompare(b)).map(([k,x])=>[k,canonical(x)])) : v;
+  const canonical = (v: unknown): unknown =>
+    Array.isArray(v)
+      ? v.map(canonical)
+      : v && typeof v === "object"
+        ? Object.fromEntries(
+            Object.entries(v)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([k, x]) => [k, canonical(x)]),
+          )
+        : v;
   return JSON.stringify(canonical(value));
 }
 function seal(p: Omit<Prepared, "seal">) {
@@ -132,23 +143,48 @@ export function verifySeal(p: Prepared, allowExpired = false) {
 }
 // Retry only read-only preparation, with fresh clients and heads on each attempt.
 // Every simulation and safety check must pass again; no transaction is submitted.
-export async function retryPreparation<T>(read: () => Promise<T>): Promise<T> {
+export async function retryPreparation<T>(
+  read: (attempt: number) => Promise<T>,
+): Promise<T> {
   for (let attempt = 0; ; attempt++) {
     try {
-      return await read();
+      return await read(attempt);
     } catch (error) {
-      if (!(error instanceof RpcRequestError) || attempt >= 2) throw error;
+      const rpc =
+        error instanceof BaseError
+          ? error.walk((e) => e instanceof RpcRequestError)
+          : null;
+      const reverted =
+        error instanceof BaseError
+          ? error.walk((e) => e instanceof ContractFunctionRevertedError)
+          : null;
+      if (
+        !(rpc instanceof RpcRequestError) ||
+        reverted instanceof ContractFunctionRevertedError ||
+        attempt >= 2
+      )
+        throw error;
+      await new Promise((resolve) =>
+        setTimeout(resolve, attempt === 0 ? 500 : 1500),
+      );
     }
   }
 }
 export function prepare(intent: Intent): Promise<Prepared> {
-  return retryPreparation(() => prepareOnce(intent));
+  return retryPreparation((attempt) => prepareOnce(intent, attempt === 2));
 }
-async function prepareOnce(intent: Intent): Promise<Prepared> {
+async function prepareOnce(
+  intent: Intent,
+  publicFallback = false,
+): Promise<Prepared> {
   assertRiskAcknowledged(intent);
   secret(); // Fail before requesting RPC work or a forwarding quote.
-  const reads = new BridgeReads(),
-    route = await reads.route(intent.chain, intent.token);
+  const reads = new BridgeReads();
+  if (publicFallback) {
+    reads.clients[5042] = bridgeClient(5042, true);
+    reads.clients[8453] = bridgeClient(8453, true);
+  }
+  const route = await reads.route(intent.chain, intent.token);
   if (!route) throw Error("Token contract not found.");
   if (!route.compatible) throw Error(route.reason!);
   await reads.recipientAllowed(route, intent.account);

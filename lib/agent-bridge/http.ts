@@ -196,11 +196,20 @@ export async function handle(req: Request): Promise<Response> {
       "Bridge quote verification is not configured.",
     ]);
     if (e instanceof Error && safeMessages.has(e.message))
-      return json({ error: { code: "preparation_failed", message: e.message } }, 503);
-    const category = e instanceof Error && /^[A-Za-z]{1,60}$/.test(e.name) ? e.name : "UnknownError";
+      return json(
+        { error: { code: "preparation_failed", message: e.message } },
+        503,
+      );
+    const category =
+      e instanceof Error && /^[A-Za-z]{1,60}$/.test(e.name)
+        ? e.name
+        : "UnknownError";
     console.warn("CTS API operation failed", {
       operation: path.split("/").at(-1),
-      category: e instanceof Error && /^[A-Za-z]{1,60}$/.test(e.name) ? e.name : "UnknownError",
+      category:
+        e instanceof Error && /^[A-Za-z]{1,60}$/.test(e.name)
+          ? e.name
+          : "UnknownError",
     });
     // Avoid returning RPC URLs, credentials or raw error payloads from dependencies.
     return json(

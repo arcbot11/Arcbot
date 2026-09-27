@@ -32,12 +32,13 @@ import {
   pins,
   WRAPPER_PROXY_HASH,
 } from "./policy";
-export function bridgeClient(chain: BridgeChain) {
-  const url =
-    (chain === 5042
+export function bridgeClient(chain: BridgeChain, publicFallback = false) {
+  const configured =
+    chain === 5042
       ? process.env.BRIDGE_ARC_RPC_URL || process.env.ARC_MAINNET_RPC_URL
-      : process.env.BRIDGE_BASE_RPC_URL || process.env.BASE_MAINNET_RPC_URL) ||
-    chains[chain].rpcUrls.default.http[0];
+      : process.env.BRIDGE_BASE_RPC_URL || process.env.BASE_MAINNET_RPC_URL;
+  const url =
+    (!publicFallback && configured) || chains[chain].rpcUrls.default.http[0];
   if (new URL(url).protocol !== "https:")
     throw Error("Bridge RPC must use HTTPS.");
   return createPublicClient({
@@ -45,7 +46,9 @@ export function bridgeClient(chain: BridgeChain) {
     transport: http(url, {
       timeout: 12_000,
       retryCount: 2,
-      batch: { wait: 20, batchSize: 20 },
+      // Route verification spans both chains. Small, spaced batches avoid
+      // exhausting provider burst quotas in low-latency serverless regions.
+      batch: { wait: 150, batchSize: 5 },
     }),
   });
 }
@@ -72,7 +75,10 @@ export function notRegistered(error: unknown) {
 }
 export class BridgeReads {
   // Inspection can report a paused connection. Execution always uses the default.
-  constructor(private finalized = false, private inspectionOnly = false) {}
+  constructor(
+    private finalized = false,
+    private inspectionOnly = false,
+  ) {}
   readonly operationalIssues = new Set<string>();
   clients = { 5042: bridgeClient(5042), 8453: bridgeClient(8453) };
   private heads = new Map<
@@ -189,7 +195,8 @@ export class BridgeReads {
             !same(transmitter, TRANSMITTER)
           )
             throw Error("Circle route is paused, changed, or unavailable.");
-          if (paused || system) this.operationalIssues.add(`${chain}:service_paused`);
+          if (paused || system)
+            this.operationalIssues.add(`${chain}:service_paused`);
           if (!trusted) this.operationalIssues.add(`${chain}:domain_disabled`);
           await Promise.all(
             Object.entries(manifest).map(async ([name, pin]) => {
@@ -283,7 +290,11 @@ export class BridgeReads {
     }
     return { address, token, type };
   }
-  async route(chain: BridgeChain, token: Address, known?: Route): Promise<Route | null> {
+  async route(
+    chain: BridgeChain,
+    token: Address,
+    known?: Route,
+  ): Promise<Route | null> {
     const code = await this.code(chain, token);
     if (code === "0x") return null;
     const destination = otherChain(chain);
@@ -317,15 +328,14 @@ export class BridgeReads {
       origin = destination;
       original = remote.token;
     }
-    const [local, remote, decimals, name, symbol] =
-      await Promise.all([
-        this.manager(chain, id),
-        this.manager(destination, id),
-        this.read<number>(chain, token, "decimals"),
-        this.read<string>(chain, token, "name"),
-        this.read<string>(chain, token, "symbol"),
-        this.code(origin, original),
-      ]);
+    const [local, remote, decimals, name, symbol] = await Promise.all([
+      this.manager(chain, id),
+      this.manager(destination, id),
+      this.read<number>(chain, token, "decimals"),
+      this.read<string>(chain, token, "name"),
+      this.read<string>(chain, token, "symbol"),
+      this.code(origin, original),
+    ]);
     if (
       !Number.isInteger(decimals) ||
       decimals < 0 ||

@@ -1,7 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { type Hex } from "viem";
 import { BridgeReads, bridgeClient } from "../bridge/read";
-import { prepare, revalidate, exactBridgeAmount } from "../bridge/prepare";
+import {
+  prepare,
+  revalidate,
+  exactBridgeAmount,
+  retryPreparation,
+} from "../bridge/prepare";
 import { status } from "../bridge/status";
 import {
   same,
@@ -45,12 +50,17 @@ export const liveReads: EngineReads = {
       );
     await r.canonical();
   },
-  route: async (chain, token) => {
-    const r = new BridgeReads();
-    const route = await r.route(chain, token);
-    await r.canonical();
-    return route;
-  },
+  route: (chain, token) =>
+    retryPreparation(async (attempt) => {
+      const r = new BridgeReads();
+      if (attempt === 2) {
+        r.clients[5042] = bridgeClient(5042, true);
+        r.clients[8453] = bridgeClient(8453, true);
+      }
+      const route = await r.route(chain, token);
+      await r.canonical();
+      return route;
+    }),
   prepare,
   revalidate,
   status,
