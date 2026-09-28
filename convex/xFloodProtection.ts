@@ -1,5 +1,5 @@
 import { v } from "convex/values";
-import { internalMutation } from "./_generated/server";
+import { internalMutation, internalQuery } from "./_generated/server";
 import type { MutationCtx } from "./_generated/server";
 import type { Doc } from "./_generated/dataModel";
 import { readOnlyReplyCategory, reserveLookupSlot, reserveWalletRequestSlot, walletLookupLimit, type BudgetedReplyCategory } from "../lib/x-wallet-flood-policy";
@@ -87,30 +87,64 @@ export const guardQueued = internalMutation({
 });
 
 // Separate provider-call budgets; outgoing X queue limits alone do not bound
-// API traffic. Atomic across workers, and a retry reuses its original slot.
+// API traffic. Every attempt counts globally; a lease serializes each post.
 export const admitRadarScan = internalMutation({
   args: { postId: v.string(), authorXUserId: v.string() },
   handler: async (ctx, args) => {
     const now = Date.now();
+    const scan = await ctx.db.query("xRadarScans").withIndex("by_post_id", q => q.eq("postId", args.postId)).unique();
+    if (scan && scan.owner !== args.authorXUserId) throw Error("Radar owner mismatch");
+    if (scan?.result !== undefined) return { kind: "cached" as const, message: scan.result };
+    if (scan && scan.leaseUntil > now) return { kind: "busy" as const, waitMs: scan.leaseUntil - now };
+    if ((scan?.attempts ?? 0) >= 4) return { kind: "exhausted" as const };
     const plans = [
-      { key: `radar:user:${args.authorXUserId}`, window: 60_000, limit: 1 },
-      { key: "radar:global", window: 3_600_000, limit: 100 },
+      ...(!scan ? [{ key: `radar:user:${args.authorXUserId}`, window: 60_000, limit: 1 }] : []),
+      { key: "radar:global", window: 3_600_000, limit: 200 },
     ];
     const updates = [];
     for (const plan of plans) {
       const row = await ctx.db.query("xWalletLookupBudgets").withIndex("by_key", q => q.eq("key", plan.key)).unique();
       const slots = (row?.slots ?? []).filter(s => s.at > now - plan.window);
-      if (!slots.some(s => s.postId === args.postId)) {
-        if (slots.length >= plan.limit) return false;
-        slots.push({ postId: args.postId, owner: args.authorXUserId, at: now });
-      }
+      if (slots.length >= plan.limit) return { kind: "limited" as const };
+      slots.push({ postId: args.postId, owner: args.authorXUserId, at: now });
       updates.push({ row, key: plan.key, slots });
     }
     for (const { row, key, slots } of updates) {
       if (row) await ctx.db.patch(row._id, { slots, updatedAt: now });
       else await ctx.db.insert("xWalletLookupBudgets", { key, slots, updatedAt: now });
     }
+    const attempts = (scan?.attempts ?? 0) + 1;
+    const state = { attempts, leaseUntil: now + 60_000, updatedAt: now };
+    if (scan) await ctx.db.patch(scan._id, state);
+    else await ctx.db.insert("xRadarScans", { postId: args.postId, owner: args.authorXUserId, ...state });
+    return { kind: "attempt" as const, attempt: attempts };
+  },
+});
+
+export const finishRadarScan = internalMutation({
+  args: { postId: v.string(), attempt: v.number(), message: v.optional(v.string()) },
+  handler: async (ctx, args) => {
+    const scan = await ctx.db.query("xRadarScans").withIndex("by_post_id", q => q.eq("postId", args.postId)).unique();
+    if (!scan || scan.attempts !== args.attempt || scan.result !== undefined) return false;
+    await ctx.db.patch(scan._id, { result: args.message, leaseUntil: args.message === undefined ? Date.now() + 15_000 : 0, updatedAt: Date.now() });
     return true;
+  },
+});
+
+export const savedRadarResult = internalQuery({
+  args: { postId: v.string(), owner: v.string() },
+  handler: async (ctx, args) => {
+    const scan = await ctx.db.query("xRadarScans").withIndex("by_post_id", q => q.eq("postId", args.postId)).unique();
+    if (scan && scan.owner !== args.owner) throw Error("Radar owner mismatch");
+    return scan?.result ?? null;
+  },
+});
+
+export const radarClarification = internalQuery({
+  args: { parentPostId: v.string(), owner: v.string() },
+  handler: async (ctx, args) => {
+    const parent = await ctx.db.query("xReplyInteractions").withIndex("by_response_post_id", q => q.eq("responsePostId", args.parentPostId)).unique();
+    return !!parent && parent.authorXUserId === args.owner && parent.commandKind === "token_scan_ca" && parent.updatedAt > Date.now() - 10 * 60_000;
   },
 });
 

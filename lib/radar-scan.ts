@@ -1,22 +1,24 @@
 // Read-only X feature. Never use partner strings as instructions or wallet inputs.
 const ADDRESS = /^0x[0-9a-f]{40}$/i;
 export const RADAR_ATTRIBUTION = "Powered by ARCddicted Radar https://arcddicted.com";
+export const RADAR_CA_PROMPT = "Which token should I scan? Reply with one full contract address (CA) and tag @TheArgosBot.";
 
 export function radarScanRequest(text: string): { token?: string } | undefined {
-  const clean = text.replace(/^\s*(?:@[\w]+[\s,:]*)+/, "").trim();
+  const clean = text.replace(/^\s*(?:@[\w]+[\s,:]*)+/, "").replace(/[’‘]/g, "'").trim();
   if (/\b(?:fees?|balance|balances|wallet|holdings|portfolio)\b/i.test(clean)) return;
   const asks = /\b(?:check|scan|analyse|analyze|review|research|investigate|inspect|evaluate|assess|audit|thoughts|opinion|legit|safe|scam|rug|red flags|due diligence|tell me about|look (?:at|into)|what do you (?:think|know)|what(?:'s| is) (?:the deal|up) with)\b/i.test(clean);
   if (!asks) return;
   // Mixed scan/trade requests get clarification, never fall through to a trade.
   if (/\b(?:buy|sell|send|transfer|swap|bridge|claim|burn|launch|deploy)\b/i.test(clean)) return {};
   const addresses = clean.match(/0x[0-9a-z]+/ig) ?? [];
-  if (addresses.length) return addresses.length === 1 && ADDRESS.test(addresses[0]) ? { token: addresses[0] } : {};
   const cash = clean.match(/\$[a-z0-9_]{1,32}\b/ig) ?? [];
-  if (cash.length) return cash.length === 1 ? { token: cash[0] } : {};
-  const words = clean.replace(/[?!.,:;]/g, " ").split(/\s+/).filter(Boolean);
+  const words = clean.replace(/0x[0-9a-z]+|\$[a-z0-9_]{1,32}\b/ig, " ").replace(/[?!.,:;]/g, " ").split(/\s+/).filter(Boolean);
   const filler = new Set("hey hi hello please pls can could would you your me my a an the this that token coin project contract address ca ticker about on of for out into at and is it its any what do does think know tell give us some thoughts opinion check scan analyse analyze review research investigate inspect evaluate assess audit look legit safe scam rug red flags due diligence how looks looking thanks thank more information info report seems seem".split(" "));
-  const candidates = words.filter(w => !filler.has(w.toLowerCase()));
-  return candidates.length === 1 && /^\w{1,32}$/.test(candidates[0]) ? { token: candidates[0] } : {};
+  for (const word of ["deal", "with", "up", "what's", "what’s"]) filler.add(word);
+  const candidates = [...addresses, ...cash, ...words.filter(w => !filler.has(w.toLowerCase()))];
+  if (candidates.length !== 1) return {};
+  const token = candidates[0];
+  return (token.toLowerCase().startsWith("0x") ? ADDRESS.test(token) : /^\$?\w{1,32}$/.test(token)) ? { token } : {};
 }
 
 type Counts = { count?: number; creators?: number; sameCreator?: number; previousUses?: number };
@@ -50,17 +52,21 @@ export async function fetchRadarReport(address: string, key: string | undefined,
     });
     if (response.status === 404) throw new Error("RADAR_NOT_FOUND");
     if (response.status === 429) throw new Error("RADAR_RATE_LIMIT");
+    if (response.status >= 500) throw new Error("RADAR_RETRYABLE");
     if (response.status !== 200) throw new Error("RADAR_UNAVAILABLE");
     if (!response.headers.get("content-type")?.includes("application/json") || !response.body) throw new Error("RADAR_INVALID_RESPONSE");
     const reader = response.body.getReader(); const chunks: Uint8Array[] = []; let size = 0;
     try { for (;;) { const { done, value } = await reader.read(); if (done) break; size += value.byteLength; if (size > 64_000) throw new Error("RADAR_INVALID_RESPONSE"); chunks.push(value); } }
     finally { await reader.cancel().catch(() => undefined); }
     const bytes = new Uint8Array(size); let offset = 0; for (const chunk of chunks) { bytes.set(chunk, offset); offset += chunk.length; }
-    return parseRadarReport(JSON.parse(new TextDecoder().decode(bytes)), address);
+    let value: unknown;
+    try { value = JSON.parse(new TextDecoder().decode(bytes)); }
+    catch { throw new Error("RADAR_INVALID_RESPONSE"); }
+    return parseRadarReport(value, address);
   } catch (error) {
     // Never propagate fetch errors, headers, raw partner content or credentials.
     const code = error instanceof Error ? error.message : "";
-    throw new Error(["RADAR_NOT_FOUND", "RADAR_RATE_LIMIT", "RADAR_INVALID_RESPONSE"].includes(code) ? code : "RADAR_UNAVAILABLE");
+    throw new Error(["RADAR_NOT_FOUND", "RADAR_RATE_LIMIT", "RADAR_INVALID_RESPONSE", "RADAR_UNAVAILABLE", "RADAR_RETRYABLE"].includes(code) ? code : "RADAR_RETRYABLE");
   }
 }
 
@@ -77,14 +83,15 @@ export function formatRadarReport(r: RadarReport): string {
   ].join("\n");
 }
 
-export async function radarReply(request: { token?: string }, resolve: (identifier: string) => Promise<string>, key: string | undefined, fetcher: typeof fetch = fetch): Promise<string> {
-  if (!request.token) return `Please name one token ticker or full contract address for a scan, without a trade command.\n${RADAR_ATTRIBUTION}`;
+export async function radarReply(request: { token?: string }, resolve: (identifier: string) => Promise<string>, key: string | undefined, fetcher: typeof fetch = fetch, retryTransient = false): Promise<string> {
+  if (!request.token) return `${RADAR_CA_PROMPT}\n${RADAR_ATTRIBUTION}`;
   let address: string;
-  try { address = await resolve(request.token); } catch { return `I couldn't resolve that ticker uniquely. Please use the full contract address.\n${RADAR_ATTRIBUTION}`; }
-  if (!ADDRESS.test(address)) return `That ticker isn't in our index. Please use the full contract address.\n${RADAR_ATTRIBUTION}`;
+  try { address = await resolve(request.token); } catch { return `I couldn't resolve that ticker uniquely. ${RADAR_CA_PROMPT}\n${RADAR_ATTRIBUTION}`; }
+  if (!ADDRESS.test(address)) return `That ticker isn't in our index. ${RADAR_CA_PROMPT}\n${RADAR_ATTRIBUTION}`;
   try { return formatRadarReport(await fetchRadarReport(address, key, fetcher)); }
   catch (error) {
     const code = error instanceof Error ? error.message : "";
+    if (retryTransient && code === "RADAR_RETRYABLE") throw error;
     const message = code === "RADAR_NOT_FOUND" ? `Radar has no report for ${address}. This does not mean the token is safe or unsafe.`
       : code === "RADAR_RATE_LIMIT" ? "Radar is rate limited. Please try again later." : "Radar is temporarily unavailable. Please try again later.";
     return `${message}\n${RADAR_ATTRIBUTION}`;

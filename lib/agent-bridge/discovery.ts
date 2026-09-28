@@ -60,6 +60,10 @@ export function operationMetadata(resourcePath: string) {
 }
 export function discovery() {
   return {
+    version: 1,
+    resources: config().enabled
+      ? ["/v1/lookup", "/v1/lookup/direct", "/v1/jobs", "/v1/jobs/direct"].map((path) => `${ORIGIN}${path}`)
+      : [],
     name: NAME,
     image: SERVICE_ICON_URL,
     icon: SERVICE_ICON_URL,

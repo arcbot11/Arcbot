@@ -42,7 +42,7 @@ export function openapi() {
   ) => ({
     price: {
       mode: "fixed",
-      currency: "USDC",
+      currency: "USD",
       amount: config(kind, rail).price,
     },
     protocols: [
@@ -192,6 +192,7 @@ export function openapi() {
       },
       "/v1/authorization": {
         post: {
+          security: [],
           operationId: "authorizeBridgeJob",
           summary:
             "Get wallet typed data for a fixed job intent; no funds move",
@@ -220,6 +221,8 @@ export function openapi() {
           operationId: "createBridgeJob",
           summary:
             "Purchase one resumable setup or bridge job; wallet signatures remain external",
+          description:
+            "An unpaid POST returns discovery and payment instructions without creating a job. Before paying, obtain fresh typed data from /v1/authorization and sign it with your external wallet. Paid requests require the complete CreateJob body; an empty or example body cannot create a job.",
           "x-payment-info": payment("job"),
           parameters: paidHeaders,
           requestBody: body(ref("CreateJob")),

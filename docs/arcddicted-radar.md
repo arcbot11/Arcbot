@@ -10,7 +10,11 @@ Replies include creator prior launches, prior launches in 24 hours, previous nam
 
 Live read-only checks: supplied CMC example returned 200 with history; ARGUS returned 404 (not indexed by Radar). No wallet access, payments, or public X posts were used in development. Mock tests cover identity mismatches, injection content, request boundaries, input routing, missing fields, rate limits, and failures. Publishing remains through the existing durable X reply queue.
 
-Provider admission is atomic: one scan per user per rolling minute and 100 globally per rolling hour. Retries reuse the same post admission. These limits are independent of the outgoing X publication queue.
+Provider admission is atomic: one new scan per user per rolling minute and 200 total provider attempts per rolling hour, including retries. Each post permits one initial attempt plus three retries for network/timeouts and HTTP 5xx, with 15-second retry spacing. A 60-second lease prevents simultaneous calls; attempt fencing rejects stale completions. Successful reports and terminal failures are saved before publication, so queue retries reuse the result. HTTP 404, 401, 429 and invalid responses do not trigger automatic retries. These limits are independent of the outgoing X publication queue.
+
+Mixed identifiers, duplicate indexed tickers and unknown tickers ask for one full contract address without consuming a scan. The same user can reply with the CA and tag the bot within ten minutes; the continuation is scoped to that user's Radar prompt. Both intake and processing accept the shared contract-only grammar, including `CA: 0x…` and `here is the contract 0x…`. Neither the prompt nor its reply can authorize a wallet operation. Recovery reads an owner-bound saved result before ticker resolution, so index outages or new ticker ambiguity cannot replace a completed report with a clarification prompt.
+
+Deployment preparation only: this revision adds the `xRadarScans` Convex table and requires the matching Convex schema/worker deployment. No deployment or public posting was performed during implementation.
 
 Validation: 36 new mocked tests and TypeScript passed. The real client also rendered the supplied CMC report successfully; invalid-address and missing-key probes returned 400 and 401. The wider X flood/publication suite has 21 existing failures, reproduced with Radar routing disabled. No public X post or deployment was performed.
 

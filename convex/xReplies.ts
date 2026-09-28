@@ -8,7 +8,7 @@ import { isXBotAuthor, xBotUserId } from "../lib/x-bot-identity";
 import { socialAddressLinks } from "../lib/social-address-links";
 import {ARC_WALLET_PENDING,arcPendingRetryDelay} from "../lib/arc/social-timing";
 import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
-import { radarScanRequest, radarReply, RADAR_ATTRIBUTION } from "../lib/radar-scan";
+import { radarScanRequest, radarReply, RADAR_ATTRIBUTION, RADAR_CA_PROMPT } from "../lib/radar-scan";
 import { retiredFeatureEnabled } from "../lib/retired-features";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 
@@ -1602,6 +1602,8 @@ export const retryInteraction = internalAction({
         suppliedContract,
       );
     }
+    const radarCaReply = !current.interaction.parsedIntentJson && !ambiguousTokenIntent && suppliedContract && current.interaction.parentPostId
+      ? await ctx.runQuery(internal.xFloodProtection.radarClarification, { parentPostId: current.interaction.parentPostId, owner: current.user.xUserId }) : false;
     if (
       isPassiveBotChainReply(
         current.interaction.text,
@@ -1615,7 +1617,7 @@ export const retryInteraction = internalAction({
             ]
           : undefined,
       ) &&
-      !shouldHandlePassiveChainText(directText) && !ambiguousTokenIntent
+      !shouldHandlePassiveChainText(directText) && !ambiguousTokenIntent && !radarCaReply
     ) {
       await ctx.runMutation(internal.xReplies.updateInteraction, {
         postId,
@@ -1641,15 +1643,45 @@ export const retryInteraction = internalAction({
     try {
       // X-only read-only routing precedes AI/wallet provisioning. Partner data
       // can only become a templated reply, never an executable command.
-      const scan = !current.interaction.parsedIntentJson && !ambiguousTokenIntent ? radarScanRequest(directText) : undefined;
+      const scan = radarCaReply ? { token: suppliedContract } : !current.interaction.parsedIntentJson && !ambiguousTokenIntent ? radarScanRequest(directText) : undefined;
       if (scan) {
         await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "processing", commandKind: "token_scan" });
-        const admitted = await ctx.runMutation(internal.xFloodProtection.admitRadarScan, { postId, authorXUserId: current.user.xUserId });
-        const message = admitted
-          ? await radarReply(scan, identifier => ctx.runQuery(internal.wallets.resolveKnownToken, { identifier }), process.env.ARCDDICTED_API_KEY)
-          : `Scan limit reached. Please try again later.\n${RADAR_ATTRIBUTION}`;
+        let message: string;
+        const saved = await ctx.runQuery(internal.xFloodProtection.savedRadarResult, { postId, owner: current.user.xUserId });
+        let scanAddress: string | undefined;
+        if (saved === null && scan.token) {
+          try { scanAddress = await ctx.runQuery(internal.wallets.resolveKnownToken, { identifier: scan.token }); }
+          catch { /* Ambiguous/missing tickers require a CA, without spending a scan. */ }
+        }
+        if (saved !== null) message = saved;
+        else if (!scanAddress || !/^0x[0-9a-f]{40}$/i.test(scanAddress)) message = `${RADAR_CA_PROMPT}\n${RADAR_ATTRIBUTION}`;
+        else {
+          const admitted = await ctx.runMutation(internal.xFloodProtection.admitRadarScan, { postId, authorXUserId: current.user.xUserId });
+          if (admitted.kind === "busy") {
+            await ctx.scheduler.runAfter(admitted.waitMs, internal.xReplies.retryInteraction, { postId });
+            return;
+          }
+          if (admitted.kind === "cached") message = admitted.message;
+          else if (admitted.kind === "limited") message = `Scan limit reached. Please try again later.\n${RADAR_ATTRIBUTION}`;
+          else if (admitted.kind === "exhausted") message = `Radar is temporarily unavailable. Please try again later.\n${RADAR_ATTRIBUTION}`;
+          else {
+            try {
+              message = await radarReply({ token: scanAddress }, async identifier => identifier, process.env.ARCDDICTED_API_KEY, fetch, true);
+            } catch {
+              if (admitted.attempt < 4) {
+                if (await ctx.runMutation(internal.xFloodProtection.finishRadarScan, { postId, attempt: admitted.attempt }))
+                  await ctx.scheduler.runAfter(15_000, internal.xReplies.retryInteraction, { postId });
+                return;
+              }
+              message = `Radar is temporarily unavailable. Please try again later.\n${RADAR_ATTRIBUTION}`;
+            }
+            if (!await ctx.runMutation(internal.xFloodProtection.finishRadarScan, { postId, attempt: admitted.attempt, message })) return;
+          }
+        }
+        const commandKind = message.includes(RADAR_CA_PROMPT) ? "token_scan_ca" : "token_scan";
+        await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "processing", commandKind });
         const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, true, { ok: true, kind: "reply" });
-        await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", commandKind: "token_scan", responsePostId });
+        await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", commandKind, responsePostId });
         return;
       }
       let workflowText = directText;
@@ -2662,6 +2694,8 @@ export const pollMentions = internalAction({
           directText,
           mention.referenced_tweets,
         );
+        const radarContinuation = !!parentPostId && !!buyTargetContractReply(directPostCommandText(directText))
+          && await ctx.runQuery(internal.xFloodProtection.radarClarification, { parentPostId, owner: mention.author_id });
         const workflowAdmission = ambiguousTokenContinuation
           ? await ctx.runMutation(internal.xReplies.admitWorkflowContinuation, {
               ownerXUserId: mention.author_id || "", postId: mention.id,
@@ -2673,7 +2707,7 @@ export const pollMentions = internalAction({
         if (exceedsXReplyDepthLimit({
           replyDepth,
           maximumDepth: MAX_X_REPLY_DEPTH,
-          guidedWorkflow: Boolean(ambiguousTokenContinuation),
+          guidedWorkflow: Boolean(ambiguousTokenContinuation || radarContinuation),
           contextualGasHelp: false, expectedGasResumeReply: false,
           ownedBotSelfWalletRequest,
           directedInformationalHelp,
@@ -2690,7 +2724,7 @@ export const pollMentions = internalAction({
         if (
           restrictedReply &&
           !directedHelp &&
-          !ambiguousTokenContinuation && !shouldHandlePassiveChainText(directText)
+          !ambiguousTokenContinuation && !radarContinuation && !shouldHandlePassiveChainText(directText)
         )
           continue;
         if (!workflowCooldownNotice && !await ctx.runMutation(internal.xFloodProtection.admitBeforeProfile, {

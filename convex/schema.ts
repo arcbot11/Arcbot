@@ -190,6 +190,11 @@ export default defineSchema({
     .index("by_status_updated_at", ["status", "updatedAt"])
     .index("by_status_next_retry", ["status", "nextRetryAt"]),
 
+  xRadarScans: defineTable({
+    postId: v.string(), owner: v.string(), attempts: v.number(),
+    leaseUntil: v.number(), result: v.optional(v.string()), updatedAt: v.number(),
+  }).index("by_post_id", ["postId"]),
+
   xWalletLookupBudgets: defineTable({
     key: v.string(),
     slots: v.array(v.object({ postId: v.string(), owner: v.string(), at: v.number() })),

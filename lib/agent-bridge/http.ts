@@ -81,6 +81,16 @@ export async function handle(req: Request): Promise<Response> {
         { config: lookupConfig },
       );
     }
+    // Discovery never executes a job. Paid requests still pass body and wallet
+    // authorization checks below before a job is created or payment is settled.
+    if (
+      req.method === "POST" &&
+      ["/v1/jobs", "/v1/jobs/direct"].includes(path) &&
+      !req.headers.has("payment-signature")
+    )
+      return paid(req, {}, path, async () => {
+        throw new ApiError("invalid_input", "A signed job request is required", 400);
+      });
     // Shared database limits apply across replicas. Paid routes enforce their own limit.
     if (!config().configured)
       throw new ApiError(

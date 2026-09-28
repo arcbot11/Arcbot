@@ -23,6 +23,11 @@ export function discovery() {
   const c = apiConfig();
   const direct = apiConfig("direct");
   return {
+    version: 1,
+    resources: [
+      ...(c.enabled ? [`${c.origin}${LOOKUP_PATH}`] : []),
+      ...(direct.enabled ? [`${c.origin}${DIRECT_LOOKUP_PATH}`] : []),
+    ],
     name: SERVICE_NAME,
     image: SERVICE_ICON_URL,
     icon: SERVICE_ICON_URL,
@@ -115,6 +120,10 @@ function railOpenapi(rail: "gateway" | "direct") {
           tags: [LOOKUP_CATEGORY],
           "x-keywords": LOOKUP_TAGS,
           "x-payment-option": { rail, priceUSDC: c.price, enabled: c.enabled },
+          "x-payment-info": {
+            protocols: [{ x402: {} }],
+            price: { mode: "fixed", currency: "USD", amount: c.price },
+          },
           "x-payment-networks": [
             "eip155:5042",
             ...(basePaymentsConfigured() ? [BASE_NETWORK] : []),

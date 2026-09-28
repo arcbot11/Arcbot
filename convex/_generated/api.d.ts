@@ -35,6 +35,7 @@ import type * as legacyLaunch from "../legacyLaunch.js";
 import type * as lib_agentBridgeSchema from "../lib/agentBridgeSchema.js";
 import type * as lib_bridgeApiSchema from "../lib/bridgeApiSchema.js";
 import type * as lib_feeCommands from "../lib/feeCommands.js";
+import type * as lib_feeHistoryCommands from "../lib/feeHistoryCommands.js";
 import type * as lib_listingTotals from "../lib/listingTotals.js";
 import type * as lib_telegramUnlink from "../lib/telegramUnlink.js";
 import type * as lib_terminalFeeReceipts from "../lib/terminalFeeReceipts.js";
@@ -109,6 +110,7 @@ declare const fullApi: ApiFromModules<{
   "lib/agentBridgeSchema": typeof lib_agentBridgeSchema;
   "lib/bridgeApiSchema": typeof lib_bridgeApiSchema;
   "lib/feeCommands": typeof lib_feeCommands;
+  "lib/feeHistoryCommands": typeof lib_feeHistoryCommands;
   "lib/listingTotals": typeof lib_listingTotals;
   "lib/telegramUnlink": typeof lib_telegramUnlink;
   "lib/terminalFeeReceipts": typeof lib_terminalFeeReceipts;
