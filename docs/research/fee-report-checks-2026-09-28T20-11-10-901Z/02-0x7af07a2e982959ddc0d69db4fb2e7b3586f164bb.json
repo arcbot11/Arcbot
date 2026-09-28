@@ -1,0 +1,150 @@
+{
+  "schemaVersion": "1",
+  "service": "Argos Token Fee Intelligence",
+  "chainId": 5042,
+  "token": "0x7af07a2e982959ddc0d69db4fb2e7b3586f164bb",
+  "status": "partial",
+  "family": "portal8-escrow",
+  "evidence": {
+    "blockNumber": "23253163",
+    "blockHash": "0x92e13215d048420ba9e216dc418f2712fada512e8c1b339b0000359f3a796e53",
+    "blockTimestamp": "2026-09-28T20:11:12.000Z",
+    "observedAt": "2026-09-28T20:11:12.552Z"
+  },
+  "contracts": {
+    "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+    "splitter": "0xb028816c42b2e18617eCa72A5992c8DD052A3928",
+    "tracker": null,
+    "hook": "0x27834ec6289c26625C795A1c8875A44f505f20Cc",
+    "locker": "0xb69D9D2e469065Ce55d85138fe6D9926Fea0fE44"
+  },
+  "assets": {
+    "token": {
+      "address": "0x7af07a2e982959ddc0d69db4fb2e7b3586f164bb",
+      "decimals": 18,
+      "symbol": "ZRX"
+    },
+    "quote": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC"
+    },
+    "payout": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC"
+    }
+  },
+  "beneficiaries": [
+    {
+      "address": "0xe1bfe475e47Eac74A8f2f8F0B5498A67835617b0",
+      "shareBps": 10000
+    }
+  ],
+  "allocationBps": {
+    "creator": 5000,
+    "burn": 0,
+    "holders": 5000,
+    "liquidity": 0,
+    "treasury": 3000,
+    "lock": 0
+  },
+  "balances": [
+    {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "483099",
+      "formatted": "0.483099"
+    },
+    {
+      "address": "0x7af07a2e982959ddc0d69db4fb2e7b3586f164bb",
+      "decimals": 18,
+      "symbol": "ZRX",
+      "raw": "0",
+      "formatted": "0"
+    }
+  ],
+  "unallocated": null,
+  "creatorOwed": [
+    {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "255212",
+      "formatted": "0.255212",
+      "bucket": "quote"
+    }
+  ],
+  "liquidityReserved": [
+    {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "0",
+      "formatted": "0"
+    }
+  ],
+  "holderRewards": null,
+  "signals": {
+    "unprocessedFees": false,
+    "creatorFeesOwed": true
+  },
+  "execution": {
+    "enabled": false,
+    "reason": "report_only"
+  },
+  "usdValuation": null,
+  "lifetimeFeesEarned": null,
+  "warnings": [
+    "Amounts use each asset's own units; no USD valuation is supplied. Lifetime fees require a complete verified event index.",
+    "Balances, accounted claims and reserved liquidity overlap; do not sum them as total fees.",
+    "Positive balances are observations, not proof that a crank or claim will succeed.",
+    "Portal 8 creator debt is denominated in quote units, not guaranteed payout proceeds. Registered recipients may include an identity vault.",
+    "Portal 8 budgets and holder liability are quote-denominated accounting obligations, not payout inventory. Holder liability includes rounding carry and does not guarantee an immediately payable holder. Direct transfers may contribute to these current budgets but are not counted as historical fee events."
+  ],
+  "escrowBudgets": {
+    "burn": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "0",
+      "formatted": "0"
+    },
+    "liquidity": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "0",
+      "formatted": "0"
+    },
+    "lock": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "0",
+      "formatted": "0"
+    },
+    "treasury": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "218752",
+      "formatted": "0.218752"
+    },
+    "holderLiability": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "9131",
+      "formatted": "0.009131"
+    },
+    "holderPaidQuote": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "246077",
+      "formatted": "0.246077"
+    }
+  }
+}

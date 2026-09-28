@@ -11,7 +11,7 @@ const catalogPath='lib/arc/token-catalog.json',old=JSON.parse(await fs.readFile(
 const report={mode:process.argv.includes('--older-only')?'older-portals':'all-portals',at:new Date().toISOString(),block:String(blockNumber),portals:[],enumerated:0,added:[],excluded:0,duplicateSymbols:0,invalid:0,failed:[],dynamic:[]};
 const candidates=new Map(), marketMetrics=new Map();
 const includeTopArc=process.argv.includes('--top-arc');
-const requested=new Map([
+const requested=new Map(process.argv.includes('--older-only')?[]:[
  ['0x8dc7b0ade2c3224874d413e0de86757d0fcd4038','ARCDD'],
  ['0xe86688530c456e099732f953ed7aa7c583026680','ARGOS'],
 ]);
@@ -41,16 +41,6 @@ for(let page=0;!olderOnly&&page<100;page++){
  if(data.nextOffset==null)break;if(data.nextOffset<=offset||page===99)throw Error('Incomplete dynamic pagination');offset=data.nextOffset;
 }
 console.log(JSON.stringify({newDynamicLaunches:launchLogs.size}));
-let verifiedDynamic=0;
-await batches([...launchLogs.values()],1,async ([l])=>{
-  const receipt=await c.getTransactionReceipt({hash:l.transactionHash});
-  const exact=receipt.logs.find(e=>e.logIndex===l.logIndex&&e.address.toLowerCase()===ARGUS_DYNAMIC_PORTAL&&e.data===l.data&&JSON.stringify(e.topics)===JSON.stringify(l.topics));
-  if(receipt.status!=='success'||!exact||(await c.getBlock({blockNumber:receipt.blockNumber})).hash!==receipt.blockHash)throw Error('Unverified dynamic launch log');
-  const token=getAddress('0x'+l.topics[1].slice(-40));const found=await discoverArgusPool(token,rpc,blockNumber);
-  if(found?.portal!==ARGUS_DYNAMIC_PORTAL)throw Error('Dynamic launch identity mismatch');
-  candidates.set(token.toLowerCase(),{portal:ARGUS_DYNAMIC_PORTAL,poolId:found.poolId});dynamic.add(token.toLowerCase());
-  if(++verifiedDynamic%100===0)console.log(JSON.stringify({verifiedDynamic,total:launchLogs.size}));
-});
 // Screen market data first; verify qualifying candidates against deployed portals.
 // This also covers older-portal launches missing from a previous enumeration.
 const { screenArgusPool, preferDeeperPool }=await import('./lib/argus-index-screen.mjs');
@@ -65,6 +55,21 @@ for(let offset=0;offset<10000;offset+=100){
  if(page.items.length!==100||offset===9900)throw Error('Incomplete market pagination');
 }
 report.marketSource='Arc Explorer USD-anchored pools';report.coverage='Tokens without explorer market metrics remain unassessed, not below-threshold.';report.scannedPools=scannedPools;report.screen={minVolume24hUsd:1000,minLiquidityUsd:500,minTrades:10,minVolumeToMarketCap:0.01};report.screenedOut=0;report.unverified=[];report.verifiedMarkets=[];
+let verifiedDynamic=0;
+report.newDynamicLaunches=launchLogs.size;
+report.unassessedDynamic=[...launchLogs.keys()].filter(a=>!requested.has(a)&&!marketMetrics.get(a));
+report.belowThresholdDynamic=[...launchLogs.keys()].filter(a=>!requested.has(a)&&marketMetrics.get(a)&&!screenArgusPool(marketMetrics.get(a)));
+const eligibleLogs=[...launchLogs].filter(([a])=>!excluded.has(a)&&(requested.has(a)||screenArgusPool(marketMetrics.get(a)))).map(([,log])=>log);
+console.log(JSON.stringify({eligibleDynamic:eligibleLogs.length,unassessedDynamic:report.unassessedDynamic.length,belowThresholdDynamic:report.belowThresholdDynamic.length}));
+await batches(eligibleLogs,1,async ([l])=>{
+  const receipt=await c.getTransactionReceipt({hash:l.transactionHash});
+  const exact=receipt.logs.find(e=>e.logIndex===l.logIndex&&e.address.toLowerCase()===ARGUS_DYNAMIC_PORTAL&&e.data===l.data&&JSON.stringify(e.topics)===JSON.stringify(l.topics));
+  if(receipt.status!=='success'||!exact||(await c.getBlock({blockNumber:receipt.blockNumber})).hash!==receipt.blockHash)throw Error('Unverified dynamic launch log');
+  const token=getAddress('0x'+l.topics[1].slice(-40));const found=await discoverArgusPool(token,rpc,blockNumber);
+  if(found?.portal!==ARGUS_DYNAMIC_PORTAL)throw Error('Dynamic launch identity mismatch');
+  candidates.set(token.toLowerCase(),{portal:ARGUS_DYNAMIC_PORTAL,poolId:found.poolId});dynamic.add(token.toLowerCase());
+  if(++verifiedDynamic%100===0)console.log(JSON.stringify({verifiedDynamic,total:launchLogs.size}));
+});
 const topArc=new Set(includeTopArc?[...marketMetrics].filter(([,p])=>screenArgusPool(p)).sort(([,a],[,b])=>(b.marketCapUsd??b.fdvUsd)-(a.marketCapUsd??a.fdvUsd)).slice(0,100).map(([a])=>a):[]);
 for(const [address,pool]of marketMetrics){
  if(old.some(t=>t.address.toLowerCase()===address)||excluded.has(address))continue;
@@ -74,7 +79,6 @@ for(const [address,pool]of marketMetrics){
  if(olderOnly&&found.portal===ARGUS_DYNAMIC_PORTAL)continue;
  candidates.set(address,{portal:found.portal,poolId:found.poolId});report.verifiedMarkets.push({address,...metrics,portal:found.portal,poolId:found.poolId});
 }
-report.enumerated=candidates.size;
 report.requested=[];
 for(const [address,symbol] of requested){
  if(excluded.has(address))throw Error('Requested token is excluded: '+symbol);
@@ -85,13 +89,14 @@ for(const [address,symbol] of requested){
  candidates.set(address,{portal:found.portal,poolId:found.poolId});
  report.requested.push({address,symbol,portal:found.portal});
 }
+report.enumerated=candidates.size;
 await fs.mkdir('.deployment-private',{recursive:true});await fs.writeFile(marketScan?'.deployment-private/argus-market-candidates.json':'.deployment-private/argus-index-candidates.json',JSON.stringify({block:String(blockNumber),candidates:[...candidates]}));
 console.log(JSON.stringify({enumerated:candidates.size,dynamic:dynamic.size}));
 const known=new Map(old.map(t=>[t.address.toLowerCase(),t])),symbols=new Set(old.map(t=>t.symbol.trim().toUpperCase()));
 const additions=[];
-// Historical additions require market screening and verified portal identity.
-// Stable priority independent of concurrent RPC completion: new family first,
-// then the newest array entries in each older portal. Existing identities stay fixed.
+// Screen every ordinary addition, including the dynamic family. Explicitly
+// requested tokens still require identity verification. Keep selection stable
+// across concurrent RPC completion, without replacing existing ticker identities.
 const portalRank=new Map([...ARGUS_PORTALS.map(p=>p.address),ARGUS_DYNAMIC_PORTAL].map((a,i)=>[a,i]));
 const pending=[...candidates].filter(([a])=>(requested.has(a)||dynamic.has(a)||report.verifiedMarkets.some(t=>t.address===a))&&!known.has(a)).sort(([a,x],[b,y])=>Number(requested.has(b))-Number(requested.has(a))||((screenArgusPool(marketMetrics.get(b))?.marketCapUsd??0)-(screenArgusPool(marketMetrics.get(a))?.marketCapUsd??0))||((portalRank.get(y.portal)??-1)-(portalRank.get(x.portal)??-1))||((y.index??0)-(x.index??0))||a.localeCompare(b));
 const metadata=new Map();
@@ -119,4 +124,4 @@ report.argusCount=[...known.values()].filter(t=>t.argus).length;
 await fs.writeFile('.deployment-private/argus-refresh-catalog-preview.json',JSON.stringify([...known.values()],null,2)+'\n');
 if(report.written){await fs.writeFile(catalogPath+'.next',JSON.stringify([...known.values()],null,2)+'\n');await fs.rename(catalogPath+'.next',catalogPath);}
 await fs.writeFile(olderOnly?'.deployment-private/argus-older-index-refresh-report.json':'.deployment-private/argus-index-refresh-report.json',JSON.stringify(report,null,2)+'\n');
-console.log(JSON.stringify({...report,added:report.added.length,failed:report.failed.length}));
+console.log(JSON.stringify({at:report.at,block:report.block,catalogCount:report.catalogCount,argusCount:report.argusCount,added:report.added.length,failed:report.failed.length,duplicateSymbols:report.duplicateSymbols,unassessedDynamic:report.unassessedDynamic.length,written:report.written}));

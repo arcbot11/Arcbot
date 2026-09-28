@@ -7,6 +7,7 @@ export const FEE_POLICY_VERSION = 1;
 // Keep the unfinished paid service unavailable when unrelated website changes deploy.
 // Enable only after report coverage and payment/worker release checks are complete.
 export const FEE_PUBLIC_API_ENABLED = false;
+export const FEE_SOCIAL_ENABLED = false;
 
 // Initial commercial policy, not a claim about measured production gas costs.
 // Arc native gas is USDC represented at 18 decimals (ERC-20 USDC uses 6).

@@ -55,6 +55,8 @@ export type FeeReport = {
     portal: Address;
     splitter: Address;
     tracker: Address | null;
+    hook?: Address;
+    locker?: Address;
   } | null;
   assets: { token: Asset; quote: Asset; payout: Asset } | null;
   beneficiaries: { address: Address; shareBps: number }[] | null;
@@ -64,12 +66,14 @@ export type FeeReport = {
     holders: number;
     liquidity: number;
     treasury: number;
+    lock?: number;
   } | null;
   // Accounted already includes claims/reserves: never add these buckets to balances.
   balances: Amount[] | null;
   unallocated: Amount[] | null;
   creatorOwed: CreatorDebt[] | null;
   liquidityReserved: Amount[] | null;
+  escrowBudgets?: { burn: Amount; liquidity: Amount; lock: Amount; treasury: Amount; holderLiability: Amount; holderPaidQuote: Amount };
   holderRewards: {
     funded: Amount;
     held: Amount;
@@ -85,6 +89,7 @@ export type FeeReport = {
     fromBlock: string;
     throughBlock: string;
     source: "verified_counter" | "indexed_fee_events";
+    scope?: string;
   } | null;
   warnings: string[];
 };
@@ -111,7 +116,7 @@ export function emptyReport(input: FeeReportInput): FeeReport {
     usdValuation: null,
     lifetimeFeesEarned: null,
     warnings: [
-      "Amounts use each asset's own units; no USD valuation is supplied. Lifetime fees are unavailable until verified lifetime accounting is implemented.",
+      "Amounts use each asset's own units; no USD valuation is supplied. Lifetime fees require a complete verified event index.",
       "Balances, accounted claims and reserved liquidity overlap; do not sum them as total fees.",
       "Positive balances are observations, not proof that a crank or claim will succeed.",
     ],

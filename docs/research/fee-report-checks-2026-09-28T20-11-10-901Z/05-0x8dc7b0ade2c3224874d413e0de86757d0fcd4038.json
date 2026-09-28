@@ -1,0 +1,154 @@
+{
+  "schemaVersion": "1",
+  "service": "Argos Token Fee Intelligence",
+  "chainId": 5042,
+  "token": "0x8dc7b0ade2c3224874d413e0de86757d0fcd4038",
+  "status": "partial",
+  "family": "portal8-escrow",
+  "evidence": {
+    "blockNumber": "23253163",
+    "blockHash": "0x92e13215d048420ba9e216dc418f2712fada512e8c1b339b0000359f3a796e53",
+    "blockTimestamp": "2026-09-28T20:11:12.000Z",
+    "observedAt": "2026-09-28T20:11:12.552Z"
+  },
+  "contracts": {
+    "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+    "splitter": "0x47E0B1523a24C31E295d946b4D5b0c0C23e66c05",
+    "tracker": null,
+    "hook": "0x6077974C11226D19bBe968A377FfEecbcE9F60cc",
+    "locker": "0xe55A34e2B51d76435d9CE9DDc03A0417E5f59112"
+  },
+  "assets": {
+    "token": {
+      "address": "0x8dc7b0ade2c3224874d413e0de86757d0fcd4038",
+      "decimals": 18,
+      "symbol": "ARCDD"
+    },
+    "quote": {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS"
+    },
+    "payout": {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS"
+    }
+  },
+  "beneficiaries": [
+    {
+      "address": "0x278D65C600A9e7De81125DdC4f9B312e27400000",
+      "shareBps": 5000
+    },
+    {
+      "address": "0xD23AffB1982b1824E01F9379824D3241d2C11111",
+      "shareBps": 5000
+    }
+  ],
+  "allocationBps": {
+    "creator": 5000,
+    "burn": 0,
+    "holders": 5000,
+    "liquidity": 0,
+    "treasury": 3000,
+    "lock": 0
+  },
+  "balances": [
+    {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS",
+      "raw": "2881704205137352780047",
+      "formatted": "2881.704205137352780047"
+    },
+    {
+      "address": "0x8dc7b0ade2c3224874d413e0de86757d0fcd4038",
+      "decimals": 18,
+      "symbol": "ARCDD",
+      "raw": "0",
+      "formatted": "0"
+    }
+  ],
+  "unallocated": null,
+  "creatorOwed": [
+    {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS",
+      "raw": "62287978817231554",
+      "formatted": "0.062287978817231554",
+      "bucket": "quote"
+    }
+  ],
+  "liquidityReserved": [
+    {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS",
+      "raw": "0",
+      "formatted": "0"
+    }
+  ],
+  "holderRewards": null,
+  "signals": {
+    "unprocessedFees": false,
+    "creatorFeesOwed": true
+  },
+  "execution": {
+    "enabled": false,
+    "reason": "report_only"
+  },
+  "usdValuation": null,
+  "lifetimeFeesEarned": null,
+  "warnings": [
+    "Amounts use each asset's own units; no USD valuation is supplied. Lifetime fees require a complete verified event index.",
+    "Balances, accounted claims and reserved liquidity overlap; do not sum them as total fees.",
+    "Positive balances are observations, not proof that a crank or claim will succeed.",
+    "Portal 8 creator debt is denominated in quote units, not guaranteed payout proceeds. Registered recipients may include an identity vault.",
+    "Portal 8 budgets and holder liability are quote-denominated accounting obligations, not payout inventory. Holder liability includes rounding carry and does not guarantee an immediately payable holder. Direct transfers may contribute to these current budgets but are not counted as historical fee events."
+  ],
+  "escrowBudgets": {
+    "burn": {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS",
+      "raw": "0",
+      "formatted": "0"
+    },
+    "liquidity": {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS",
+      "raw": "0",
+      "formatted": "0"
+    },
+    "lock": {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS",
+      "raw": "0",
+      "formatted": "0"
+    },
+    "treasury": {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS",
+      "raw": "124901136751572561",
+      "formatted": "0.124901136751572561"
+    },
+    "holderLiability": {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS",
+      "raw": "2881517016021783975763",
+      "formatted": "2881.517016021783975763"
+    },
+    "holderPaidQuote": {
+      "address": "0xeCe5cA8bf9220718E5727754026757512212cb3c",
+      "decimals": 18,
+      "symbol": "ARGUS",
+      "raw": "1755216260929560449516",
+      "formatted": "1755.216260929560449516"
+    }
+  }
+}

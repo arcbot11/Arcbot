@@ -6,8 +6,10 @@ import { feeTxId, finalizedFeeGas, phases, type FeeControl, type FeeJob } from "
 import { z } from "zod";
 import { cancelUnsignedTrade, neverSigned } from "../../lib/otc/unsigned-recovery";
 import { PRE_SETTLEMENT_LEASE_MS } from "../../lib/bridge-api/model";
+import {feeHistoryCommand} from "./feeHistoryCommands";
 const address=z.string().regex(/^0x[\da-f]{40}$/i).transform(x=>x.toLowerCase()).refine(x=>!/^0x0{40}$/.test(x));
 export async function feeCommand(ctx:MutationCtx,store:Store,command:string,input:unknown,now:number) {
+  if(command.startsWith("fee_history_"))return feeHistoryCommand(ctx,store,command,input,now);
   if(command==="fee_configure") {
     const a=z.object({enabled:z.boolean(),wallets:z.array(address).min(1).max(100),excludedTokens:z.array(address).max(10000)}).strict().parse(input);
     const control:FeeControl={...a,kind:"fee_control",id:"fee:control",owner:FEE_EXECUTOR_OWNER,updatedAt:now};

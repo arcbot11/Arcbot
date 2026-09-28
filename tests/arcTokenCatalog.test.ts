@@ -30,6 +30,21 @@ describe("Arc snapshot index selection", () => {
       expect(ARC_TOKEN_CATALOG.some(t => t.symbol === token.symbol)).toBe(true);
     }
   });
+  it("includes the current verified additions and explicitly requested launches", () => {
+    for (const token of currentRefresh.added) {
+      expect(ARC_TOKEN_CATALOG.find(t => t.address === token.address)).toEqual(token);
+      if (!currentRefresh.requested.some(t => t.address === token.address)) {
+        const evidence = currentRefresh.verifiedMarkets.find(t => t.address === token.address)!;
+        expect(evidence.volume24hUsd).toBeGreaterThanOrEqual(currentRefresh.screen.minVolume24hUsd);
+        expect(evidence.liquidityUsd).toBeGreaterThanOrEqual(currentRefresh.screen.minLiquidityUsd);
+        expect(evidence.trades).toBeGreaterThanOrEqual(currentRefresh.screen.minTrades);
+        expect(evidence.volume24hUsd / evidence.marketCapUsd).toBeGreaterThanOrEqual(currentRefresh.screen.minVolumeToMarketCap);
+      }
+    }
+    for (const token of currentRefresh.requested) {
+      expect(ARC_TOKEN_CATALOG.find(t => t.symbol === token.symbol)?.address).toBe(token.address);
+    }
+  });
   it("retains the highest-cap contract for each ticker in the combined snapshot", () => {
     const contracts = new Map<string, { address: string; symbol: string; marketCapUsd: number }>();
     // Fresh source valuations include on-chain fallbacks for unpriced old tokens.

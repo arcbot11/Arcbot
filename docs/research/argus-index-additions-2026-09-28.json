@@ -1,0 +1,204 @@
+{
+  "at": "2026-09-28T19:31:14.127Z",
+  "block": "23248438",
+  "catalogCount": 486,
+  "argusCount": 298,
+  "previousCatalogCount": 479,
+  "added": [
+    {
+      "chainId": 5042,
+      "address": "0x8dc7b0ade2c3224874d413e0de86757d0fcd4038",
+      "symbol": "ARCDD",
+      "name": "ARCddicted",
+      "decimals": 18,
+      "marketCapUsd": null,
+      "snapshotAt": "2026-09-28T19:31:14.127Z",
+      "argus": true,
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+      "poolId": "0xaa662b9b0e67e96a816b4b7271c3fdee9c9d10d31cf60cb6080dd17b947b9776"
+    },
+    {
+      "chainId": 5042,
+      "address": "0xfa3ffdf775cc3f6ac82cd258fb948a8a21e1749e",
+      "symbol": "UBI",
+      "name": "UBI",
+      "decimals": 18,
+      "marketCapUsd": 462221.3680007033,
+      "snapshotAt": "2026-09-28T19:31:14.127Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x92395d0cd51bb504a39e53105cb6862948af1b8e",
+      "symbol": "TIDE",
+      "name": "Arctide",
+      "decimals": 18,
+      "marketCapUsd": 318856.2013122567,
+      "snapshotAt": "2026-09-28T19:31:14.127Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0xa83a7be150d97b77c4ad96742ea38ab7c8e13782",
+      "symbol": "WPAY",
+      "name": "WPAY",
+      "decimals": 18,
+      "marketCapUsd": 79768.69455094964,
+      "snapshotAt": "2026-09-28T19:31:14.127Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x0a31d07b696c9044f6f628f971ca38a50cf3beaf",
+      "symbol": "COOLONG",
+      "name": "COOLONG",
+      "decimals": 18,
+      "marketCapUsd": 22868.52021354309,
+      "snapshotAt": "2026-09-28T19:31:14.127Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x6505506540dc99f7366316b10e9cf1a584cbd42a",
+      "symbol": "NVDA",
+      "name": "NVIDIA • Arc Token",
+      "decimals": 18,
+      "marketCapUsd": 8014.683484207197,
+      "snapshotAt": "2026-09-28T19:31:14.127Z",
+      "argus": false
+    },
+    {
+      "chainId": 5042,
+      "address": "0x9c7c98b0ed687b0489d3223387196293e97c34c7",
+      "symbol": "SYN",
+      "name": "Synthra",
+      "decimals": 18,
+      "marketCapUsd": 6957.31305208311,
+      "snapshotAt": "2026-09-28T19:31:14.127Z",
+      "argus": false
+    }
+  ],
+  "requested": [
+    {
+      "address": "0x8dc7b0ade2c3224874d413e0de86757d0fcd4038",
+      "symbol": "ARCDD",
+      "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93"
+    },
+    {
+      "address": "0xe86688530c456e099732f953ed7aa7c583026680",
+      "symbol": "ARGOS",
+      "portal": "0xa5628a11c412596e1f63b75a2c0284f843c549d6"
+    }
+  ],
+  "screen": {
+    "minVolume24hUsd": 1000,
+    "minLiquidityUsd": 500,
+    "minTrades": 10,
+    "minVolumeToMarketCap": 0.01
+  },
+  "scannedPools": 386,
+  "verifiedMarkets": [
+    {
+      "address": "0x2164bb17a2d38c1b5170e987b2c0416df1efc752",
+      "marketCapUsd": 1392983.462878795,
+      "volume24hUsd": 37553.94802600001,
+      "liquidityUsd": 124479.880368,
+      "trades": 3171,
+      "pool": "0xda9f3d166497ddfddf37c93cacfd8aa39b71e493",
+      "argus": false
+    },
+    {
+      "address": "0xfa3ffdf775cc3f6ac82cd258fb948a8a21e1749e",
+      "marketCapUsd": 462221.3680007033,
+      "volume24hUsd": 15692.212783000014,
+      "liquidityUsd": 1281.504762,
+      "trades": 1166,
+      "pool": "0x2643400d699e60c53f70a943d9c721bf79b1040a",
+      "argus": false
+    },
+    {
+      "address": "0x92395d0cd51bb504a39e53105cb6862948af1b8e",
+      "marketCapUsd": 318856.2013122567,
+      "volume24hUsd": 14860.906662000003,
+      "liquidityUsd": 68259.686846,
+      "trades": 63,
+      "pool": "0x8e61d497784779c31936fdfc223b7d53fb2664b7",
+      "argus": false
+    },
+    {
+      "address": "0xcaad9713114a3c26131594e7e3a908f41e7d4549",
+      "marketCapUsd": 115002.29909332983,
+      "volume24hUsd": 5319.532977999999,
+      "liquidityUsd": 56784.86178,
+      "trades": 15,
+      "pool": "0x11b73810472525a13c90bee4f1a6edcb039aee78",
+      "argus": false
+    },
+    {
+      "address": "0xa83a7be150d97b77c4ad96742ea38ab7c8e13782",
+      "marketCapUsd": 79768.69455094964,
+      "volume24hUsd": 2873.5381999999995,
+      "liquidityUsd": 142954.00756,
+      "trades": 15,
+      "pool": "0xab6ab7323d5fb24ba09472353a505231eb0c6c97",
+      "argus": false
+    },
+    {
+      "address": "0xc1347b8f2b79af2f150d26f350eb974cd7dab6f3",
+      "marketCapUsd": 45847.24753224003,
+      "volume24hUsd": 20046.25373999999,
+      "liquidityUsd": 20228.623048,
+      "trades": 326,
+      "pool": "0xc4f9c3d33b28710420b9d4966c932ef4b754660c",
+      "argus": false
+    },
+    {
+      "address": "0xd218e4730fdf224d0464b29c6f24cc139240adcb",
+      "marketCapUsd": 33271.471336975876,
+      "volume24hUsd": 4757.214653000002,
+      "liquidityUsd": 15910.753378,
+      "trades": 51,
+      "pool": "0x6ca8e6002d111277325b25ab9619b55b71bfc01c",
+      "argus": false
+    },
+    {
+      "address": "0x0a31d07b696c9044f6f628f971ca38a50cf3beaf",
+      "marketCapUsd": 22868.52021354309,
+      "volume24hUsd": 1314.9615730000005,
+      "liquidityUsd": 4621.568754,
+      "trades": 127,
+      "pool": "0x7bf9e65013adc0401662dade8985814561af96dd",
+      "argus": false
+    },
+    {
+      "address": "0x6505506540dc99f7366316b10e9cf1a584cbd42a",
+      "marketCapUsd": 8014.683484207197,
+      "volume24hUsd": 3538.424535,
+      "liquidityUsd": 14527.733604,
+      "trades": 40,
+      "pool": "0xc0bf5f39ac2010ea38e040d85719b14d390e87c4",
+      "argus": false
+    },
+    {
+      "address": "0x9c7c98b0ed687b0489d3223387196293e97c34c7",
+      "marketCapUsd": 6957.31305208311,
+      "volume24hUsd": 1033.433966,
+      "liquidityUsd": 8734.14527,
+      "trades": 18,
+      "pool": "0xcee68e8e409b182388ef7a24b968c098f9642ad8",
+      "argus": false
+    }
+  ],
+  "dynamic": [
+    {
+      "address": "0x8dc7b0ade2c3224874d413e0de86757d0fcd4038",
+      "symbol": "ARCDD",
+      "indexed": true
+    }
+  ],
+  "duplicateSymbols": 4,
+  "failed": [],
+  "unassessedDynamicCount": 1981,
+  "belowThresholdDynamicCount": 0,
+  "coverage": "Tokens without explorer market metrics remain unassessed, not below-threshold. Argus website HTTP 429 prevented supplementary market coverage. Existing catalog records are unchanged. New-family additions now require the market screen except explicitly requested tokens."
+}

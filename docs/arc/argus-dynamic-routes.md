@@ -32,8 +32,8 @@ The new-family log coverage is limited to the explorer's complete paginated
 response; an explorer omission cannot be ruled out by this scan.
 
 Existing symbol identities and exclusions are preserved. Duplicate symbols do
-not replace existing contracts; users can specify the exact address. New entries
-have unknown market cap (`null`), not an invented valuation. Index admission is
+not replace existing contracts; users can specify the exact address. Entries
+without market evidence have unknown market cap (`null`), not an invented valuation. Index admission is
 not a claim of liquidity or a trading recommendation: execution always resolves
 and checks the current route. Detailed scan reports remain in `.deployment-private`.
 
@@ -54,3 +54,40 @@ Missing explorer coverage is unassessed, never evidence of low activity.
 The September 23 older-portal pass scanned 460 pools and added zero tokens;
 14 otherwise qualifying unindexed tokens lacked verified Argus portal membership.
 Argus board endpoints returned HTTP 429, limiting coverage of older V4 launches.
+
+## Combined Argus and top Arc refresh
+
+Use `node --use-system-ca --env-file=.env.local --import ./scripts/register-typescript.mjs scripts/refresh-argus-index.mjs --market-scan --top-arc`
+to verify new-family launches and screen current explorer markets together.
+New-family additions now use the same market screen as historical additions;
+launches without usable market evidence remain unassessed. Existing catalog
+entries are retained, and explicitly requested ARCDD/ARGOS are identity-verified
+exceptions to market screening. Receipt verification still applies to eligible
+new-family launch logs before admission.
+`--top-arc` also admits non-Argus tokens among the top 100 qualifying addresses
+ranked by reported market cap, retaining the same liquidity/activity thresholds.
+These entries have `argus: false`; market ranking does not establish launch provenance.
+The explicitly requested ARCDD and ARGOS contracts are checked on-chain regardless
+of explorer market coverage. Existing ticker assignments and exclusions remain fixed.
+
+The dry run saves `.deployment-private/argus-refresh-catalog-preview.json` and its
+verification report. Add `--write` to replace the local catalog after a successful
+scan. The scan uses a pinned block and checks its hash again before writing.
+Existing entries retain their historical valuations and snapshot timestamps;
+this command is a catalog addition pass, not a live-price feed.
+
+Deploying the catalog updates the website's bundled index and social ticker
+resolution. After deploying Convex, its operator-only `arcTokenCatalog:refreshBatch`
+can update stored registry rows: start with `{ "offset": 0 }`, then use each returned
+`nextOffset` until `complete` is true. This bounded refresh does not enable tokens
+as launch pairs or perform wallet transactions. Do not deploy unrelated unfinished
+features merely to refresh the index.
+
+The September 28 refresh scanned 386 explorer pools and produced 486 catalog
+entries (298 with verified Argus launch provenance). It added ARCDD, UBI, TIDE,
+WPAY, COOLONG, NVDA and SYN; ARGOS was reverified and all 479 prior records were
+preserved. Four competing ticker addresses were skipped. The snapshot and
+screening evidence are in `docs/research/argus-index-additions-2026-09-28.json`.
+There were 1,981 additional new-family candidates without usable explorer market
+evidence. Argus's website returned HTTP 429, so this is not an exhaustive update
+of every newly launched Argus token. Those candidates remain unassessed.

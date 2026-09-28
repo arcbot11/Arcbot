@@ -1,0 +1,85 @@
+[
+  {
+    "symbol": "CC",
+    "address": "0xf44ddb40cba49e98c388d5f5ede5728815f6987a",
+    "kind": "random-recent",
+    "launchTime": "2026-09-28T19:43:45.000Z",
+    "url": "https://api.arcddicted.com/api/partner/token/0xf44ddb40cba49e98c388d5f5ede5728815f6987a",
+    "status": 200,
+    "checkedAt": "2026-09-28T20:18:36.613Z",
+    "file": "1-0xf44ddb40cba49e98c388d5f5ede5728815f6987a.json",
+    "rawBody": "{\"ok\":true,\"source\":\"ARCddicted Radar\",\"attribution\":\"Powered by ARCddicted Radar\",\"website\":\"https://arcddicted.com\",\"reportUrl\":\"https://arcddicted.com/?token=0xf44ddb40cba49e98c388d5f5ede5728815f6987a\",\"token\":{\"address\":\"0xf44ddb40cba49e98c388d5f5ede5728815f6987a\",\"creator\":\"0x77511d60d02753d744cf9f29d380c6879d709ac9\",\"name\":\"Comet Coin\",\"symbol\":\"CC\",\"blockNumber\":23249918,\"transactionHash\":\"0xa352fcb436d321731d7f3f393ef276c903b0c4f04dc20e407b63079cfe68eff8\",\"createdAt\":1790624462384,\"devBuy\":4.499496,\"socialCount\":0,\"website\":null,\"twitter\":null,\"telegram\":null},\"creatorHistory\":{\"previousLaunches\":0,\"previous24h\":0},\"tokenHistory\":{\"name\":{\"previousUses\":0,\"creators\":0,\"sameCreator\":0},\"symbol\":{\"previousUses\":81,\"creators\":62,\"sameCreator\":0}},\"socialHistory\":{\"website\":{\"count\":0,\"creators\":0,\"sameCreator\":0},\"twitter\":{\"count\":0,\"creators\":0,\"sameCreator\":0},\"telegram\":{\"count\":0,\"creators\":0,\"sameCreator\":0}},\"signals\":[{\"type\":\"ticker_reuse\",\"level\":\"warning\",\"message\":\"Ticker was previously seen 81x across 62 creators.\"}]}"
+  },
+  {
+    "symbol": "ZRX",
+    "address": "0x7af07a2e982959ddc0d69db4fb2e7b3586f164bb",
+    "kind": "random-recent",
+    "launchTime": "2026-09-28T18:25:54.000Z",
+    "url": "https://api.arcddicted.com/api/partner/token/0x7af07a2e982959ddc0d69db4fb2e7b3586f164bb",
+    "status": 200,
+    "checkedAt": "2026-09-28T20:18:37.505Z",
+    "file": "2-0x7af07a2e982959ddc0d69db4fb2e7b3586f164bb.json",
+    "rawBody": "{\"ok\":true,\"source\":\"ARCddicted Radar\",\"attribution\":\"Powered by ARCddicted Radar\",\"website\":\"https://arcddicted.com\",\"reportUrl\":\"https://arcddicted.com/?token=0x7af07a2e982959ddc0d69db4fb2e7b3586f164bb\",\"token\":{\"address\":\"0x7af07a2e982959ddc0d69db4fb2e7b3586f164bb\",\"creator\":\"0xe1bfe475e47eac74a8f2f8f0b5498a67835617b0\",\"name\":\"Zorix\",\"symbol\":\"ZRX\",\"blockNumber\":23240718,\"transactionHash\":\"0xef8e666ef45244a8c72d1c4863f0302c09686a2e7d536d7971b462829334e609\",\"createdAt\":1790619798033,\"devBuy\":9.99836,\"socialCount\":0,\"website\":null,\"twitter\":null,\"telegram\":null},\"creatorHistory\":{\"previousLaunches\":0,\"previous24h\":0},\"tokenHistory\":{\"name\":{\"previousUses\":0,\"creators\":0,\"sameCreator\":0},\"symbol\":{\"previousUses\":1,\"creators\":1,\"sameCreator\":0}},\"socialHistory\":{\"website\":{\"count\":0,\"creators\":0,\"sameCreator\":0},\"twitter\":{\"count\":0,\"creators\":0,\"sameCreator\":0},\"telegram\":{\"count\":0,\"creators\":0,\"sameCreator\":0}},\"signals\":[]}"
+  },
+  {
+    "symbol": "ABTC",
+    "address": "0x258d4093a797dc2849e3db8762523ab0d8e4ff34",
+    "kind": "random-recent",
+    "launchTime": "2026-09-28T17:55:21.000Z",
+    "url": "https://api.arcddicted.com/api/partner/token/0x258d4093a797dc2849e3db8762523ab0d8e4ff34",
+    "status": 200,
+    "checkedAt": "2026-09-28T20:18:38.112Z",
+    "file": "3-0x258d4093a797dc2849e3db8762523ab0d8e4ff34.json",
+    "rawBody": "{\"ok\":true,\"source\":\"ARCddicted Radar\",\"attribution\":\"Powered by ARCddicted Radar\",\"website\":\"https://arcddicted.com\",\"reportUrl\":\"https://arcddicted.com/?token=0x258d4093a797dc2849e3db8762523ab0d8e4ff34\",\"token\":{\"address\":\"0x258d4093a797dc2849e3db8762523ab0d8e4ff34\",\"creator\":\"0x5be40fb0f68b57bf1c51511645d0c305a7bb586a\",\"name\":\"Anime Bitcoin\",\"symbol\":\"ABTC\",\"blockNumber\":23237104,\"transactionHash\":\"0x5d0d8e31280f2d3316c2645243071fc5ab621c2d9ea18869729748c4e727b386\",\"createdAt\":1790617959080,\"devBuy\":15.997376,\"socialCount\":0,\"website\":null,\"twitter\":null,\"telegram\":null},\"creatorHistory\":{\"previousLaunches\":4,\"previous24h\":4},\"tokenHistory\":{\"name\":{\"previousUses\":19,\"creators\":12,\"sameCreator\":0},\"symbol\":{\"previousUses\":30,\"creators\":21,\"sameCreator\":0}},\"socialHistory\":{\"website\":{\"count\":0,\"creators\":0,\"sameCreator\":0},\"twitter\":{\"count\":0,\"creators\":0,\"sameCreator\":0},\"telegram\":{\"count\":0,\"creators\":0,\"sameCreator\":0}},\"signals\":[{\"type\":\"creator_history\",\"level\":\"info\",\"message\":\"Creator has 4 previous launches.\"},{\"type\":\"recent_activity\",\"level\":\"warning\",\"message\":\"Creator launched 4 tokens in the previous 24 hours.\"},{\"type\":\"name_reuse\",\"level\":\"warning\",\"message\":\"Token name was previously seen 19x across 12 creators.\"},{\"type\":\"ticker_reuse\",\"level\":\"warning\",\"message\":\"Ticker was previously seen 30x across 21 creators.\"}]}"
+  },
+  {
+    "symbol": "ARGUS",
+    "address": "0xece5ca8bf9220718e5727754026757512212cb3c",
+    "kind": "repeat",
+    "url": "https://api.arcddicted.com/api/partner/token/0xece5ca8bf9220718e5727754026757512212cb3c",
+    "status": 404,
+    "checkedAt": "2026-09-28T20:18:38.407Z",
+    "file": "4-0xece5ca8bf9220718e5727754026757512212cb3c.json",
+    "rawBody": "{\"ok\":false,\"error\":\"Token not found in ARCddicted Radar database\"}"
+  },
+  {
+    "symbol": "ARGOS",
+    "address": "0xe86688530c456e099732f953ed7aa7c583026680",
+    "kind": "repeat",
+    "url": "https://api.arcddicted.com/api/partner/token/0xe86688530c456e099732f953ed7aa7c583026680",
+    "status": 404,
+    "checkedAt": "2026-09-28T20:18:38.647Z",
+    "file": "5-0xe86688530c456e099732f953ed7aa7c583026680.json",
+    "rawBody": "{\"ok\":false,\"error\":\"Token not found in ARCddicted Radar database\"}"
+  },
+  {
+    "symbol": "ARCDD",
+    "address": "0x8Dc7B0Ade2c3224874D413E0DE86757d0Fcd4038",
+    "kind": "repeat",
+    "url": "https://api.arcddicted.com/api/partner/token/0x8dc7b0ade2c3224874d413e0de86757d0fcd4038",
+    "status": 404,
+    "checkedAt": "2026-09-28T20:18:38.894Z",
+    "file": "6-0x8dc7b0ade2c3224874d413e0de86757d0fcd4038.json",
+    "rawBody": "{\"ok\":false,\"error\":\"Token not found in ARCddicted Radar database\"}"
+  },
+  {
+    "symbol": "USDC (non-Argus Arc token)",
+    "address": "0x3600000000000000000000000000000000000000",
+    "kind": "repeat",
+    "url": "https://api.arcddicted.com/api/partner/token/0x3600000000000000000000000000000000000000",
+    "status": 404,
+    "checkedAt": "2026-09-28T20:18:39.139Z",
+    "file": "7-0x3600000000000000000000000000000000000000.json",
+    "rawBody": "{\"ok\":false,\"error\":\"Token not found in ARCddicted Radar database\"}"
+  },
+  {
+    "symbol": "CMC",
+    "address": "0xC162b1e2Fa18d3B5d6064d01D55Cedb1638DA826",
+    "kind": "repeat-control",
+    "url": "https://api.arcddicted.com/api/partner/token/0xc162b1e2fa18d3b5d6064d01d55cedb1638da826",
+    "status": 200,
+    "checkedAt": "2026-09-28T20:18:40.010Z",
+    "file": "8-0xc162b1e2fa18d3b5d6064d01d55cedb1638da826.json",
+    "rawBody": "{\"ok\":true,\"source\":\"ARCddicted Radar\",\"attribution\":\"Powered by ARCddicted Radar\",\"website\":\"https://arcddicted.com\",\"reportUrl\":\"https://arcddicted.com/?token=0xc162b1e2fa18d3b5d6064d01d55cedb1638da826\",\"token\":{\"address\":\"0xc162b1e2fa18d3b5d6064d01d55cedb1638da826\",\"creator\":\"0x5be40fb0f68b57bf1c51511645d0c305a7bb586a\",\"name\":\"CoinMarketCat\",\"symbol\":\"CMC\",\"blockNumber\":23234794,\"transactionHash\":\"0x27ee3a873f4668aa82bb987257b49301d1005d6cc9149f19190bcf93ae787526\",\"createdAt\":1790616795622,\"devBuy\":29.99547,\"socialCount\":2,\"website\":\"https://www.thecoinmarketcat.site/\",\"twitter\":\"thecmcmemes\",\"telegram\":null},\"creatorHistory\":{\"previousLaunches\":0,\"previous24h\":0},\"tokenHistory\":{\"name\":{\"previousUses\":11,\"creators\":7,\"sameCreator\":0},\"symbol\":{\"previousUses\":22,\"creators\":15,\"sameCreator\":0}},\"socialHistory\":{\"website\":{\"count\":0,\"creators\":0,\"sameCreator\":0},\"twitter\":{\"count\":0,\"creators\":0,\"sameCreator\":0},\"telegram\":{\"count\":0,\"creators\":0,\"sameCreator\":0}},\"signals\":[{\"type\":\"name_reuse\",\"level\":\"warning\",\"message\":\"Token name was previously seen 11x across 7 creators.\"},{\"type\":\"ticker_reuse\",\"level\":\"warning\",\"message\":\"Ticker was previously seen 22x across 15 creators.\"}]}"
+  }
+]

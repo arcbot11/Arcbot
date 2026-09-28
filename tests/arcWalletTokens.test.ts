@@ -12,7 +12,7 @@ import { ARC_TOKEN_CATALOG } from "../lib/arc/token-catalog";
 const token="0xece5ca8bf9220718e5727754026757512212cb3c";
 let counter=1;
 const owner=()=>`0x${(counter++).toString(16).padStart(40,"0")}`;
-beforeEach(()=>{vi.clearAllMocks();m.value.mockResolvedValue({usdValue:24.69,pricedAt:null});vi.stubGlobal("fetch",m.fetch);m.fetch.mockResolvedValue({ok:true,json:async()=>({items:[{address:token,symbol:"ARGUS",name:"Argus",balance:"999"}]})});m.balance.mockResolvedValue(12345n);m.decimals.mockResolvedValue(3);m.block.mockResolvedValue({hash:"canonical"});});
+beforeEach(()=>{vi.clearAllMocks();m.value.mockResolvedValue({usdValue:24.69,pricedAt:new Date().toISOString()});vi.stubGlobal("fetch",m.fetch);m.fetch.mockResolvedValue({ok:true,json:async()=>({items:[{address:token,symbol:"ARGUS",name:"Argus",balance:"999"}]})});m.balance.mockResolvedValue(12345n);m.decimals.mockResolvedValue(3);m.block.mockResolvedValue({hash:"canonical"});});
 afterEach(()=>vi.unstubAllGlobals());
 describe("Arc token balance display",()=>{
   it("returns verified balances when price requests never finish",async()=>{

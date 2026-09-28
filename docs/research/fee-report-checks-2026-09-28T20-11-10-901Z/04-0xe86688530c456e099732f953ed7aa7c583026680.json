@@ -1,0 +1,134 @@
+{
+  "schemaVersion": "1",
+  "service": "Argos Token Fee Intelligence",
+  "chainId": 5042,
+  "token": "0xe86688530c456e099732f953ed7aa7c583026680",
+  "status": "partial",
+  "family": "legacy-splitter",
+  "evidence": {
+    "blockNumber": "23253163",
+    "blockHash": "0x92e13215d048420ba9e216dc418f2712fada512e8c1b339b0000359f3a796e53",
+    "blockTimestamp": "2026-09-28T20:11:12.000Z",
+    "observedAt": "2026-09-28T20:11:12.552Z"
+  },
+  "contracts": {
+    "portal": "0xa5628a11c412596e1f63b75a2c0284f843c549d6",
+    "splitter": "0x13F5F9011f399067A80125D48c248B14791d1b2c",
+    "tracker": null,
+    "hook": "0xD9005842Eebf8F5974747CB7E2D4b585A45B2044",
+    "locker": "0x310baFC75bFF39BEf7BFdCDcBeF6Cac140e37fBe"
+  },
+  "assets": {
+    "token": {
+      "address": "0xe86688530c456e099732f953ed7aa7c583026680",
+      "decimals": 18,
+      "symbol": "ARGOS"
+    },
+    "quote": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC"
+    },
+    "payout": {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC"
+    }
+  },
+  "beneficiaries": [
+    {
+      "address": "0x7d381D70e3Cc6532Fd5546e5439bC3D5CeCD28DC",
+      "shareBps": 10000
+    }
+  ],
+  "allocationBps": {
+    "creator": 10000,
+    "burn": 0,
+    "holders": 0,
+    "liquidity": 0,
+    "treasury": 1000
+  },
+  "balances": [
+    {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "1789945",
+      "formatted": "1.789945"
+    },
+    {
+      "address": "0xe86688530c456e099732f953ed7aa7c583026680",
+      "decimals": 18,
+      "symbol": "ARGOS",
+      "raw": "1049608798572108",
+      "formatted": "0.001049608798572108"
+    }
+  ],
+  "unallocated": [
+    {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "371226",
+      "formatted": "0.371226"
+    },
+    {
+      "address": "0xe86688530c456e099732f953ed7aa7c583026680",
+      "decimals": 18,
+      "symbol": "ARGOS",
+      "raw": "1049608798572108",
+      "formatted": "0.001049608798572108"
+    }
+  ],
+  "creatorOwed": [
+    {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "1418719",
+      "formatted": "1.418719",
+      "bucket": "quote"
+    },
+    {
+      "address": "0xe86688530c456e099732f953ed7aa7c583026680",
+      "decimals": 18,
+      "symbol": "ARGOS",
+      "raw": "0",
+      "formatted": "0",
+      "bucket": "launchToken"
+    }
+  ],
+  "liquidityReserved": [
+    {
+      "address": "0x3600000000000000000000000000000000000000",
+      "decimals": 6,
+      "symbol": "USDC",
+      "raw": "0",
+      "formatted": "0"
+    },
+    {
+      "address": "0xe86688530c456e099732f953ed7aa7c583026680",
+      "decimals": 18,
+      "symbol": "ARGOS",
+      "raw": "0",
+      "formatted": "0"
+    }
+  ],
+  "holderRewards": null,
+  "signals": {
+    "unprocessedFees": true,
+    "creatorFeesOwed": true
+  },
+  "execution": {
+    "enabled": false,
+    "reason": "report_only"
+  },
+  "usdValuation": null,
+  "lifetimeFeesEarned": null,
+  "warnings": [
+    "Amounts use each asset's own units; no USD valuation is supplied. Lifetime fees require a complete verified event index.",
+    "Balances, accounted claims and reserved liquidity overlap; do not sum them as total fees.",
+    "Positive balances are observations, not proof that a crank or claim will succeed.",
+    "Creator/burn/holder/liquidity percentages apply after treasury allocation; they are not five additive percentages."
+  ]
+}

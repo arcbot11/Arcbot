@@ -4804,5 +4804,77 @@
     "argus": true,
     "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
     "poolId": "0x6b2190b2d8d293e6832efdc358725cde72c9261ad4258f40d26b2d4888f7103c"
+  },
+  {
+    "chainId": 5042,
+    "address": "0x8dc7b0ade2c3224874d413e0de86757d0fcd4038",
+    "symbol": "ARCDD",
+    "name": "ARCddicted",
+    "decimals": 18,
+    "marketCapUsd": null,
+    "snapshotAt": "2026-09-28T19:31:14.127Z",
+    "argus": true,
+    "portal": "0xeed7559b8a6abf64427dc41cb5cc6400109c5d93",
+    "poolId": "0xaa662b9b0e67e96a816b4b7271c3fdee9c9d10d31cf60cb6080dd17b947b9776"
+  },
+  {
+    "chainId": 5042,
+    "address": "0xfa3ffdf775cc3f6ac82cd258fb948a8a21e1749e",
+    "symbol": "UBI",
+    "name": "UBI",
+    "decimals": 18,
+    "marketCapUsd": 462221.3680007033,
+    "snapshotAt": "2026-09-28T19:31:14.127Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x92395d0cd51bb504a39e53105cb6862948af1b8e",
+    "symbol": "TIDE",
+    "name": "Arctide",
+    "decimals": 18,
+    "marketCapUsd": 318856.2013122567,
+    "snapshotAt": "2026-09-28T19:31:14.127Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0xa83a7be150d97b77c4ad96742ea38ab7c8e13782",
+    "symbol": "WPAY",
+    "name": "WPAY",
+    "decimals": 18,
+    "marketCapUsd": 79768.69455094964,
+    "snapshotAt": "2026-09-28T19:31:14.127Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x0a31d07b696c9044f6f628f971ca38a50cf3beaf",
+    "symbol": "COOLONG",
+    "name": "COOLONG",
+    "decimals": 18,
+    "marketCapUsd": 22868.52021354309,
+    "snapshotAt": "2026-09-28T19:31:14.127Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x6505506540dc99f7366316b10e9cf1a584cbd42a",
+    "symbol": "NVDA",
+    "name": "NVIDIA • Arc Token",
+    "decimals": 18,
+    "marketCapUsd": 8014.683484207197,
+    "snapshotAt": "2026-09-28T19:31:14.127Z",
+    "argus": false
+  },
+  {
+    "chainId": 5042,
+    "address": "0x9c7c98b0ed687b0489d3223387196293e97c34c7",
+    "symbol": "SYN",
+    "name": "Synthra",
+    "decimals": 18,
+    "marketCapUsd": 6957.31305208311,
+    "snapshotAt": "2026-09-28T19:31:14.127Z",
+    "argus": false
   }
 ]

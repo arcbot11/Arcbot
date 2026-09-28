@@ -61,6 +61,13 @@ function fixture(portal: Address = address(9)) {
     payoutOf: creator,
     payoutSplit: [[creator], [10000]],
     owedCreator: 17n,
+    lockBps: 0,
+    budgetBurn: 2n,
+    budgetLiquidity: 3n,
+    budgetLock: 0n,
+    owedTreasury: 1n,
+    rawLiability: 7n,
+    dividendsPaidQuote: 13n,
     symbol: "@FAKE",
   };
   const rpc = {
@@ -183,7 +190,9 @@ describe("read-only token fee reports", () => {
     });
     expect(r.assets?.payout.address).toBe(payout);
     expect(r.unallocated).toBeNull();
-    expect(r.signals.unprocessedFees).toBeNull();
+    expect(r.signals.unprocessedFees).toBe(false);
+    expect(r.escrowBudgets?.holderLiability).toMatchObject({address: quote, raw: "7"});
+    expect(r.allocationBps?.lock).toBe(0);
     expect(feeReportLines(r).join("\n")).toContain("Automatic; no crank needed");
     expect(r.beneficiaries).toEqual([{ address: creator, shareBps: 10000 }]);
     expect(f.deps.verifyPortal8).toHaveBeenCalledWith(f.deps.rpc, head.number);

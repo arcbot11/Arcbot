@@ -56,6 +56,13 @@ export const feeReadAbi = parseAbi([
   "function payoutOf(address) view returns(address)",
   "function payoutSplit(address) view returns(address[],uint16[])",
   "function owedCreator() view returns(uint256)",
+  "function lockBps() view returns(uint16)",
+  "function budgetBurn() view returns(uint256)",
+  "function budgetLiquidity() view returns(uint256)",
+  "function budgetLock() view returns(uint256)",
+  "function owedTreasury() view returns(uint256)",
+  "function rawLiability() view returns(uint256)",
+  "function dividendsPaidQuote() view returns(uint256)",
 ]);
 const abi = feeReadAbi;
 const implementations = [
@@ -163,6 +170,8 @@ export async function readFeeReport(
       portal: launch.portal,
       splitter: launch.splitter,
       tracker: null,
+      hook: launch.hook,
+      locker: launch.locker,
     };
     if (same(launch.portal, PORTAL8)) {
       await (dependencies?.verifyPortal8 ?? verifyPortal8)(rpc, head.number);
@@ -213,9 +222,20 @@ export async function readFeeReport(
         quoteAsset,
         tokenAsset,
       ]);
+      const allocation = await Promise.all(["creatorBps", "burnBps", "dividendBps", "liquidityBps", "treasuryBps", "lockBps"].map(f => read<number>(launch.splitter, f)));
+      const [cr, bu, ho, li, tr, lock] = allocation;
+      if (allocation.some(v => !Number.isInteger(v) || v < 0 || v > 10000) || cr + bu + ho + li + lock !== 10000) throw Error("Invalid escrow allocation");
+      report.allocationBps = {creator: cr, burn: bu, holders: ho, liquidity: li, treasury: tr, lock};
+      const [burn, liquidity, locked, treasury, liability, paid] = await Promise.all([
+        ...["budgetBurn", "budgetLiquidity", "budgetLock", "owedTreasury"].map(f => read<bigint>(launch.splitter, f)),
+        read<bigint>(input.token, "rawLiability"), read<bigint>(launch.splitter, "dividendsPaidQuote"),
+      ]);
+      report.escrowBudgets = {burn: amount(quoteAsset, burn), liquidity: amount(quoteAsset, liquidity), lock: amount(quoteAsset, locked), treasury: amount(quoteAsset, treasury), holderLiability: amount(quoteAsset, liability), holderPaidQuote: amount(quoteAsset, paid)};
+      report.liquidityReserved = [amount(quoteAsset, liquidity)];
+      report.signals.unprocessedFees = false;
       report.warnings.push(
         "Portal 8 creator debt is denominated in quote units, not guaranteed payout proceeds. Registered recipients may include an identity vault.",
-        "Portal 8 unallocated funds, allocation percentages, holder funds and liquidity reserves are not covered by this adapter yet.",
+        "Portal 8 budgets and holder liability are quote-denominated accounting obligations, not payout inventory. Holder liability includes rounding carry and does not guarantee an immediately payable holder. Direct transfers may contribute to these current budgets but are not counted as historical fee events.",
       );
     } else {
       const code = (

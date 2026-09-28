@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1",
+  "service": "Argos Token Fee Intelligence",
+  "chainId": 5042,
+  "token": "0xece5ca8bf9220718e5727754026757512212cb3c",
+  "status": "unsupported",
+  "family": null,
+  "evidence": {
+    "blockNumber": "23253163",
+    "blockHash": "0x92e13215d048420ba9e216dc418f2712fada512e8c1b339b0000359f3a796e53",
+    "blockTimestamp": "2026-09-28T20:11:12.000Z",
+    "observedAt": "2026-09-28T20:11:12.552Z"
+  },
+  "contracts": null,
+  "assets": null,
+  "beneficiaries": null,
+  "allocationBps": null,
+  "balances": null,
+  "unallocated": null,
+  "creatorOwed": null,
+  "liquidityReserved": null,
+  "holderRewards": null,
+  "signals": {
+    "unprocessedFees": null,
+    "creatorFeesOwed": null
+  },
+  "execution": {
+    "enabled": false,
+    "reason": "report_only"
+  },
+  "usdValuation": null,
+  "lifetimeFeesEarned": null,
+  "warnings": [
+    "Amounts use each asset's own units; no USD valuation is supplied. Lifetime fees require a complete verified event index.",
+    "Balances, accounted claims and reserved liquidity overlap; do not sum them as total fees.",
+    "Positive balances are observations, not proof that a crank or claim will succeed.",
+    "No supported Argus launch record found."
+  ]
+}

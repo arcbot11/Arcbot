@@ -8,6 +8,7 @@ import { json } from "../bridge-api/handler";
 import { feeReportInput,type FeeReport } from "./model";
 import { FEE_REPORT_PRICE_USDC,FEE_CLAIM_PRICE_USDC,FEE_PUBLIC_API_ENABLED } from "./policy";
 import { readFeeReport } from "./read";
+import { readServiceFeeReport } from "./history-service";
 import { repository } from "../otc/repository";
 import { runFeeJob } from "./execution";
 import type { FeeJob } from "./jobs";
@@ -59,7 +60,7 @@ export async function handleFeeApi(req:Request,kind:"report"|"claim",deps:{store
     let result:FeeReport|{jobId:string};
     const jobId=`fee:${hash(JSON.stringify([payment.requestId,input]))}`;
     try {
-      const report=await (deps.report??readFeeReport)(input);
+      const report=await (deps.report??(kind==="report"?readServiceFeeReport:readFeeReport))(input);
       if(["unsupported","unavailable"].includes(report.status))throw Error("Unsupported or unavailable token");
       if(kind==="claim") {
         const job=await (deps.admit??(async a=>repository().command<FeeJob>("fee_admit",{...a,balanceWei:await feeFunding()})))({id:jobId,channel:"x402",principal:payment.paymentKey,token:input.token,paymentId:payment.requestId});

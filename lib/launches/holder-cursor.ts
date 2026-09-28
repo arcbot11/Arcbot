@@ -22,7 +22,7 @@ export async function skipHolderPage(store:Store,token:string,revision:number,ne
 }
 export async function prepareHolderBatch(store:Store,input:Parameters<typeof prepareTransaction>[1],revision:number,nextOffset:number,now:number){
  const existing=await store.get<Transaction>(input.id);if(existing)return prepareTransaction(store,input,now);
- if(input.creatorClaim?.reward?.action!=="holders")throw Error("Invalid holder payout.");
+ if(input.creatorClaim?.reward?.action!=="holders"&&input.creatorClaim?.sponsored?.phase!=="holders")throw Error("Invalid holder payout.");
  const c=await holderCursor(store,input.creatorClaim.token,now);assertCurrent(c,revision,nextOffset);
  const tx=await prepareTransaction(store,input,now);
  c.activeTx=tx.id;c.nextOffset=nextOffset;c.updatedAt=now;await store.put(c);return tx;

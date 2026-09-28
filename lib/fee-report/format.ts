@@ -22,6 +22,7 @@ export function feeReportLines(report: FeeReport): string[] {
     `Token: ${report.token}`,
     `Arc block: ${report.evidence?.blockNumber}`,
     `Lifetime fees earned: ${amounts(report.lifetimeFeesEarned?.amounts ?? null)}`,
+    ...(report.lifetimeFeesEarned?.scope ? [report.lifetimeFeesEarned.scope] : []),
     report.family === "portal8-escrow"
       ? "Fee allocation: Automatic; no crank needed"
       : `Unprocessed: ${amounts(report.unallocated)}`,
@@ -49,11 +50,12 @@ export function feeReportSummary(report: FeeReport): string[] {
     } fee report | Arc`,
     `Token: ${report.token}`,
     `Lifetime fees earned: ${amounts(report.lifetimeFeesEarned?.amounts ?? null)}`,
+    ...(report.lifetimeFeesEarned && report.family === "legacy-splitter" ? ["Excludes uncollected LP fees."] : []),
     report.family === "portal8-escrow"
       ? "Awaiting crank: Automatic allocation; no crank needed"
       : `Awaiting crank: ${amounts(report.unallocated)}`,
     `Creator fees ready to claim: ${amounts(report.creatorOwed)}`,
-    `Holder funds awaiting distribution: ${report.holderRewards ? amounts([report.holderRewards.available]) : "Not available"}`,
+    report.escrowBudgets ? `Holder rewards owed (quote units): ${amounts([report.escrowBudgets.holderLiability])}` : `Holder funds awaiting distribution: ${report.holderRewards ? amounts([report.holderRewards.available]) : "Not available"}`,
     ...(report.status === "partial" ? ["Partial coverage"] : []),
     "Token units, not USD. Buckets overlap; do not add them. Report only.",
   ];
