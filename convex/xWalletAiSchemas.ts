@@ -14,7 +14,7 @@ export const walletIntentSchema: JsonSchemaResponseFormat = {
       kind: { type: "string", enum: ["irrelevant", "unknown_wallet", "question", "command"] },
       operation: {
         type: ["string", "null"],
-        enum: [null, "create_wallet", "show_wallet", "show_balance", "send", "burn", "buy", "buy_and_send", "buy_and_burn", "swap_token_for_token", "sell", "claim_fees", "reassign_fees", "upgrade_fees", ...(LAUNCH_EXECUTION_ENABLED ? ["launch"] : [])],
+        enum: [null, "create_wallet", "show_wallet", "show_balance", "send", "burn", "buy", "buy_and_send", "buy_and_burn", "swap_token_for_token", "sell", "check_fees", "claim_fees", "reassign_fees", "upgrade_fees", ...(LAUNCH_EXECUTION_ENABLED ? ["launch"] : [])],
         description: "Command operation, or null unless kind is command.",
       },
       topic: {
@@ -78,6 +78,7 @@ const operationProperties: Record<string, Record<string, unknown>> = {
     token: nullableString("Token being sold, or null when missing."),
     slippageBps: nullableSlippage("Slippage in integer basis points; normally 250."),
   },
+  check_fees: { token: nullableString("Token ticker or contract for a read-only fee report.") },
   claim_fees: { token: nullableString("Specific token ticker or contract. Null requests discovery; when multiple launches exist the user must choose one. One launch per request.") },
   reassign_fees: { token: nullableString("Ticker or contract from the user's tokens."), recipient: nullableString("X handle, wallet address, or the literal word holders following 'to'.") },
   upgrade_fees: { token: nullableString("The ticker without a leading $, or complete contract immediately after Upgrade. The case-insensitive phrase can appear within a longer direct request.") },

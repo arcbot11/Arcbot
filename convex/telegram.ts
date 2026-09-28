@@ -514,7 +514,8 @@ export const processUpdate = internalAction({
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "completed" });
         return;
       }
-      const input = telegramInput(text, Boolean(callback));
+      const feeInput = await ctx.runMutation(makeFunctionReference<"mutation">("feePrompts:resolve"),{updateId:args.updateId}) as {name:string;args:string}|null;
+      const input = feeInput ?? telegramInput(text, Boolean(callback));
       if (!input) {
         await sendMessage(chatId, "Use the buttons or a /command. Open /help for formats.");
         await ctx.runMutation(internal.telegram.updateStatus, { updateId: args.updateId, status: "ignored" });

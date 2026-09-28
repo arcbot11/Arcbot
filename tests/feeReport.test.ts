@@ -15,7 +15,11 @@ import {
   type FeeReportDependencies,
 } from "../lib/fee-report/read";
 import { feeReportInput } from "../lib/fee-report/model";
-import { feeReportLines } from "../lib/fee-report/format";
+import {
+  feeReportLines,
+  feeReportSummary,
+  feeReportXParts,
+} from "../lib/fee-report/format";
 
 const address = (n: number) =>
   `0x${n.toString(16).padStart(40, "0")}` as Address;
@@ -119,10 +123,27 @@ function fixture(portal: Address = address(9)) {
   return { rpc, values, deps, discover };
 }
 describe("read-only token fee reports", () => {
+  it("keeps compact social reports bounded, avoids mentions, and distinguishes unknown lifetime totals", async () => {
+    const f = fixture();
+    const report = await readFeeReport({ token }, f.deps);
+    const lines = feeReportSummary(report);
+    expect(lines.join("\n")).toContain("Lifetime fees earned: Not available");
+    expect(lines.join("\n")).toContain("Awaiting crank:");
+    expect(lines.join("\n")).toContain("Creator fees ready to claim:");
+    expect(lines.join("\n")).toContain("Holder funds awaiting distribution:");
+    expect(lines.join("\n")).not.toMatch(/block:/i);
+    expect(lines.join("\n")).not.toMatch(/simulation|estimated gas|@FAKE/i);
+    const parts = feeReportXParts(report);
+    expect(
+      parts.every((p) => p.length <= 280 && /^[\x00-\x7F]*$/.test(p)),
+    ).toBe(true);
+    expect(parts.join("\n")).toBe(lines.join("\n"));
+    expect(report).not.toHaveProperty("history");
+  });
   it("keeps reserves and debts out of unallocated balances, uses actual asset decimals and pins reads", async () => {
     const f = fixture();
     const r = await readFeeReport({ token }, f.deps);
-    expect(r.status).toBe("complete");
+    expect(r.status).toBe("partial");
     expect(r.unallocated?.map((a) => a.formatted)).toEqual(["0.3", "0.01"]);
     expect(r.creatorOwed?.map((a) => [a.bucket, a.formatted])).toEqual([
       ["quote", "0.15"],
@@ -163,6 +184,7 @@ describe("read-only token fee reports", () => {
     expect(r.assets?.payout.address).toBe(payout);
     expect(r.unallocated).toBeNull();
     expect(r.signals.unprocessedFees).toBeNull();
+    expect(feeReportLines(r).join("\n")).toContain("Automatic; no crank needed");
     expect(r.beneficiaries).toEqual([{ address: creator, shareBps: 10000 }]);
     expect(f.deps.verifyPortal8).toHaveBeenCalledWith(f.deps.rpc, head.number);
   });

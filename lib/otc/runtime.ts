@@ -228,6 +228,7 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
     }
     if(record.escrowRef)await (await import("./escrow-runtime")).assertEscrowTransaction(record);
     if(!record.escrowRef&&!await repo.identity(record.owner,record.wallet))throw new Error("Wallet ownership or active status changed before signing.");
+    await (await import("../fee-report/authorize")).authorizeFeeTransaction({get:async <T extends import("./model").RecordValue>(id:string)=>repo.read<T|null>({id}),put:async()=>{throw Error("Read only");}},record,Date.now(),BigInt(snapshot.balanceWei));
     const minimumReserve = nativeSpend(record.chainId, tx) + (tx.gas ?? 0n) * (tx.maxFeePerGas ?? 0n);
     if (BigInt(w.holds[record.holdId] ?? "0") < minimumReserve) throw new Error("Transaction amount and gas exceed its reservation.");
     if (record.orderId && ["approval", "payment"].includes(record.leg)) {
@@ -250,7 +251,9 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
     }
     if(record.leg==="claim"){
       if(record.chainId!==5042||!record.creatorClaim)throw Error("Invalid creator claim.");
-      if(record.creatorClaim.reward){
+      if(record.creatorClaim.sponsored){
+        await (await import("../fee-report/execution")).verifySponsoredFee(record);
+      }else if(record.creatorClaim.reward){
         await (await import("../launches/reward-service")).verifyRewardTransaction(record,BigInt(snapshot.block));
       }else{
       const launch=await verifyCreatorToken(getAddress(record.wallet),getAddress(record.creatorClaim.token),createArcRpc(arcConfigFromEnv()),BigInt(snapshot.block)).catch(error=>{
@@ -294,7 +297,14 @@ async function advanceTransactionAttempt(id:string,receiptOnly:boolean,lease?:st
     }
     if(receipt.status==="success"&&record.leg==="claim"){
       if(!record.creatorClaim||!settlement)throw Error("Claim verification terms missing.");
-      if(record.creatorClaim.reward){
+      if(record.creatorClaim.sponsored){
+        (await import("../fee-report/calls")).assertSponsoredTransaction(record);
+        if(record.creatorClaim.sponsored.phase==="creator") {
+          const terms=record.creatorClaim.sponsored;
+          if(terms.family==="legacy-splitter")settlement.claims=claimedAmounts(terms.beneficiaries[0],record.creatorClaim.splitter,receipt.logs);
+          else settlement.claims=(await import("../fee-report/receipts")).sponsoredCreatorAmounts(record.creatorClaim.splitter,terms,receipt.logs);
+        }
+      }else if(record.creatorClaim.reward){
         (await import("../launches/reward-call")).assertRewardCall(record.creatorClaim.splitter,record.creatorClaim.reward,tx);
       }else{
       if(record.creatorClaim.portal8){

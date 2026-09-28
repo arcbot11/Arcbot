@@ -90,7 +90,7 @@ async function boundNative(ctx: DbCtx, updateId: string) {
 export const enqueue = internalMutation({ args: { updateId: v.string(), name: v.string(), args: v.string() }, handler: async (ctx, a) => {
   const { update, wallet } = await boundNative(ctx, a.updateId);
   const command = telegramWalletCommand(a.name, a.args);
-  if (!command || !["claim_fees", "show_wallet", "show_balance", "buy", "sell", "swap_token_for_token", "send", "burn"].includes(command.kind)) throw Error("Unsupported command.");
+  if (!command || !["check_fees", "claim_fees", "show_wallet", "show_balance", "buy", "sell", "swap_token_for_token", "send", "burn"].includes(command.kind)) throw Error("Unsupported command.");
   const requestId = `telegram-native:${a.updateId}`;
   const existing = await ctx.db.query("telegramNativeRequests").withIndex("by_request", q => q.eq("requestId", requestId)).unique();
   if (existing) {

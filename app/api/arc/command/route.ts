@@ -1,4 +1,5 @@
 import {runSocialLaunch} from "@/lib/launches/social-service";
+import {socialFees} from "@/lib/fee-report/social";
 import {LaunchError,retryableLaunchError,launchUserMessage} from "@/lib/launches/policy";
 import {prepareBaseWithdrawal} from "@/lib/base/wallet-actions";
 import {runCreatorClaim} from "@/lib/launches/fee-service";
@@ -85,17 +86,7 @@ export async function POST(request:NextRequest){
         throw error;
       }
     }
-    if(command.kind==="claim_fees"){
-      try{
-        const target=command.token?await token(command.token):undefined;
-        if(target==="native")throw new FeeClaimError("Specify your launched token, not USDC.");
-        const result=await runCreatorClaim(auth.owner,wallet,requestId,target?getAddress(target):undefined,requestId,!auth.recoveryOnly&&Date.now()-auth.createdAt<=ARC_COMMAND_AUTHORIZATION_MS);
-        return json({...result,processing:result.pending});
-      }catch(error){
-        if(error instanceof FeeClaimError||error instanceof SocialTokenResolutionError)return json({ok:false,message:error.message});
-        throw error;
-      }
-    }
+    if(command.kind==="check_fees"||command.kind==="claim_fees")return json(await socialFees(auth,requestId,command));
     preparing=true;
     const baseWithdrawal=command.kind==="send"&&command.chainId===8453;
     if(baseWithdrawal&&(auth.source!=="telegram"||command.token!==undefined||!["eth","usd"].includes(command.unit)))throw Error("Command not supported.");

@@ -14,6 +14,7 @@ const intakeFilterGuardState = v.object({
 });
 
 export default defineSchema({
+  telegramFeePrompts: defineTable({user:v.string(),chat:v.string(),name:v.string(),updateId:v.string(),expiresAt:v.number()}).index("by_user_chat",["user","chat"]),
   ...bridgeApiTables,
   ...agentBridgeTables,
   rpcCapacity: defineTable({key:v.string(),nextAt:v.number()}).index('by_key',['key']),
@@ -783,6 +784,7 @@ export default defineSchema({
   }).index("by_nonce_hash", ["nonceHash"]).index("by_return_hash", ["returnHash"]),
 
   telegramUpdates: defineTable({
+    feeInput: v.optional(v.object({name:v.string(),args:v.string()})),
     walletTransitionBlocked: v.optional(v.boolean()),
     unlinkBindingVersion: v.optional(v.number()), unlinkLinkId: v.optional(v.id("telegramAccountLinks")),
     boundTelegramWalletId: v.optional(v.id("telegramNativeWallets")),

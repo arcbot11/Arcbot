@@ -4,6 +4,7 @@ import { BASE_RECOVERY_WEI } from "./gas-recovery";
 import { BASE_GAS_POLICY } from "../project-config";
 import {nativeSpend} from "./native-spend";
 import {abortUnfundedListing,abortUnfundedPurchase} from './external-spending';
+import {authorizeFeeTransaction} from '../fee-report/authorize';
 
 export type SignedAttempt={unsigned:string;raw:string;hash:string;revision:number};
 export const BASE_WITHDRAWAL_GAS_FLEX_WEI=10n**12n; // At most 0.000001 additional ETH per withdrawal.
@@ -57,6 +58,7 @@ export async function prepareReplacement(store:Store,input:{id:string;expectedHa
   const before=parseTransaction(tx.unsigned as Hex),after=parseTransaction(input.unsigned as Hex);
   if((after.maxFeePerGas??0n)<((before.maxFeePerGas??0n)*1125n+999n)/1000n||(after.maxPriorityFeePerGas??0n)<((before.maxPriorityFeePerGas??0n)*1125n+999n)/1000n||(after.maxFeePerGas??0n)<=(before.maxFeePerGas??0n))throw Error("Replacement fees must increase by at least 12.5%.");
   if((tx.previousSigned?.length??0)>=5)throw Error("Replacement limit reached. Operator reconciliation required.");
+  await authorizeFeeTransaction(store,{...tx,unsigned:input.unsigned},now,BigInt(input.balanceWei));
   const w=await wallet(store,tx.chainId,tx.wallet,tx.owner,now);checkSnapshot({...w,activeTx:undefined},input.block);
   if(w.activeTx!==tx.id)throw Error("Wallet transaction lease mismatch.");
   const old=BigInt(w.holds[tx.holdId]??"0"),reserve=BigInt(input.reserveWei);

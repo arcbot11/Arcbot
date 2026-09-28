@@ -5,7 +5,7 @@ Allowed outputs:
 {"kind":"irrelevant"}
 {"kind":"unknown_wallet"}
 {"kind":"question","topic":"capabilities|wallet|fund|gas|balance|send|buy_sell|burn|launch"}
-{"kind":"command","operation":"create_wallet|show_wallet|show_balance|send|burn|buy|buy_and_send|buy_and_burn|swap_token_for_token|sell|claim_fees|launch"}
+{"kind":"command","operation":"create_wallet|show_wallet|show_balance|send|burn|buy|buy_and_send|buy_and_burn|swap_token_for_token|sell|check_fees|claim_fees|launch"}
 
 Fee reassignment, upgrades, burned-total inquiries, supported-pair help, OTC transactions and Base withdrawals are not supported X commands. Return irrelevant for those requests. Do not invent capabilities.
 
@@ -42,7 +42,8 @@ Examples:
 
 export function currentXExtractorPrompt(operation: string): string | null {
   const instructions: Record<string, string> = {
-    claim_fees: 'Return kind claim_fees with optional token only if explicitly named. Claim credited creator fees for that token; do not infer a token or recipient. No distribution or crank.',
+    check_fees: 'Return kind check_fees and the explicitly named token. Read-only fee report.',
+    claim_fees: 'Return kind claim_fees with optional token only if explicitly named. Request the sponsored fee workflow for that token: one eligible crank, creator claim and bounded holder distribution. Do not infer a token or recipient. The service pays gas; on-chain recipients receive payouts.',
     create_wallet: 'Return kind create_wallet, with no transaction fields.',
     show_wallet: 'Return kind show_wallet, with no transaction fields. A request for the author\'s wallet or deposit address qualifies.',
     show_balance: 'Return kind show_balance with token only if the user explicitly named a token. "Show my holdings" has no token. Ordinary words like assets or balance are not tickers.',

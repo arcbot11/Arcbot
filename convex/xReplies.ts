@@ -1916,7 +1916,7 @@ export const retryInteraction = internalAction({
       // result blocks and token links. They are eligible for X long-post
       // publishing instead of being compressed into a 280-character reply.
       const longCommandResult = intent.kind === "command" &&
-        (intent.command.kind === "claim_fees" || intent.command.kind === "buy_top_five" || (intent.command.kind === "reassign_fees" && intent.command.selfBurnBps!==undefined));
+        (intent.command.kind === "check_fees" || intent.command.kind === "claim_fees" || intent.command.kind === "buy_top_five" || (intent.command.kind === "reassign_fees" && intent.command.selfBurnBps!==undefined));
       const longHelpResult = intent.kind === "help" && intent.topic === "pairs";
       const clarification=tokenClarificationReply(reply);
       const ambiguousField = intent.kind === "command" && clarification ? ambiguousTokenField(intent.command,clarification.ticker) : null;
@@ -2358,6 +2358,7 @@ const PASSIVE_CHAIN_OPERATIONS = new Set([
   "buy_top_five",
   "swap_token_for_token",
   "sell",
+  "check_fees",
   "claim_fees",
   "launch",
   "reassign_fees",

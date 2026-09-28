@@ -336,7 +336,7 @@ export async function readFeeReport(
       report.warnings.push(
         "Creator/burn/holder/liquidity percentages apply after treasury allocation; they are not five additive percentages.",
       );
-      report.status = "complete";
+      report.status = report.lifetimeFeesEarned ? "complete" : "partial";
     }
     return await finish();
   } catch {

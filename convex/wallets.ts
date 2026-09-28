@@ -3891,7 +3891,7 @@ Your wallet: ${walletPageUrl(wallet.address, args.sourcePostId)}`,
         channel: args.channel || "x_reply",
       },
     );
-    if((source==="x"||source==="telegram")&&["launch","claim_fees","buy","sell","send","burn","swap_token_for_token","buy_and_send","buy_and_burn","buy_top_five"].includes(command.kind)){
+    if((source==="x"||source==="telegram")&&["launch","check_fees","claim_fees","buy","sell","send","burn","swap_token_for_token","buy_and_send","buy_and_burn","buy_top_five"].includes(command.kind)){
       return await ctx.runAction(internal.wallets.continueArcCommand,{requestId});
     }
     if (!reserved.inserted) {
@@ -7036,7 +7036,7 @@ export const continueArcCommand=internalAction({args:{requestId:v.string(),attem
   if(!request)return {ok:false,message:"Request not found."};
   const walletContext = await ctx.runQuery(internal.wallets.getXUserAndWallet, { xUserId: request.ownerXUserId });
   const savedCommand=JSON.parse(request.normalizedJson??"{}");
-  const responseMessage = (message: string, hash?: string) => walletContext?.wallet?.address ? arcCommandResponse(message, walletContext.wallet.address, hash, savedCommand.kind==="send"&&savedCommand.chainId===8453?8453:5042) : message;
+  const responseMessage = (message: string, hash?: string) => ["check_fees","claim_fees"].includes(savedCommand.kind) ? message : walletContext?.wallet?.address ? arcCommandResponse(message, walletContext.wallet.address, hash, savedCommand.kind==="send"&&savedCommand.chainId===8453?8453:5042) : message;
   if(["confirmed","failed","rejected"].includes(request.status))return {ok:request.status==="confirmed",message:responseMessage(request.finalMessage??"Check wallet history.", request.transactionHash)};
   let result:ReturnType<typeof arcServiceResult>;
   try{

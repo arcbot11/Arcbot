@@ -1,4 +1,5 @@
 import { LAUNCH_EXECUTION_ENABLED, LaunchError } from "../lib/launches/policy";
+import {feeRequest} from "../lib/fee-report/language";
 import { launchPairFromXText } from "../lib/launches/x-pair";
 import { launchAllocationFromXText, withoutLaunchAllocation } from "../lib/launches/x-allocation";
 import { X_INTENT_CLASSIFIER_PROMPT, currentXExtractorPrompt } from "../lib/x-intent-prompt";
@@ -89,6 +90,7 @@ function explicitAuthority(text: string, command: WalletCommand) {
   if (command.kind === "burn") return /\bburn\b/i.test(text);
   if (command.kind === "buy") return tokenPattern(/\b(?:buy(?:\s*back)?|purchase|grab|gimme|ape|swap|spend|compra|ach[eè]te)\b|\b(?:put|get\s+me)\s+\$?[0-9a-z][0-9a-z,.]*\b|\bsend\s+it\s*:|\bi\s+want\b[\s\S]{0,30}\bworth\s+of\b/i).test(text);
   if (command.kind === "sell") return /\b(?:sell|trim|dump|cash\s+out|get\s+rid\s+of|unload|liquidate)\b/i.test(text);
+  if (command.kind === "check_fees") return feeRequest(text)?.kind === "check_fees";
   if (command.kind === "claim_fees") return (/\b(?:claim|collect|withdraw)\b/i.test(text) && /\b(?:fees?|revenue|rewards?)\b/i.test(text))
     || /\b(?:claim|collect)\s+everything(?:\s+(?:available|i\s+can\s+claim|i\s+can))?(?:\s+for\s+me)?\b/i.test(text);
   if (command.kind === "reassign_fees") return parseWalletCommand(text).kind === "reassign_fees";
@@ -267,7 +269,7 @@ function fieldsAreGrounded(text: string, command: WalletCommand) {
     return amountGrounded && identifierIsGrounded(text, command.token)
       && (command.kind !== "buy" || !command.pairAsset || identifierIsGrounded(text, command.pairAsset));
   }
-  if (command.kind === "claim_fees") return !command.token || identifierIsGrounded(text, command.token);
+  if (command.kind === "claim_fees" || command.kind === "check_fees") return !command.token || identifierIsGrounded(text, command.token);
   if (command.kind === "reassign_fees") return parseWalletCommand(text).kind === "reassign_fees"
     && identifierIsGrounded(text, command.token) && recipientIsExplicitlyGrounded(text, command.recipient);
   if (command.kind === "upgrade_fees") {
@@ -299,7 +301,7 @@ function extractJson(raw: string) {
   try { return JSON.parse(source.slice(start, end + 1)) as unknown; } catch { return null; }
 }
 
-export type WalletOperation = "show_burned" | "create_wallet" | "show_wallet" | "show_balance" | "send" | "burn" | "buy" | "buy_and_send" | "buy_and_burn" | "buy_top_five" | "swap_token_for_token" | "sell" | "claim_fees" | "reassign_fees" | "upgrade_fees" | "launch";
+export type WalletOperation = "show_burned" | "create_wallet" | "show_wallet" | "show_balance" | "send" | "burn" | "buy" | "buy_and_send" | "buy_and_burn" | "buy_top_five" | "swap_token_for_token" | "sell" | "check_fees" | "claim_fees" | "reassign_fees" | "upgrade_fees" | "launch";
 type ClassifiedIntent =
   | { kind: "irrelevant" }
   | { kind: "unknown_wallet" }
@@ -307,7 +309,7 @@ type ClassifiedIntent =
   | { kind: "command"; operation: WalletOperation };
 
 const HELP_TOPICS: WalletHelpTopic[] = ["capabilities", "wallet", "fund", "gas", "balance", "send", "buy_sell", "burn", "launch", "pairs", "fees"];
-const OPERATIONS: WalletOperation[] = ["create_wallet", "show_wallet", "show_balance", "send", "burn", "buy", "buy_and_send", "buy_and_burn", "swap_token_for_token", "sell", "claim_fees", "reassign_fees", "upgrade_fees", "launch"];
+const OPERATIONS: WalletOperation[] = ["create_wallet", "show_wallet", "show_balance", "send", "burn", "buy", "buy_and_send", "buy_and_burn", "swap_token_for_token", "sell", "check_fees", "claim_fees", "reassign_fees", "upgrade_fees", "launch"];
 const AI_COMPLETION_TOKEN_BUDGET = 4_096;
 
 function structuredAiEnabled() {
@@ -348,6 +350,7 @@ const extractionInstructions: Record<WalletOperation, string> = {
   buy_top_five: `This operation is deterministic-only. Accept only the exact anchored top-five command handled before model extraction.`,
   swap_token_for_token: `Return {"kind":"swap_token_for_token","amount":"decimal","unit":"usd|percent|token","fromToken":"ticker or address","toToken":"ticker or address","slippageBps":200}. Accept explicit swaps such as "swap $25 of SOURCE for DESTINATION", "swap 25 USDC of SOURCE for DESTINATION", "swap 100 SOURCE for DESTINATION", "swap 50% SOURCE for DESTINATION", and "swap all SOURCE for DESTINATION". Dollar/USDC values use usd, token quantities use token, and percentages/all use percent. All means 100. Preserve SOURCE and DESTINATION order. Both assets and the amount must be explicit. Never infer missing values.`,
   sell: `Return {"kind":"sell","amount":"decimal","unit":"eth|usd|token|percent","token":"ticker or address","slippageBps":200}. Sell synonyms include dump, cash out, get rid of, unload, and liquidate. A leading dollar sign means sell that USD value of the token: "sell $25 of ARCBOT" returns amount 25, unit usd, and token ARCBOT. An explicit ETH denomination means sell that ETH value of the token: "sell 0.001 ETH of ARGOS" returns amount 0.001, unit eth, and token ARGOS. Without USD, ETH, or a percentage, a numeric amount is a token quantity. Convert all or entire to 100 percent and half or 1/2 to 50 percent; a quarter means 25 percent and three quarters means 75 percent. Do not interpret every, rest, remaining, or full as an amount. Convert number words to decimals and explicit slippage percent to integer basis points.`,
+  check_fees: `Return {"kind":"check_fees"} and token only if explicitly supplied. Read-only report; never a claim.`,
   claim_fees: `Return {"kind":"claim_fees"} with optional "token" only when the user names a specific Argus launch ticker or contract. Direct requests using claim or collect qualify when they name fees or ask for everything. "Claim my fees", "claim my fees for my launch", "claim fees from my launches", "Claim everything available for me", "Claim everything I can claim", and "Collect everything" have no token and request fee-claim discovery. The executor supports one launch per request: when multiple launches exist, ask for a ticker or contract instead of promising a batch claim. "Claim the ARCBOT launch fees" and "collect creator fees for ARCBOT" both use token ARCBOT. Never treat words such as my, the, everything, all, available, fees, creator, launch, launches, token, tokens, ETH, revenue, or rewards as a token.`,
   reassign_fees: `Return {"kind":"reassign_fees","token":"ARCBOT","recipient":"@user"} only for the complete exact forms "Reassign $TICKER fees to RECIPIENT" or "Reassign fees for $TICKER to RECIPIENT". A complete contract may replace TICKER. RECIPIENT must be an X handle, a complete wallet address, or the literal word "holders". Never accept synonyms, missing fields, extra instructions, or an inferred recipient.`,
   upgrade_fees: `Return {"kind":"upgrade_fees","token":"ARCBOT"} when a direct request contains "Upgrade TICKER" or "Upgrade CONTRACT". The ticker may have a leading $, which must be removed. The phrase is case-insensitive and may have conversational text before or after. Take only the identifier immediately following Upgrade; never infer another ticker from elsewhere in the post. Require one complete contract or one ticker, not multiple choices. Quoted examples, negation, hypotheticals, and help questions are not commands.`,
@@ -485,6 +488,7 @@ function validateExtractedCommand(value: unknown, operation: WalletOperation, te
 }
 
 export function groundedCanonicalCommand(text: string): WalletCommand | null {
+  if(!hasPromptInjection(text)&&!hasNonExecutableFraming(text)){const fee=feeRequest(text);if(fee)return fee;}
   const command = parseWalletCommand(canonicalCommandText(text));
   return command.kind === "unknown" ? null : validateExtractedCommand(command, command.kind, text);
 }
@@ -982,6 +986,7 @@ function isClearlyConversational(text: string, operations = requestedOperations(
 }
 
 export async function parseXWalletIntent(text: string, hasImage: boolean, diagnostics?: AiWorkflowDiagnostics): Promise<XWalletIntent> {
+  if(!hasPromptInjection(text)&&!hasNonExecutableFraming(text)){const fee=feeRequest(text);if(fee)return {kind:"command",command:fee};}
   if (retiredSocialRequest(text)) return {kind:"irrelevant"};
   if (disabledCreationRequest(text)) return { kind: "irrelevant" };
   if(LAUNCH_EXECUTION_ENABLED && /\b(?:launch|deploy)\b/i.test(text)){try{launchPairFromXText(text);launchAllocationFromXText(text);}catch(error){if(error instanceof LaunchError)return {kind:"command",command:{kind:"unknown",reason:error.message}};throw error;}}

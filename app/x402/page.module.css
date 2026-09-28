@@ -1,0 +1,30 @@
+.content { max-width: 1160px; margin: 0 auto; padding: 64px 24px 80px; color: var(--ink); }
+.intro { max-width: 760px; margin-bottom: 44px; }
+.eyebrow, .tag { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: #a4d5e9; }
+.intro h1 { font-size: clamp(38px, 6vw, 68px); line-height: 1.1; letter-spacing: -.04em; margin: 14px 0 24px; font-weight: 500; }
+.intro h1 span { color: #a4d5e9; }
+.content p { line-height: 1.75; }
+.intro > p:last-child { font-size: 18px; color: #c3d2dd; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.card { min-width: 0; display: flex; flex-direction: column; padding: 28px; border: 1px solid #294458; border-radius: 6px; background: #0b1d30; }
+.card h2 { font-size: 25px; line-height: 1.3; margin: 4px 0 18px; letter-spacing: -.02em; }
+.card p { margin: 0 0 18px; color: #c3d2dd; }
+.card .tag { color: #a4d5e9; margin-bottom: 12px; }
+.endpoints { margin: 6px 0 24px; display: grid; gap: 10px; }
+.endpoints > a, .endpoints > div { display: flex; align-items: baseline; gap: 10px; padding: 12px; background: #061322; border: 1px solid #294458; border-radius: 4px; font-size: 12px; }
+.endpoints b { color: #a4d5e9; font-size: 10px; flex-shrink: 0; }
+.endpoints code { overflow-wrap: anywhere; min-width: 0; }
+.links { display: flex; flex-wrap: wrap; gap: 14px 20px; margin-top: auto; padding-top: 8px; font-size: 14px; }
+.links a, .endpoints a { text-decoration: underline; text-underline-offset: 4px; }
+.links { align-items: center; }
+.links > a { min-height: 36px; display: inline-flex; align-items: center; }
+.links > a:first-child { padding: 8px 14px; border: 1px solid #5e8299; border-radius: 4px; text-decoration: none; color: #edf5fa; }
+.content a:hover { color: #a4d5e9; }
+.content a:focus-visible { outline: 2px solid #a4d5e9; outline-offset: 5px; }
+.upcoming { border-style: dashed; }
+.card .note, .note { font-size: 14px; color: #a5bbcb; }
+.guide { margin-top: 48px; padding-top: 28px; border-top: 1px solid #294458; max-width: 860px; }
+.guide h2 { font-size: 26px; }
+.guide h3 { margin-top: 28px; font-size: 20px; }
+.guide code { overflow-wrap: anywhere; }
+@media (max-width: 760px) { .grid { grid-template-columns: 1fr; } .content { padding: 40px 18px 56px; } .card { padding: 22px; } }

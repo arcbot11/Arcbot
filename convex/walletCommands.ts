@@ -1,4 +1,5 @@
 import { githubRecipientFromUrl } from '../lib/launches/github-recipient';
+import {feeRequest} from "../lib/fee-report/language";
 import { launchPairFromXText } from "../lib/launches/x-pair";
 import {DEFAULT_ARC_SLIPPAGE_BPS} from '../lib/arc/slippage';
 import { launchAllocationFromXText } from "../lib/launches/x-allocation";
@@ -31,6 +32,7 @@ export type WalletCommand =
   | { kind: "swap_token_for_token"; amount: string; unit: "usd" | "percent" | "token"; fromToken: string; toToken: string; slippageBps: number }
   | { kind: "sell"; amount: string; unit: "eth" | "usd" | "token" | "percent"; token: string; slippageBps: number }
   | { kind: "claim_fees"; token?: string }
+  | { kind: "check_fees"; token?: string }
   | { kind: "reassign_fees"; token: string; recipient: string; selfBurnBps?: number }
   | { kind: "upgrade_fees"; token: string }
   | {
@@ -90,7 +92,7 @@ export function identifierAppearsAsKnownLaunchPair(text: string, ticker: string)
 }
 
 export function isTerminalCommand(command: WalletCommand) {
-  return ["show_wallet", "show_balance", "show_burned", "buy", "buy_and_send", "buy_and_burn", "buy_top_five", "swap_token_for_token", "sell", "send", "burn", "claim_fees"].includes(command.kind);
+  return ["show_wallet", "show_balance", "show_burned", "buy", "buy_and_send", "buy_and_burn", "buy_top_five", "swap_token_for_token", "sell", "send", "burn", "check_fees", "claim_fees"].includes(command.kind);
 }
 
 /** A deliberately narrow, anchored command that is never advertised. */
@@ -459,6 +461,7 @@ export function oversizedLaunchTicker(text: string) {
 }
 
 export function parseWalletCommand(raw: string): WalletCommand {
+  const fee = feeRequest(raw); if(fee)return fee;
   if(/\b(?:buy|purchase)\b/i.test(raw)&&/\bsell\b/i.test(raw))return {kind:"unknown",reason:"Use separate buy and sell commands."};
   if (disabledCreationRequest(raw)) return { kind: "unknown", reason: "Command not supported." };
   // Launch metadata is extracted and grounded by the launch intent pipeline.
@@ -761,7 +764,7 @@ export function validateStructuredWalletCommand(value: unknown): WalletCommand |
     if (kind === "sell" && (item.unit === "eth" || item.unit === "usd" || item.unit === "token" || item.unit === "percent") && (item.unit !== "percent" || Number(amount) <= 100)) return { kind, amount, unit: item.unit, token, slippageBps };
     return null;
   }
-  if (kind === "claim_fees") {
+  if (kind === "claim_fees" || kind === "check_fees") {
     const token = item.token === undefined ? undefined : tokenIdentifier(item.token);
     if (item.token !== undefined && !token) return null;
     return { kind, ...(token ? { token } : {}) };

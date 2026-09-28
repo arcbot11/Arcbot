@@ -40,3 +40,6 @@ body{font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased}b
 }
 .arc-footer-disclaimer{max-width:270px;font-size:10px;line-height:1.6;color:#7f98ac;text-align:right;overflow-wrap:anywhere}
 .arc-hero-art img{transform:none}
+
+/* Keep the expanded service navigation clear on tablet and small laptop widths. */
+@media (min-width:901px) and (max-width:1200px){.arc-header>nav{display:none}.arc-header .mobile-nav{display:flex;align-items:center;gap:6px;margin-left:auto}}

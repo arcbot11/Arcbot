@@ -79,7 +79,13 @@ export type FeeReport = {
   signals: { unprocessedFees: boolean | null; creatorFeesOwed: boolean | null };
   execution: { enabled: false; reason: "report_only" };
   usdValuation: null;
-  history: null;
+  // Gross fees earned since launch, counted once at accrual; never claims + balances.
+  lifetimeFeesEarned: {
+    amounts: Amount[];
+    fromBlock: string;
+    throughBlock: string;
+    source: "verified_counter" | "indexed_fee_events";
+  } | null;
   warnings: string[];
 };
 export function emptyReport(input: FeeReportInput): FeeReport {
@@ -103,9 +109,9 @@ export function emptyReport(input: FeeReportInput): FeeReport {
     signals: { unprocessedFees: null, creatorFeesOwed: null },
     execution: { enabled: false, reason: "report_only" },
     usdValuation: null,
-    history: null,
+    lifetimeFeesEarned: null,
     warnings: [
-      "Amounts use each asset's own units; no USD valuation or historical aggregation is supplied.",
+      "Amounts use each asset's own units; no USD valuation is supplied. Lifetime fees are unavailable until verified lifetime accounting is implemented.",
       "Balances, accounted claims and reserved liquidity overlap; do not sum them as total fees.",
       "Positive balances are observations, not proof that a crank or claim will succeed.",
     ],

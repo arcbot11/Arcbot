@@ -11,7 +11,7 @@ describe("Telegram command-only interface", () => {
     expect(telegramInput("/export",true)).toBeNull();expect(telegramInput("/exportkey")).toBeNull();
     expect(JSON.stringify(telegramMenu({native:{},link:{},selected:"tg"}))).not.toMatch(/export/i);
   });
-  it.each(["hello", "buy 10 ARGOS", "resume", "10 USDC ARGOS", "guide:buy", "/fees", "/positions", "/launch", "/cancel", "/buyandsend", "/buyandburn"])("rejects chat and retired actions: %s", text => expect(telegramInput(text)).toBeNull());
+  it.each(["hello", "buy 10 ARGOS", "resume", "10 USDC ARGOS", "guide:buy", "/positions", "/launch", "/cancel", "/buyandsend", "/buyandburn"])("rejects chat and retired actions: %s", text => expect(telegramInput(text)).toBeNull());
   it("checks command addressing and callback payloads", () => {
     expect(telegramInput("/wallet@TheArgosBot", false, "TheArgosBot")?.name).toBe("wallet");
     expect(telegramInput("/wallet@other", false, "TheArgosBot")).toBeNull();
@@ -34,13 +34,15 @@ describe("Telegram command-only interface", () => {
     ["send", `$10 ARGOS to ${address}`, {kind:"send",unit:"usd",amount:"10"}],
     ["wallet", "", {kind:"show_wallet"}],
     ["balance", "USDC", {kind:"show_balance",token:"USDC"}],
+    ["fees", "ARGOS", {kind:"check_fees",token:"ARGOS"}],
+    ["claim", "ARGOS", {kind:"claim_fees",token:"ARGOS"}],
   ] as const)("parses /%s %s without AI", (name,args,expected) => {const command=telegramWalletCommand(name,args);expect(command).toMatchObject(expected);expect(validateStructuredWalletCommand(command)).toMatchObject(expected);});
   it.each([
     ["buyandsend", `10 USDC ARGOS to ${address}`], ["buyandburn", "10 USDC ARGOS"],
     ["buy", "10 ETH ARGOS"], ["buy", "10 USDC ARGOS then sell all"], ["buy", "-1 USDC ARGOS"],
     ["sell", "101% ARGOS"], ["sell", "$all ARGOS"], ["send", "10 USDC to @alice"],
     ["swap", "101% ARGOS for TOKEN"], ["burn", "101% ARGOS"],
-    ["fees", "ARGOS"], ["wallet", "another person's wallet"],
+    ["wallet", "another person's wallet"],
   ])("rejects unsupported or incomplete /%s %s", (name,args) => expect(telegramWalletCommand(name,args)).toBeNull());
   it("has no retired feature buttons and every action button has a format", () => {
     for (const button of TELEGRAM_MENU.inline_keyboard.flat()) expect(telegramInput(button.callback_data,true)).not.toBeNull();

@@ -70,7 +70,7 @@ export type Transaction = { kind: "transaction"; id: string; owner: string; wall
   swapOutput?: {token:string;minimum:string;recipient?:string;inputToken?:string;inputAmount?:string};
   launchStep?: import("../launches/execution-types").LaunchStepTerms;
   bridgeStep?: import("../bridge/contracts").Prepared;
-  creatorClaim?: {token:string;splitter:string;portal8?:import("../launches/portal8-claims").Portal8Claim;reward?:import("../launches/reward-call").RewardTerms};
+  creatorClaim?: {token:string;splitter:string;portal8?:import("../launches/portal8-claims").Portal8Claim;reward?:import("../launches/reward-call").RewardTerms;sponsored?:import("../fee-report/jobs").SponsoredFeeTerms};
   settlement?: {launch?:import("../launches/execution-types").VerifiedLaunch;gasWei:string;output?:{raw:string;decimals?:number};claims?:Array<{token:string;raw:string}>};
   /** Read-only observation; not a settled transaction or permission to release holds. */
   confirmation?: {status:"success"|"reverted";blockNumber:string};
@@ -79,7 +79,7 @@ export type Transaction = { kind: "transaction"; id: string; owner: string; wall
   unsigned: string; raw?: string; hash?: string; blockNumber?: string; note?: string; createdAt: number; updatedAt: number };
 export type HolderCursor = {kind:"holder_cursor";id:string;owner:string;token:string;offset:number;revision:number;activeTx?:string;nextOffset?:number;updatedAt:number};
 export type RewardRequestFence={kind:"reward_request_fence";id:string;owner:string;wallet:string;updatedAt:number};
-export type RecordValue = Listing | Order | Wallet | Transaction | HolderCursor | RewardRequestFence;
+export type RecordValue = Listing | Order | Wallet | Transaction | HolderCursor | RewardRequestFence | import("../fee-report/jobs").FeeJob | import("../fee-report/jobs").FeeControl;
 export interface Store {
   get<T extends RecordValue>(id: string): Promise<T | null>;
   put(record: RecordValue): Promise<void>;

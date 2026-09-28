@@ -1,4 +1,5 @@
 import { isAddress, parseUnits, zeroAddress } from "viem";
+import { X402_REVENUE_WALLET } from "../x402-revenue";
 export const SERVICE_NAME = "Argos Bot CTS Bridge Lookup";
 export const DESCRIPTION =
   "Look up any Arc or Base token’s ownerless bridge using Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Get original and wrapped token addresses, wrapped supply, contracts and verification status.";
@@ -12,7 +13,7 @@ export const PROPOSED_PRICE = "0.005";
 export const LOOKUP_PAYMENTS_ENABLED = true;
 export function apiConfig(rail: "gateway" | "direct" = "gateway") {
   const price = rail === "direct" ? DIRECT_PRICE : PROPOSED_PRICE;
-  const payTo = "0x60E4834783dA4D4D7ad1C81fc48221840192152C";
+  const payTo: string = X402_REVENUE_WALLET;
   const origin = "https://www.argosbot.io";
   if (
     !/^\d+(\.\d{1,6})?$/.test(price) ||
