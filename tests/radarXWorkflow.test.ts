@@ -2,7 +2,7 @@ import { afterEach, expect, it, vi } from "vitest";
 import { getFunctionName } from "convex/server";
 import { retryInteraction } from "../convex/xReplies";
 import { admitRadarScan } from "../convex/xFloodProtection";
-afterEach(() => { vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
+afterEach(() => { vi.useRealTimers(); vi.unstubAllEnvs(); vi.unstubAllGlobals(); });
 it("routes a real X handler through lookup and publication with zero wallet actions", async () => {
   vi.stubEnv("X_REPLIES_ENABLED", "true"); vi.stubEnv("X_STANDALONE_MENTIONS_ENABLED", "false"); vi.stubEnv("ARCDDICTED_API_KEY", "test-only");
   const address = "0xc162b1e2fa18d3b5d6064d01d55cedb1638da826";
@@ -31,6 +31,7 @@ it("routes a real X handler through lookup and publication with zero wallet acti
   expect(fetch).toHaveBeenCalledTimes(1);
 });
 it("bounds provider calls per user and globally, and reuses retry admission", async () => {
+  vi.useFakeTimers(); vi.setSystemTime(new Date("2026-09-28T16:00:00Z"));
   const rows: any[] = [];
   const ctx = { db: {
     query: () => { let key: string; const q = { withIndex: (_: string, f: any) => { f({ eq: (_: string, v: string) => { key = v; } }); return q; }, unique: async () => rows.find(r => r.key === key) }; return q; },
@@ -38,9 +39,18 @@ it("bounds provider calls per user and globally, and reuses retry admission", as
     patch: async (id: number, changes: any) => { Object.assign(rows[id], changes); },
   } };
   const invoke = (postId: string, authorXUserId: string) => (admitRadarScan as any)._handler(ctx, { postId, authorXUserId });
-  for (let n = 0; n < 5; n++) expect(await invoke(String(n), "one")).toBe(true);
   expect(await invoke("0", "one")).toBe(true);
-  expect(await invoke("sixth", "one")).toBe(false);
-  for (let n = 5; n < 60; n++) expect(await invoke(String(n), `user${n}`)).toBe(true);
-  expect(await invoke("61", "new-user")).toBe(false);
+  expect(await invoke("0", "one")).toBe(true);
+  expect(await invoke("second", "one")).toBe(false);
+  vi.advanceTimersByTime(59_999);
+  expect(await invoke("second", "one")).toBe(false);
+  vi.advanceTimersByTime(1);
+  expect(await invoke("second", "one")).toBe(true);
+  for (let n = 2; n < 100; n++) expect(await invoke(String(n), `user${n}`)).toBe(true);
+  expect(await invoke("101", "new-user")).toBe(false);
+  vi.advanceTimersByTime(3_539_999);
+  expect(await invoke("101", "new-user")).toBe(false);
+  vi.advanceTimersByTime(1);
+  expect(await invoke("101", "new-user")).toBe(true);
+  expect(await invoke("102", "another-user")).toBe(false);
 });

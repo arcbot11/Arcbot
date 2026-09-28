@@ -5,6 +5,7 @@ import additions from "../docs/research/argus-index-additions-2026-09-14.json";
 import refresh from "../docs/research/argus-index-additions-2026-09-16.json";
 import latest from "../docs/research/arc-index-additions-2026-09-16-afternoon.json";
 import dynamicRefresh from "../docs/research/argus-index-additions-2026-09-23.json";
+import currentRefresh from "../docs/research/argus-index-additions-2026-09-28.json";
 import excluded from "../lib/arc/excluded-catalog-addresses.json";
 import { RETIRED_TOKEN_ADDRESSES } from "../lib/token-index-exclusions";
 import { seedArcTokenCatalog, refreshCatalogBatch } from "../convex/arcTokenCatalog";
@@ -12,9 +13,9 @@ import type { MutationCtx } from "../convex/_generated/server";
 
 describe("Arc snapshot index selection", () => {
   it("keeps the refreshed unique tickers and Argus launches, with no retired addresses", () => {
-    expect(ARC_TOKEN_CATALOG).toHaveLength(dynamicRefresh.catalogCount);
-    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol.normalize("NFKC").toUpperCase())).size).toBe(dynamicRefresh.catalogCount);
-    expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(dynamicRefresh.argusCount);
+    expect(ARC_TOKEN_CATALOG).toHaveLength(currentRefresh.catalogCount);
+    expect(new Set(ARC_TOKEN_CATALOG.map(t => t.symbol.normalize("NFKC").toUpperCase())).size).toBe(currentRefresh.catalogCount);
+    expect(ARC_TOKEN_CATALOG.filter(t => t.argus)).toHaveLength(currentRefresh.argusCount);
     for (const t of ARC_TOKEN_CATALOG) {
       expect(t.chainId).toBe(5042);
       expect(Number.isInteger(t.decimals)).toBe(true);
@@ -129,7 +130,7 @@ describe("Arc snapshot index selection", () => {
     } } as unknown as MutationCtx;
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
     expect(await seedArcTokenCatalog(ctx)).toEqual({ complete: true });
-    expect(tables.tokenRegistry).toHaveLength(dynamicRefresh.catalogCount);
+    expect(tables.tokenRegistry).toHaveLength(currentRefresh.catalogCount);
     expect(tables.walletTokenIndex).toEqual([]);
     expect(tables.walletTransactions).toHaveLength(1);
     for (const token of tables.tokenRegistry) expect(token).toMatchObject({ chainId: 5042, active: true, pairCandidate: false, pairApproved: false });
@@ -140,13 +141,13 @@ describe("Arc snapshot index selection", () => {
     expect(await refreshCatalogBatch(ctx, 0)).toEqual({ complete: false, nextOffset: 0 });
     expect(tables.walletTokenIndex).toHaveLength(10);
     let cursor = 0, complete = false;
-    for (let attempt = 0; attempt < 100 && !complete; attempt++) {
+    for (let attempt = 0; attempt < Math.ceil((excluded.length + ARC_TOKEN_CATALOG.length) / 25) + 5 && !complete; attempt++) {
       const batch = await refreshCatalogBatch(ctx, cursor);
       expect(batch.nextOffset - cursor).toBeLessThanOrEqual(25);
       cursor = batch.nextOffset; complete = batch.complete;
     }
     expect(complete).toBe(true);
-    expect(tables.tokenRegistry).toHaveLength(dynamicRefresh.catalogCount);
+    expect(tables.tokenRegistry).toHaveLength(currentRefresh.catalogCount);
     expect(tables.walletTokenIndex).toEqual([]);
     expect(tables.walletTransactions).toHaveLength(1);
   });

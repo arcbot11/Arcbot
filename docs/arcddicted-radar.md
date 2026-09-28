@@ -10,6 +10,8 @@ Replies include creator prior launches, prior launches in 24 hours, previous nam
 
 Live read-only checks: supplied CMC example returned 200 with history; ARGUS returned 404 (not indexed by Radar). No wallet access, payments, or public X posts were used in development. Mock tests cover identity mismatches, injection content, request boundaries, input routing, missing fields, rate limits, and failures. Publishing remains through the existing durable X reply queue.
 
-Provider admission is atomic: five requests per user per ten minutes and 60 globally per minute. Retries reuse the same post admission. These limits are independent of the outgoing X publication queue.
+Provider admission is atomic: one scan per user per rolling minute and 100 globally per rolling hour. Retries reuse the same post admission. These limits are independent of the outgoing X publication queue.
 
 Validation: 36 new mocked tests and TypeScript passed. The real client also rendered the supplied CMC report successfully; invalid-address and missing-key probes returned 400 and 401. The wider X flood/publication suite has 21 existing failures, reproduced with Radar routing disabled. No public X post or deployment was performed.
+
+2026-09-28 follow-up: live partner calls for ARGUS, ARGOS, ARCDD (contract from ARCddicted's own frontend), and Arc native USDC ERC-20 interface all returned 404. The CMC control still returned 200. Do not imply complete Argus or Arc coverage. ARCDD was absent from the current bot catalog; the direct-address check does not add its ticker to the index.

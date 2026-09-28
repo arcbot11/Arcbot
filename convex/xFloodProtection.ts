@@ -93,8 +93,8 @@ export const admitRadarScan = internalMutation({
   handler: async (ctx, args) => {
     const now = Date.now();
     const plans = [
-      { key: `radar:user:${args.authorXUserId}`, window: 600_000, limit: 5 },
-      { key: "radar:global", window: 60_000, limit: 60 },
+      { key: `radar:user:${args.authorXUserId}`, window: 60_000, limit: 1 },
+      { key: "radar:global", window: 3_600_000, limit: 100 },
     ];
     const updates = [];
     for (const plan of plans) {

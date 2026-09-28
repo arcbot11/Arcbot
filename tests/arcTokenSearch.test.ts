@@ -11,6 +11,15 @@ it("pins ARGOS first while preserving exact ticker matches", () => {
 it("matches ticker case-insensitively with an optional dollar prefix", () => {
   expect(searchArcTokens(ARC_TOKEN_CATALOG, "$tolly")[0].symbol).toBe("TOLLY");
 });
+it("resolves the requested ARCDD and ARGOS identities by ticker and address", () => {
+  for (const [symbol, address] of [
+    ["ARCDD", "0x8dc7b0ade2c3224874d413e0de86757d0fcd4038"],
+    ["ARGOS", "0xe86688530c456e099732f953ed7aa7c583026680"],
+  ]) {
+    expect(searchArcTokens(ARC_TOKEN_CATALOG, `$${symbol.toLowerCase()}`)[0].address).toBe(address);
+    expect(searchArcTokens(ARC_TOKEN_CATALOG, address)[0].symbol).toBe(symbol);
+  }
+});
 it("matches token names and contract addresses", () => {
   const token=ARC_TOKEN_CATALOG.find(t=>t.symbol==="TOLLY")!;
   expect(searchArcTokens(ARC_TOKEN_CATALOG,token.name).some(t=>t.address===token.address)).toBe(true);
