@@ -86,6 +86,34 @@ export const guardQueued = internalMutation({
   },
 });
 
+// Separate provider-call budgets; outgoing X queue limits alone do not bound
+// API traffic. Atomic across workers, and a retry reuses its original slot.
+export const admitRadarScan = internalMutation({
+  args: { postId: v.string(), authorXUserId: v.string() },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const plans = [
+      { key: `radar:user:${args.authorXUserId}`, window: 600_000, limit: 5 },
+      { key: "radar:global", window: 60_000, limit: 60 },
+    ];
+    const updates = [];
+    for (const plan of plans) {
+      const row = await ctx.db.query("xWalletLookupBudgets").withIndex("by_key", q => q.eq("key", plan.key)).unique();
+      const slots = (row?.slots ?? []).filter(s => s.at > now - plan.window);
+      if (!slots.some(s => s.postId === args.postId)) {
+        if (slots.length >= plan.limit) return false;
+        slots.push({ postId: args.postId, owner: args.authorXUserId, at: now });
+      }
+      updates.push({ row, key: plan.key, slots });
+    }
+    for (const { row, key, slots } of updates) {
+      if (row) await ctx.db.patch(row._id, { slots, updatedAt: now });
+      else await ctx.db.insert("xWalletLookupBudgets", { key, slots, updatedAt: now });
+    }
+    return true;
+  },
+});
+
 // Admit obvious read-only requests BEFORE their author profiles are fetched.
 // Reserve the same admission slot guardQueued will reuse, but do not create an
 // executable interaction until profile lookup succeeds. A failed X lookup can

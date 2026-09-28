@@ -1,4 +1,5 @@
 import { xReplyBudgetScale } from "./x-budget-scale";
+import { radarScanRequest } from "./radar-scan";
 export const X_WALLET_LOOKUP_WINDOW_MS = 5 * 60_000;
 export const X_WALLET_LOOKUP_LIMIT = 10;
 export const X_WALLET_LOOKUP_MIN_GAP_MS = 60_000;
@@ -48,6 +49,7 @@ export function isWalletLookupInteraction(item: { text: string; parsedIntentJson
 // Only obvious, whole-message questions are admitted before AI. A sentence
 // containing a real transaction must reach intent parsing, not a read-only gate.
 export function readOnlyReplyCategory(item: Interaction): ReadOnlyReplyCategory | undefined {
+  if (!item.parsedIntentJson && radarScanRequest(item.text)) return "information";
   if (item.parsedIntentJson) {
     try {
       const parsed = JSON.parse(item.parsedIntentJson);
@@ -74,7 +76,7 @@ export function readOnlyReplyCategory(item: Interaction): ReadOnlyReplyCategory 
 function commandCategory(kind?: string): ReadOnlyReplyCategory | undefined {
   if (kind === "show_wallet" || kind === "create_wallet") return "wallet";
   if (kind === "show_balance") return "balance";
-  if (kind === "help") return "information";
+  if (kind === "help" || kind === "token_scan") return "information";
   return undefined;
 }
 

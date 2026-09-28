@@ -8,6 +8,7 @@ import { isXBotAuthor, xBotUserId } from "../lib/x-bot-identity";
 import { socialAddressLinks } from "../lib/social-address-links";
 import {ARC_WALLET_PENDING,arcPendingRetryDelay} from "../lib/arc/social-timing";
 import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
+import { radarScanRequest, radarReply, RADAR_ATTRIBUTION } from "../lib/radar-scan";
 import { retiredFeatureEnabled } from "../lib/retired-features";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 
@@ -1638,6 +1639,19 @@ export const retryInteraction = internalAction({
       commandKind: current.interaction.commandKind,
     });
     try {
+      // X-only read-only routing precedes AI/wallet provisioning. Partner data
+      // can only become a templated reply, never an executable command.
+      const scan = !current.interaction.parsedIntentJson && !ambiguousTokenIntent ? radarScanRequest(directText) : undefined;
+      if (scan) {
+        await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "processing", commandKind: "token_scan" });
+        const admitted = await ctx.runMutation(internal.xFloodProtection.admitRadarScan, { postId, authorXUserId: current.user.xUserId });
+        const message = admitted
+          ? await radarReply(scan, identifier => ctx.runQuery(internal.wallets.resolveKnownToken, { identifier }), process.env.ARCDDICTED_API_KEY)
+          : `Scan limit reached. Please try again later.\n${RADAR_ATTRIBUTION}`;
+        const responsePostId = await publishReplyOnce(ctx, message, postId, undefined, true, { ok: true, kind: "reply" });
+        await ctx.runMutation(internal.xReplies.updateInteraction, { postId, status: "completed", commandKind: "token_scan", responsePostId });
+        return;
+      }
       let workflowText = directText;
       const contextualBuy = !current.interaction.parsedIntentJson ? parseContextualBuy(directText) : undefined;
       let contextualBuyIntent: XWalletIntent | undefined;
@@ -2401,6 +2415,7 @@ export function includedReplyDepth(
 
 export function shouldHandlePassiveChainText(text: string) {
   const direct = directPostCommandText(text);
+  if (radarScanRequest(direct)) return true;
   if (parseContextualBuy(direct)) return true;
 
   // A carried bare "wallet" mention is ambiguous chatter, not a self-wallet
