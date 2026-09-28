@@ -167,3 +167,39 @@ it.each([false, true])(
     expect(factory).not.toHaveBeenCalled();
   },
 );
+
+it("limits Arcus payment tags on challenges, verification and settlement without changing authorization", async () => {
+  const forwarded: Array<{ paymentPayload: unknown; paymentRequirements: unknown }> = [];
+  vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+    if (String(url).endsWith("/supported")) return Response.json({
+      kinds: [{ x402Version: 2, scheme: "exact", network: "eip155:5042" }],
+      extensions: [], signers: {},
+    });
+    const body = JSON.parse(String(init?.body));
+    forwarded.push(body);
+    if (body.paymentPayload.resource.tags.length > 5)
+      return Response.json({ isValid: false, invalidReason: "malformed_request" }, { status: 400 });
+    return Response.json(String(url).endsWith("/verify")
+      ? { isValid: true, payer: token }
+      : { success: true, payer: token, network: "eip155:5042", transaction: "0x" + "33".repeat(32) });
+  }));
+  const gateway = await arcusGateway();
+  const challenge = await gateway.challenge(ORIGIN + "/v1/lookup");
+  expect(challenge.resource?.tags).toEqual(["bridge", "arc", "base", "circle", "cts"]);
+  const proof = {
+    x402Version: 2,
+    accepted: challenge.accepts[0],
+    resource: { ...challenge.resource!, tags: ["blockchain", "bridge", "cross-chain", "tokens", "arc", "base", "circle", "cts"] },
+    payload: { signature: "0x11", authorization: { from: token, to: challenge.accepts[0].payTo, value: "7000", nonce: "0x" + "22".repeat(32), validAfter: "0", validBefore: "9999999999" } },
+  };
+  const before = structuredClone(proof);
+  const requirement = await gateway.verify(proof);
+  expect(requirement).not.toBeNull();
+  expect((await gateway.settle(proof, requirement!)).success).toBe(true);
+  expect(proof).toEqual(before);
+  expect(forwarded).toHaveLength(2);
+  for (const body of forwarded) {
+    expect(body.paymentRequirements).toEqual(proof.accepted);
+    expect(body.paymentPayload).toEqual({ ...proof, resource: { ...proof.resource, tags: proof.resource.tags.slice(0, 5) } });
+  }
+});

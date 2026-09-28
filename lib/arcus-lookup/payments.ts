@@ -3,8 +3,19 @@ import { SERVICE_ICON_URL } from "../service-brand";
 import { ExactEvmScheme } from "@x402/evm/exact/server";
 import type { PaymentGateway } from "../bridge-api/payments";
 import { DESCRIPTION, SERVICE_NAME } from "../bridge-api/config";
-import { lookupExtensions, LOOKUP_TAGS } from "../bridge-api/metadata";
+import { lookupExtensions } from "../bridge-api/metadata";
 import { arcusConfig, FACILITATOR } from "./config";
+
+// Arcus accepts at most five resource tags. These are discovery metadata,
+// not fields in the signed EIP-3009 authorization.
+const PAYMENT_TAGS = ["bridge", "arc", "base", "circle", "cts"];
+function facilitatorPayload(payload: Parameters<PaymentGateway["verify"]>[0]) {
+  const resource = payload.resource;
+  const tags = resource?.tags;
+  if (!resource || !Array.isArray(tags) || tags.length <= 5) return payload;
+  // Also accept clients echoing a challenge issued before the tag-limit fix.
+  return { ...payload, resource: { ...resource, tags: tags.slice(0, 5) } };
+}
 
 export async function arcusGateway(): Promise<PaymentGateway> {
   const config = arcusConfig();
@@ -33,7 +44,7 @@ export async function arcusGateway(): Promise<PaymentGateway> {
           mimeType: "application/json",
           serviceName: SERVICE_NAME,
           iconUrl: SERVICE_ICON_URL,
-          tags: LOOKUP_TAGS,
+          tags: PAYMENT_TAGS,
         },
         undefined,
         lookupExtensions(),
@@ -47,11 +58,11 @@ export async function arcusGateway(): Promise<PaymentGateway> {
         return null;
       const matched = server.findMatchingRequirements(requirements, payload);
       if (!matched) return null;
-      const result = await server.verifyPayment(payload, matched);
+      const result = await server.verifyPayment(facilitatorPayload(payload), matched);
       return result.isValid && !result.skipHandler ? matched : null;
     },
     settle: (payload, requirement) =>
-      server.settlePayment(payload, requirement),
+      server.settlePayment(facilitatorPayload(payload), requirement),
     // Exact EIP-3009 verification does not reserve or transfer funds.
     cancel: async () => {},
   };
