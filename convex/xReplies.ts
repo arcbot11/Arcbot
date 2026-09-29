@@ -8,7 +8,7 @@ import { isXBotAuthor, xBotUserId } from "../lib/x-bot-identity";
 import { socialAddressLinks } from "../lib/social-address-links";
 import {ARC_WALLET_PENDING,arcPendingRetryDelay} from "../lib/arc/social-timing";
 import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
-import { radarScanRequest, radarReply, RADAR_ATTRIBUTION, RADAR_CA_PROMPT } from "../lib/radar-scan";
+import { authorizedRadarContinuation, radarScanRequest, radarReply, RADAR_ATTRIBUTION, RADAR_CA_PROMPT } from "../lib/radar-scan";
 import { retiredFeatureEnabled } from "../lib/retired-features";
 import { disabledCreationRequest, disabledCreationKind } from "../lib/disabled-creation";
 
@@ -729,7 +729,11 @@ export const reserveInteraction = internalMutation({
     guidedHelpStateJson: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    if(isXBotAuthor(args.authorXUserId)||!explicitReplyRequest(args.text,args.parentPostId))return false;
+    const parent = args.parentPostId && !args.parsedIntentJson && buyTargetContractReply(directPostCommandText(args.text))
+      ? await ctx.db.query("xReplyInteractions").withIndex("by_response_post_id", q => q.eq("responsePostId", args.parentPostId)).unique() : null;
+    const radarContinuationAuthorized = !!parent && parent.authorXUserId === args.authorXUserId
+      && parent.commandKind === "token_scan_ca" && parent.updatedAt > Date.now() - 10 * 60_000;
+    if(isXBotAuthor(args.authorXUserId)||(!explicitReplyRequest(args.text,args.parentPostId) && !radarContinuationAuthorized))return false;
     const existing = await ctx.db
       .query("xReplyInteractions")
       .withIndex("by_post_id", (q) => q.eq("postId", args.postId))
@@ -739,6 +743,7 @@ export const reserveInteraction = internalMutation({
     await ctx.db.insert("xReplyInteractions", {
       ...args,
       status: "received",
+      ...(radarContinuationAuthorized ? { radarContinuationAuthorized: true } : {}),
       createdAt: now,
       updatedAt: now,
     });
@@ -978,7 +983,7 @@ export const beginReplyPublication = internalMutation({
       .query("xReplyInteractions")
       .withIndex("by_post_id", (q) => q.eq("postId", postId))
       .unique();
-    if (!interaction || !explicitReplyRequest(interaction.text,interaction.parentPostId) || isXBotAuthor(interaction.authorXUserId) || interaction.commandKind === "operator_cancelled")
+    if (!interaction || (!explicitReplyRequest(interaction.text,interaction.parentPostId) && !authorizedRadarContinuation(interaction)) || isXBotAuthor(interaction.authorXUserId) || interaction.commandKind === "operator_cancelled")
       return { reserved: false, waitMs: 0 };
     if (interaction.replySuppressedReason)
       return { reserved: false, waitMs: 0, suppressedReason: interaction.replySuppressedReason };
@@ -1501,7 +1506,7 @@ export const retryInteraction = internalAction({
     });
     if (
       !current?.user ||
-      !explicitReplyRequest(current.interaction.text,current.interaction.parentPostId) ||
+      (!explicitReplyRequest(current.interaction.text,current.interaction.parentPostId) && !authorizedRadarContinuation(current.interaction)) ||
       isXBotAuthor(current.interaction.authorXUserId,current.user.username) ||
       current.interaction.publicationQueued ||
       ["completed", "rejected", "publishing"].includes(
@@ -1602,8 +1607,8 @@ export const retryInteraction = internalAction({
         suppliedContract,
       );
     }
-    const radarCaReply = !current.interaction.parsedIntentJson && !ambiguousTokenIntent && suppliedContract && current.interaction.parentPostId
-      ? await ctx.runQuery(internal.xFloodProtection.radarClarification, { parentPostId: current.interaction.parentPostId, owner: current.user.xUserId }) : false;
+    const radarCaReply = authorizedRadarContinuation(current.interaction) || (!current.interaction.parsedIntentJson && !ambiguousTokenIntent && suppliedContract && current.interaction.parentPostId
+      ? await ctx.runQuery(internal.xFloodProtection.radarClarification, { parentPostId: current.interaction.parentPostId, owner: current.user.xUserId }) : false);
     if (
       isPassiveBotChainReply(
         current.interaction.text,
@@ -2623,7 +2628,10 @@ export const pollMentions = internalAction({
 
       for (const { mention } of prioritized) {
         if (!/^\d+$/.test(mention.author_id) || isXBotAuthor(mention.author_id)) continue;
-        if (!explicitReplyRequest(mention.text,mention.referenced_tweets?.find(r=>r.type==="replied_to")?.id)) continue;
+        const radarParentId = mention.referenced_tweets?.find(r => r.type === "replied_to")?.id;
+        const acceptedRadarReply = !!radarParentId && !!buyTargetContractReply(directPostCommandText(mention.text))
+          && await ctx.runQuery(internal.xFloodProtection.radarClarification, { parentPostId: radarParentId, owner: mention.author_id });
+        if (!explicitReplyRequest(mention.text,radarParentId) && !acceptedRadarReply) continue;
         // This guard runs before persistence, wallet provisioning, parsing, AI,
         // transaction execution, or reply publication. Parent/thread text is
         // never considered: `mention.text` is the direct post's text from X.
@@ -2694,8 +2702,7 @@ export const pollMentions = internalAction({
           directText,
           mention.referenced_tweets,
         );
-        const radarContinuation = !!parentPostId && !!buyTargetContractReply(directPostCommandText(directText))
-          && await ctx.runQuery(internal.xFloodProtection.radarClarification, { parentPostId, owner: mention.author_id });
+        const radarContinuation = acceptedRadarReply;
         const workflowAdmission = ambiguousTokenContinuation
           ? await ctx.runMutation(internal.xReplies.admitWorkflowContinuation, {
               ownerXUserId: mention.author_id || "", postId: mention.id,

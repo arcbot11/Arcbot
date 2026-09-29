@@ -32,18 +32,18 @@ it("routes a real X handler through lookup and publication with zero wallet acti
   expect(queued?.[1]).toMatchObject({ allowLong: true, text: expect.stringContaining("Powered by ARCddicted Radar") });
   expect(fetch).toHaveBeenCalledTimes(1);
 });
-it.each(['busy','cached','retry','exhausted','mixed','ambiguous','ca-reply','ca-label','ca-natural'])('handles %s without wallet work',async scenario=>{
+it.each(['busy','cached','retry','exhausted','mixed','ambiguous','ca-reply','ca-label','ca-natural','ca-untagged'])('handles %s without wallet work',async scenario=>{
  vi.stubEnv('X_REPLIES_ENABLED','true');vi.stubEnv('X_STANDALONE_MENTIONS_ENABLED','false');vi.stubEnv('ARCDDICTED_API_KEY','test-only');
  const address='0xc162b1e2fa18d3b5d6064d01d55cedb1638da826';
  const caReply=scenario.startsWith('ca-');
- const text=scenario==='mixed'?'@TheArgosBot check $CMC and ARGUS':caReply?`@TheArgosBot ${scenario==='ca-label'?'CA: ':scenario==='ca-natural'?'here is the contract ':''}${address}`:'@TheArgosBot check CMC';
+ const text=scenario==='mixed'?'@TheArgosBot check $CMC and ARGUS':caReply?`${scenario==='ca-untagged'?'':'@TheArgosBot '}${scenario==='ca-label'?'CA: ':scenario==='ca-natural'?'here is the contract ':''}${address}`:'@TheArgosBot check CMC';
  const fetcher=vi.fn().mockResolvedValue(new Response(JSON.stringify({ok:true,token:{address,symbol:'CMC'}}),{status:scenario==='retry'||scenario==='exhausted'?503:200,headers:{'content-type':'application/json'}}));
  vi.stubGlobal('fetch',fetcher);
  const ctx={scheduler:{runAfter:vi.fn()},runAction:vi.fn(()=>{throw Error('No wallet actions');}),
  runQuery:vi.fn(async(ref:never)=>{const name=getFunctionName(ref);
-  if(name==='xReplies:getRetryContext')return {user:{xUserId:'human',username:'human'},interaction:{text,status:'received',authorXUserId:'human',createdAt:Date.now(),...(caReply?{parentPostId:'parent'}:{})}};
+  if(name==='xReplies:getRetryContext')return {user:{xUserId:'human',username:'human'},interaction:{text,status:'received',authorXUserId:'human',createdAt:Date.now(),...(caReply?{parentPostId:'parent'}:{}),...(scenario==='ca-untagged'?{radarContinuationAuthorized:true}:{})}};
   if(name==='xReplies:ambiguousTokenReplyContext')return null;
-  if(name==='xFloodProtection:radarClarification')return true;
+  if(name==='xFloodProtection:radarClarification'){if(scenario==='ca-untagged')throw Error('Persisted continuation must not recheck expired prompt');return true;}
   if(name==='xFloodProtection:savedRadarResult')return scenario==='cached'?'saved report':null;
   if(name==='wallets:resolveKnownToken'){if(scenario==='ambiguous'||scenario==='cached')throw Error('ambiguous');return address;}
   throw Error(name);

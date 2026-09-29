@@ -30,3 +30,21 @@ describe("X Radar scans", () => {
   it('handles index miss without calling partner', async () => { const f = vi.fn(); expect(await radarReply({ token: "OTHER" }, async t => t, "key", f)).toContain("isn't in our index"); expect(f).not.toHaveBeenCalled(); });
   it('does not turn Radar misses into safety judgments', async () => expect(await radarReply({ token: address }, async t => t, "key", vi.fn().mockResolvedValue(response({}, 404)))).toContain("does not mean the token is safe or unsafe"));
 });
+
+it.each(['check $ARGUS on Arc','check $ARGUS on the Arc network','check ($ARGUS)'])('accepts chain labels and punctuation: %s',text=>expect(radarScanRequest(text)).toEqual({token:'$ARGUS'}));
+it('accepts a bare ticker that is also a filler word',()=>expect(radarScanRequest('check SAFE')).toEqual({token:'SAFE'}));
+it('still clarifies multiple tokens with a chain label',()=>expect(radarScanRequest('check $ARGUS and $ARGOS on Arc')).toEqual({}));
+
+it('formats provider dollar amounts without publishing social availability, links or handles',()=>{
+ const report=parseRadarReport({...data,token:{address,symbol:'CMC',devBuy:29.99547,website:'https://untrusted.example',twitter:'@external_account',telegram:null,socialCount:999}},address);
+ const text=formatRadarReport(report);
+ expect(text).toContain('Developer buy: $30.00');
+ expect(text).not.toContain('Social links provided');
+ expect(text).not.toMatch(/untrusted|external_account|999/);
+});
+it.each([undefined,null,-1,Infinity,NaN,'30',{},Number.MAX_SAFE_INTEGER+1])('does not invent a developer buy for invalid amount %s',devBuy=>{
+ expect(formatRadarReport(parseRadarReport({...data,token:{address,devBuy}},address))).toContain('Developer buy: unavailable');
+});
+it.each([[0,'$0.00'],[0.001,'<$0.01'],[1234.56,'$1,234.56']])('formats developer buy %s', (devBuy,expected)=>{
+ expect(formatRadarReport(parseRadarReport({...data,token:{address,devBuy}},address))).toContain('Developer buy: '+expected);
+});

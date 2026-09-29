@@ -1,3 +1,4 @@
+import { authorizedRadarContinuation } from "../lib/radar-scan";
 import { retiredXPrompt, xCommandReply } from "../lib/x-command-workflows";
 import { isXBotAuthor } from "../lib/x-bot-identity";
 import { explicitReplyRequest } from "../lib/x-passive-chain-policy";
@@ -82,7 +83,7 @@ export const enqueue = internalMutation({
     const interaction = args.postId ? await ctx.db.query("xReplyInteractions").withIndex("by_post_id", q => q.eq("postId", args.postId!)).unique() : null;
     if (retiredXPrompt(args.kind, interaction?.commandKind, interaction?.guidedHelpStateJson)) return { status: "cancelled" };
     if (isXBotAuthor(interaction?.authorXUserId) || disabledCreationKind(interaction?.commandKind)) return { status: "cancelled" };
-    if (args.postId && (!interaction || !explicitReplyRequest(interaction.text,interaction.parentPostId) || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) return { status: "cancelled" };
+    if (args.postId && (!interaction || (!explicitReplyRequest(interaction.text,interaction.parentPostId) && !authorizedRadarContinuation(interaction)) || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) return { status: "cancelled" };
     const prior = await ctx.db.query("xPublicationEvents").withIndex("by_post_id", q => q.eq("postId", args.key)).order("desc").first();
     if (prior?.status === "published") return { status: "published", responsePostId: prior.responsePostId };
     if (interaction?.responsePostId && args.key === args.postId) return { status: "published", responsePostId: interaction.responsePostId };
@@ -218,7 +219,7 @@ export const takeNext = internalMutation({
     }
 
     const interaction = row.postId ? await ctx.db.query("xReplyInteractions").withIndex("by_post_id", q => q.eq("postId", row!.postId!)).unique() : null;
-    if (row.postId && (!interaction || !explicitReplyRequest(interaction.text,interaction.parentPostId) || isXBotAuthor(interaction.authorXUserId,row.username) || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) {
+    if (row.postId && (!interaction || (!explicitReplyRequest(interaction.text,interaction.parentPostId) && !authorizedRadarContinuation(interaction)) || isXBotAuthor(interaction.authorXUserId,row.username) || interaction.commandKind === "operator_cancelled" || interaction.replySuppressedReason || interaction.walletLookupSuppressed)) {
       await ctx.db.patch(row._id, { status: "cancelled", updatedAt: now }); await settleBindings(ctx, row, "cancelled"); await wake(ctx, state); return null;
     }
     if (retiredXPrompt(row.kind, interaction?.commandKind, interaction?.guidedHelpStateJson) || disabledCreationKind(interaction?.commandKind)) {

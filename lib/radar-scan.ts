@@ -1,7 +1,16 @@
+import { buyTargetContractReply } from "./buy-target-policy";
+import { directPostCommandText } from "./x-direct-post-policy";
+
 // Read-only X feature. Never use partner strings as instructions or wallet inputs.
 const ADDRESS = /^0x[0-9a-f]{40}$/i;
 export const RADAR_ATTRIBUTION = "Powered by ARCddicted Radar https://arcddicted.com";
-export const RADAR_CA_PROMPT = "Which token should I scan? Reply with one full contract address (CA) and tag @TheArgosBot.";
+export const RADAR_CA_PROMPT = "Which token should I scan? Reply with one full contract address (CA).";
+
+// Proof is written only after checking the same-owner Radar parent at admission.
+export function authorizedRadarContinuation(item: { text: string; parentPostId?: string; parsedIntentJson?: string; radarContinuationAuthorized?: boolean }) {
+  return item.radarContinuationAuthorized === true && !!item.parentPostId && !item.parsedIntentJson
+    && !!buyTargetContractReply(directPostCommandText(item.text));
+}
 
 export function radarScanRequest(text: string): { token?: string } | undefined {
   const clean = text.replace(/^\s*(?:@[\w]+[\s,:]*)+/, "").replace(/[’‘]/g, "'").trim();
@@ -10,9 +19,13 @@ export function radarScanRequest(text: string): { token?: string } | undefined {
   if (!asks) return;
   // Mixed scan/trade requests get clarification, never fall through to a trade.
   if (/\b(?:buy|sell|send|transfer|swap|bridge|claim|burn|launch|deploy)\b/i.test(clean)) return {};
-  const addresses = clean.match(/0x[0-9a-z]+/ig) ?? [];
-  const cash = clean.match(/\$[a-z0-9_]{1,32}\b/ig) ?? [];
-  const words = clean.replace(/0x[0-9a-z]+|\$[a-z0-9_]{1,32}\b/ig, " ").replace(/[?!.,:;]/g, " ").split(/\s+/).filter(Boolean);
+  const input = clean.replace(/\bon\s+(?:the\s+)?arc(?:\s+(?:chain|network))?\b/ig, " ").replace(/[()\[\]\x60]/g, " ");
+  // A single bare ticker can also be an ordinary word (e.g. SAFE).
+  const simple = /^(?:please\s+)?(?:check|scan|review|research|inspect|analy[sz]e)\s+(?:token\s+)?(\$?[a-z0-9_]{1,32})[.!?]*\s*$/i.exec(input.trim());
+  if (simple && !simple[1].toLowerCase().startsWith("0x")) return { token: simple[1] };
+  const addresses = input.match(/0x[0-9a-z]+/ig) ?? [];
+  const cash = input.match(/\$[a-z0-9_]{1,32}\b/ig) ?? [];
+  const words = input.replace(/0x[0-9a-z]+|\$[a-z0-9_]{1,32}\b/ig, " ").replace(/[?!.,:;]/g, " ").split(/\s+/).filter(Boolean);
   const filler = new Set("hey hi hello please pls can could would you your me my a an the this that token coin project contract address ca ticker about on of for out into at and is it its any what do does think know tell give us some thoughts opinion check scan analyse analyze review research investigate inspect evaluate assess audit look legit safe scam rug red flags due diligence how looks looking thanks thank more information info report seems seem".split(" "));
   for (const word of ["deal", "with", "up", "what's", "what’s"]) filler.add(word);
   const candidates = [...addresses, ...cash, ...words.filter(w => !filler.has(w.toLowerCase()))];
@@ -23,19 +36,23 @@ export function radarScanRequest(text: string): { token?: string } | undefined {
 
 type Counts = { count?: number; creators?: number; sameCreator?: number; previousUses?: number };
 export type RadarReport = {
-  token: { address: string; symbol?: string };
+  token: { address: string; symbol?: string; devBuy?: number };
   creatorHistory: { previousLaunches?: number; previous24h?: number };
   tokenHistory: { name: Counts; symbol: Counts };
   socialHistory: { website: Counts; twitter: Counts; telegram: Counts };
 };
 const object = (v: unknown): Record<string, unknown> => v !== null && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : {};
 const number = (v: unknown) => typeof v === "number" && Number.isSafeInteger(v) && v >= 0 ? v : undefined;
+const amount = (v: unknown) => typeof v === "number" && Number.isFinite(v) && v >= 0 && v <= Number.MAX_SAFE_INTEGER ? v : undefined;
 function counts(v: unknown): Counts { const o = object(v); return { count: number(o.count), creators: number(o.creators), sameCreator: number(o.sameCreator), previousUses: number(o.previousUses) }; }
 export function parseRadarReport(value: unknown, address: string): RadarReport {
   const root = object(value), token = object(root.token), creator = object(root.creatorHistory), history = object(root.tokenHistory), social = object(root.socialHistory);
   if (root.ok !== true || typeof token.address !== "string" || token.address.toLowerCase() !== address.toLowerCase() || !ADDRESS.test(address)) throw new Error("RADAR_INVALID_RESPONSE");
   return {
-    token: { address: address.toLowerCase(), symbol: typeof token.symbol === "string" && /^[a-z0-9_]{1,20}$/i.test(token.symbol) ? token.symbol : undefined },
+    token: {
+      address: address.toLowerCase(), symbol: typeof token.symbol === "string" && /^[a-z0-9_]{1,20}$/i.test(token.symbol) ? token.symbol : undefined,
+      devBuy: amount(token.devBuy),
+    },
     creatorHistory: { previousLaunches: number(creator.previousLaunches), previous24h: number(creator.previous24h) },
     tokenHistory: { name: counts(history.name), symbol: counts(history.symbol) },
     socialHistory: { website: counts(social.website), twitter: counts(social.twitter), telegram: counts(social.telegram) },
@@ -72,14 +89,20 @@ export async function fetchRadarReport(address: string, key: string | undefined,
 
 export function formatRadarReport(r: RadarReport): string {
   const n = (v: number | undefined) => v === undefined ? "unavailable" : String(v);
+  // ARCddicted's own report UI displays devBuy in dollars (not token units).
+  const buy = r.token.devBuy;
+  const devBuy = buy === undefined ? "unavailable" : buy > 0 && buy < 0.01 ? "<$0.01"
+    : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(buy);
   return [
-    `Radar scan${r.token.symbol ? `: $${r.token.symbol}` : ""} (Arc)`, r.token.address,
+    `Radar scan${r.token.symbol ? `: $${r.token.symbol}` : ""} (Arc)`, r.token.address, "",
+    `Developer buy: ${devBuy}`, "",
     `Creator's prior launches: ${n(r.creatorHistory.previousLaunches)}; past 24h: ${n(r.creatorHistory.previous24h)}.`,
+    "",
     `Prior name uses: ${n(r.tokenHistory.name.previousUses)} across ${n(r.tokenHistory.name.creators)} creators.`,
     `Prior ticker uses: ${n(r.tokenHistory.symbol.previousUses)} across ${n(r.tokenHistory.symbol.creators)} creators.`,
-    `Prior social-link uses — website: ${n(r.socialHistory.website.count)}; X: ${n(r.socialHistory.twitter.count)}; Telegram: ${n(r.socialHistory.telegram.count)}.`,
-    "Radar database history, not a contract audit. Reuse alone doesn't establish fraud.",
-    `Full report: https://arcddicted.com/?token=${r.token.address}`, RADAR_ATTRIBUTION,
+    "", "Prior social-link uses",
+    `Website: ${n(r.socialHistory.website.count)} · X: ${n(r.socialHistory.twitter.count)} · Telegram: ${n(r.socialHistory.telegram.count)}`, "",
+    `Full report: https://arcddicted.com/?token=${r.token.address}`, "", RADAR_ATTRIBUTION,
   ].join("\n");
 }
 

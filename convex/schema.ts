@@ -147,6 +147,7 @@ export default defineSchema({
     ),
     nestedReply: v.optional(v.boolean()),
     botParentAuthorized: v.optional(v.boolean()),
+    radarContinuationAuthorized: v.optional(v.boolean()),
     parentPostId: v.optional(v.string()),
     replyDepth: v.optional(v.number()),
     recipientXUserId: v.optional(v.string()),

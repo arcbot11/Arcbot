@@ -502,3 +502,19 @@ describe("command-only X rollout", () => {
     expect((await take(ctx)).row.text).toContain("tag @TheArgosBot");
   });
 });
+
+it('admits an untagged same-owner Radar CA and publishes after prompt expiry', async()=>{
+ const ctx=fixture(), ca='0x'+'1'.repeat(40);
+ await source(ctx,'prompt','token_scan_ca',{authorXUserId:'human',responsePostId:'radar-parent'});
+ expect(await invoke(replies.reserveInteraction,ctx,{postId:'radar-ca',authorXUserId:'human',text:ca,parentPostId:'radar-parent'})).toBe(true);
+ const item=ctx.rows.xReplyInteractions.find((r:Row)=>r.postId==='radar-ca');
+ expect(item.radarContinuationAuthorized).toBe(true);
+ await ctx.db.patch(item._id,{status:'processing',commandKind:'token_scan'});
+ await ctx.db.patch(ctx.rows.xReplyInteractions[0]._id,{updatedAt:Date.now()-11*60_000});
+ expect(await invoke(queue.enqueue,ctx,{key:'radar-ca',postId:'radar-ca',text:'Radar scan\n\n'+'Report data '.repeat(40),kind:'reply',allowLong:true,ok:true})).toMatchObject({status:'queued'});
+ const job=await take(ctx);expect(job?.row.postId).toBe('radar-ca');expect(job?.row.allowLong).toBe(true);expect(job?.row.text).toContain('Report data '.repeat(40));
+});
+it.each(['wrong-owner','expired','trade','no-parent'])('rejects untagged Radar bypass: %s',async scenario=>{
+ const ctx=fixture();await source(ctx,'prompt','token_scan_ca',{authorXUserId:'human',responsePostId:'radar-parent',updatedAt:Date.now()-(scenario==='expired'?11*60_000:0)});
+ expect(await invoke(replies.reserveInteraction,ctx,{postId:'radar-ca',authorXUserId:scenario==='wrong-owner'?'other':'human',text:scenario==='trade'?'buy 10 ARGUS':'0x'+'1'.repeat(40),...(scenario==='no-parent'?{}:{parentPostId:'radar-parent'})})).toBe(false);
+});
