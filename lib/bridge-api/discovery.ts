@@ -101,6 +101,8 @@ function railOpenapi(rail: "gateway" | "direct") {
   return {
     openapi: "3.1.0",
     info: { title: SERVICE_NAME, version: "1.0.0", description: DESCRIPTION,
+      contact: { name: "@TheArgosBot", url: "https://x.com/TheArgosBot" },
+      "x-guidance": "GET a lookup endpoint with token=<ERC-20 address> and optional chain=arc|base. Handle its x402 challenge and retry the identical request with Payment-Signature. Payment network is independent of token chain. Missing bridges are valid results. Preserve the original payment proof for recovery; never create a second payment after uncertain settlement. Documentation: https://www.argosbot.io/developers/bridge-api",
       "x-logo": { url: SERVICE_ICON_URL, altText: "Argos Bot" } },
     ...(c.origin ? { servers: [{ url: c.origin }] } : {}),
     externalDocs: {

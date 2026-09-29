@@ -1,3 +1,4 @@
+import {authorizeFeeTransaction} from "../fee-report/authorize";
 import {assertBotBridge} from "../bridge/bot-call";
 import {assertLaunchEnabled,assertLaunchTransaction} from "../launches/execution-checks";
 import { BASE_USDC, baseUsdcAbi } from "../base/usdc";
@@ -53,7 +54,7 @@ export async function retryPayout(store:Store,input:{id:string;owner:string;atte
   return order;
 }
 export async function prepareTransaction(store: Store, input: { id: string; owner: string; wallet: string; chainId: Chain; leg: Transaction["leg"]; orderId?: string; sourceRequestId?: string; fundingPlan?:string;tradeRouteHint?:string;launchStep?:Transaction["launchStep"];creatorClaim?:Transaction["creatorClaim"];bridgeStep?:Transaction["bridgeStep"];swapOutput?: {token:string;minimum:string;recipient?:string}; unsigned: string; reserveWei: string; balanceWei: string; baseUsdcBalance?:string; block: string }, now: number, escrow = false) {
-  await (await import("../fee-report/authorize")).authorizeFeeTransaction(store,input,now,BigInt(input.balanceWei));
+  await authorizeFeeTransaction(store,input,now,BigInt(input.balanceWei));
   const previous = await store.get<Transaction>(input.id);
   if (previous) { if (previous.wallet !== input.wallet || previous.owner !== input.owner) throw new Error("Transaction identity mismatch."); return previous; }
   if(input.id.startsWith("reward:")&&await store.get("reward-fence:"+input.id))throw Error("This unsubmitted request was cleared. Start a new action.");

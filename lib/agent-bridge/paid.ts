@@ -158,6 +158,7 @@ export async function paid(
         ...challenge,
         resource: {
           ...challenge.resource!,
+          description: metadata.description,
           serviceName: metadata.serviceName,
           iconUrl: SERVICE_ICON_URL,
           tags: metadata.tags,

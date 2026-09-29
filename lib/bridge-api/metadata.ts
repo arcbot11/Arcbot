@@ -2,6 +2,8 @@ import {
   declareDiscoveryExtension,
   type QueryDiscoveryExtension,
 } from "@x402/extensions/bazaar";
+import { openapi } from "./discovery";
+import { discoveryOutput } from "../discovery-response-schema";
 
 export const LOOKUP_CATEGORY = "Blockchain data";
 export const LOOKUP_TAGS = [
@@ -63,10 +65,13 @@ export const LOOKUP_INPUT_SCHEMA = {
   ),
 };
 export function lookupExtensions() {
+  const schemas = openapi().components.schemas;
   const extensions = declareDiscoveryExtension({
     input: LOOKUP_EXAMPLE,
     inputSchema: LOOKUP_INPUT_SCHEMA,
   });
+  extensions.bazaar.info.output = { type: "json" };
+  extensions.bazaar.schema.properties.output = discoveryOutput(schemas.LookupResponse, schemas);
   // This handler uses the resource server directly, without HTTP middleware enrichment.
   (extensions.bazaar as QueryDiscoveryExtension).info.input.method = "GET";
   return extensions;

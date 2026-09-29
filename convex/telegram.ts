@@ -638,6 +638,8 @@ export const processUpdate = internalAction({
             } else if (result.processing) {
               const action = parsedCommand.kind === "send" && parsedCommand.chainId === 8453 ? "Base withdrawal" : parsedCommand.kind === "claim_fees" ? "Claim" : parsedCommand.kind === "swap_token_for_token" ? "Swap" : parsedCommand.kind[0].toUpperCase() + parsedCommand.kind.slice(1);
               await ctx.runAction(internal.telegram.deliverWalletMessage, { telegramUserId, telegramChatId: chatId, ownerXUserId: link.ownerXUserId, requestId: `telegram-processing:${requestId}`, text: `${action} processing.` });
+            } else if (result.pending) {
+              await ctx.runAction(internal.telegram.deliverWalletMessage, { telegramUserId, telegramChatId: chatId, ownerXUserId: link.ownerXUserId, requestId: `telegram-waiting:${requestId}`, text: "Your request is waiting for verification. No final result is available yet. Check wallet activity before retrying; do not submit the same trade again." });
             }
           } else {
             await ctx.runMutation(internal.telegramDeliveries.setText, { requestId, text: telegramResponse(result.message) });

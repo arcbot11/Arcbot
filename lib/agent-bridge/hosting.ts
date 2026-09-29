@@ -6,6 +6,8 @@ export function agentPathAllowed(path: string) {
     [
       "/",
       "/health",
+      "/favicon.ico",
+      "/favicon.png",
       "/openapi.json",
       "/llms.txt",
       "/.well-known/x402",

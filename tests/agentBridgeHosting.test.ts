@@ -3,6 +3,14 @@ import { NextRequest } from "next/server";
 import { middleware } from "../middleware";
 import { handleVercel } from "../lib/agent-bridge/vercel";
 import { tick } from "../convex/agentBridgeWorker";
+import { SERVICE_ICON_URL } from "../lib/service-brand";
+
+it.each(["/favicon.ico", "/favicon.png"])("serves the padded dog favicon through %s", async (path) => {
+  const response = await handleVercel(new Request(`https://bridge-api.argosbot.io${path}`));
+  expect(response.status).toBe(302);
+  expect(response.headers.get("location")).toBe(SERVICE_ICON_URL);
+  expect(middleware(new NextRequest(`https://bridge-api.argosbot.io${path}`)).headers.get("x-middleware-rewrite")).toContain(`/api/cts-agent${path}`);
+});
 
 afterEach(() => {
   vi.unstubAllEnvs();

@@ -139,7 +139,7 @@ export function openapi() {
       version: "1.0.0",
       description: DESCRIPTION,
       "x-guidance": guidance,
-      contact: { name: "Argos Bot", url: "https://t.me/argosbotcommunity" },
+      contact: { name: "@TheArgosBot", url: "https://x.com/TheArgosBot" },
     },
     servers: [{ url: ORIGIN }],
     externalDocs: { url: `${ORIGIN}/llms.txt` },
@@ -148,7 +148,7 @@ export function openapi() {
         get: {
           operationId: "lookupOwnerlessBridge",
           summary:
-            "Find an ownerless Arc/Base bridge and identify original, wrapper, supply and contracts",
+            "Bridge lookup — Arc Gateway or direct Base USDC (0.005 USDC)",
           "x-payment-info": payment("lookup"),
           parameters: [
             {
@@ -626,6 +626,7 @@ export function openapi() {
         get: {
           ...spec.paths["/v1/lookup"].get,
           operationId: "lookupOwnerlessBridgeDirect",
+          summary: "Bridge lookup — direct Arc or Base USDC (0.007 USDC)",
           "x-payment-info": payment("lookup", "direct"),
         },
       },

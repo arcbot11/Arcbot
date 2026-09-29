@@ -1,3 +1,5 @@
+import {makeFunctionReference} from "convex/server";
+import {authorizeFeeTransaction} from "../lib/fee-report/authorize";
 import {recoverRewardRequest} from "../lib/launches/reward-recovery";
 import {feeCommand} from "./lib/feeCommands";
 import {FEE_EXECUTOR,FEE_EXECUTOR_OWNER} from "../lib/fee-report/policy";
@@ -82,7 +84,7 @@ export const command = mutation({
       },
       put: async record => {
         const row = await ctx.db.query("otcRecords").withIndex("by_key", q=>q.eq("key",record.id)).unique();
-        if(record.kind==="fee_job" && ((!row && ["running","awaiting_payment"].includes(record.status)) || (record.status==="running" && row && JSON.parse(row.json).status==="awaiting_payment")))await ctx.scheduler.runAfter(5000,(await import("convex/server")).makeFunctionReference<"action">("feeWorker:run"),{id:record.id});
+        if(record.kind==="fee_job" && ((!row && ["running","awaiting_payment"].includes(record.status)) || (record.status==="running" && row && JSON.parse(row.json).status==="awaiting_payment")))await ctx.scheduler.runAfter(5000,makeFunctionReference<"action">("feeWorker:run"),{id:record.id});
         if(record.kind==='transaction'){
           const previous=row?JSON.parse(row.json) as Transaction:null;
           record.progressAt=previous?.progressAt??record.createdAt;
@@ -145,7 +147,7 @@ export const command = mutation({
       case "escrow_gas_allowance": return authorizeGasRecovery(store,input.listingId,input.orderId,input.owner,input.limitWei,input.arc===true,now);
       case "begin_signing": {
         const tx = await store.get<import("../lib/otc/model").Transaction>(input.id);
-        if(tx?.creatorClaim?.sponsored && tx.signingStartedAt===undefined) await (await import("../lib/fee-report/authorize")).authorizeFeeTransaction(store,tx,now);
+        if(tx?.creatorClaim?.sponsored && tx.signingStartedAt===undefined) await authorizeFeeTransaction(store,tx,now);
         if(tx?.leg === "launch" && tx.signingStartedAt === undefined){
           const row=await ctx.db.query("launchRuns").withIndex("by_owner_request",q=>q.eq("owner",tx.owner).eq("requestId",tx.launchStep?.requestId??"")).unique();
           const run=row?JSON.parse(row.json) as import("../lib/launches/execution-types").LaunchRun:null;

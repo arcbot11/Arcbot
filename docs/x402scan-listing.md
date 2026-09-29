@@ -1,6 +1,26 @@
 # x402scan listing readiness
 
-Two independent services are prepared for x402scan. Registration URLs contain no example token; tokens and chains are caller inputs. No listing submission or deployment is performed by these changes.
+Both services were verified live and registered on x402scan on 2026-09-29 UTC (2026-09-28 Halifax). Registration URLs contain no example token; tokens and chains are caller inputs.
+
+## Live registration results
+
+- Lookup: https://www.x402scan.com/server/5843552f-8058-491f-bb2f-34d71e2883f9 — two paid GET resources. The origin heading uses the main website's title, Argos Bot; endpoint descriptions correctly identify CTS bridge lookup.
+- Full bridge: https://www.x402scan.com/server/ce4b22b5-7733-414a-badc-e39f85b83a82 — four paid resources (two GET lookup and two POST job creation) plus public POST /v1/authorization.
+- Both forms showed "You're registered!" and both resulting pages were opened to verify their resource lists.
+- All six paid endpoints returned unpaid 402 challenges with the expected Arc and Base USDC amounts, methods and input schemas. Both OpenAPI and compatibility discovery documents returned 200. No payment, signature, wallet transaction or bridge job was performed.
+- Six job-ID/Bearer-protected management paths were skipped by x402scan's probe. Do not make them public to remove marketplace warnings. They remain supporting API operations described in OpenAPI.
+- Follow-up metadata polish: runtime Bazaar response schemas are missing (the validator reports SCHEMA_OUTPUT_MISSING, but registration accepted all paid endpoints); lookup contact/guidance metadata and the full bridge root favicon can be improved. Ownership email verification was not performed, and no contact email was invented or submitted.
+
+Confirmation screenshots: `research/x402scan-lookup-registered.png` and `research/x402scan-full-bridge-registered.png`.
+
+## Metadata follow-up (local, awaiting deployment)
+
+- Both OpenAPI contact URLs now point to https://x.com/TheArgosBot. This is a public contact link, not email-based merchant ownership verification.
+- Runtime Bazaar metadata now includes self-contained successful response schemas for lookups and jobs. References are expanded from the existing OpenAPI definitions; no real or fabricated wallet signatures or job credentials are published as response examples.
+- The full service's short description is: “Look up bridges, create ownerless wrappers and bridge tokens between Arc and Base using Circle’s CTS and CCTP infrastructure.” Detailed signing responsibilities remain in the documentation.
+- Separate runtime descriptions explain the standard and direct payment options. The existing full-service lookup endpoints use the same lookup engine and report schema as the website endpoints; they do not need duplicate products. Payment proofs/recovery remain scoped to the original endpoint.
+- Dedicated-host `/favicon.ico` and `/favicon.png` redirect to the padded dog social artwork. After Vercel deployment, refresh the full-service listing so x402scan can recrawl the description and favicon.
+- The user requested consolidation onto the full Bridge API listing. The lookup-only listing has NOT been removed: the current public x402scan interface exposes no self-service removal control. Preserve CRA's live website endpoints; listing removal should be handled through authorized merchant management or platform support, not by disabling the service.
 
 | Service | Origin / OpenAPI | Paid endpoints |
 | --- | --- | --- |

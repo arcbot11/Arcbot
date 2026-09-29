@@ -1,4 +1,5 @@
 import { discovery } from "./discovery";
+import { SERVICE_ICON_URL } from "../service-brand";
 import { z } from "zod";
 import { inputSchema } from "../bridge-api/model";
 import { lookupReport } from "../bridge-api/lookup";
@@ -24,6 +25,12 @@ export async function handle(req: Request): Promise<Response> {
   const url = new URL(req.url),
     path = url.pathname;
   try {
+    if (req.method === "GET" && ["/favicon.ico", "/favicon.png"].includes(path))
+      return new Response(null, { status: 302, headers: {
+        Location: SERVICE_ICON_URL,
+        "Cache-Control": "public, max-age=3600",
+        "Cross-Origin-Resource-Policy": "cross-origin",
+      } });
     if (req.method === "GET" && path === "/openapi.json")
       return json(openapi());
     if (req.method === "GET" && (path === "/llms.txt" || path === "/"))

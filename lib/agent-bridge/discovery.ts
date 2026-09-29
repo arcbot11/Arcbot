@@ -7,6 +7,7 @@ import {
 } from "../bridge-api/metadata";
 import { config, DESCRIPTION, NAME, ORIGIN } from "./config";
 import { openapi } from "./openapi";
+import { discoveryOutput } from "../discovery-response-schema";
 
 export const TAGS = [
   "bridge",
@@ -45,6 +46,11 @@ export function operationMetadata(resourcePath: string) {
   const job = ["/v1/jobs", "/v1/jobs/direct"].includes(
     resourcePath.split("?")[0],
   );
+  const spec = openapi();
+  const output = discoveryOutput(
+    job ? spec.paths["/v1/jobs"].post.responses["200"].content["application/json"].schema : spec.components.schemas.PaidLookup,
+    spec.components.schemas,
+  );
   const extensions = job
     ? declareDiscoveryExtension({
         bodyType: "json",
@@ -56,7 +62,13 @@ export function operationMetadata(resourcePath: string) {
         inputSchema: LOOKUP_INPUT_SCHEMA,
       });
   Object.assign(extensions.bazaar.info.input, { method: job ? "POST" : "GET" });
-  return { extensions, serviceName: NAME, tags: TAGS };
+  extensions.bazaar.info.output = { type: "json" };
+  extensions.bazaar.schema.properties.output = output;
+  const direct = resourcePath.split("?")[0].endsWith("/direct");
+  const description = job
+    ? `Create an external-wallet bridge or ownerless-wrapper setup job using Circle CTS. ${direct ? "Direct Arc or Base USDC: 0.012 USDC." : "Arc Gateway or direct Base USDC: 0.01 USDC."}`
+    : `Look up Arc/Base original and wrapped token addresses, bridged supply and ownerless verification. ${direct ? "Direct Arc or Base USDC: 0.007 USDC." : "Arc Gateway or direct Base USDC: 0.005 USDC."}`;
+  return { extensions, serviceName: NAME, tags: TAGS, description };
 }
 export function discovery() {
   return {

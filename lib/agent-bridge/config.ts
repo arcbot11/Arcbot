@@ -2,7 +2,7 @@ import { apiConfig } from "../bridge-api/config";
 export const ORIGIN = "https://bridge-api.argosbot.io";
 export const NAME = "Argos Bot CTS Bridge API";
 export const DESCRIPTION =
-  "Inspect ownerless Arc/Base connections and coordinate external-wallet registration, wrapper creation and transfers through Circle's Crosschain Token Standard (CTS), CrossChainTokenService and CCTP. Wallets sign their own transactions.";
+  "Look up bridges, create ownerless wrappers and bridge tokens between Arc and Base using Circle’s CTS and CCTP infrastructure.";
 export function config(
   kind: "lookup" | "job" = "job",
   rail: "gateway" | "direct" = "gateway",

@@ -170,7 +170,10 @@ describe("Telegram update execution boundary", () => {
     {ok:false,message:"More than one token uses SAME. Enter its contract address."},
   ])("does not announce processing before execution: $message",async result=>{
     const ctx=await run("/buy 10 USDC UNKNOWN",false,result);
-    expect(ctx.runAction.mock.calls.some(c=>getFunctionName(c[0])==="telegram:deliverWalletMessage")).toBe(false);
+    if ('pending' in result && result.pending) {
+      expect(ctx.runAction).toHaveBeenCalledWith(expect.anything(),expect.objectContaining({requestId:expect.stringContaining("telegram-waiting:"),text:expect.stringContaining("waiting for verification")}));
+      expect(ctx.runMutation.mock.calls.map(c=>getFunctionName(c[0]))).not.toContain("telegramDeliveries:setText");
+    } else expect(ctx.runAction.mock.calls.some(c=>getFunctionName(c[0])==="telegram:deliverWalletMessage")).toBe(false);
     expect(vi.mocked(fetch).mock.calls.some(c=>String(c[1]?.body).includes("processing."))).toBe(false);
   });
   it("sends only a parsed Arc command through the authorized wallet path",async()=>{
