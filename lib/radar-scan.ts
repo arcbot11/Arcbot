@@ -94,7 +94,7 @@ export function formatRadarReport(r: RadarReport): string {
   const devBuy = buy === undefined ? "unavailable" : buy > 0 && buy < 0.01 ? "<$0.01"
     : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(buy);
   return [
-    `Radar scan${r.token.symbol ? `: $${r.token.symbol}` : ""} (Arc)`, r.token.address, "",
+    `Radar scan${r.token.symbol ? `: $${r.token.symbol}` : ""} (Arc)`, "",
     `Developer buy: ${devBuy}`, "",
     `Creator's prior launches: ${n(r.creatorHistory.previousLaunches)}; past 24h: ${n(r.creatorHistory.previous24h)}.`,
     "",
