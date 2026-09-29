@@ -4,6 +4,24 @@ import { middleware } from "../middleware";
 import { handleVercel } from "../lib/agent-bridge/vercel";
 import { tick } from "../convex/agentBridgeWorker";
 import { SERVICE_ICON_URL } from "../lib/service-brand";
+import { DESCRIPTION, NAME } from "../lib/agent-bridge/config";
+import { guidance } from "../lib/agent-bridge/openapi";
+
+it("exposes crawler-readable HTML branding at the API origin and preserves agent documentation", async () => {
+  const response = await handleVercel(new Request("https://bridge-api.argosbot.io/"));
+  expect(response.status).toBe(200);
+  expect(response.headers.get("content-type")).toContain("text/html");
+  const html = await response.text();
+  expect(html).toContain(`<title>${NAME}</title>`);
+  expect(html).toContain(`<meta name="description" content="${DESCRIPTION}">`);
+  expect(html).toContain(`<link rel="icon" type="image/png" href="${SERVICE_ICON_URL}">`);
+  expect(html).toContain(`<meta property="og:image" content="${SERVICE_ICON_URL}">`);
+  expect(html).toContain(`<meta name="twitter:image" content="${SERVICE_ICON_URL}">`);
+  expect(html).toContain('href="/openapi.json"');
+  const docs = await handleVercel(new Request("https://bridge-api.argosbot.io/llms.txt"));
+  expect(docs.headers.get("content-type")).toContain("text/plain");
+  expect(await docs.text()).toBe(guidance);
+});
 
 it.each(["/favicon.ico", "/favicon.png"])("serves the padded dog favicon through %s", async (path) => {
   const response = await handleVercel(new Request(`https://bridge-api.argosbot.io${path}`));

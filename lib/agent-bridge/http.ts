@@ -1,4 +1,5 @@
 import { discovery } from "./discovery";
+import { homepage } from "./homepage";
 import { SERVICE_ICON_URL } from "../service-brand";
 import { z } from "zod";
 import { inputSchema } from "../bridge-api/model";
@@ -33,7 +34,13 @@ export async function handle(req: Request): Promise<Response> {
       } });
     if (req.method === "GET" && path === "/openapi.json")
       return json(openapi());
-    if (req.method === "GET" && (path === "/llms.txt" || path === "/"))
+    if (req.method === "GET" && path === "/")
+      return new Response(homepage(), { headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "public, max-age=300",
+        "X-Content-Type-Options": "nosniff",
+      } });
+    if (req.method === "GET" && path === "/llms.txt")
       return new Response(guidance, {
         headers: {
           "Content-Type": "text/plain; charset=utf-8",
