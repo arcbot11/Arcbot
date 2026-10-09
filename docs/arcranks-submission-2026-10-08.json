@@ -1,0 +1,18 @@
+{
+  "submittedAt": "2026-10-08T13:42:07.6046029Z",
+  "request": {
+    "projectName": "Argos Bot CTS Bridge API",
+    "website": "https://www.argosbot.io",
+    "officialX": "https://x.com/TheArgosBot",
+    "docs": "https://bridge-api.argosbot.io/llms.txt",
+    "categories": [
+      "Bridges",
+      "Infrastructure",
+      "AI Agents"
+    ],
+    "contractAddress": "",
+    "notes": "Argos Bot provides an x402-payable CTS Bridge API for Arc and Base token lookups, ownerless wrapper creation, and resumable bridge jobs using Circle CTS and CCTP infrastructure. External wallets sign blockchain transactions; jobs track preparation, delivery and finality. API origin: https://bridge-api.argosbot.io . OpenAPI: https://bridge-api.argosbot.io/openapi.json . Four paid routes: /v1/lookup, /v1/lookup/direct, /v1/jobs, /v1/jobs/direct. API fees start at 0.005 USDC; network gas and forwarding charges are separate. Public listings: https://x402-list.com/services/argos-bot-cts-bridge-api and https://agentic.market/services/bridge-api-argosbot-io ."
+  },
+  "httpStatus": 201,
+  "response": "{\"id\":\"6ab57b21-73c3-45a8-8b46-87580651c1b7\",\"status\":\"pending_review\"}"
+}

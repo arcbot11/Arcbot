@@ -1,0 +1,130 @@
+{
+  "checkedAt": "2026-10-03T15:32:50.3511329Z",
+  "nextStep": "Successful paid Base USDC lookup through CDP with resource and bazaar extension; wallet selection pending.",
+  "results": [
+    {
+      "failures": [
+        {
+          "actual": "eip155:5042",
+          "check": "accepts[0].network",
+          "detail": "Network \"eip155:5042\" is not supported",
+          "expected": "a facilitator-supported network (Base, Solana, Polygon, Arbitrum, World)",
+          "passed": false,
+          "severity": "required"
+        },
+        {
+          "actual": "0x3600000000000000000000000000000000000000",
+          "check": "accepts[0].asset",
+          "detail": "Asset \"0x3600000000000000000000000000000000000000\" is not USDC",
+          "passed": false,
+          "severity": "required"
+        },
+        {
+          "check": "bazaar.info.output.example",
+          "detail": "Missing output example — helps consumers understand your response format",
+          "passed": false,
+          "severity": "advisory"
+        }
+      ],
+      "valid": false,
+      "simulation": {
+        "outcome": "accepted"
+      },
+      "path": "/v1/lookup",
+      "index": null
+    },
+    {
+      "failures": [
+        {
+          "actual": "eip155:5042",
+          "check": "accepts[0].network",
+          "detail": "Network \"eip155:5042\" is not supported",
+          "expected": "a facilitator-supported network (Base, Solana, Polygon, Arbitrum, World)",
+          "passed": false,
+          "severity": "required"
+        },
+        {
+          "actual": "0x3600000000000000000000000000000000000000",
+          "check": "accepts[0].asset",
+          "detail": "Asset \"0x3600000000000000000000000000000000000000\" is not USDC",
+          "passed": false,
+          "severity": "required"
+        },
+        {
+          "check": "bazaar.info.output.example",
+          "detail": "Missing output example — helps consumers understand your response format",
+          "passed": false,
+          "severity": "advisory"
+        }
+      ],
+      "valid": false,
+      "simulation": {
+        "outcome": "accepted"
+      },
+      "path": "/v1/lookup/direct",
+      "index": null
+    },
+    {
+      "failures": [
+        {
+          "actual": "eip155:5042",
+          "check": "accepts[0].network",
+          "detail": "Network \"eip155:5042\" is not supported",
+          "expected": "a facilitator-supported network (Base, Solana, Polygon, Arbitrum, World)",
+          "passed": false,
+          "severity": "required"
+        },
+        {
+          "actual": "0x3600000000000000000000000000000000000000",
+          "check": "accepts[0].asset",
+          "detail": "Asset \"0x3600000000000000000000000000000000000000\" is not USDC",
+          "passed": false,
+          "severity": "required"
+        },
+        {
+          "check": "bazaar.info.output.example",
+          "detail": "Missing output example — helps consumers understand your response format",
+          "passed": false,
+          "severity": "advisory"
+        }
+      ],
+      "valid": false,
+      "simulation": {
+        "outcome": "accepted"
+      },
+      "path": "/v1/jobs",
+      "index": null
+    },
+    {
+      "failures": [
+        {
+          "actual": "eip155:5042",
+          "check": "accepts[0].network",
+          "detail": "Network \"eip155:5042\" is not supported",
+          "expected": "a facilitator-supported network (Base, Solana, Polygon, Arbitrum, World)",
+          "passed": false,
+          "severity": "required"
+        },
+        {
+          "actual": "0x3600000000000000000000000000000000000000",
+          "check": "accepts[0].asset",
+          "detail": "Asset \"0x3600000000000000000000000000000000000000\" is not USDC",
+          "passed": false,
+          "severity": "required"
+        },
+        {
+          "check": "bazaar.info.output.example",
+          "detail": "Missing output example — helps consumers understand your response format",
+          "passed": false,
+          "severity": "advisory"
+        }
+      ],
+      "valid": false,
+      "simulation": {
+        "outcome": "accepted"
+      },
+      "path": "/v1/jobs/direct",
+      "index": null
+    }
+  ]
+}

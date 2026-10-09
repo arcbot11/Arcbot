@@ -5,7 +5,7 @@ import styles from "./page.module.css";
 
 export const metadata: Metadata = {
   title: "x402 Services | Argos Bot",
-  description: "Explore Argos Bot’s x402 APIs: CTS bridge lookup through CRA and Arcus, and external-wallet bridge setup and transfers between Arc and Base.",
+  description: "Explore the Argos Bot Arc and Base bridge APIs, live x402 marketplace listings, and ERC-8004 agent identity.",
 };
 
 function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
@@ -83,6 +83,21 @@ export default function X402Page() {
         </section>
       </div>
 
+      <section className={styles.guide} aria-labelledby="discover-services">
+        <h2 id="discover-services">Find Argos Bot across the agent ecosystem</h2>
+        <p>Discover our bridge services through these live marketplaces and directories. Each listing shows the endpoints available through that platform.</p>
+        <div className={styles.links}>
+          <ExternalLink href="https://x402-list.com/services/argos-bot-cts-bridge-api">x402 List</ExternalLink>
+          <ExternalLink href="https://agentic.market/services/bridge-api-argosbot-io">Coinbase Agentic Marketplace</ExternalLink>
+          <ExternalLink href="https://www.x402scan.com/server/ce4b22b5-7733-414a-badc-e39f85b83a82">x402scan</ExternalLink>
+        </div>
+        <h3>Arc agent #304</h3>
+        <p>The ERC-8004 registration gives Argos Bot an onchain identity for discovering our CTS Bridge Lookup service. ArcID indexes this registration automatically.</p>
+        <div className={styles.links}>
+          <ExternalLink href="https://arcusid.com/agents/304">ArcID agent directory</ExternalLink>
+          <ExternalLink href="https://8004scan.io/agents/arc/304">8004scan identity</ExternalLink>
+        </div>
+      </section>
       <section className={styles.guide} aria-labelledby="getting-started">
         <h2 id="getting-started">Built on Circle’s crosschain infrastructure</h2>
         <p>Our bridge services inspect or coordinate connections through Circle’s Crosschain Token Standard (CTS), CrossChainTokenService and Cross-Chain Transfer Protocol (CCTP). Lookup verifies the supported contracts and connection; it does not certify a token’s safety or provide trading liquidity.</p>

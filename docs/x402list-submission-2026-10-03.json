@@ -1,0 +1,20 @@
+{
+  "submittedAt": "2026-10-03T11:55:47.759Z",
+  "request": {
+    "url": "https://bridge-api.argosbot.io",
+    "email": "arctos111@proton.me",
+    "service_name": "Argos Bot CTS Bridge API",
+    "description": "Look up bridges, create ownerless wrappers and bridge tokens between Arc and Base using Circle CTS and CCTP infrastructure. External wallets sign blockchain transactions; resumable jobs track preparation, delivery and finality.",
+    "website_url": "https://www.argosbot.io",
+    "category": "Blockchain",
+    "endpoints": [
+      "/v1/lookup",
+      "/v1/lookup/direct",
+      "/v1/jobs",
+      "/v1/jobs/direct"
+    ],
+    "notes": "OpenAPI: https://bridge-api.argosbot.io/openapi.json ; agent documentation: https://bridge-api.argosbot.io/llms.txt . Lookup requires a token query input. Job creation requires intent and external-wallet authorization from public POST /v1/authorization. Standard endpoints accept Circle Gateway USDC on Arc or direct Base USDC; /direct endpoints accept direct Arc or Base USDC. Standard prices: lookup 0.005 USDC, job 0.01 USDC; direct prices: lookup 0.007 USDC, job 0.012 USDC. Network gas and forwarding charges are separate. No wallet connection or paid bridge execution is required to inspect discovery metadata."
+  },
+  "httpStatus": 201,
+  "response": "{\"data\":{\"submission_id\":\"49290503-4cff-4633-9e5e-be764ce296c5\",\"status\":\"pending\",\"probe_result\":{\"endpoints_found\":4,\"errors\":[]}},\"provenance\":{\"license\":\"CC-BY-4.0\",\"attribution_required\":true,\"attribution\":\"Data: x402-list.com (CC BY 4.0)\",\"cite_as\":\"https://x402-list.com/api/v1/submit\",\"source\":\"https://x402-list.com\"}}"
+}
