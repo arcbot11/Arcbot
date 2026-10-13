@@ -1,0 +1,23 @@
+{
+  "checkedAt": "2026-10-09T14:58:56.248Z",
+  "operatorEmail": "arctos111@proton.me",
+  "submissionFee": 0,
+  "listings": [
+    {
+      "id": "38b19abf-5ec",
+      "httpStatus": 200,
+      "status": "unverified",
+      "name": "Argos Bot CTS Bridge Lookup",
+      "pageUrl": "https://api.nohumans.directory/l/38b19abf-5ec",
+      "pageStatus": 200
+    },
+    {
+      "id": "f95b4a88-8ad",
+      "httpStatus": 200,
+      "status": "unverified",
+      "name": "Argos Bot CTS Bridge Lookup - Direct Payment",
+      "pageUrl": "https://api.nohumans.directory/l/f95b4a88-8ad",
+      "pageStatus": 200
+    }
+  ]
+}
