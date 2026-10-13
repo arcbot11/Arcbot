@@ -20,6 +20,14 @@ try {
   assert.ok(spec.paths["/v1/lookup"].get);
   assert.ok(spec.paths["/v1/jobs"].post.requestBody.required);
   assert.ok(spec.paths["/v1/jobs/{id}/renew"]);
+  assert.ok(spec.paths["/a2a"].post);
+  const { response: cardResponse, body: card } = await get("/.well-known/agent-card.json");
+  assert.equal(cardResponse.status, 200);
+  assert.equal(card.protocolVersion, "0.3.0");
+  assert.equal(card.url, origin.origin + "/a2a");
+  assert.deepEqual(card.skills.map(s => s.id), ["bridge_lookup", "bridge_status"]);
+  const unsupported = await fetch(new URL("/a2a", origin), { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ jsonrpc: "2.0", id: "readiness", method: "message/stream", params: {} }), signal: AbortSignal.timeout(20000) });
+  assert.equal((await unsupported.json()).error.code, -32004);
   const { response: health, body: status } = await get("/health");
   assert.equal(health.status, 200, "Service configuration is incomplete");
   assert.equal(status.configured, true);

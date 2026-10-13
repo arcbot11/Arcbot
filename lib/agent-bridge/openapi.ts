@@ -15,6 +15,7 @@ Only Arc/Base external EOAs are supported. Known incompatible tokens, wrong cont
 Armed or submitted steps are never automatically discarded. If a wallet request was interrupted, provide its hash. A finalized same-nonce replacement can terminate the job. Preserve recovery data; never assume a missing receipt means no transaction occurred.
 If an armed quote expires before broadcast, POST /renew with stepId to obtain a fresh quote at the SAME nonce. First reconcile any transaction your wallet already broadcast. A quoted, unarmed step can be refreshed using /next. Neither endpoint broadcasts anything.
 OpenAPI: ${ORIGIN}/openapi.json
+A2A 0.3.0 JSON-RPC: ${ORIGIN}/a2a. Agent Card: ${ORIGIN}/.well-known/agent-card.json. Examples: ${ORIGIN}/a2a/docs. Supports structured paid lookup and authenticated snapshots of existing bridge jobs only. Uses HTTP x402 challenges, not the A2A task-payment extension. Job creation and wallet input remain on REST.
 For an uncertain direct USDC payment, retry the identical paid request with its original Payment-Signature and a Payment-Transaction header containing the settlement transaction hash from the facilitator. Recovery requires finalized canonical USDC receipt and exact authorization evidence. It never submits payment again. Missing evidence, unsupported batched calls or an unknown hash leave the payment unresolved; do not pay again. Gateway reconciliation does not need this header.
 This service is independent of Circle. Marketplace listing requires separate review; this document is not an endorsement.
 `;
@@ -144,6 +145,21 @@ export function openapi() {
     servers: [{ url: ORIGIN }],
     externalDocs: { url: `${ORIGIN}/llms.txt` },
     paths: {
+      "/.well-known/agent-card.json": {
+        get: { security: [], operationId: "getA2AAgentCard", summary: "Discover A2A 0.3.0 capabilities", responses: { "200": response("Public Agent Card", { type: "object" }) } },
+      },
+      "/a2a/docs": {
+        get: { security: [], operationId: "getA2ADocumentation", summary: "Read A2A schemas and HTTP x402 payment behavior", responses: { "200": { description: "Plain text examples", content: { "text/plain": { schema: { type: "string" } } } } } },
+      },
+      "/a2a": {
+        post: {
+          security: [], operationId: "sendA2ARequest", summary: "Structured lookup or authenticated bridge task retrieval",
+          description: "A2A 0.3.0 JSON-RPC. message/send accepts one bridge_lookup DataPart. tasks/get requires the existing job Bearer token. HTTP x402 challenges name the lookup resource; preserve the exact payment across retries. No A2A task-payment extension, streaming, new bridge jobs or wallet actions.",
+          parameters: [...paidHeaders, { in: "header", name: "Authorization", schema: { type: "string" }, description: "Bearer job access token, required for tasks/get and tasks/cancel" }],
+          requestBody: body({ type: "object", required: ["jsonrpc", "id", "method", "params"], properties: { jsonrpc: { type: "string", const: "2.0" }, id: { oneOf: [{ type: "string" }, { type: "number" }] }, method: { type: "string", enum: ["message/send", "tasks/get", "tasks/cancel"] }, params: { type: "object", description: "See /a2a/docs for exact method schemas" } } }),
+          responses: { "200": response("A2A result or JSON-RPC error", { type: "object" }), "402": response("Original HTTP x402 lookup challenge", ref("PaymentRequired")), ...errors },
+        },
+      },
       "/v1/lookup": {
         get: {
           operationId: "lookupOwnerlessBridge",

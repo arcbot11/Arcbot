@@ -11,6 +11,9 @@ export function agentPathAllowed(path: string) {
       "/openapi.json",
       "/llms.txt",
       "/.well-known/x402",
+      "/.well-known/agent-card.json",
+      "/a2a",
+      "/a2a/docs",
       "/internal/poll",
     ].includes(path) ||
     path === "/v1/lookup" ||

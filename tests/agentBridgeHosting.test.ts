@@ -34,6 +34,14 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.unstubAllGlobals();
 });
+it("routes A2A discovery and requests only on the bridge hostname", async () => {
+  for (const path of ["/.well-known/agent-card.json", "/a2a/docs", "/a2a"]) {
+    expect(middleware(new NextRequest(`https://bridge-api.argosbot.io${path}`)).headers.get("x-middleware-rewrite")).toContain(`/api/cts-agent${path}`);
+  }
+  const card = await handleVercel(new Request("https://bridge-api.argosbot.io/.well-known/agent-card.json"));
+  expect((await card.json()).url).toBe("https://bridge-api.argosbot.io/a2a");
+  expect((await handleVercel(new Request("https://www.argosbot.io/api/cts-agent/.well-known/agent-card.json"))).status).toBe(404);
+});
 it("routes only the dedicated hostname into the bridge API", () => {
   const response = middleware(
     new NextRequest(

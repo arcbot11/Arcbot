@@ -35,7 +35,7 @@ export function homepage() {
 <img src="${icon}" alt="Argos Bot dog logo" width="96" height="96">
 <h1>${name}</h1><p>${description}</p>
 <p>Inspect original and wrapped token addresses, bridged supply and ownerless connections. Coordinate wrapper setup and transfers through Circle’s CrossChainTokenService and Cross-Chain Transfer Protocol (CCTP).</p>
-<nav aria-label="API resources"><a href="/llms.txt">Agent documentation</a><a href="/openapi.json">OpenAPI specification</a><a href="/.well-known/x402">x402 discovery</a><a href="https://www.argosbot.io/bridge">Open the bridge</a></nav>
+<nav aria-label="API resources"><a href="/llms.txt">Agent documentation</a><a href="/openapi.json">OpenAPI specification</a><a href="/.well-known/x402">x402 discovery</a><a href="/.well-known/agent-card.json">A2A Agent Card</a><a href="/a2a/docs">A2A lookup &amp; job tracking</a><a href="https://www.argosbot.io/bridge">Open the bridge</a></nav>
 <small><a href="https://x.com/TheArgosBot">Contact @TheArgosBot</a></small>
 </main></body></html>`;
 }

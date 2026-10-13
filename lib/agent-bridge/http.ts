@@ -1,4 +1,5 @@
 import { discovery } from "./discovery";
+import { agentCard, handleA2A, a2aDocs } from "./a2a";
 import { homepage } from "./homepage";
 import { SERVICE_ICON_URL } from "../service-brand";
 import { z } from "zod";
@@ -26,6 +27,11 @@ export async function handle(req: Request): Promise<Response> {
   const url = new URL(req.url),
     path = url.pathname;
   try {
+    if (req.method === "GET" && path === "/.well-known/agent-card.json")
+      return json(agentCard());
+    if (req.method === "GET" && path === "/a2a/docs")
+      return new Response(a2aDocs, { headers: { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "public, max-age=300" } });
+    if (path === "/a2a") return handleA2A(req, handle);
     if (req.method === "GET" && ["/favicon.ico", "/favicon.png"].includes(path))
       return new Response(null, { status: 302, headers: {
         Location: SERVICE_ICON_URL,
