@@ -1,59 +1,45 @@
-# Direct Argos Bot A2A support
+# Direct Argos Bot A2A bridge workflow
 
-The first adapter is pinned to A2A 0.3.0 JSON-RPC. It is independent of Arcus.
-After deployment, discovery is at `https://bridge-api.argosbot.io/.well-known/agent-card.json`,
-the JSON-RPC endpoint is `/a2a`, and request examples are at `/a2a/docs`.
+Independent of Arcus; pinned to A2A 0.3.0 JSON-RPC. Public paths after deployment:
+- /.well-known/agent-card.json
+- POST /a2a
+- /a2a/docs (full schemas and usage instructions)
 
-## Supported operations
+## Commands
 
-- `message/send`: a single structured `DataPart` with `skill: bridge_lookup`,
-  `input: {token, chain?, finality?}`, and `rail: gateway | direct` (default gateway).
-  Returns an A2A Message containing the existing paid lookup response.
-- `tasks/get`: `params.id` is an existing REST bridge job ID. The caller must
-  provide that job's Bearer access token in the HTTP Authorization header.
-  Returns the current job as an artifact, with its lifecycle mapped to an A2A Task.
-- `tasks/cancel`: authenticates the existing job, then returns TaskNotCancelable.
-  Cancellation cannot reverse a submitted blockchain transaction.
+Use message/send with a user Message and one DataPart containing:
+- bridge_lookup: input {token, chain?, finality?}; rail gateway/direct.
+- bridge_authorization: input is the REST JobIntent; returns typed data for the external wallet.
+- bridge_create: input {intent, expiresAt, signature}; rail gateway/direct; returns a durable Task. Save metadata.accessToken privately.
+- bridge_continue: message.taskId is the job ID; optional contextId must match it. input is {operation:next|resume}, {operation:arm|renew,stepId}, or {operation:transactions,stepId,hash}. Supply Authorization: Bearer jobAccessToken in the HTTP header, never in message data.
 
-Ready/awaiting-wallet states map to input-required. Pending, forwarding and
-delivered map to working; delivered does not mean finalized. Complete maps to
-completed, and failed maps to failed. Retrieval is a snapshot, not a refresh;
-the existing worker and authenticated REST resume endpoint continue to update jobs.
+Only bridge_continue accepts a taskId. tasks/get accepts params.id with the same per-job Bearer token and returns a saved snapshot. No history, streaming or push callbacks are advertised. tasks/cancel authenticates and returns TaskNotCancelable; submitted blockchain transactions cannot be undone.
 
-## Payments and compatibility
+## Setup and transfer
 
-This version uses HTTP x402 challenges and does **not** advertise the A2A x402
-task-payment extension. Generic A2A clients need HTTP x402 support or a payment
-adapter. A 402 identifies the existing lookup resource, which is what the client
-must authorize. Retry the identical A2A request with the same Payment-Signature.
-Recovery responses (including unresolved-payment 409) are preserved unchanged.
-Successful responses retain PAYMENT-RESPONSE and the original request/receipt data.
-Changing a message ID is not permission to create another payment.
+1. Get authorization for the full JobIntent: clientRequestId (UUID), chain (5042/8453), token, account, mode (setup/transfer), amount, allowSetup, riskAcknowledged=true, maxForwardingFeeAtomic and maxGasBudgetAtomic.
+2. External wallet signs the returned typed data. This authorizes the API job, not token movement. Preserve the returned intent and expiresAt.
+3. Create using signed input and HTTP x402 payment. Save the task/job ID and access token.
+4. Continue with next. Review route, fees and transaction details. Arm the exact step immediately before signing. Only arm returns the signable transaction and deadline.
+5. External wallet signs and broadcasts, persisting signed transaction/hash before broadcast. Record that same hash through transactions.
+6. Resume reconciles receipts and finality. Next prepares the following step when appropriate. Renew uses the existing same-nonce recovery safeguards after reconciliation.
 
-Discovery is free. Job tracking requires the existing per-job credential and
-does not accept credentials inside message data. No new persistence, signing,
-transaction broadcasting, job creation, streaming or push callbacks are added.
-Existing REST and MCP interfaces retain their behavior.
+All existing signed-intent, identity, simulation, fee caps, leases, nonce, persistence and finality guards are reused. Raw signed transactions, private keys and arbitrary operation names are rejected. The API never signs or broadcasts wallet actions. Setup connects tokens without transferring; transfers use an existing or explicitly authorized new connection.
 
-## Validation
+Ready/awaiting-wallet states map to input-required. Pending, forwarding and delivered map to working; delivered is not finalized. Complete maps to completed, failed to failed. Task artifacts include the public job and current prepared step. Only creation returns its access token and paid receipt in metadata; tracking does not reissue credentials.
 
-Tests cover challenge/receipt preservation, stable message identity, payment
-recovery without retries, authorization, job lifecycle including delivered versus
-finalized, unsupported operations, request validation and hostname isolation.
-Run `npx vitest run tests/agentBridgeA2A.test.ts tests/agentBridgeHosting.test.ts
-tests/agentBridgePayment.test.ts tests/agentBridgePaymentRecovery.test.ts`,
-`npm run typecheck`, and `npm run agent-bridge:build`.
+## Payments
 
-Next phase: independent SDK interoperability checks and an explicitly versioned
-A2A x402 task-payment extension before enabling job creation and wallet-input
-continuations. Do not claim support for those capabilities in directory listings.
+HTTP x402 is used, not the A2A task-payment extension. Generic A2A clients need an HTTP x402 adapter. Follow the exact REST resource in the original 402 challenge, then retry the identical A2A message with the SAME Payment-Signature. Explicit gateway/direct selection must not change while payment is unresolved. Payment-Transaction is forwarded for direct recovery; uncertain recovery responses remain unchanged, and PAYMENT-RESPONSE is preserved on success.
 
-## Release handoff
+Changing messageId never authorizes another payment. Durable identity and conflicting-intent checks use the existing signed clientRequestId/account. One job fee includes continuation; gas and Circle forwarding fees are separate. External wallet actions remain subject to the existing documented restrictions.
 
-Commit the A2A adapter, routing, documentation, regression tests and updated public readiness checker. Push to the GitHub branch used by Vercel; deploy Vercel normally. No Convex schema/functions or new environment variables are required by this change; the existing Convex deployment and worker remain in use. If deploying Convex as part of your normal release, deploy its current functions before the Vercel release.
+## Release
 
-After deployment run:
-```powershell
-node --use-system-ca scripts/check-agent-bridge-public.mjs
-```
-This checker never signs a payment or blockchain transaction. Announce A2A lookup and existing-job tracking only after it passes. Full job creation and the A2A payment extension are outside this release.
+No new secrets or Convex schema/functions required. Existing storage and background polling remain in use. Push the scoped release commit to the branch Vercel deploys; deploy current Convex only as required by the normal release process.
+
+Run TypeScript, bridge tests, Next production build and standalone API build. After deployment:
+
+    node --use-system-ca scripts/check-agent-bridge-public.mjs
+
+This checker never sends payment proofs, wallet signatures or transactions. Paid live interoperability and on-chain execution require separately authorized external-wallet tests. Do not advertise server-wallet execution or the A2A task-payment extension.
