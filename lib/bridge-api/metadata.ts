@@ -7,10 +7,7 @@ import { discoveryOutput } from "../discovery-response-schema";
 
 export const LOOKUP_CATEGORY = "Blockchain data";
 export const LOOKUP_TAGS = [
-  "blockchain",
   "bridge",
-  "cross-chain",
-  "tokens",
   "arc",
   "base",
   "circle",

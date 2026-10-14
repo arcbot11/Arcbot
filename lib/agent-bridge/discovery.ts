@@ -11,10 +11,8 @@ import { discoveryOutput } from "../discovery-response-schema";
 
 export const TAGS = [
   "bridge",
-  "cross-chain",
   "arc",
   "base",
-  "circle",
   "cts",
   "external-wallet",
 ];
