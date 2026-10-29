@@ -1,5 +1,6 @@
 import { expect, it } from "vitest";
 import { handleVercel } from "../lib/agent-bridge/vercel";
+import { OPTIONS as standalonePreflight } from "../app/api/cts-agent/[[...path]]/route";
 import { handleArcus } from "../lib/arcus-lookup/http";
 import * as standard from "../app/api/v1/bridge/lookup/route";
 import * as direct from "../app/api/v1/bridge/lookup/direct/route";
@@ -14,7 +15,7 @@ function cors(response: Response) {
 }
 it("preflights paid lookups, signed job creation, authorization and A2A without executing them",async()=>{
   for(const path of ["/v1/lookup","/v1/lookup/direct","/v1/jobs","/v1/jobs/direct","/v1/authorization","/a2a","/v1/jobs/ab_"+"a".repeat(48)+"/next"]){
-    const r=await handleVercel(new Request("https://bridge-api.argosbot.io"+path,{method:"OPTIONS",headers:{origin,"Access-Control-Request-Headers":"authorization,payment-signature,payment-transaction,content-type"}}));
+    const r=await standalonePreflight(new Request("https://bridge-api.argosbot.io"+path,{method:"OPTIONS",headers:{origin,"Access-Control-Request-Headers":"authorization,payment-signature,payment-transaction,content-type"}}));
     expect(r.status).toBe(204);cors(r);expect(r.headers.get("cache-control")).toBe("no-store");
   }
 });
