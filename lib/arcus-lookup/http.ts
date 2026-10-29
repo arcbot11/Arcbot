@@ -6,6 +6,7 @@ import { discovery, guidance, openapi } from "./metadata";
 import { ARCUS_HOST, ARCUS_PATHS, ARCUS_PREFIX } from "./hosting";
 import { agentRegistration } from "./identity";
 import { handleMcp } from "./mcp";
+import { publicApiCors, publicApiPreflight } from "../bridge-api/cors";
 
 export async function handleArcus(req: Request) {
   const url = new URL(req.url);
@@ -16,7 +17,7 @@ export async function handleArcus(req: Request) {
   if (!ARCUS_PATHS.includes(path)) return json({ error: "Not found" }, 404);
   const lookup = (request: Request) => handleLookup(request, {
     config: arcusConfig(), resourcePath: "/v1/lookup", inputScope: "arcus-lookup-v1",
-    gatewayFactory: arcusGateway, reconcile: async () => null,
+    gatewayFactory: arcusGateway,
   });
   if (path === "/mcp") {
     const response = await handleMcp(req, lookup, guidance);
@@ -29,15 +30,8 @@ export async function handleArcus(req: Request) {
     }
     return response;
   }
-  const headers = {
-    "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Payment-Signature, Content-Type",
-    "Access-Control-Expose-Headers":
-      "PAYMENT-REQUIRED, PAYMENT-RESPONSE, Retry-After",
-  };
   let response: Response;
-  if (req.method === "OPTIONS") response = new Response(null, { status: 204 });
+  if (req.method === "OPTIONS") return publicApiPreflight("GET, OPTIONS");
   else if (req.method !== "GET")
     response = json({ error: "Method not allowed" }, 405, {
       Allow: "GET, OPTIONS",
@@ -63,7 +57,5 @@ export async function handleArcus(req: Request) {
         "Cache-Control": "no-store",
       },
     });
-  for (const [key, value] of Object.entries(headers))
-    response.headers.set(key, value);
-  return response;
+  return publicApiCors(response, "GET, OPTIONS");
 }

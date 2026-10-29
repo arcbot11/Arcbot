@@ -1,4 +1,4 @@
-import { decodeEventLog, decodeFunctionData, parseAbi, type Hex } from "viem";
+import { decodeEventLog, decodeFunctionData, keccak256, parseTransaction, parseAbi, type Hex } from "viem";
 import type { PaymentPayload, SettleResponse } from "@x402/core/types";
 import { bridgeClient } from "../bridge/read";
 
@@ -114,4 +114,47 @@ export async function reconcileDirectPayment(
   );
   if (used.length !== 1 || transfers.length !== 1) return null;
   return { success: true, network, transaction, payer: auth.from };
+}
+
+/** Keep only a receipt locator; RPC errors can contain signed transactions. */
+export function settlementTransaction(receiptJson?: string): string | null {
+  if (!receiptJson) return null;
+  try {
+    const r = JSON.parse(receiptJson);
+    if (typeof r.transaction === "string" && /^0x[\da-fA-F]{64}$/.test(r.transaction)) return r.transaction;
+    // Some facilitators omit the hash but include the already-signed envelope
+    // in their RPC error. Derive its hash locally; never broadcast that data.
+    const raw = typeof r.errorMessage === "string" ? r.errorMessage.match(/0x02[\da-fA-F]{100,24000}/)?.[0] : undefined;
+    if (raw && parseTransaction(raw as Hex).r) return keccak256(raw as Hex);
+  } catch { /* Unknown evidence remains unresolved. */ }
+  return null;
+}
+export function safeSettlementFailure(receipt: SettleResponse): SettleResponse {
+  return {
+    success: false,
+    network: receipt.network,
+    transaction: settlementTransaction(JSON.stringify(receipt)) || "",
+    errorReason: typeof receipt.errorReason === "string" && /^[a-zA-Z0-9_-]{1,100}$/.test(receipt.errorReason) ? receipt.errorReason : "settlement_unresolved",
+  };
+}
+
+// Only for an already verified, durably settling/uncertain direct payment.
+// Wall time, an RPC error or a missing receipt cannot prove non-payment.
+export async function reconcileUnchargedDirectPayment(
+  payload: PaymentPayload,
+  clientFactory = bridgeClient,
+): Promise<SettleResponse | null> {
+  const network = payload.accepted.network;
+  if (network !== "eip155:5042" && network !== "eip155:8453") return null;
+  const asset = assets[network], auth = payload.payload.authorization as Record<string, string> | undefined;
+  if (!auth || !same(payload.accepted.asset, asset) || payload.accepted.extra?.name !== (network === "eip155:5042" ? "USDC" : "USD Coin") || payload.accepted.extra?.version !== "2" || payload.accepted.extra?.assetTransferMethod || !same(auth.to, payload.accepted.payTo) || auth.value !== payload.accepted.amount || !/^0x[\da-fA-F]{40}$/.test(auth.from) || !/^0x[\da-fA-F]{64}$/.test(auth.nonce) || !/^\d+$/.test(auth.validBefore) || !/^\d+$/.test(auth.validAfter) || BigInt(auth.validAfter) >= BigInt(auth.validBefore)) return null;
+  const chain = network === "eip155:5042" ? 5042 : 8453, client = clientFactory(chain);
+  const [chainId, finalized] = await Promise.all([client.getChainId(), client.getBlock({blockTag:"finalized"})]);
+  if (chainId !== chain || finalized.number === null || !finalized.hash || finalized.timestamp <= BigInt(auth.validBefore)) return null;
+  const [used, canonical] = await Promise.all([
+    client.readContract({address:asset,abi:parseAbi(["function authorizationState(address,bytes32) view returns(bool)"]),functionName:"authorizationState",args:[auth.from as `0x${string}`,auth.nonce as Hex],blockNumber:finalized.number}),
+    client.getBlock({blockNumber:finalized.number}),
+  ]);
+  if (used !== false || !same(canonical.hash, finalized.hash)) return null;
+  return {success:false,network,transaction:"",errorReason:"authorization_expired_unused",extensions:{"argos-reconciliation":{status:"expired_unused",blockNumber:String(finalized.number),blockHash:finalized.hash}}};
 }

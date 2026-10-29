@@ -18,7 +18,7 @@ Price: ${PRICE} USDC per lookup, paid on Arc through Arcus x402 v2 exact settlem
 The chain parameter selects the token chain, not the payment network.
 A missing bridge or failed contract verification is a valid paid result. Dependency failures are not settled.
 Keep the original Payment-Signature and identical query for recovery. Never pay again after uncertain settlement.
-Uncertain Arcus settlements require reconciliation; the API never automatically resubmits them.
+Uncertain Arcus settlements are reconciled through read-only chain evidence; the API never automatically resubmits them. REST may include Payment-Transaction with the settlement hash. Only a canonical finalized block proving an expired, unused authorization permits a not_charged response and a new authorization.
 Verification is not certification of token transfer behavior, liquidity or redemption safety.
 OpenAPI: ${ORIGIN}/openapi.json
 MCP: POST ${ORIGIN}/mcp (stateless Streamable HTTP, protocol 2025-06-18).
@@ -28,6 +28,7 @@ An unpaid tool call returns an x402 PaymentRequired object in structuredContent 
 An x402-capable MCP client retries with the payment payload in params._meta["x402/payment"].
 Settlement receipts appear in result._meta["x402/payment-response"]. HTTP Payment-Signature is for REST only.
 Keep identical tool arguments and the SAME payment payload for recovery; errors do not imply payment was unspent.
+For a known settlement hash, also supply params._meta["x402/payment-transaction"]. The API verifies the exact finalized authorization and transfer before returning a recovered result.
 MCP uses the same payment journal and purchase scope as REST. A generic MCP client without x402 support can discover tools but cannot purchase a lookup.
 Identity: Arc ERC-8004 agent 304; registration metadata: ${ORIGIN}/.well-known/agent-registration.json
 No reputation or validation trust mechanism is claimed. Registration and contract checks are not a safety endorsement.

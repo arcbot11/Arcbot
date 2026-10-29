@@ -7,6 +7,7 @@ import { inputSchema } from "../bridge-api/model";
 import { lookupReport } from "../bridge-api/lookup";
 import { apiStore } from "../bridge-api/store";
 import { hash } from "../bridge-api/payments";
+import { publicApiCors, publicApiPreflight } from "../bridge-api/cors";
 import { boundedJson, RequestBodyError } from "../bounded-json";
 import { hashSchema } from "../bridge/validation";
 import {
@@ -24,6 +25,10 @@ import { openapi, guidance } from "./openapi";
 const stepBody = z.object({ stepId: z.string().uuid() }).strict();
 const txBody = stepBody.extend({ hash: hashSchema });
 export async function handle(req: Request): Promise<Response> {
+  if (req.method === "OPTIONS") return publicApiPreflight();
+  return publicApiCors(await route(req));
+}
+async function route(req: Request): Promise<Response> {
   const url = new URL(req.url),
     path = url.pathname;
   try {

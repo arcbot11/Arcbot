@@ -2,7 +2,7 @@ import { operationMetadata } from "./discovery";
 import { SERVICE_ICON_URL } from "../service-brand";
 import { config as apiConfig, DESCRIPTION } from "./config";
 import { ApiError } from "./model";
-import { reconcileDirectPayment } from "./payment-recovery";
+import { reconcileDirectPayment, reconcileUnchargedDirectPayment, safeSettlementFailure, settlementTransaction } from "./payment-recovery";
 
 import {
   apiStore,
@@ -67,6 +67,7 @@ export async function paid(
     gateway?: PaymentGateway;
     reconcile?: typeof reconcileGateway;
     reconcileDirect?: typeof reconcileDirectPayment;
+    reconcileUncharged?: typeof reconcileUnchargedDirectPayment;
   } = {},
 ) {
   try {
@@ -119,7 +120,7 @@ export async function paid(
               ? (deps.reconcile || reconcileGateway)(payment.payload)
               : (deps.reconcileDirect || reconcileDirectPayment)(
                   payment.payload,
-                  req.headers.get("payment-transaction"),
+                  req.headers.get("payment-transaction") || settlementTransaction(previous.receiptJson),
                 )
           ).catch(() => null);
           if (receipt) {
@@ -134,6 +135,14 @@ export async function paid(
               payment.recoveryHash,
             );
             if (resolved) return recovered(resolved);
+          }
+          if (payment.payload.accepted.extra?.name !== "GatewayWalletBatched") {
+            const uncharged = await (deps.reconcileUncharged || reconcileUnchargedDirectPayment)(payment.payload).catch(() => null);
+            if (uncharged?.errorReason === "authorization_expired_unused") {
+              await store.update(payment.requestId,"not_charged",undefined,JSON.stringify(uncharged));
+              const resolved = await store.recover(payment.requestId,payment.recoveryHash);
+              if (resolved) return recovered(resolved);
+            }
           }
         }
         return recovered(previous);
@@ -219,7 +228,7 @@ export async function paid(
           payment.requestId,
           "uncertain",
           undefined,
-          JSON.stringify(receipt),
+          JSON.stringify(safeSettlementFailure(receipt)),
         );
         return json(
           {

@@ -80,8 +80,8 @@ it("allows payment headers for the playground and rejects invalid input before d
     new Request(ORIGIN + "/v1/lookup?token=no"),
   );
   expect(invalid.status).toBe(400);
-  expect(invalid.headers.get("Access-Control-Expose-Headers")).toContain(
-    "PAYMENT-REQUIRED",
+  expect(invalid.headers.get("Access-Control-Expose-Headers")!.toLowerCase()).toContain(
+    "payment-required",
   );
 });
 it("uses Arcus exclusively and refuses Base and Gateway proofs", async () => {

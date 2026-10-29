@@ -78,7 +78,15 @@ export const updateRequest = mutation({ args: { secret: v.string(), requestId: v
       row.createdAt + PRE_SETTLEMENT_LEASE_MS <= Date.now()) throw Error("Payment processing lease expired");
   // Repeated successful reconciliation is idempotent; never downgrade a settled attempt.
   if (row.state === "settled" && a.state === "settled") return;
-  const transitions: Record<string, string[]> = { processing: ["prepared","not_charged"], prepared: ["settling","not_charged"], settling: ["settled","uncertain"], uncertain: ["settled"], settled: [], not_charged: [] };
+  if (row.state === "not_charged" && a.state === "not_charged") return;
+  if (["settling", "uncertain"].includes(row.state) && a.state === "not_charged") {
+    const proof = a.receiptJson ? JSON.parse(a.receiptJson) : null;
+    const evidence = proof?.extensions?.["argos-reconciliation"];
+    if (proof?.errorReason !== "authorization_expired_unused" || !["eip155:5042","eip155:8453"].includes(proof?.network) || evidence?.status !== "expired_unused" || !/^\d+$/.test(evidence?.blockNumber || "") || !/^0x[\da-fA-F]{64}$/.test(evidence?.blockHash || "")) throw Error("Finalized non-payment evidence required");
+  }
+  // Post-settlement not_charged is used only after the service proves that a
+  // direct authorization expired unused at a canonical finalized block.
+  const transitions: Record<string, string[]> = { processing: ["prepared","not_charged"], prepared: ["settling","not_charged"], settling: ["settled","uncertain","not_charged"], uncertain: ["settled","not_charged"], settled: [], not_charged: [] };
   if (!transitions[row.state]?.includes(a.state)) throw Error("Invalid payment transition");
   if ((a.resultJson?.length || 0) > 100000 || (a.receiptJson?.length || 0) > 20000) throw Error("Oversized response");
   await ctx.db.patch(row._id, { state: a.state, ...(a.resultJson ? { resultJson: a.resultJson } : {}), ...(a.receiptJson ? { receiptJson: a.receiptJson } : {}) });
@@ -93,7 +101,7 @@ export const recover = mutation({ args: { secret: v.string(), requestId: v.strin
     await ctx.db.patch(row._id, { state: "not_charged", resultJson: undefined });
     return { requestId: row.requestId, inputKey: row.inputKey, state: "not_charged" };
   }
-  return { requestId: row.requestId, inputKey: row.inputKey, state: row.state, ...(row.state === "settled" ? { resultJson: row.resultJson, receiptJson: row.receiptJson } : {}) };
+  return { requestId: row.requestId, inputKey: row.inputKey, state: row.state, ...(row.state === "settled" ? { resultJson: row.resultJson } : {}), ...(row.receiptJson ? { receiptJson: row.receiptJson } : {}) };
 }});
 export const cleanup = internalMutation({ args: {}, handler: async ctx => {
   let more = false;

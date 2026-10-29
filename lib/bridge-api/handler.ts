@@ -3,6 +3,7 @@ import { LOOKUP_PARAMETERS } from "./metadata";
 import { inputSchema, type LookupInput, type Report } from "./model";
 import { lookupReport } from "./lookup";
 import { apiStore, type ApiStore, type RequestRecord } from "./store";
+import { reconcileDirectPayment, reconcileUnchargedDirectPayment, safeSettlementFailure, settlementTransaction } from "../agent-bridge/payment-recovery";
 import {
   encode,
   hash,
@@ -58,6 +59,8 @@ export async function handleLookup(
     gateway?: PaymentGateway;
     lookup?: (input: LookupInput, store: ApiStore) => Promise<Report>;
     reconcile?: typeof reconcileGateway;
+    reconcileDirect?: typeof reconcileDirectPayment;
+    reconcileUncharged?: typeof reconcileUnchargedDirectPayment;
     resourcePath?: string;
     inputScope?: string;
     gatewayFactory?: () => Promise<PaymentGateway>;
@@ -174,8 +177,11 @@ export async function handleLookup(
         if (previous.inputKey !== inputKey)
           return json({ error: "Payment is bound to a different lookup" }, 409);
         if (["settling", "uncertain"].includes(previous.state)) {
-          const receipt = await (deps.reconcile || reconcileGateway)(
-            payment.payload,
+          const gatewayPayment = payment.payload.accepted.extra?.name === "GatewayWalletBatched";
+          const receipt = await (deps.reconcile
+            ? deps.reconcile(payment.payload)
+            : gatewayPayment ? reconcileGateway(payment.payload)
+            : (deps.reconcileDirect || reconcileDirectPayment)(payment.payload,req.headers.get("payment-transaction") || settlementTransaction(previous.receiptJson))
           ).catch(() => null);
           if (receipt) {
             await store.update(
@@ -189,6 +195,14 @@ export async function handleLookup(
               payment.recoveryHash,
             );
             if (resolved) return recovered(resolved);
+          }
+          if (!gatewayPayment) {
+            const uncharged = await (deps.reconcileUncharged || reconcileUnchargedDirectPayment)(payment.payload).catch(() => null);
+            if (uncharged?.errorReason === "authorization_expired_unused") {
+              await store.update(payment.requestId,"not_charged",undefined,JSON.stringify(uncharged));
+              const resolved = await store.recover(payment.requestId,payment.recoveryHash);
+              if (resolved) return recovered(resolved);
+            }
           }
         }
         return recovered(previous);
@@ -258,7 +272,7 @@ export async function handleLookup(
           payment.requestId,
           "uncertain",
           undefined,
-          JSON.stringify(receipt),
+          JSON.stringify(safeSettlementFailure(receipt)),
         );
         return json(
           {

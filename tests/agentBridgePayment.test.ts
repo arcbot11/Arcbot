@@ -266,3 +266,11 @@ it("persists the job result before settlement and never automatically repeats un
   expect(f.gateway.settle).toHaveBeenCalledTimes(1);
   expect(execute).toHaveBeenCalledTimes(1);
 });
+it("releases an expired unused direct attempt without executing or settling it again",async()=>{
+  const f=fixture(),execute=vi.fn(async()=>({job:{id:"saved"}}));
+  vi.mocked(f.gateway.settle).mockResolvedValue({success:false,network:"eip155:5042",transaction:"",errorReason:"rpc_limit",errorMessage:"private RPC data"});
+  expect((await paid(f.request(),{},"/v1/jobs",execute,f.deps)).status).toBe(503);
+  expect([...f.rows.values()][0].receiptJson).not.toContain("private RPC data");
+  const reconcileUncharged=vi.fn(async()=>({success:false,network:"eip155:5042"as const,transaction:"",errorReason:"authorization_expired_unused"}));
+  const r=await paid(f.request(),{},"/v1/jobs",execute,{...f.deps,reconcileUncharged});expect(await r.json()).toMatchObject({state:"not_charged"});expect(execute).toHaveBeenCalledOnce();expect(f.gateway.settle).toHaveBeenCalledOnce();
+});

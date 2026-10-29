@@ -78,6 +78,13 @@ it("rejected client traffic does not consume global capacity", async () => {
   expect(await run(limit, ctx, { key: "client-b" })).toBe(true);
   expect([...ctx.rows.values()].find(r => r.key === "global").count).toBe(31);
 });
+it("permits explicit chain-reconciled non-payment while keeping the tombstone and blocking late workers",async()=>{
+  const ctx=database();await run(claim,ctx,identity);await run(updateRequest,ctx,{requestId:"request",state:"prepared",resultJson:"{}"});await run(updateRequest,ctx,{requestId:"request",state:"settling"});await run(updateRequest,ctx,{requestId:"request",state:"uncertain",receiptJson:JSON.stringify({transaction:"locator"})});
+  expect((await run(recover,ctx,identity)).receiptJson).toContain("locator");
+  await expect(run(updateRequest,ctx,{requestId:"request",state:"not_charged"})).rejects.toThrow("Finalized non-payment evidence required");
+  await run(updateRequest,ctx,{requestId:"request",state:"not_charged",receiptJson:JSON.stringify({network:"eip155:5042",errorReason:"authorization_expired_unused",extensions:{"argos-reconciliation":{status:"expired_unused",blockNumber:"10",blockHash:"0x"+"11".repeat(32)}}})});expect((await run(recover,ctx,identity)).state).toBe("not_charged");expect((await run(claim,ctx,identity)).kind).toBe("existing");
+  await expect(run(updateRequest,ctx,{requestId:"request",state:"settled"})).rejects.toThrow("Invalid payment transition");
+});
 
 it("preserves the global cap and resets expired windows", async () => {
   const ctx = database();

@@ -61,3 +61,11 @@ it("routes MCP on isolated host and advertises no A2A or invented trust",async()
   expect(meta.services.some(s=>s.name==="A2A")).toBe(false);
   expect(meta.supportedTrust).toEqual([]);
 });
+it("forwards an optional receipt locator only with the same MCP payment proof",async()=>{
+  const payment={x402Version:2,payload:{signature:"private-proof"}},hash="0x"+"12".repeat(32);
+  const lookup=vi.fn(async(req:Request)=>{expect(req.headers.get("payment-transaction")).toBe(hash);expect(req.headers.has("payment-signature")).toBe(true);return Response.json({recovered:true});});
+  const params={name:MCP_TOOL,arguments:{token},_meta:{"x402/payment":payment,"x402/payment-transaction":hash}};
+  const result=await(await handleMcp(request("tools/call",params),lookup,"")).json();expect(result.result.isError).toBe(false);expect(lookup).toHaveBeenCalledOnce();
+  for(const meta of [{"x402/payment-transaction":hash},{"x402/payment":payment,"x402/payment-transaction":"invalid"}])expect((await(await handleMcp(request("tools/call",{...params,_meta:meta}),lookup,"")).json()).error.code).toBe(-32602);
+  expect(lookup).toHaveBeenCalledOnce();
+});

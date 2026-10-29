@@ -87,7 +87,9 @@ export async function handleMcp(req: Request, lookup: (req: Request) => Promise<
   if (!parsed.success) return error(id, -32602, "Supply token and optional chain=arc|base|5042|8453, finality=latest|finalized; no extra arguments.");
   if (params._meta !== undefined && !record(params._meta)) return error(id, -32602, "Invalid tool metadata");
   const payment = (params._meta as Record<string, unknown> | undefined)?.["x402/payment"];
+  const paymentTransaction = (params._meta as Record<string, unknown> | undefined)?.["x402/payment-transaction"];
   if (payment !== undefined && !record(payment)) return error(id, -32602, "Invalid x402 payment payload");
+  if (paymentTransaction !== undefined && (!payment || typeof paymentTransaction !== "string" || !/^0x[\da-fA-F]{64}$/.test(paymentTransaction))) return error(id, -32602, "Supply a payment payload and valid x402/payment-transaction hash for recovery");
   if (req.headers.has("payment-signature")) return error(id, -32602, "Send MCP payment only in params._meta['x402/payment']");
   const url = new URL("/v1/lookup", ORIGIN);
   for (const [key, v] of Object.entries(parsed.data)) if (v !== undefined) url.searchParams.set(key, v);
@@ -95,6 +97,7 @@ export async function handleMcp(req: Request, lookup: (req: Request) => Promise<
   const ip = req.headers.get("x-vercel-forwarded-for");
   if (ip) headers.set("x-vercel-forwarded-for", ip);
   if (payment) headers.set("Payment-Signature", encode(payment));
+  if (typeof paymentTransaction === "string") headers.set("Payment-Transaction", paymentTransaction);
   try {
     const response = await lookup(new Request(url, { headers }));
     const body = await response.json();
